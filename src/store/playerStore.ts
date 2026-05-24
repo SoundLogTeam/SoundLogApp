@@ -1,0 +1,27 @@
+import { create } from 'zustand';
+
+import { Track } from '@/types/domain';
+
+type PlayerSource = 'none' | 'preview' | 'external';
+
+type PlayerState = {
+  currentTrack?: Track;
+  isPlaying: boolean;
+  playlistId?: string;
+  source: PlayerSource;
+  setTrack: (track: Track, playlistId?: string) => void;
+  toggle: () => void;
+};
+
+export const usePlayerStore = create<PlayerState>((set) => ({
+  isPlaying: false,
+  source: 'none',
+  setTrack: (track, playlistId) =>
+    set({
+      currentTrack: track,
+      isPlaying: true,
+      playlistId,
+      source: 'external',
+    }),
+  toggle: () => set((state) => ({ isPlaying: !state.isPlaying })),
+}));
