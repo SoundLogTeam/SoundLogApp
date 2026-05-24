@@ -1,4 +1,4 @@
-import { RecapItem } from '@/types/domain';
+import { RecapItem, RecapShare } from '@/types/domain';
 
 export const recapItems: RecapItem[] = [
   {
@@ -15,10 +15,16 @@ export const recapItems: RecapItem[] = [
   },
 ];
 
-export const recapShare = {
+export const recapShare: RecapShare = {
   artistName: 'JENNIE',
+  backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
+  discImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/97/4033397_image2_1.jpg',
   id: 'seoul-night',
   placeName: 'Seoul',
-  recordedAt: '2024/4/24 | 6:20 PM',
+  recordedAt: '2024-04-24T18:20:00.000+09:00',
   trackTitle: 'Seoul City',
+};
+
+export const recapShareById: Record<string, RecapShare> = {
+  'seoul-night': recapShare,
 };

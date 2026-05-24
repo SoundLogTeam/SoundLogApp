@@ -11,7 +11,6 @@ export default function RootLayout() {
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="recap-share/[id]" />
         <Stack.Screen name="camera/index" options={{ presentation: 'modal' }} />
       </Stack>
     </AppProviders>

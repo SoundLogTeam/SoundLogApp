@@ -62,3 +62,14 @@ export type RecapItem = {
   representativeTrack: Track;
   createdAt: string;
 };
+
+export type RecapShare = {
+  id: string;
+  placeName: string;
+  trackTitle: string;
+  artistName: string;
+  backgroundImageUrl?: string;
+  discImageUrl?: string;
+  recordedAt: string;
+  shareImageUrl?: string;
+};

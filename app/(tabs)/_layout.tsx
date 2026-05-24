@@ -85,6 +85,13 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="recap-share/[id]"
+        options={{
+          href: null,
+          title: '리캡 공유',
+        }}
+      />
+      <Tabs.Screen
         name="my"
         options={{
           tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="user" />,
