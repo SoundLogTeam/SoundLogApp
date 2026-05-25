@@ -1,16 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { homeApi } from '@/api/homeApi';
+import { GeoPoint } from '@/types/domain';
+
+type FeaturedPlaylistParams = {
+  location?: GeoPoint;
+  locationRecommendationEnabled: boolean;
+};
 
 type MoodRecommendationParams = {
   moodFilter: string;
+  preferredGenres?: string[];
+  preferredMoods?: string[];
   topFilter: string;
+  travelStyles?: string[];
 };
 
-export function useFeaturedPlaylistsQuery() {
+export function useFeaturedPlaylistsQuery(params: FeaturedPlaylistParams) {
   return useQuery({
-    queryFn: homeApi.getFeaturedPlaylists,
-    queryKey: ['home', 'featured-playlists'],
+    queryFn: () => homeApi.getFeaturedPlaylists(params),
+    queryKey: ['home', 'featured-playlists', params],
   });
 }
 

@@ -3,7 +3,7 @@ import { ScrollView, View } from 'react-native';
 import { AppText } from '@/components/AppText';
 import { Chip } from '@/components/Chip';
 
-const topFilters = ['전체', '잔잔한', '청량한', '감성적인', '신나는'];
+const topFilters = ['전체', '잔잔한', '청량한', '감성적인', '활기찬', '신나는'];
 
 type HomeHeaderProps = {
   selectedTopFilter: string;

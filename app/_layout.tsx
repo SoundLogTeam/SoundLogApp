@@ -10,6 +10,7 @@ export default function RootLayout() {
     <AppProviders>
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="camera/index" options={{ presentation: 'modal' }} />
       </Stack>

@@ -5,7 +5,18 @@ import { Chip } from '@/components/Chip';
 import { MoodRecommendationCard } from '@/components/home/MoodRecommendationCard';
 import { MoodRecommendation } from '@/types/domain';
 
-const moodFilters = ['전체', '드라이브', '산책', '시원한 바람', '활기찬', '신나는'];
+const moodFilters = [
+  '전체',
+  '드라이브',
+  '산책',
+  '카페 투어',
+  '바다 보기',
+  '축제',
+  '야경 감상',
+  '시원한 바람',
+  '활기찬',
+  '신나는',
+];
 
 type MoodRecommendationSectionProps = {
   data?: MoodRecommendation[];

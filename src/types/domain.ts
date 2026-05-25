@@ -32,7 +32,10 @@ export type MoodRecommendation = {
   title: string;
   subtitle?: string;
   color: string;
+  genres?: string[];
+  moods?: string[];
   track: Track;
+  travelStyles?: string[];
 };
 
 export type PlaylistCuration = {

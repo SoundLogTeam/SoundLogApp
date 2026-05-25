@@ -35,7 +35,7 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Soundlog가 사진을 촬영한 장소를 함께 기록하기 위해 위치 권한이 필요합니다."
+          "locationWhenInUsePermission": "Soundlog가 현재 장소에 맞는 음악을 추천하고 여행 순간의 위치를 기록하기 위해 위치 권한이 필요합니다."
         }
       ],
       "expo-sharing",
