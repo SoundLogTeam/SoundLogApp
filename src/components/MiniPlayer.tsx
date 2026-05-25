@@ -1,18 +1,22 @@
 import { Feather } from '@expo/vector-icons';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
 import { getMiniPlayerBottom } from '@/constants/layout';
+import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 
 export function MiniPlayer() {
   const insets = useSafeAreaInsets();
   const { currentTrack, isPlaying, toggle } = usePlayerStore();
+  const { isLiked, toggleLike } = useLibraryStore();
 
   if (!currentTrack) {
     return null;
   }
+
+  const liked = isLiked(currentTrack.id);
 
   return (
     <View
@@ -28,6 +32,14 @@ export function MiniPlayer() {
         <AppText className="text-xs text-white/60">{currentTrack.artist}</AppText>
       </View>
       <View className="flex-row items-center gap-3">
+        <Pressable
+          accessibilityLabel={liked ? '좋아요 취소' : '좋아요'}
+          accessibilityRole="button"
+          className="h-9 w-9 items-center justify-center"
+          onPress={() => toggleLike(currentTrack)}
+        >
+          <Feather color={liked ? '#E879F9' : '#fff'} name="heart" size={18} />
+        </Pressable>
         <Feather color="#fff" name="skip-back" size={18} />
         <Feather color="#fff" name={isPlaying ? 'pause' : 'play'} onPress={toggle} size={18} />
         <Feather color="#fff" name="skip-forward" size={18} />

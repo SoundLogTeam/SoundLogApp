@@ -15,6 +15,7 @@ import {
 import { TrackActionMenu } from '@/components/playlist/TrackActionMenu';
 import { TrackList } from '@/components/playlist/TrackList';
 import { getCurationListBottomPadding } from '@/constants/layout';
+import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { Track } from '@/types/domain';
 
@@ -25,27 +26,48 @@ type PlaylistCurationScreenProps = {
 export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenProps) {
   const insets = useSafeAreaInsets();
   const { currentTrack, setTrack } = usePlayerStore();
+  const {
+    isLiked,
+    isSaved,
+    likedTracks,
+    savedTracks,
+    seedFromPlaylist,
+    toggleLike,
+    toggleSave,
+  } = useLibraryStore();
   const { data: playlist, isError, isLoading, refetch } = usePlaylistCurationQuery(playlistId);
 
   const [selectedTrackId, setSelectedTrackId] = useState<string>();
-  const [likedTrackIds, setLikedTrackIds] = useState<Set<string>>(new Set());
-  const [savedTrackIds, setSavedTrackIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!playlist) {
       return;
     }
 
-    const likedIds = playlist.tracks.filter((track) => track.isLiked).map((track) => track.id);
-    const savedIds = playlist.tracks.filter((track) => track.isSaved).map((track) => track.id);
-
-    setLikedTrackIds(new Set(likedIds));
-    setSavedTrackIds(new Set(savedIds));
-  }, [playlist?.id]);
+    seedFromPlaylist(playlist.id, playlist.tracks);
+  }, [playlist, seedFromPlaylist]);
 
   const selectedTrack = useMemo(
     () => playlist?.tracks.find((track) => track.id === selectedTrackId),
     [playlist?.tracks, selectedTrackId],
+  );
+  const likedTrackIds = useMemo(
+    () =>
+      new Set(
+        playlist?.tracks
+          .filter((track) => likedTracks.some((record) => record.track.id === track.id))
+          .map((track) => track.id),
+      ),
+    [likedTracks, playlist?.tracks],
+  );
+  const savedTrackIds = useMemo(
+    () =>
+      new Set(
+        playlist?.tracks
+          .filter((track) => savedTracks.some((record) => record.track.id === track.id))
+          .map((track) => track.id),
+      ),
+    [playlist?.tracks, savedTracks],
   );
 
   const hasMiniPlayer = Boolean(currentTrack);
@@ -74,17 +96,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       return;
     }
 
-    setLikedTrackIds((prev) => {
-      const next = new Set(prev);
-
-      if (next.has(selectedTrack.id)) {
-        next.delete(selectedTrack.id);
-      } else {
-        next.add(selectedTrack.id);
-      }
-
-      return next;
-    });
+    toggleLike(selectedTrack, playlist?.id);
   };
 
   const toggleSaved = () => {
@@ -92,17 +104,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       return;
     }
 
-    setSavedTrackIds((prev) => {
-      const next = new Set(prev);
-
-      if (next.has(selectedTrack.id)) {
-        next.delete(selectedTrack.id);
-      } else {
-        next.add(selectedTrack.id);
-      }
-
-      return next;
-    });
+    toggleSave(selectedTrack, playlist?.id);
   };
 
   const closeMenu = () => setSelectedTrackId(undefined);
@@ -139,8 +141,8 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       </PlaylistBottomSheet>
 
       <TrackActionMenu
-        isLiked={selectedTrack ? likedTrackIds.has(selectedTrack.id) : false}
-        isSaved={selectedTrack ? savedTrackIds.has(selectedTrack.id) : false}
+        isLiked={isLiked(selectedTrack?.id)}
+        isSaved={isSaved(selectedTrack?.id)}
         onClose={closeMenu}
         onToggleLike={toggleLiked}
         onToggleSave={toggleSaved}
