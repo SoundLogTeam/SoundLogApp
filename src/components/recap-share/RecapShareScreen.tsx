@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -20,7 +20,12 @@ import { getTabBarHeight } from '@/constants/layout';
 import { useRecapShareActions } from '@/hooks/useRecapShareActions';
 import { useMomentLogStore } from '@/store/momentLogStore';
 import { formatRecapRecordedAt } from '@/utils/dateFormat';
-import { momentLogToRecapShare } from '@/utils/recapMappers';
+import {
+  createMomentLogGroups,
+  extractSessionIdFromRecapId,
+  momentLogGroupToRecapShare,
+  momentLogToRecapShare,
+} from '@/utils/recapMappers';
 
 type RecapShareScreenProps = {
   recapId?: string;
@@ -28,16 +33,30 @@ type RecapShareScreenProps = {
 
 export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
   const insets = useSafeAreaInsets();
-  const localMomentLog = useMomentLogStore((state) =>
-    state.logs.find((item) => item.id === recapId),
+  const momentLogs = useMomentLogStore((state) => state.logs);
+  const sessionId = extractSessionIdFromRecapId(recapId);
+  const localMomentGroup = useMemo(
+    () =>
+      sessionId
+        ? createMomentLogGroups(momentLogs).find((group) => group.sessionId === sessionId)
+        : undefined,
+    [momentLogs, sessionId],
   );
+  const localMomentLog = sessionId
+    ? undefined
+    : momentLogs.find((item) => item.id === recapId);
+  const localRecap = localMomentGroup
+    ? momentLogGroupToRecapShare(localMomentGroup)
+    : localMomentLog
+      ? momentLogToRecapShare(localMomentLog)
+      : undefined;
   const {
     data: remoteRecap,
     isError,
     isLoading,
     refetch,
-  } = useRecapShareQuery(recapId, { enabled: !localMomentLog });
-  const recap = localMomentLog ? momentLogToRecapShare(localMomentLog) : remoteRecap;
+  } = useRecapShareQuery(recapId, { enabled: !localRecap });
+  const recap = localRecap ?? remoteRecap;
   const captureRef = useRef<RecapCaptureFrameHandle>(null);
   const { activeAction, message, save, share } = useRecapShareActions({
     capture: () => captureRef.current?.capture() ?? Promise.resolve(undefined),
@@ -60,7 +79,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
         </AppText>
 
         <View className="mt-8 w-full items-center">
-          {isLoading && !localMomentLog ? (
+          {isLoading && !localRecap ? (
             <RecapShareLoadingState />
           ) : isError ? (
             <RecapShareErrorState onRetry={() => refetch()} />

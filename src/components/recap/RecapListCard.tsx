@@ -13,6 +13,9 @@ type RecapListCardProps = {
 };
 
 export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
+  const momentCountLabel =
+    item.momentCount && item.momentCount > 1 ? `저장된 순간 ${item.momentCount}개` : undefined;
+
   return (
     <Pressable
       accessibilityLabel={`${item.title} 리캡 열기`}
@@ -40,7 +43,7 @@ export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
               {item.placeName}
             </AppText>
             <AppText className="mt-3 text-[12px] text-white/45" numberOfLines={1}>
-              {item.representativeTrack.artist}
+              {momentCountLabel ?? item.representativeTrack.artist}
             </AppText>
           </View>
 

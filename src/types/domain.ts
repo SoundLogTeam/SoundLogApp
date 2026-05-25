@@ -98,6 +98,8 @@ export type RecapItem = {
   placeName: string;
   representativeTrack: Track;
   createdAt: string;
+  momentCount?: number;
+  sessionId?: string;
 };
 
 export type RecapShare = {

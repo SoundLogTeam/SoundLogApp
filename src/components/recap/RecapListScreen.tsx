@@ -7,17 +7,25 @@ import { RecapListCard } from '@/components/recap/RecapListCard';
 import { Screen } from '@/components/Screen';
 import { recapItems } from '@/mocks/recapMocks';
 import { useMomentLogStore } from '@/store/momentLogStore';
-import { momentLogToRecapItem } from '@/utils/recapMappers';
+import { createMomentLogGroups, momentLogGroupToRecapItem } from '@/utils/recapMappers';
+
+type RecapListEntry = {
+  imageUrl?: string;
+  item: ReturnType<typeof momentLogGroupToRecapItem>;
+  shareId: string;
+};
 
 export function RecapListScreen() {
   const momentLogs = useMomentLogStore((state) => state.logs);
-  const localRecaps = momentLogs.map((log) => ({
-    imageUrl: log.photoUri,
-    item: momentLogToRecapItem(log),
+  const localRecaps: RecapListEntry[] = createMomentLogGroups(momentLogs).map((group) => ({
+    imageUrl: group.logs[0]?.photoUri,
+    item: momentLogGroupToRecapItem(group),
+    shareId: group.id,
   }));
-  const sampleRecaps = recapItems.map((item) => ({
+  const sampleRecaps: RecapListEntry[] = recapItems.map((item) => ({
     imageUrl: item.representativeTrack.albumImageUrl,
     item,
+    shareId: item.id,
   }));
   const hasLocalRecaps = localRecaps.length > 0;
   const recaps = [...localRecaps, ...sampleRecaps];
@@ -38,12 +46,12 @@ export function RecapListScreen() {
         {!hasLocalRecaps ? <RecapEmptyState /> : null}
 
         <View className="gap-3">
-          {recaps.map(({ imageUrl, item }) => (
+          {recaps.map(({ imageUrl, item, shareId }) => (
             <RecapListCard
               key={item.id}
               imageUrl={imageUrl}
               item={item}
-              onPress={() => router.push(`/recap-share/${item.id}`)}
+              onPress={() => router.push(`/recap-share/${shareId}`)}
             />
           ))}
         </View>
