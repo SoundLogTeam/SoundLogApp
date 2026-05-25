@@ -4,9 +4,12 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { AppText } from '@/components/AppText';
 import { LibraryEmptyState } from '@/components/library/LibraryEmptyState';
 import { LibraryTrackRow } from '@/components/library/LibraryTrackRow';
+import { TrackActionMenu } from '@/components/playlist/TrackActionMenu';
 import { Screen } from '@/components/Screen';
-import { useLibraryStore } from '@/store/libraryStore';
+import { LibraryTrackRecord, useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
+import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type LibraryTab = 'liked' | 'saved';
 
@@ -17,9 +20,65 @@ const tabs: Array<{ id: LibraryTab; label: string }> = [
 
 export function LibraryScreen() {
   const [selectedTab, setSelectedTab] = useState<LibraryTab>('liked');
-  const { likedTracks, removeLikedTrack, removeSavedTrack, savedTracks } = useLibraryStore();
+  const [selectedRecord, setSelectedRecord] = useState<LibraryTrackRecord>();
+  const { isLiked, isSaved, likedTracks, savedTracks, toggleLike, toggleSave } = useLibraryStore();
   const setTrack = usePlayerStore((state) => state.setTrack);
+  const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
   const records = selectedTab === 'liked' ? likedTracks : savedTracks;
+  const selectedTrack = selectedRecord?.track;
+  const selectedTrackLiked = isLiked(selectedTrack?.id);
+  const selectedTrackSaved = isSaved(selectedTrack?.id);
+
+  const closeMenu = () => setSelectedRecord(undefined);
+  const selectTab = (tab: LibraryTab) => {
+    setSelectedTab(tab);
+    closeMenu();
+  };
+  const playRecord = (record: LibraryTrackRecord) => {
+    setTrack(record.track, record.playlistId);
+    addRecommendationEvent({
+      context: createRecommendationEventContext(),
+      playlistId: record.playlistId,
+      trackId: record.track.id,
+      type: 'track_play',
+    });
+  };
+  const toggleSelectedLike = () => {
+    if (!selectedRecord) {
+      return;
+    }
+
+    const nextLiked = !isLiked(selectedRecord.track.id);
+    toggleLike(selectedRecord.track, selectedRecord.playlistId);
+    addRecommendationEvent({
+      context: createRecommendationEventContext(),
+      playlistId: selectedRecord.playlistId,
+      trackId: selectedRecord.track.id,
+      type: nextLiked ? 'track_like' : 'track_unlike',
+    });
+
+    if (selectedTab === 'liked' && !nextLiked) {
+      closeMenu();
+    }
+  };
+  const toggleSelectedSave = () => {
+    if (!selectedRecord) {
+      return;
+    }
+
+    const nextSaved = !isSaved(selectedRecord.track.id);
+    toggleSave(selectedRecord.track, selectedRecord.playlistId);
+    addRecommendationEvent({
+      context: createRecommendationEventContext(),
+      playlistId: selectedRecord.playlistId,
+      trackId: selectedRecord.track.id,
+      type: nextSaved ? 'track_save' : 'track_unsave',
+    });
+
+    if (selectedTab === 'saved' && !nextSaved) {
+      closeMenu();
+    }
+  };
 
   return (
     <Screen>
@@ -42,7 +101,7 @@ export function LibraryScreen() {
               <Pressable
                 key={tab.id}
                 className="h-10 flex-1 items-center justify-center rounded-full"
-                onPress={() => setSelectedTab(tab.id)}
+                onPress={() => selectTab(tab.id)}
                 style={{ backgroundColor: isSelected ? '#ffffff' : 'transparent' }}
               >
                 <AppText
@@ -71,20 +130,24 @@ export function LibraryScreen() {
             {records.map((record) => (
               <LibraryTrackRow
                 key={record.track.id}
-                actionIcon={selectedTab === 'liked' ? 'heart' : 'bookmark'}
-                actionLabel={selectedTab === 'liked' ? '좋아요 취소' : '저장 취소'}
-                onPress={() => setTrack(record.track, record.playlistId)}
-                onRemove={() =>
-                  selectedTab === 'liked'
-                    ? removeLikedTrack(record.track.id)
-                    : removeSavedTrack(record.track.id)
-                }
+                onOpenActions={() => setSelectedRecord(record)}
+                onPress={() => playRecord(record)}
                 record={record}
               />
             ))}
           </View>
         )}
       </ScrollView>
+
+      <TrackActionMenu
+        isLiked={selectedTrackLiked}
+        isSaved={selectedTrackSaved}
+        onClose={closeMenu}
+        onToggleLike={toggleSelectedLike}
+        onToggleSave={toggleSelectedSave}
+        track={selectedTrack}
+        visible={Boolean(selectedRecord)}
+      />
     </Screen>
   );
 }

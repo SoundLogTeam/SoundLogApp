@@ -7,18 +7,14 @@ import { LibraryTrackRecord } from '@/store/libraryStore';
 import { formatRecapRecordedAt } from '@/utils/dateFormat';
 
 type LibraryTrackRowProps = {
-  actionIcon: keyof typeof Feather.glyphMap;
-  actionLabel: string;
+  onOpenActions: () => void;
   onPress: () => void;
-  onRemove: () => void;
   record: LibraryTrackRecord;
 };
 
 export function LibraryTrackRow({
-  actionIcon,
-  actionLabel,
+  onOpenActions,
   onPress,
-  onRemove,
   record,
 }: LibraryTrackRowProps) {
   const { track } = record;
@@ -52,15 +48,15 @@ export function LibraryTrackRow({
       </View>
 
       <Pressable
-        accessibilityLabel={actionLabel}
+        accessibilityLabel={`${track.title} 옵션 열기`}
         accessibilityRole="button"
         className="h-11 w-11 items-center justify-center rounded-full bg-white/10"
         onPress={(event) => {
           event.stopPropagation();
-          onRemove();
+          onOpenActions();
         }}
       >
-        <Feather color="#fff" name={actionIcon} size={18} />
+        <Feather color="#fff" name="more-horizontal" size={18} />
       </Pressable>
     </Pressable>
   );

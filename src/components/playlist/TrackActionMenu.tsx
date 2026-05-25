@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, View } from 'react-native';
 
@@ -106,9 +107,17 @@ export function TrackActionMenu({
           {track ? (
             <View className="mb-4 flex-row items-center">
               <View
-                className="h-[42px] w-[42px] rounded-[10px]"
+                className="h-[42px] w-[42px] overflow-hidden rounded-[10px]"
                 style={{ backgroundColor: track.fallbackColor ?? '#fff' }}
-              />
+              >
+                {track.albumImageUrl ? (
+                  <Image
+                    className="h-full w-full"
+                    contentFit="cover"
+                    source={{ uri: track.albumImageUrl }}
+                  />
+                ) : null}
+              </View>
               <View className="ml-3 flex-1">
                 <AppText className="text-base font-semibold text-white" numberOfLines={1}>
                   {track.title}
