@@ -14,6 +14,7 @@ import { MusicLogSection } from '@/components/home/MusicLogSection';
 import { Screen } from '@/components/Screen';
 import { getHomeContentBottomPadding } from '@/constants/layout';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
+import { momentLogToMusicLogItem, useMomentLogStore } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { MoodRecommendation } from '@/types/domain';
 
@@ -22,6 +23,7 @@ export default function HomeScreen() {
   const { selectedMoodFilter, selectedTopFilter, setSelectedMoodFilter, setSelectedTopFilter } =
     useHomeFilterStore();
   const { currentTrack, setTrack } = usePlayerStore();
+  const momentLogs = useMomentLogStore((state) => state.logs);
 
   const featuredPlaylistsQuery = useFeaturedPlaylistsQuery();
   const moodRecommendationsQuery = useMoodRecommendationsQuery({
@@ -29,6 +31,10 @@ export default function HomeScreen() {
     topFilter: selectedTopFilter,
   });
   const recentMusicLogsQuery = useRecentMusicLogsQuery();
+  const musicLogs = [
+    ...momentLogs.slice(0, 6).map(momentLogToMusicLogItem),
+    ...(recentMusicLogsQuery.data ?? []),
+  ].slice(0, 10);
 
   const handleSelectRecommendation = (item: MoodRecommendation) => {
     setTrack(item.track);
@@ -68,9 +74,9 @@ export default function HomeScreen() {
         />
 
         <MusicLogSection
-          data={recentMusicLogsQuery.data}
+          data={musicLogs}
           isError={recentMusicLogsQuery.isError}
-          isLoading={recentMusicLogsQuery.isLoading}
+          isLoading={recentMusicLogsQuery.isLoading && momentLogs.length === 0}
         />
       </ScrollView>
       {currentTrack ? <MiniPlayer /> : null}

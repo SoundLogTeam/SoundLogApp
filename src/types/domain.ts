@@ -55,6 +55,19 @@ export type MusicLogItem = {
   createdAt: string;
 };
 
+export type MomentLog = {
+  id: string;
+  photoUri: string;
+  createdAt: string;
+  location?: GeoPoint;
+  placeName?: string;
+  track?: Track;
+  travelMode?: TravelMode;
+  moodTags: MoodTag[];
+  source: 'camera';
+  syncStatus: 'failed' | 'local' | 'pending' | 'synced';
+};
+
 export type RecapItem = {
   id: string;
   title: string;

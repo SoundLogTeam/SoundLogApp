@@ -26,6 +26,18 @@
     "plugins": [
       "expo-router",
       "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Soundlog가 여행 순간을 사진으로 기록하기 위해 카메라 권한이 필요합니다."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Soundlog가 사진을 촬영한 장소를 함께 기록하기 위해 위치 권한이 필요합니다."
+        }
+      ],
       "expo-sharing",
       [
         "expo-media-library",

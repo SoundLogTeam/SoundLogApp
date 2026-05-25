@@ -18,7 +18,9 @@ import { ShareActionList } from '@/components/recap-share/ShareActionList';
 import { Screen } from '@/components/Screen';
 import { getTabBarHeight } from '@/constants/layout';
 import { useRecapShareActions } from '@/hooks/useRecapShareActions';
+import { useMomentLogStore } from '@/store/momentLogStore';
 import { formatRecapRecordedAt } from '@/utils/dateFormat';
+import { momentLogToRecapShare } from '@/utils/recapMappers';
 
 type RecapShareScreenProps = {
   recapId?: string;
@@ -26,7 +28,16 @@ type RecapShareScreenProps = {
 
 export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
   const insets = useSafeAreaInsets();
-  const { data: recap, isError, isLoading, refetch } = useRecapShareQuery(recapId);
+  const localMomentLog = useMomentLogStore((state) =>
+    state.logs.find((item) => item.id === recapId),
+  );
+  const {
+    data: remoteRecap,
+    isError,
+    isLoading,
+    refetch,
+  } = useRecapShareQuery(recapId, { enabled: !localMomentLog });
+  const recap = localMomentLog ? momentLogToRecapShare(localMomentLog) : remoteRecap;
   const captureRef = useRef<RecapCaptureFrameHandle>(null);
   const { activeAction, message, save, share } = useRecapShareActions({
     capture: () => captureRef.current?.capture() ?? Promise.resolve(undefined),
@@ -49,7 +60,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
         </AppText>
 
         <View className="mt-8 w-full items-center">
-          {isLoading ? (
+          {isLoading && !localMomentLog ? (
             <RecapShareLoadingState />
           ) : isError ? (
             <RecapShareErrorState onRetry={() => refetch()} />
