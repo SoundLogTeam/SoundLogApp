@@ -102,6 +102,17 @@ export type RecapItem = {
   sessionId?: string;
 };
 
+export type RecapTemplateId = 'album' | 'film' | 'lp';
+
+export type RecapShareMoment = {
+  id: string;
+  imageUrl?: string;
+  placeName: string;
+  trackTitle: string;
+  artistName: string;
+  recordedAt: string;
+};
+
 export type RecapShare = {
   id: string;
   placeName: string;
@@ -109,6 +120,7 @@ export type RecapShare = {
   artistName: string;
   backgroundImageUrl?: string;
   discImageUrl?: string;
+  moments?: RecapShareMoment[];
   recordedAt: string;
   shareImageUrl?: string;
 };

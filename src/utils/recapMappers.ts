@@ -1,4 +1,4 @@
-import { MomentLog, RecapItem, RecapShare } from '@/types/domain';
+import { MomentLog, RecapItem, RecapShare, RecapShareMoment } from '@/types/domain';
 
 const FALLBACK_ARTIST = 'Soundlog';
 const FALLBACK_PLACE = '위치 없음';
@@ -15,6 +15,23 @@ function getNewestLog(logs: MomentLog[]) {
   return [...logs].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   )[0];
+}
+
+function getOldestFirstLogs(logs: MomentLog[]) {
+  return [...logs].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  );
+}
+
+function momentLogToRecapShareMoment(log: MomentLog): RecapShareMoment {
+  return {
+    artistName: log.track?.artist ?? FALLBACK_ARTIST,
+    id: log.id,
+    imageUrl: log.photoUri,
+    placeName: log.placeName ?? FALLBACK_PLACE,
+    recordedAt: log.createdAt,
+    trackTitle: log.track?.title ?? FALLBACK_TITLE,
+  };
 }
 
 export function createSessionRecapId(sessionId: string) {
@@ -109,6 +126,7 @@ export function momentLogGroupToRecapShare(group: MomentLogGroup): RecapShare | 
   return {
     ...momentLogToRecapShare(representativeLog),
     id: group.id,
+    moments: getOldestFirstLogs(group.logs).map(momentLogToRecapShareMoment),
   };
 }
 
@@ -133,6 +151,7 @@ export function momentLogToRecapShare(log: MomentLog): RecapShare {
     backgroundImageUrl: log.photoUri,
     discImageUrl: log.photoUri,
     id: log.id,
+    moments: [momentLogToRecapShareMoment(log)],
     placeName: log.placeName ?? FALLBACK_PLACE,
     recordedAt: log.createdAt,
     trackTitle: log.track?.title ?? FALLBACK_TITLE,

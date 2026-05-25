@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,11 +14,13 @@ import {
   RecapShareErrorState,
   RecapShareLoadingState,
 } from '@/components/recap-share/RecapShareState';
+import { RecapTemplateSelector } from '@/components/recap-share/RecapTemplateSelector';
 import { ShareActionList } from '@/components/recap-share/ShareActionList';
 import { Screen } from '@/components/Screen';
 import { getTabBarHeight } from '@/constants/layout';
 import { useRecapShareActions } from '@/hooks/useRecapShareActions';
 import { useMomentLogStore } from '@/store/momentLogStore';
+import { RecapTemplateId } from '@/types/domain';
 import { formatRecapRecordedAt } from '@/utils/dateFormat';
 import {
   createMomentLogGroups,
@@ -33,6 +35,7 @@ type RecapShareScreenProps = {
 
 export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
   const insets = useSafeAreaInsets();
+  const [selectedTemplate, setSelectedTemplate] = useState<RecapTemplateId>('lp');
   const momentLogs = useMomentLogStore((state) => state.logs);
   const sessionId = extractSessionIdFromRecapId(recapId);
   const localMomentGroup = useMemo(
@@ -78,7 +81,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
           Share Your Music
         </AppText>
 
-        <View className="mt-8 w-full items-center">
+        <View className="mt-7 w-full items-center">
           {isLoading && !localRecap ? (
             <RecapShareLoadingState />
           ) : isError ? (
@@ -87,9 +90,15 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
             <RecapShareEmptyState />
           ) : (
             <>
-              <RecapCaptureFrame ref={captureRef}>
-                <RecapPreviewCard recap={recap} />
-              </RecapCaptureFrame>
+              <RecapTemplateSelector
+                selectedTemplate={selectedTemplate}
+                onSelect={setSelectedTemplate}
+              />
+              <View className="mt-5 w-full items-center">
+                <RecapCaptureFrame ref={captureRef}>
+                  <RecapPreviewCard recap={recap} template={selectedTemplate} />
+                </RecapCaptureFrame>
+              </View>
               <AppText className="mt-5 text-sm text-white/70">
                 {formatRecapRecordedAt(recap.recordedAt)}
               </AppText>
