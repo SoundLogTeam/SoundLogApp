@@ -3,6 +3,19 @@ export type GeoPoint = {
   lng: number;
 };
 
+export type PlaceContext = {
+  address?: string;
+  category?: string;
+  contentType?: string;
+  distanceMeters?: number;
+  id: string;
+  imageUrl?: string;
+  location?: GeoPoint;
+  overview?: string;
+  source: 'mock' | 'tour-api';
+  title: string;
+};
+
 export type TravelMode = 'walk' | 'drive' | 'cafe' | 'ocean' | 'festival' | 'night';
 
 export type MoodTag = 'calm' | 'fresh' | 'emotional' | 'active' | 'local';
@@ -63,6 +76,8 @@ export type MomentLog = {
   photoUri: string;
   createdAt: string;
   location?: GeoPoint;
+  placeCategory?: string;
+  placeId?: string;
   placeName?: string;
   track?: Track;
   travelMode?: TravelMode;

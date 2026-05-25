@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { homeApi } from '@/api/homeApi';
-import { GeoPoint } from '@/types/domain';
+import { GeoPoint, PlaceContext } from '@/types/domain';
 
 type FeaturedPlaylistParams = {
   location?: GeoPoint;
   locationRecommendationEnabled: boolean;
+  place?: PlaceContext;
 };
 
 type MoodRecommendationParams = {

@@ -4,6 +4,7 @@ import { Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Screen } from '@/components/Screen';
+import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 
 type MyMenuItem = {
@@ -13,8 +14,23 @@ type MyMenuItem = {
   onPress?: () => void;
 };
 
+function formatEventTime(value?: string) {
+  if (!value) {
+    return '아직 없음';
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '확인 불가';
+  }
+
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
 export default function MyScreen() {
   const { profile, resetOnboarding } = useUserProfileStore();
+  const { clearEvents, events, isHydrated } = useRecommendationEventStore();
   const selectedSummary = [
     ...profile.preferredGenres.slice(0, 2),
     ...profile.preferredMoods.slice(0, 1),
@@ -86,6 +102,37 @@ export default function MyScreen() {
           </Pressable>
         ))}
       </View>
+
+      {__DEV__ ? (
+        <View className="mt-6 rounded-[18px] border border-white/10 bg-white/10 p-5">
+          <View className="flex-row items-start justify-between gap-3">
+            <View className="min-w-0 flex-1">
+              <AppText className="text-sm font-semibold text-white/45">
+                추천 피드백 로그
+              </AppText>
+              <AppText className="mt-2 text-[20px] font-semibold text-white">
+                {isHydrated ? `${events.length}개` : '동기화 중'}
+              </AppText>
+              <AppText className="mt-2 text-xs leading-5 text-white/50">
+                마지막 이벤트 {formatEventTime(events[0]?.createdAt)}
+              </AppText>
+              {events[0] ? (
+                <AppText className="mt-1 text-xs leading-5 text-white/35">
+                  {events[0].type}
+                  {events[0].value ? ` · ${events[0].value}` : ''}
+                </AppText>
+              ) : null}
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              className="rounded-full border border-white/10 px-4 py-2"
+              onPress={clearEvents}
+            >
+              <AppText className="text-xs font-semibold text-white/70">초기화</AppText>
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
     </Screen>
   );
 }

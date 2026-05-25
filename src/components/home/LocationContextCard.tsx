@@ -3,16 +3,20 @@ import { Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { HomeLocationStatus } from '@/store/travelSessionStore';
-import { GeoPoint } from '@/types/domain';
+import { GeoPoint, PlaceContext } from '@/types/domain';
 import { formatRecapRecordedAt } from '@/utils/dateFormat';
 import { formatPlaceLabel } from '@/utils/placeLabel';
 
 type LocationContextCardProps = {
   enabled: boolean;
   isLoading?: boolean;
+  isPlaceLoading?: boolean;
   location?: GeoPoint;
   onEnable: () => void;
   onRefresh: () => void;
+  place?: PlaceContext;
+  placeCount?: number;
+  placeInfoMessage?: string;
   status: HomeLocationStatus;
   updatedAt?: string;
 };
@@ -48,9 +52,13 @@ const statusCopy: Record<HomeLocationStatus, { description: string; icon: keyof 
 export function LocationContextCard({
   enabled,
   isLoading = false,
+  isPlaceLoading = false,
   location,
   onEnable,
   onRefresh,
+  place,
+  placeCount = 0,
+  placeInfoMessage,
   status,
   updatedAt,
 }: LocationContextCardProps) {
@@ -77,12 +85,29 @@ export function LocationContextCard({
           {enabled && location ? (
             <View className="mt-4 rounded-[16px] bg-black/20 px-4 py-3">
               <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
-                {formatPlaceLabel(location)}
+                {place?.title ?? formatPlaceLabel(location)}
               </AppText>
+              {place ? (
+                <AppText className="mt-1 text-xs text-white/45" numberOfLines={1}>
+                  {[place.category ?? place.contentType, place.distanceMeters ? `${Math.round(place.distanceMeters)}m` : undefined]
+                    .filter(Boolean)
+                    .join(' · ') || '장소 컨텍스트 확인됨'}
+                </AppText>
+              ) : null}
               {updatedAt ? (
                 <AppText className="mt-1 text-xs text-white/40">
                   {formatRecapRecordedAt(updatedAt)} 갱신
                 </AppText>
+              ) : null}
+              {isPlaceLoading ? (
+                <AppText className="mt-2 text-xs text-[#9EA8FF]">주변 관광지를 확인 중이에요</AppText>
+              ) : placeCount > 0 ? (
+                <AppText className="mt-2 text-xs text-[#9EA8FF]">
+                  주변 장소 {placeCount}곳을 추천 맥락으로 반영해요
+                </AppText>
+              ) : null}
+              {placeInfoMessage ? (
+                <AppText className="mt-2 text-xs text-white/40">{placeInfoMessage}</AppText>
               ) : null}
             </View>
           ) : null}

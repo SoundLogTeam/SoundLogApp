@@ -32,7 +32,7 @@ export function MomentCaptureScreen() {
   const addLog = useMomentLogStore((state) => state.addLog);
   const { selectedMoodFilter } = useHomeFilterStore();
   const { currentTrack } = usePlayerStore();
-  const { currentLocation, selectedMode, setLocation } = useTravelSessionStore();
+  const { currentLocation, currentPlace, selectedMode, setLocation } = useTravelSessionStore();
 
   const moodTags = useMemo(() => getMoodTagsFromFilter(selectedMoodFilter), [selectedMoodFilter]);
 
@@ -120,8 +120,10 @@ export function MomentCaptureScreen() {
         id,
         location: locationSnapshot,
         moodTags,
+        placeCategory: currentPlace?.category,
+        placeId: currentPlace?.id,
         photoUri,
-        placeName: formatPlaceLabel(locationSnapshot),
+        placeName: currentPlace?.title ?? formatPlaceLabel(locationSnapshot),
         source: 'camera',
         syncStatus: 'local',
         track: currentTrack,

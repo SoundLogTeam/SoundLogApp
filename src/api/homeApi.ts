@@ -1,10 +1,11 @@
 import { featuredPlaylists, moodRecommendations, recentMusicLogs } from '@/mocks/homeMocks';
 import { mockDelay } from '@/api/mockDelay';
-import { FeaturedPlaylist, GeoPoint, MoodRecommendation } from '@/types/domain';
+import { FeaturedPlaylist, GeoPoint, MoodRecommendation, PlaceContext } from '@/types/domain';
 
 type FeaturedPlaylistParams = {
   location?: GeoPoint;
   locationRecommendationEnabled: boolean;
+  place?: PlaceContext;
 };
 
 type MoodRecommendationParams = {
@@ -61,6 +62,27 @@ function getFeaturedPlaylistLocationScore(item: FeaturedPlaylist, location?: Geo
   return 0;
 }
 
+function getFeaturedPlaylistPlaceScore(item: FeaturedPlaylist, place?: PlaceContext) {
+  if (!place) {
+    return 0;
+  }
+
+  const context = [place.title, place.category, place.contentType, place.overview]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  if (item.id.includes('busan') && /해변|바다|해수욕장|ocean|beach/.test(context)) {
+    return 20;
+  }
+
+  if (item.id.includes('seoul') && /야경|문화|도시|광장|타워|night|city/.test(context)) {
+    return 20;
+  }
+
+  return 0;
+}
+
 export const homeApi = {
   getFeaturedPlaylists: (params?: FeaturedPlaylistParams) =>
     mockDelay(
@@ -70,6 +92,8 @@ export const homeApi = {
         }
 
         return (
+          getFeaturedPlaylistPlaceScore(second, params.place) -
+          getFeaturedPlaylistPlaceScore(first, params.place) ||
           getFeaturedPlaylistLocationScore(second, params.location) -
           getFeaturedPlaylistLocationScore(first, params.location)
         );

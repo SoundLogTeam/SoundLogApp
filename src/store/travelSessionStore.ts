@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { GeoPoint, TravelMode } from '@/types/domain';
+import { GeoPoint, PlaceContext, TravelMode } from '@/types/domain';
 
 export type HomeLocationStatus = 'denied' | 'granted' | 'idle' | 'loading' | 'unavailable';
 
@@ -13,12 +13,14 @@ type TravelSession = {
 
 type TravelSessionState = {
   currentLocation?: GeoPoint;
+  currentPlace?: PlaceContext;
   locationStatus: HomeLocationStatus;
   locationUpdatedAt?: string;
   selectedMode?: TravelMode;
   session: TravelSession;
   clearLocation: () => void;
   setLocation: (location: GeoPoint) => void;
+  setPlace: (place?: PlaceContext) => void;
   setLocationStatus: (status: HomeLocationStatus) => void;
   setMode: (mode: TravelMode) => void;
   startSession: () => void;
@@ -33,6 +35,7 @@ export const useTravelSessionStore = create<TravelSessionState>((set) => ({
   clearLocation: () =>
     set({
       currentLocation: undefined,
+      currentPlace: undefined,
       locationStatus: 'idle',
       locationUpdatedAt: undefined,
     }),
@@ -44,6 +47,7 @@ export const useTravelSessionStore = create<TravelSessionState>((set) => ({
     }),
   setLocationStatus: (locationStatus) => set({ locationStatus }),
   setMode: (selectedMode) => set({ selectedMode }),
+  setPlace: (currentPlace) => set({ currentPlace }),
   startSession: () =>
     set({
       session: {

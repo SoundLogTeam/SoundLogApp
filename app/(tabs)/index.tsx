@@ -8,6 +8,7 @@ import {
   useMoodRecommendationsQuery,
   useRecentMusicLogsQuery,
 } from '@/api/homeQueries';
+import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
 import { HomeHeader } from '@/components/home/HomeHeader';
@@ -19,29 +20,40 @@ import { getHomeContentBottomPadding } from '@/constants/layout';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
 import { momentLogToMusicLogItem, useMomentLogStore } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
+import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { MoodRecommendation } from '@/types/domain';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
+import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 function HomeContent() {
   const insets = useSafeAreaInsets();
   const { selectedMoodFilter, selectedTopFilter, setSelectedMoodFilter, setSelectedTopFilter } =
     useHomeFilterStore();
   const { currentTrack, setTrack } = usePlayerStore();
+  const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
   const momentLogs = useMomentLogStore((state) => state.logs);
   const { profile, updateProfile } = useUserProfileStore();
   const {
     currentLocation,
+    currentPlace,
     locationStatus,
     locationUpdatedAt,
     setLocation,
     setLocationStatus,
+    setPlace,
   } = useTravelSessionStore();
 
+  const nearbyPlacesQuery = useNearbyPlacesQuery({
+    enabled: profile.locationRecommendationEnabled,
+    location: currentLocation,
+    radiusMeters: 2000,
+  });
   const featuredPlaylistsQuery = useFeaturedPlaylistsQuery({
     location: currentLocation,
     locationRecommendationEnabled: profile.locationRecommendationEnabled,
+    place: currentPlace,
   });
   const moodRecommendationsQuery = useMoodRecommendationsQuery({
     moodFilter: selectedMoodFilter,
@@ -56,9 +68,57 @@ function HomeContent() {
     ...(recentMusicLogsQuery.data ?? []),
   ].slice(0, 10);
 
+  useEffect(() => {
+    if (!nearbyPlacesQuery.data) {
+      return;
+    }
+
+    const nextPlace = nearbyPlacesQuery.data[0];
+
+    if (nextPlace?.id !== currentPlace?.id) {
+      setPlace(nextPlace);
+    }
+  }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
+
   const handleSelectRecommendation = (item: MoodRecommendation) => {
     setTrack(item.track);
+    addRecommendationEvent({
+      context: createRecommendationEventContext(),
+      trackId: item.track.id,
+      type: 'track_play',
+      value: item.id,
+    });
   };
+  const handleSelectTopFilter = useCallback(
+    (filter: string) => {
+      if (filter === selectedTopFilter) {
+        return;
+      }
+
+      setSelectedTopFilter(filter);
+      addRecommendationEvent({
+        context: createRecommendationEventContext({ topFilter: filter }),
+        type: 'top_filter_change',
+        value: filter,
+      });
+    },
+    [addRecommendationEvent, selectedTopFilter, setSelectedTopFilter],
+  );
+  const handleSelectMoodFilter = useCallback(
+    (filter: string) => {
+      if (filter === selectedMoodFilter) {
+        return;
+      }
+
+      setSelectedMoodFilter(filter);
+      addRecommendationEvent({
+        context: createRecommendationEventContext({ moodFilter: filter }),
+        type: 'mood_filter_change',
+        value: filter,
+      });
+    },
+    [addRecommendationEvent, selectedMoodFilter, setSelectedMoodFilter],
+  );
   const handleEnableLocationRecommendation = () => {
     updateProfile({
       companionType: profile.companionType,
@@ -102,16 +162,22 @@ function HomeContent() {
         showsVerticalScrollIndicator={false}
       >
         <HomeHeader
-          onSelectTopFilter={setSelectedTopFilter}
+          onSelectTopFilter={handleSelectTopFilter}
           selectedTopFilter={selectedTopFilter}
         />
 
         <LocationContextCard
           enabled={profile.locationRecommendationEnabled}
           isLoading={locationStatus === 'loading'}
+          isPlaceLoading={nearbyPlacesQuery.isLoading}
           location={currentLocation}
           onEnable={handleEnableLocationRecommendation}
           onRefresh={handleRefreshLocation}
+          place={currentPlace}
+          placeCount={nearbyPlacesQuery.data?.length ?? 0}
+          placeInfoMessage={
+            currentPlace?.source === 'mock' ? 'TourAPI 키가 없거나 실패해 임시 장소 데이터를 사용 중이에요.' : undefined
+          }
           status={locationStatus}
           updatedAt={locationUpdatedAt}
         />
@@ -127,7 +193,7 @@ function HomeContent() {
           data={moodRecommendationsQuery.data}
           isError={moodRecommendationsQuery.isError}
           isLoading={moodRecommendationsQuery.isLoading}
-          onSelectMoodFilter={setSelectedMoodFilter}
+          onSelectMoodFilter={handleSelectMoodFilter}
           onSelectRecommendation={handleSelectRecommendation}
           selectedMoodFilter={selectedMoodFilter}
         />

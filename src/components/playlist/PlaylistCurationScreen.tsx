@@ -17,7 +17,9 @@ import { TrackList } from '@/components/playlist/TrackList';
 import { getCurationListBottomPadding } from '@/constants/layout';
 import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
+import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { Track } from '@/types/domain';
+import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type PlaylistCurationScreenProps = {
   playlistId?: string;
@@ -26,6 +28,7 @@ type PlaylistCurationScreenProps = {
 export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenProps) {
   const insets = useSafeAreaInsets();
   const { currentTrack, setTrack } = usePlayerStore();
+  const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
   const {
     isLiked,
     isSaved,
@@ -79,6 +82,12 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     }
 
     setTrack(track, playlist.id);
+    addRecommendationEvent({
+      context: createRecommendationEventContext(),
+      playlistId: playlist.id,
+      trackId: track.id,
+      type: 'track_play',
+    });
   };
 
   const playFirstTrack = () => {
@@ -96,7 +105,14 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       return;
     }
 
+    const nextLiked = !isLiked(selectedTrack.id);
     toggleLike(selectedTrack, playlist?.id);
+    addRecommendationEvent({
+      context: createRecommendationEventContext(),
+      playlistId: playlist?.id,
+      trackId: selectedTrack.id,
+      type: nextLiked ? 'track_like' : 'track_unlike',
+    });
   };
 
   const toggleSaved = () => {
@@ -104,7 +120,14 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       return;
     }
 
+    const nextSaved = !isSaved(selectedTrack.id);
     toggleSave(selectedTrack, playlist?.id);
+    addRecommendationEvent({
+      context: createRecommendationEventContext(),
+      playlistId: playlist?.id,
+      trackId: selectedTrack.id,
+      type: nextSaved ? 'track_save' : 'track_unsave',
+    });
   };
 
   const closeMenu = () => setSelectedTrackId(undefined);
