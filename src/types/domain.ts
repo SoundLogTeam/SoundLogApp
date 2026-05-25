@@ -80,6 +80,7 @@ export type MomentLog = {
   id: string;
   photoUri: string;
   createdAt: string;
+  sessionId?: string;
   location?: GeoPoint;
   placeCategory?: string;
   placeId?: string;

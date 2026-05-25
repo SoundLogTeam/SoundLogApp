@@ -32,12 +32,13 @@ export function MomentCaptureScreen() {
   const addLog = useMomentLogStore((state) => state.addLog);
   const { selectedMoodFilter } = useHomeFilterStore();
   const { currentTrack } = usePlayerStore();
-  const { currentLocation, currentPlace, selectedMode, setLocation } = useTravelSessionStore();
+  const { currentLocation, currentPlace, selectedMode, session, setLocation, startSession } =
+    useTravelSessionStore();
 
   const moodTags = useMemo(() => getMoodTagsFromFilter(selectedMoodFilter), [selectedMoodFilter]);
 
   useEffect(() => {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === 'web' || session.status !== 'active') {
       return;
     }
 
@@ -73,7 +74,7 @@ export function MomentCaptureScreen() {
     return () => {
       isMounted = false;
     };
-  }, [setLocation]);
+  }, [session.status, setLocation]);
 
   const handleCapture = async () => {
     if (isCapturing) {
@@ -124,6 +125,7 @@ export function MomentCaptureScreen() {
         placeId: currentPlace?.id,
         photoUri,
         placeName: currentPlace?.title ?? formatPlaceLabel(locationSnapshot),
+        sessionId: session.id,
         source: 'camera',
         syncStatus: 'local',
         track: currentTrack,
@@ -137,6 +139,37 @@ export function MomentCaptureScreen() {
       setIsSaving(false);
     }
   };
+
+  if (session.status !== 'active') {
+    return (
+      <Screen contentClassName="items-center justify-center px-8">
+        <View className="rounded-[24px] border border-white/10 bg-white/10 p-6">
+          <AppText className="text-center text-[24px] font-semibold text-white">
+            여행을 먼저 시작해요
+          </AppText>
+          <AppText className="mt-3 text-center text-sm leading-6 text-white/60">
+            순간 저장은 현재 여행에 연결돼요. 여행을 시작하면 사진, 음악, 장소가 하나의 기록으로 묶입니다.
+          </AppText>
+          <Pressable
+            accessibilityRole="button"
+            className="mt-7 rounded-full bg-white px-5 py-3"
+            onPress={startSession}
+          >
+            <AppText className="text-center font-semibold text-[#050916]">
+              여행 시작하고 촬영하기
+            </AppText>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            className="mt-3 rounded-full border border-white/15 px-5 py-3"
+            onPress={() => router.back()}
+          >
+            <AppText className="text-center font-semibold text-white/80">돌아가기</AppText>
+          </Pressable>
+        </View>
+      </Screen>
+    );
+  }
 
   if (Platform.OS === 'web') {
     return (

@@ -1,10 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import { Tabs, router } from 'expo-router';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/colors';
 import { getTabBarHeight } from '@/constants/layout';
+import { useTravelSessionStore } from '@/store/travelSessionStore';
 
 type TabIconName = keyof typeof Feather.glyphMap;
 
@@ -13,12 +14,32 @@ function TabIcon({ name, color }: { name: TabIconName; color: string }) {
 }
 
 function CameraTabButton() {
+  const { session, startSession } = useTravelSessionStore();
+  const openCamera = () => router.push('/camera');
+  const handlePress = () => {
+    if (session.status === 'active') {
+      openCamera();
+      return;
+    }
+
+    Alert.alert('여행을 시작할까요?', '순간 저장은 현재 여행에 연결돼요.', [
+      { style: 'cancel', text: '취소' },
+      {
+        onPress: () => {
+          startSession();
+          openCamera();
+        },
+        text: '시작하고 촬영',
+      },
+    ]);
+  };
+
   return (
     <Pressable
       accessibilityLabel="순간 저장 카메라 열기"
       accessibilityRole="button"
       className="-mt-6 h-[68px] w-[68px] items-center justify-center rounded-full border-4 border-white/40 bg-[#f4f4f4]"
-      onPress={() => router.push('/camera')}
+      onPress={handlePress}
     >
       <View className="h-[58px] w-[58px] rounded-full bg-white" />
     </Pressable>

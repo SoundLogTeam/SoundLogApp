@@ -15,6 +15,7 @@ import { HomeHeader } from '@/components/home/HomeHeader';
 import { LocationContextCard } from '@/components/home/LocationContextCard';
 import { MoodRecommendationSection } from '@/components/home/MoodRecommendationSection';
 import { MusicLogSection } from '@/components/home/MusicLogSection';
+import { TravelSessionCard } from '@/components/home/TravelSessionCard';
 import { Screen } from '@/components/Screen';
 import { getHomeContentBottomPadding } from '@/constants/layout';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
@@ -40,9 +41,14 @@ function HomeContent() {
     currentPlace,
     locationStatus,
     locationUpdatedAt,
+    selectedMode,
+    session,
+    endSession,
     setLocation,
     setLocationStatus,
+    setMode,
     setPlace,
+    startSession,
   } = useTravelSessionStore();
 
   const nearbyPlacesQuery = useNearbyPlacesQuery({
@@ -180,6 +186,17 @@ function HomeContent() {
           }
           status={locationStatus}
           updatedAt={locationUpdatedAt}
+        />
+
+        <TravelSessionCard
+          endedAt={session.endedAt}
+          onEndSession={endSession}
+          onOpenRecap={() => router.push('/recap')}
+          onSelectMode={setMode}
+          onStartSession={startSession}
+          selectedMode={selectedMode}
+          startedAt={session.startedAt}
+          status={session.status}
         />
 
         <FeaturedPlaylistSection
