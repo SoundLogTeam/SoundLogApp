@@ -58,7 +58,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
     isError,
     isLoading,
     refetch,
-  } = useRecapShareQuery(recapId, { enabled: !localRecap });
+  } = useRecapShareQuery(recapId, { enabled: Boolean(recapId) && !localRecap });
   const recap = localRecap ?? remoteRecap;
   const captureRef = useRef<RecapCaptureFrameHandle>(null);
   const { activeAction, message, save, share } = useRecapShareActions({
