@@ -3,9 +3,11 @@ import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { MusicPlatformSettingsCard } from '@/components/my/MusicPlatformSettingsCard';
 import { PermissionSettingsCard } from '@/components/my/PermissionSettingsCard';
 import { Screen } from '@/components/Screen';
 import { useNativePermissionSettings } from '@/hooks/useNativePermissionSettings';
+import { useMusicPlatformStore } from '@/store/musicPlatformStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 
@@ -34,6 +36,7 @@ export default function MyScreen() {
   const { profile, resetOnboarding } = useUserProfileStore();
   const { clearEvents, events, isHydrated } = useRecommendationEventStore();
   const permissionSettings = useNativePermissionSettings();
+  const { selectedPlatformId, setSelectedPlatform } = useMusicPlatformStore();
   const selectedSummary = [
     ...profile.preferredGenres.slice(0, 2),
     ...profile.preferredMoods.slice(0, 1),
@@ -41,11 +44,6 @@ export default function MyScreen() {
   ].join(' · ');
 
   const menuItems: MyMenuItem[] = [
-    {
-      description: 'Spotify, Melon 연결은 다음 단계에서 붙일 예정이에요.',
-      icon: 'music',
-      label: '음악 플랫폼 연동',
-    },
     {
       description: selectedSummary || '아직 저장된 취향 정보가 없어요.',
       icon: 'sliders',
@@ -96,6 +94,11 @@ export default function MyScreen() {
           onOpenSettings={permissionSettings.openSettings}
           onRefresh={permissionSettings.refreshPermissions}
           onRequest={permissionSettings.requestPermission}
+        />
+
+        <MusicPlatformSettingsCard
+          onSelectPlatform={setSelectedPlatform}
+          selectedPlatformId={selectedPlatformId}
         />
 
         <View className="mt-6 gap-3">

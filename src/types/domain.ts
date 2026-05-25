@@ -20,6 +20,10 @@ export type TravelMode = 'walk' | 'drive' | 'cafe' | 'ocean' | 'festival' | 'nig
 
 export type MoodTag = 'calm' | 'fresh' | 'emotional' | 'active' | 'local';
 
+export type MusicPlatformId = 'melon' | 'none' | 'spotify' | 'youtubeMusic';
+
+export type ExternalMusicPlatformId = Exclude<MusicPlatformId, 'none'>;
+
 export type Track = {
   id: string;
   title: string;
@@ -28,6 +32,7 @@ export type Track = {
   albumImageUrl?: string;
   previewUrl?: string;
   externalUrl?: string;
+  platformUrls?: Partial<Record<ExternalMusicPlatformId, string>>;
   isLiked?: boolean;
   isSaved?: boolean;
 };

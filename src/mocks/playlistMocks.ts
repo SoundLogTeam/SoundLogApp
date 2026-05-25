@@ -1,9 +1,34 @@
 import { PlaylistCuration, Track } from '@/types/domain';
 
 const tracks: Track[] = [
-  { artist: 'JENNIE', fallbackColor: '#192554', id: 'seoul-city', isLiked: true, title: 'Seoul City' },
-  { artist: '김건모', fallbackColor: '#48A5B4', id: 'moon-seoul', title: '서울의 달' },
-  { artist: '폴킴', fallbackColor: '#D70D31', id: 'hangang', isSaved: true, title: '한강에서' },
+  {
+    artist: 'JENNIE',
+    externalUrl: 'https://music.youtube.com/search?q=JENNIE%20Seoul%20City',
+    fallbackColor: '#192554',
+    id: 'seoul-city',
+    isLiked: true,
+    platformUrls: {
+      spotify: 'https://open.spotify.com/search/JENNIE%20Seoul%20City',
+      youtubeMusic: 'https://music.youtube.com/search?q=JENNIE%20Seoul%20City',
+    },
+    title: 'Seoul City',
+  },
+  {
+    artist: '김건모',
+    fallbackColor: '#48A5B4',
+    id: 'moon-seoul',
+    platformUrls: {
+      melon: 'https://www.melon.com/search/total/index.htm?q=%EA%B9%80%EA%B1%B4%EB%AA%A8%20%EC%84%9C%EC%9A%B8%EC%9D%98%20%EB%8B%AC',
+    },
+    title: '서울의 달',
+  },
+  {
+    artist: '폴킴',
+    fallbackColor: '#D70D31',
+    id: 'hangang',
+    isSaved: true,
+    title: '한강에서',
+  },
   { artist: '아이유', fallbackColor: '#F3B015', id: 'night-letter', title: '밤편지' },
   { artist: '기리보이', fallbackColor: '#526391', id: 'hongdae-kondae', title: '홍대와 건대사이' },
   { artist: '10cm', fallbackColor: '#DA6C51', id: 'seoul-night-track', title: '서울의 밤' },
