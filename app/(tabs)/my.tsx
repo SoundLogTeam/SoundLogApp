@@ -48,7 +48,11 @@ export default function MyScreen() {
       description: selectedSummary || '아직 저장된 취향 정보가 없어요.',
       icon: 'sliders',
       label: '취향 정보 수정',
-      onPress: () => router.push('/onboarding' as never),
+      onPress: () =>
+        router.push({
+          pathname: '/onboarding',
+          params: { mode: 'edit' },
+        } as never),
     },
     {
       description: profile.locationRecommendationEnabled

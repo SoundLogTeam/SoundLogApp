@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Switch, View } from 'react-native';
 
@@ -63,7 +63,10 @@ function getInitialDraft(profile: UserProfileInput): UserProfileInput {
 }
 
 export function OnboardingScreen() {
-  const { completeOnboarding, profile, skipOnboarding } = useUserProfileStore();
+  const params = useLocalSearchParams<{ mode?: string | string[] }>();
+  const mode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
+  const isEditMode = mode === 'edit';
+  const { completeOnboarding, profile, skipOnboarding, updateProfile } = useUserProfileStore();
   const { setSelectedMoodFilter, setSelectedTopFilter } = useHomeFilterStore();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [draft, setDraft] = useState<UserProfileInput>(() => getInitialDraft(profile));
@@ -85,10 +88,21 @@ export function OnboardingScreen() {
     setDraft((prev) => ({ ...prev, [key]: toggleValue(prev[key], value) }));
   };
 
-  const finish = (input: UserProfileInput) => {
-    completeOnboarding(input);
+  const applyHomeFilters = (input: UserProfileInput) => {
     setSelectedTopFilter(input.preferredMoods[0] ?? '전체');
     setSelectedMoodFilter(input.travelStyles[0] ?? '전체');
+  };
+
+  const finish = (input: UserProfileInput) => {
+    if (isEditMode) {
+      updateProfile(input);
+      applyHomeFilters(input);
+      router.replace('/my' as never);
+      return;
+    }
+
+    completeOnboarding(input);
+    applyHomeFilters(input);
     router.replace('/');
   };
 
@@ -102,6 +116,11 @@ export function OnboardingScreen() {
   };
 
   const handleSkip = () => {
+    if (isEditMode) {
+      router.replace('/my' as never);
+      return;
+    }
+
     skipOnboarding();
     setSelectedTopFilter('전체');
     setSelectedMoodFilter('전체');
@@ -172,17 +191,25 @@ export function OnboardingScreen() {
             <Feather color="#050916" name="music" size={20} />
           </View>
           <Pressable accessibilityRole="button" onPress={handleSkip}>
-            <AppText className="text-sm font-semibold text-white/55">나중에 하기</AppText>
+            <AppText className="text-sm font-semibold text-white/55">
+              {isEditMode ? '변경 없이 나가기' : '나중에 하기'}
+            </AppText>
           </Pressable>
         </View>
 
         <View>
-          <AppText className="text-sm font-semibold text-[#9EA8FF]">Soundlog setup</AppText>
+          <AppText className="text-sm font-semibold text-[#9EA8FF]">
+            {isEditMode ? 'Soundlog profile' : 'Soundlog setup'}
+          </AppText>
           <AppText className="mt-4 text-[32px] font-semibold leading-[40px] text-white">
-            여행 취향을 알수록{'\n'}선곡이 더 가까워져요
+            {isEditMode
+              ? '지금 여행 취향에 맞게\n추천을 다시 맞춰요'
+              : '여행 취향을 알수록\n선곡이 더 가까워져요'}
           </AppText>
           <AppText className="mt-4 text-sm leading-6 text-white/55">
-            입력한 값은 로컬에 저장되고, 홈 추천과 무드 필터의 기본값으로 사용돼요.
+            {isEditMode
+              ? '수정한 값은 홈 추천과 무드 필터의 기본값으로 다시 반영돼요.'
+              : '입력한 값은 로컬에 저장되고, 홈 추천과 무드 필터의 기본값으로 사용돼요.'}
           </AppText>
         </View>
 
@@ -218,7 +245,7 @@ export function OnboardingScreen() {
             onPress={handlePrimaryPress}
           >
             <AppText className="text-base font-semibold text-[#050916]">
-              {isLastStep ? '완료하고 시작하기' : '다음'}
+              {isLastStep ? (isEditMode ? '수정 완료' : '완료하고 시작하기') : '다음'}
             </AppText>
           </Pressable>
 
