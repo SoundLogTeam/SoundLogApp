@@ -13,8 +13,7 @@ type RecapPreviewCardProps = {
 export function RecapPreviewCard({ recap }: RecapPreviewCardProps) {
   return (
     <View
-      className="w-[88%] max-w-[320px] self-center overflow-hidden rounded-[20px] border border-white/15 bg-black/60"
-      style={{ aspectRatio: 3 / 4 }}
+      className="h-full w-full overflow-hidden rounded-[20px] border border-white/15 bg-black/60"
     >
       {recap.backgroundImageUrl ? (
         <Image

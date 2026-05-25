@@ -38,7 +38,7 @@ export function ShareActionButton({
         <Feather color="#fff" name={icon} size={24} />
       </View>
       <AppText className="text-center text-xs text-white" numberOfLines={1}>
-        {isActive ? 'Working' : label}
+        {isActive ? '처리 중' : label}
       </AppText>
     </Pressable>
   );
