@@ -16,7 +16,9 @@ export function momentLogToMusicLogItem(log: MomentLog): MusicLogItem {
     artistName: log.track?.artist ?? '음악 없음',
     createdAt: log.createdAt,
     id: log.id,
+    imageUrl: log.photoUri,
     placeName: log.placeName ?? '위치 없음',
+    recapShareId: log.id,
     trackTitle: log.track?.title ?? '저장된 순간',
   };
 }

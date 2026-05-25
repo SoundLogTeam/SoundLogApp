@@ -74,6 +74,8 @@ export type MusicLogItem = {
   trackTitle: string;
   artistName: string;
   createdAt: string;
+  imageUrl?: string;
+  recapShareId?: string;
 };
 
 export type MomentLog = {

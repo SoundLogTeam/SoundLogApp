@@ -8,6 +8,7 @@ type MusicLogSectionProps = {
   data?: MusicLogItem[];
   isError?: boolean;
   isLoading?: boolean;
+  onSelectLog?: (item: MusicLogItem) => void;
 };
 
 function MusicLogSkeleton() {
@@ -24,6 +25,7 @@ export function MusicLogSection({
   data = [],
   isError = false,
   isLoading = false,
+  onSelectLog,
 }: MusicLogSectionProps) {
   return (
     <View className="gap-4">
@@ -47,7 +49,12 @@ export function MusicLogSection({
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View className="flex-row pr-5">
             {data.map((item, index) => (
-              <MusicLogCard key={item.id} index={index} item={item} />
+              <MusicLogCard
+                key={item.id}
+                index={index}
+                item={item}
+                onPress={onSelectLog ? () => onSelectLog(item) : undefined}
+              />
             ))}
           </View>
         </ScrollView>

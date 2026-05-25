@@ -49,8 +49,8 @@ export const playlistDetail: PlaylistCuration = {
 export const playlistCurationById: Record<string, PlaylistCuration> = {
   'busan-ocean': {
     ...playlistDetail,
-    backgroundImageUrl: 'http://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
-    coverImageUrl: 'http://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+    backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
+    coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
     durationText: '40:00분',
     id: 'busan-ocean',
     placeName: '광안리 해변',

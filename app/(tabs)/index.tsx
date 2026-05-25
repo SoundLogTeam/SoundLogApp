@@ -24,7 +24,7 @@ import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
-import { MoodRecommendation } from '@/types/domain';
+import { MoodRecommendation, MusicLogItem } from '@/types/domain';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
@@ -95,6 +95,9 @@ function HomeContent() {
       value: item.id,
     });
   };
+  const handleSelectMusicLog = useCallback((item: MusicLogItem) => {
+    router.push(`/recap-share/${item.recapShareId ?? item.id}`);
+  }, []);
   const handleSelectTopFilter = useCallback(
     (filter: string) => {
       if (filter === selectedTopFilter) {
@@ -219,6 +222,7 @@ function HomeContent() {
           data={musicLogs}
           isError={recentMusicLogsQuery.isError}
           isLoading={recentMusicLogsQuery.isLoading && momentLogs.length === 0}
+          onSelectLog={handleSelectMusicLog}
         />
       </ScrollView>
       {currentTrack ? <MiniPlayer /> : null}
