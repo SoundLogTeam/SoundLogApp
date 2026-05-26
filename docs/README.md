@@ -17,6 +17,7 @@ Soundlog 문서는 목적별로 관리합니다. 공모전 기획, RN 프론트 
 
 - [비개발자용 Codex 개발 가이드](codex/NON_DEVELOPER_CODEX_GUIDE.md): Codex에게 개발을 맡기는 방식
 - [Codex 요청 프롬프트 모음](codex/CODEX_PROMPTS.md): 바로 복사해서 쓸 수 있는 요청문
+- [UI 피드백 루프 운영 문서](codex/UI_FEEDBACK_LOOP.md): 자연어 UI 수정 요청을 계획-리뷰-구현-리뷰 루프로 처리하는 방식
 
 ## Mock API
 

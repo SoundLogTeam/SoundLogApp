@@ -39,6 +39,7 @@ EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=playlist.detail npm run web
 - [React Native 프론트 고려사항](docs/frontend/RN_FRONTEND_PLANNING_POINTS.md)
 - [비개발자용 Codex 개발 가이드](docs/codex/NON_DEVELOPER_CODEX_GUIDE.md)
 - [Codex 요청 프롬프트 모음](docs/codex/CODEX_PROMPTS.md)
+- [UI 피드백 루프 운영 문서](docs/codex/UI_FEEDBACK_LOOP.md)
 - [Mock Server 안내](src/mock-server/README.md)
 
 ## Codex로 개발할 때

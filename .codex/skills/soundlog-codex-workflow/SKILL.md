@@ -16,6 +16,7 @@ Before changing code, load only the docs relevant to the task:
 - Recap share: `docs/frontend/RECAP_SHARE_PAGE_RN_BUILD_DOC.md`
 - Mock API: `src/mock-server/README.md`
 - Non-developer workflow: `docs/codex/NON_DEVELOPER_CODEX_GUIDE.md`
+- UI feedback loop: `docs/codex/UI_FEEDBACK_LOOP.md`
 
 ## Working Loop
 
@@ -27,6 +28,10 @@ Before changing code, load only the docs relevant to the task:
 6. Implement with scoped changes.
 7. Verify with `npm run typecheck`; for UI work also check web or simulator when practical.
 8. Review the diff, fix issues, then summarize. Commit only when the user asks.
+
+For natural-language UI feedback, use the narrower `soundlog-ui-feedback-loop` workflow. It forces the loop:
+
+`plan -> plan review -> revise plan -> implement -> code/UI review -> revise implementation`
 
 ## Project Patterns
 
