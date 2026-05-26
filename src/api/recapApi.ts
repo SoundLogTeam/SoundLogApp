@@ -1,7 +1,3 @@
-import { mockDelay } from '@/api/mockDelay';
-import { recapItems, recapShareById } from '@/mocks/recapMocks';
+import { mockServer } from '@/mock-server';
 
-export const recapApi = {
-  getRecapList: () => mockDelay(recapItems),
-  getRecapShare: (id?: string) => mockDelay(id ? recapShareById[id] : undefined),
-};
+export const recapApi = mockServer.recap;

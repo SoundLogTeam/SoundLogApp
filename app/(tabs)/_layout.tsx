@@ -86,7 +86,6 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="capture"
         options={{
-          href: null,
           tabBarButton: () => <CameraTabButton />,
           title: '기록',
         }}

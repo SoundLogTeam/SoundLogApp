@@ -7,16 +7,17 @@ import { MoodRecommendation } from '@/types/domain';
 
 const moodFilters = [
   '전체',
-  '드라이브',
-  '산책',
-  '카페 투어',
-  '바다 보기',
-  '축제',
-  '야경 감상',
-  '시원한 바람',
-  '활기찬',
+  '잔잔한',
   '신나는',
+  '감성적인',
+  '청량한',
+  '활기찬',
+  '로컬한',
 ];
+
+export function isMoodRecommendationFilter(filter: string) {
+  return moodFilters.includes(filter);
+}
 
 type MoodRecommendationSectionProps = {
   data?: MoodRecommendation[];
@@ -31,7 +32,10 @@ function MoodRecommendationSkeleton() {
   return (
     <View className="flex-row">
       {[0, 1, 2].map((item) => (
-        <View key={item} className="mr-3 h-[136px] w-[136px] rounded-[12px] bg-white/10" />
+        <View
+          key={item}
+          className="mr-3 h-[136px] w-[136px] rounded-[12px] bg-white/10"
+        />
       ))}
     </View>
   );

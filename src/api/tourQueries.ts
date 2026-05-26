@@ -17,7 +17,8 @@ export function useNearbyPlacesQuery({
   return useQuery({
     enabled: enabled && Boolean(location),
     gcTime: 1000 * 60 * 30,
-    queryFn: () => tourApi.getNearbyPlaces({ location: location as GeoPoint, radiusMeters }),
+    queryFn: () =>
+      tourApi.getNearbyPlaces({ location: location as GeoPoint, radiusMeters }),
     queryKey: [
       'tour',
       'nearby-places',

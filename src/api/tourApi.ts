@@ -1,5 +1,5 @@
 import { mapTourLocationItems } from '@/mappers/tourMappers';
-import { getMockNearbyPlaces } from '@/mocks/tourMocks';
+import { mockServer } from '@/mock-server';
 import { GeoPoint, PlaceContext } from '@/types/domain';
 
 type NearbyPlacesParams = {
@@ -37,7 +37,10 @@ function getEncodedServiceKey(serviceKey: string) {
   return serviceKey.includes('%') ? serviceKey : encodeURIComponent(serviceKey);
 }
 
-function buildLocationBasedListUrl({ location, radiusMeters = DEFAULT_RADIUS_METERS }: NearbyPlacesParams) {
+function buildLocationBasedListUrl({
+  location,
+  radiusMeters = DEFAULT_RADIUS_METERS,
+}: NearbyPlacesParams) {
   const serviceKey = getTourApiServiceKey();
 
   if (!serviceKey) {
@@ -79,11 +82,10 @@ async function fetchWithTimeout(url: string) {
 
 export const tourApi = {
   async getNearbyPlaces(params: NearbyPlacesParams): Promise<PlaceContext[]> {
-    const fallbackPlaces = getMockNearbyPlaces(params.location);
     const url = buildLocationBasedListUrl(params);
 
     if (!url) {
-      return fallbackPlaces;
+      return mockServer.tour.getNearbyPlaces(params);
     }
 
     try {
@@ -91,14 +93,16 @@ export const tourApi = {
       const resultCode = data.response?.header?.resultCode;
 
       if (resultCode && resultCode !== '0000') {
-        return fallbackPlaces;
+        return mockServer.tour.getNearbyPlaces(params);
       }
 
       const places = mapTourLocationItems(data.response?.body?.items?.item);
 
-      return places.length > 0 ? places : fallbackPlaces;
+      return places.length > 0
+        ? places
+        : mockServer.tour.getNearbyPlaces(params);
     } catch {
-      return fallbackPlaces;
+      return mockServer.tour.getNearbyPlaces(params);
     }
   },
 };

@@ -11,15 +11,21 @@ import {
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
-import { HomeHeader } from '@/components/home/HomeHeader';
+import { HomeHeader, isHomeTopFilter } from '@/components/home/HomeHeader';
 import { LocationContextCard } from '@/components/home/LocationContextCard';
-import { MoodRecommendationSection } from '@/components/home/MoodRecommendationSection';
+import {
+  MoodRecommendationSection,
+  isMoodRecommendationFilter,
+} from '@/components/home/MoodRecommendationSection';
 import { MusicLogSection } from '@/components/home/MusicLogSection';
 import { TravelSessionCard } from '@/components/home/TravelSessionCard';
 import { Screen } from '@/components/Screen';
 import { getHomeContentBottomPadding } from '@/constants/layout';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
-import { momentLogToMusicLogItem, useMomentLogStore } from '@/store/momentLogStore';
+import {
+  momentLogToMusicLogItem,
+  useMomentLogStore,
+} from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
@@ -30,10 +36,16 @@ import { createRecommendationEventContext } from '@/utils/recommendationEventCon
 
 function HomeContent() {
   const insets = useSafeAreaInsets();
-  const { selectedMoodFilter, selectedTopFilter, setSelectedMoodFilter, setSelectedTopFilter } =
-    useHomeFilterStore();
+  const {
+    selectedMoodFilter,
+    selectedTopFilter,
+    setSelectedMoodFilter,
+    setSelectedTopFilter,
+  } = useHomeFilterStore();
   const { currentTrack, setTrack } = usePlayerStore();
-  const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
+  const addRecommendationEvent = useRecommendationEventStore(
+    (state) => state.addEvent,
+  );
   const momentLogs = useMomentLogStore((state) => state.logs);
   const { profile, updateProfile } = useUserProfileStore();
   const {
@@ -73,6 +85,18 @@ function HomeContent() {
     ...momentLogs.slice(0, 6).map(momentLogToMusicLogItem),
     ...(recentMusicLogsQuery.data ?? []),
   ].slice(0, 10);
+
+  useEffect(() => {
+    if (!isMoodRecommendationFilter(selectedMoodFilter)) {
+      setSelectedMoodFilter('전체');
+    }
+  }, [selectedMoodFilter, setSelectedMoodFilter]);
+
+  useEffect(() => {
+    if (!isHomeTopFilter(selectedTopFilter)) {
+      setSelectedTopFilter('전체');
+    }
+  }, [selectedTopFilter, setSelectedTopFilter]);
 
   useEffect(() => {
     if (!nearbyPlacesQuery.data) {
@@ -164,7 +188,10 @@ function HomeContent() {
         className="flex-1"
         contentContainerStyle={{
           gap: 32,
-          paddingBottom: getHomeContentBottomPadding(insets.bottom, Boolean(currentTrack)),
+          paddingBottom: getHomeContentBottomPadding(
+            insets.bottom,
+            Boolean(currentTrack),
+          ),
           paddingHorizontal: 20,
           paddingTop: 24,
         }}
@@ -185,7 +212,9 @@ function HomeContent() {
           place={currentPlace}
           placeCount={nearbyPlacesQuery.data?.length ?? 0}
           placeInfoMessage={
-            currentPlace?.source === 'mock' ? 'TourAPI 키가 없거나 실패해 임시 장소 데이터를 사용 중이에요.' : undefined
+            currentPlace?.source === 'mock'
+              ? 'TourAPI 키가 없거나 실패해 임시 장소 데이터를 사용 중이에요.'
+              : undefined
           }
           status={locationStatus}
           updatedAt={locationUpdatedAt}

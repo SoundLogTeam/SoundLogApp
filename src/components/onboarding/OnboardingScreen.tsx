@@ -1,13 +1,16 @@
-import { Feather } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Switch, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { BrandLogo } from '@/components/BrandLogo';
 import { Chip } from '@/components/Chip';
 import { Screen } from '@/components/Screen';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
-import { UserProfileInput, useUserProfileStore } from '@/store/userProfileStore';
+import {
+  UserProfileInput,
+  useUserProfileStore,
+} from '@/store/userProfileStore';
 
 type MultiSelectKey = 'preferredGenres' | 'preferredMoods' | 'travelStyles';
 
@@ -43,13 +46,22 @@ const steps: OnboardingStep[] = [
 const options: Record<MultiSelectKey, string[]> = {
   preferredGenres: ['K-POP', '팝', '인디', '발라드', '힙합', 'R&B', 'OST'],
   preferredMoods: ['잔잔한', '신나는', '청량한', '감성적인', '활기찬'],
-  travelStyles: ['산책', '드라이브', '카페 투어', '바다 보기', '축제', '야경 감상'],
+  travelStyles: [
+    '산책',
+    '드라이브',
+    '카페 투어',
+    '바다 보기',
+    '축제',
+    '야경 감상',
+  ],
 };
 
 const companionOptions = ['혼자', '친구', '연인', '가족'];
 
 function toggleValue(values: string[], value: string) {
-  return values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
+  return values.includes(value)
+    ? values.filter((item) => item !== value)
+    : [...values, value];
 }
 
 function getInitialDraft(profile: UserProfileInput): UserProfileInput {
@@ -66,10 +78,13 @@ export function OnboardingScreen() {
   const params = useLocalSearchParams<{ mode?: string | string[] }>();
   const mode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
   const isEditMode = mode === 'edit';
-  const { completeOnboarding, profile, skipOnboarding, updateProfile } = useUserProfileStore();
+  const { completeOnboarding, profile, skipOnboarding, updateProfile } =
+    useUserProfileStore();
   const { setSelectedMoodFilter, setSelectedTopFilter } = useHomeFilterStore();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [draft, setDraft] = useState<UserProfileInput>(() => getInitialDraft(profile));
+  const [draft, setDraft] = useState<UserProfileInput>(() =>
+    getInitialDraft(profile),
+  );
 
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
@@ -136,7 +151,9 @@ export function OnboardingScreen() {
               <Chip
                 key={option}
                 label={option}
-                onPress={() => setDraft((prev) => ({ ...prev, companionType: option }))}
+                onPress={() =>
+                  setDraft((prev) => ({ ...prev, companionType: option }))
+                }
                 selected={draft.companionType === option}
               />
             ))}
@@ -145,17 +162,25 @@ export function OnboardingScreen() {
           <View className="rounded-[22px] border border-white/10 bg-white/10 p-5">
             <View className="flex-row items-center justify-between gap-4">
               <View className="min-w-0 flex-1">
-                <AppText className="text-base font-semibold text-white">위치 기반 추천</AppText>
+                <AppText className="text-base font-semibold text-white">
+                  위치 기반 추천
+                </AppText>
                 <AppText className="mt-2 text-sm leading-6 text-white/55">
                   현재 장소와 가까운 관광 맥락을 음악 추천에 반영해요.
                 </AppText>
               </View>
               <Switch
                 onValueChange={(value) =>
-                  setDraft((prev) => ({ ...prev, locationRecommendationEnabled: value }))
+                  setDraft((prev) => ({
+                    ...prev,
+                    locationRecommendationEnabled: value,
+                  }))
                 }
                 thumbColor="#ffffff"
-                trackColor={{ false: 'rgba(255,255,255,0.18)', true: '#7A2CFF' }}
+                trackColor={{
+                  false: 'rgba(255,255,255,0.18)',
+                  true: '#7A2CFF',
+                }}
                 value={draft.locationRecommendationEnabled}
               />
             </View>
@@ -183,13 +208,16 @@ export function OnboardingScreen() {
   return (
     <Screen>
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, gap: 30, padding: 24, paddingBottom: 40 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          gap: 30,
+          padding: 24,
+          paddingBottom: 40,
+        }}
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row items-center justify-between">
-          <View className="h-11 w-11 items-center justify-center rounded-full bg-white">
-            <Feather color="#050916" name="music" size={20} />
-          </View>
+          <BrandLogo className="border border-white/20" size={54} />
           <Pressable accessibilityRole="button" onPress={handleSkip}>
             <AppText className="text-sm font-semibold text-white/55">
               {isEditMode ? '변경 없이 나가기' : '나중에 하기'}
@@ -215,7 +243,9 @@ export function OnboardingScreen() {
 
         <View className="rounded-[28px] border border-white/10 bg-white/10 p-5">
           <View className="flex-row items-center justify-between">
-            <AppText className="text-sm font-semibold text-white/45">{progressLabel}</AppText>
+            <AppText className="text-sm font-semibold text-white/45">
+              {progressLabel}
+            </AppText>
             <AppText className="text-sm font-semibold text-white/45">
               선택 {selectedCount}개
             </AppText>
@@ -224,7 +254,9 @@ export function OnboardingScreen() {
           <View className="mt-5 h-2 overflow-hidden rounded-full bg-white/10">
             <View
               className="h-full rounded-full bg-[#7A2CFF]"
-              style={{ width: `${((currentStepIndex + 1) / steps.length) * 100}%` }}
+              style={{
+                width: `${((currentStepIndex + 1) / steps.length) * 100}%`,
+              }}
             />
           </View>
 
@@ -245,7 +277,11 @@ export function OnboardingScreen() {
             onPress={handlePrimaryPress}
           >
             <AppText className="text-base font-semibold text-[#050916]">
-              {isLastStep ? (isEditMode ? '수정 완료' : '완료하고 시작하기') : '다음'}
+              {isLastStep
+                ? isEditMode
+                  ? '수정 완료'
+                  : '완료하고 시작하기'
+                : '다음'}
             </AppText>
           </Pressable>
 
@@ -255,7 +291,9 @@ export function OnboardingScreen() {
               className="h-12 items-center justify-center rounded-full border border-white/10"
               onPress={() => setCurrentStepIndex((prev) => prev - 1)}
             >
-              <AppText className="text-sm font-semibold text-white/70">이전</AppText>
+              <AppText className="text-sm font-semibold text-white/70">
+                이전
+              </AppText>
             </Pressable>
           ) : null}
         </View>

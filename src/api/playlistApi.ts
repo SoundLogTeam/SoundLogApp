@@ -1,6 +1,3 @@
-import { mockDelay } from '@/api/mockDelay';
-import { playlistCurationById, playlistDetail } from '@/mocks/playlistMocks';
+import { mockServer } from '@/mock-server';
 
-export const playlistApi = {
-  getPlaylist: (id?: string) => mockDelay(playlistCurationById[id ?? ''] ?? playlistDetail),
-};
+export const playlistApi = mockServer.playlist;

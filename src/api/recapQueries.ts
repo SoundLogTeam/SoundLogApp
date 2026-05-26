@@ -11,7 +11,18 @@ type RecapShareQueryOptions = {
   enabled?: boolean;
 };
 
-export function useRecapShareQuery(id?: string, options: RecapShareQueryOptions = {}) {
+export function useRecapListQuery() {
+  return useQuery({
+    queryFn: recapApi.getRecapList,
+    queryKey: recapQueryKeys.list,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useRecapShareQuery(
+  id?: string,
+  options: RecapShareQueryOptions = {},
+) {
   return useQuery({
     enabled: options.enabled ?? true,
     queryFn: () => recapApi.getRecapShare(id),

@@ -44,32 +44,59 @@ function RecapBackground({
 function RecapLpTemplate({ recap }: { recap: RecapShare }) {
   return (
     <>
-      <RecapBackground imageUrl={recap.backgroundImageUrl} />
+      <RecapBackground
+        imageUrl={recap.backgroundImageUrl}
+        overlayClassName="bg-black/28"
+      />
       <LinearGradient
-        colors={['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.62)']}
+        colors={['rgba(0,0,0,0.02)', 'rgba(0,0,0,0.28)', 'rgba(0,0,0,0.78)']}
         end={{ x: 0.5, y: 1 }}
         start={{ x: 0.5, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
 
-      <AppText
-        className="absolute left-5 right-5 top-6 text-base font-semibold text-white"
-        numberOfLines={1}
-      >
-        {recap.placeName}
-      </AppText>
+      <View className="absolute left-5 right-5 top-5 flex-row items-center justify-between">
+        <View>
+          <AppText className="text-[10px] font-semibold tracking-[2px] text-white/58">
+            SOUNDLOG LP
+          </AppText>
+          <AppText
+            className="mt-1 text-[18px] font-semibold text-white"
+            numberOfLines={1}
+          >
+            {recap.placeName}
+          </AppText>
+        </View>
+        <View className="h-9 w-9 items-center justify-center rounded-full border border-white/22 bg-white/10">
+          <AppText className="text-[10px] font-semibold text-white/72">
+            REC
+          </AppText>
+        </View>
+      </View>
 
-      <View className="absolute inset-x-0 top-[88px] items-center">
+      <View className="absolute inset-x-0 top-[82px] items-center">
         <RecordDisc imageUrl={recap.discImageUrl ?? recap.backgroundImageUrl} />
       </View>
 
-      <View className="absolute bottom-6 left-5 right-5">
-        <AppText className="text-[24px] font-semibold leading-8 text-white" numberOfLines={1}>
+      <View className="absolute bottom-5 left-5 right-5 rounded-[18px] border border-white/16 bg-black/34 p-4">
+        <View className="mb-3 h-px w-14 bg-white/45" />
+        <AppText
+          className="text-[24px] font-semibold leading-8 text-white"
+          numberOfLines={2}
+        >
           {recap.trackTitle}
         </AppText>
-        <AppText className="mt-1 text-xs font-medium text-white/80" numberOfLines={1}>
-          {recap.artistName}
-        </AppText>
+        <View className="mt-3 flex-row items-center justify-between gap-3">
+          <AppText
+            className="min-w-0 flex-1 text-xs font-medium text-white/76"
+            numberOfLines={1}
+          >
+            {recap.artistName}
+          </AppText>
+          <AppText className="text-[10px] font-semibold tracking-[1.6px] text-white/46">
+            TRAVEL CUT
+          </AppText>
+        </View>
       </View>
     </>
   );
@@ -78,34 +105,56 @@ function RecapLpTemplate({ recap }: { recap: RecapShare }) {
 function RecapAlbumTemplate({ recap }: { recap: RecapShare }) {
   return (
     <>
-      <RecapBackground imageUrl={recap.backgroundImageUrl} overlayClassName="bg-black/30" />
+      <RecapBackground
+        imageUrl={recap.backgroundImageUrl}
+        overlayClassName="bg-black/22"
+      />
       <LinearGradient
-        colors={['rgba(0,0,0,0.05)', 'rgba(0,0,0,0.72)']}
+        colors={['rgba(0,0,0,0.02)', 'rgba(0,0,0,0.22)', 'rgba(0,0,0,0.82)']}
         end={{ x: 0.5, y: 1 }}
         start={{ x: 0.5, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
+      <View className="absolute inset-4 rounded-[18px] border border-white/22" />
 
-      <View className="absolute left-5 right-5 top-6 flex-row items-center justify-between">
-        <AppText className="text-[11px] font-semibold tracking-[2px] text-white/75">
+      <View className="absolute left-7 right-7 top-7 flex-row items-center justify-between">
+        <AppText className="text-[11px] font-semibold tracking-[2.5px] text-white/75">
           SOUNDLOG
         </AppText>
-        <View className="rounded-full border border-white/20 px-3 py-1">
-          <AppText className="text-[10px] font-medium text-white/70">ALBUM</AppText>
+        <View className="rounded-full border border-white/22 bg-white/10 px-3 py-1">
+          <AppText className="text-[10px] font-medium text-white/70">
+            ALBUM
+          </AppText>
         </View>
       </View>
 
-      <View className="absolute bottom-8 left-5 right-5">
-        <AppText className="text-[13px] font-semibold text-white/70" numberOfLines={1}>
+      <View className="absolute bottom-8 left-7 right-7">
+        <AppText
+          className="text-[12px] font-semibold tracking-[1.8px] text-white/62"
+          numberOfLines={1}
+        >
           {recap.placeName}
         </AppText>
-        <AppText className="mt-3 text-[30px] font-semibold leading-9 text-white" numberOfLines={2}>
+        <AppText
+          className="mt-3 text-[32px] font-semibold leading-9 text-white"
+          numberOfLines={2}
+        >
           {recap.trackTitle}
         </AppText>
-        <View className="mt-4 h-px w-16 bg-white/60" />
-        <AppText className="mt-4 text-sm font-medium text-white/80" numberOfLines={1}>
-          {recap.artistName}
-        </AppText>
+        <View className="mt-5 flex-row items-center gap-3">
+          <View className="h-px flex-1 bg-white/42" />
+          <AppText className="text-[11px] font-semibold text-white/58">
+            SIDE A
+          </AppText>
+        </View>
+        <View className="mt-4 rounded-[16px] bg-white/12 px-4 py-3">
+          <AppText
+            className="text-sm font-medium text-white/82"
+            numberOfLines={1}
+          >
+            {recap.artistName}
+          </AppText>
+        </View>
       </View>
     </>
   );
@@ -123,27 +172,33 @@ function createFallbackMoment(recap: RecapShare): RecapShareMoment {
 }
 
 function RecapFilmTemplate({ recap }: { recap: RecapShare }) {
-  const moments = (recap.moments?.length ? recap.moments : [createFallbackMoment(recap)]).slice(
-    0,
-    3,
-  );
+  const moments = (
+    recap.moments?.length ? recap.moments : [createFallbackMoment(recap)]
+  ).slice(0, 3);
 
   return (
     <>
       <LinearGradient
-        colors={['#090C14', '#16111E', '#261A27']}
+        colors={['#060812', '#15111E', '#2A1726']}
         end={{ x: 1, y: 1 }}
         start={{ x: 0, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
+      <View className="absolute inset-5 rounded-[18px] border border-white/10" />
       <View className="absolute inset-y-0 left-3 justify-around py-5">
         {Array.from({ length: 8 }).map((_, index) => (
-          <View key={`left-${index}`} className="h-3 w-2 rounded-sm bg-white/16" />
+          <View
+            key={`left-${index}`}
+            className="h-3 w-2 rounded-sm bg-white/20"
+          />
         ))}
       </View>
       <View className="absolute inset-y-0 right-3 justify-around py-5">
         {Array.from({ length: 8 }).map((_, index) => (
-          <View key={`right-${index}`} className="h-3 w-2 rounded-sm bg-white/16" />
+          <View
+            key={`right-${index}`}
+            className="h-3 w-2 rounded-sm bg-white/20"
+          />
         ))}
       </View>
 
@@ -151,7 +206,10 @@ function RecapFilmTemplate({ recap }: { recap: RecapShare }) {
         <AppText className="text-[11px] font-semibold tracking-[2px] text-white/55">
           SOUNDLOG FILM
         </AppText>
-        <AppText className="mt-1 text-[22px] font-semibold text-white" numberOfLines={1}>
+        <AppText
+          className="mt-2 text-[24px] font-semibold text-white"
+          numberOfLines={1}
+        >
           {recap.placeName}
         </AppText>
       </View>
@@ -177,15 +235,21 @@ function RecapFilmTemplate({ recap }: { recap: RecapShare }) {
                 style={StyleSheet.absoluteFill}
               />
             )}
-            <View className="absolute inset-0 bg-black/42" />
+            <View className="absolute inset-0 bg-black/34" />
             <View className="absolute bottom-3 left-3 right-3">
               <AppText className="text-[10px] font-semibold text-white/55">
                 {String(index + 1).padStart(2, '0')}
               </AppText>
-              <AppText className="mt-1 text-[13px] font-semibold text-white" numberOfLines={1}>
+              <AppText
+                className="mt-1 text-[13px] font-semibold text-white"
+                numberOfLines={1}
+              >
                 {moment.trackTitle}
               </AppText>
-              <AppText className="mt-1 text-[10px] text-white/68" numberOfLines={1}>
+              <AppText
+                className="mt-1 text-[10px] text-white/68"
+                numberOfLines={1}
+              >
                 {moment.placeName}
               </AppText>
             </View>
@@ -196,7 +260,10 @@ function RecapFilmTemplate({ recap }: { recap: RecapShare }) {
   );
 }
 
-export function RecapPreviewCard({ recap, template = 'lp' }: RecapPreviewCardProps) {
+export function RecapPreviewCard({
+  recap,
+  template = 'lp',
+}: RecapPreviewCardProps) {
   return (
     <View className="h-full w-full overflow-hidden rounded-[20px] border border-white/15 bg-black/60">
       {template === 'album' ? <RecapAlbumTemplate recap={recap} /> : null}

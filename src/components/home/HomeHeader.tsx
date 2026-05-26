@@ -1,21 +1,26 @@
 import { ScrollView, View } from 'react-native';
 
-import { AppText } from '@/components/AppText';
+import { BrandLogo } from '@/components/BrandLogo';
 import { Chip } from '@/components/Chip';
 
-const topFilters = ['전체', '잔잔한', '청량한', '감성적인', '활기찬', '신나는'];
+const topFilters = ['전체', '근처', '지역 트렌드', '내 취향', '저장 많은'];
+
+export function isHomeTopFilter(filter: string) {
+  return topFilters.includes(filter);
+}
 
 type HomeHeaderProps = {
   selectedTopFilter: string;
   onSelectTopFilter: (filter: string) => void;
 };
 
-export function HomeHeader({ onSelectTopFilter, selectedTopFilter }: HomeHeaderProps) {
+export function HomeHeader({
+  onSelectTopFilter,
+  selectedTopFilter,
+}: HomeHeaderProps) {
   return (
     <View className="flex-row items-center gap-2">
-      <View className="h-8 w-8 items-center justify-center rounded-full bg-white/90">
-        <AppText className="text-base">🎧</AppText>
-      </View>
+      <BrandLogo className="border border-white/20" size={34} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View className="flex-row gap-2 pr-5">
           {topFilters.map((filter) => (

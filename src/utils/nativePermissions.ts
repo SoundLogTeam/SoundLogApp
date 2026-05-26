@@ -1,6 +1,5 @@
 import { Camera } from 'expo-camera';
 import * as Location from 'expo-location';
-import * as MediaLibrary from 'expo-media-library';
 import { Linking, Platform } from 'react-native';
 
 export type NativePermissionKind = 'camera' | 'location' | 'mediaLibrary';
@@ -111,6 +110,8 @@ async function getPermissionResponse(kind: NativePermissionKind): Promise<Permis
     return Location.getForegroundPermissionsAsync();
   }
 
+  const MediaLibrary = await import('expo-media-library');
+
   return MediaLibrary.getPermissionsAsync(true);
 }
 
@@ -122,6 +123,8 @@ async function requestPermissionResponse(kind: NativePermissionKind): Promise<Pe
   if (kind === 'location') {
     return Location.requestForegroundPermissionsAsync();
   }
+
+  const MediaLibrary = await import('expo-media-library');
 
   return MediaLibrary.requestPermissionsAsync(true);
 }

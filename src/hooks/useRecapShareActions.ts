@@ -1,5 +1,3 @@
-import * as MediaLibrary from 'expo-media-library';
-import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { Platform } from 'react-native';
 
@@ -15,7 +13,8 @@ type UseRecapShareActionsParams = {
   recapId?: string;
 };
 
-type MediaPermissionResponse = MediaLibrary.PermissionResponse & {
+type MediaPermissionResponse = {
+  granted?: boolean;
   accessPrivileges?: 'all' | 'limited' | 'none';
 };
 
@@ -64,6 +63,7 @@ export function useRecapShareActions({ capture, recapId }: UseRecapShareActionsP
 
       try {
         const uri = await captureRecap();
+        const MediaLibrary = await import('expo-media-library');
         const permission = await MediaLibrary.requestPermissionsAsync(true);
 
         if (!canWriteToLibrary(permission)) {
@@ -98,6 +98,7 @@ export function useRecapShareActions({ capture, recapId }: UseRecapShareActionsP
       }
 
       try {
+        const Sharing = await import('expo-sharing');
         const isAvailable = await Sharing.isAvailableAsync();
 
         if (!isAvailable) {
