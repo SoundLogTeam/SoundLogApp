@@ -1,0 +1,56 @@
+# Soundlog App
+
+Soundlog는 관광지의 위치와 맥락을 음악 추천, 여행 기록, Recap 콘텐츠로 연결하는 React Native/Expo 앱입니다.
+
+## 빠른 시작
+
+```bash
+npm install
+npm run web
+```
+
+웹 실행 후 브라우저에서 `http://localhost:8081`을 열어 확인합니다. 네이티브 기능까지 확인할 때는 Expo Go 또는 development build를 사용합니다.
+
+```bash
+npm run ios
+npm run android
+npm run dev:client
+```
+
+## 자주 쓰는 명령어
+
+```bash
+npm run typecheck
+npm run check
+npm run web:clear
+```
+
+Mock API 상태를 확인할 때는 아래처럼 지연이나 실패를 강제로 줄 수 있습니다.
+
+```bash
+EXPO_PUBLIC_MOCK_API_DELAY_MS=1500 npm run web
+EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=playlist.detail npm run web
+```
+
+## 문서
+
+- [문서 인덱스](docs/README.md)
+- [서비스 기획서](docs/product/SOUNDLOG_APP_PLANNING.md)
+- [React Native 프론트 고려사항](docs/frontend/RN_FRONTEND_PLANNING_POINTS.md)
+- [비개발자용 Codex 개발 가이드](docs/codex/NON_DEVELOPER_CODEX_GUIDE.md)
+- [Codex 요청 프롬프트 모음](docs/codex/CODEX_PROMPTS.md)
+- [Mock Server 안내](src/mock-server/README.md)
+
+## Codex로 개발할 때
+
+비개발자는 기능을 바로 구현해달라고 하기보다, 먼저 “계획 수립 → 리뷰 → 구현 → 검증 → 커밋” 흐름으로 요청하면 안전합니다.
+
+예시:
+
+```text
+Soundlog 앱에서 리캡 상세 페이지를 개선하고 싶어.
+먼저 관련 문서를 읽고 구현 계획을 세운 뒤, 엣지케이스가 있으면 질문하고,
+계획 리뷰 후 구현, 타입체크, 웹 확인까지 진행해줘.
+```
+
+프로젝트 전용 Codex 스킬은 `.codex/skills/soundlog-codex-workflow/SKILL.md`에 정리되어 있습니다.
