@@ -2,6 +2,13 @@ import { FeaturedPlaylist, MoodRecommendation, MusicLogItem } from '@/types/doma
 
 export const featuredPlaylists: FeaturedPlaylist[] = [
   {
+    id: 'geoje-ocean',
+    regionName: '거제',
+    description: '거제 바다와 섬길을 따라 듣기 좋은 플레이리스트예요.',
+    durationText: '32:00분',
+    trackCount: 8,
+  },
+  {
     id: 'busan-ocean',
     regionName: '부산',
     description: '부산광역시에 어울리는 노래를 추천해드립니다.',
