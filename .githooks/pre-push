@@ -1,0 +1,26 @@
+#!/bin/sh
+
+protected_branch="main"
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  remote_branch=${remote_ref#refs/heads/}
+
+  if [ "$remote_branch" = "$protected_branch" ]; then
+    cat >&2 <<'EOF'
+
+Blocked: direct push to main is not allowed.
+
+Use the PR flow instead:
+  git switch main
+  git pull --ff-only
+  git switch -c codex/your-change-name
+  git push -u origin codex/your-change-name
+
+Then open a pull request into main.
+
+EOF
+    exit 1
+  fi
+done
+
+exit 0
