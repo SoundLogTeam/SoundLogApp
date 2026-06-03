@@ -1,8 +1,15 @@
 import { MockDelayOptions, MockEndpointId } from '@/mock-server/types';
+import { useDevToolsStore } from '@/store/devToolsStore';
 
 const DEFAULT_DELAY_MS = 300;
 
 function getConfiguredDelayMs() {
+  const runtimeDelayMs = useDevToolsStore.getState().mockDelayMs;
+
+  if (typeof runtimeDelayMs === 'number') {
+    return runtimeDelayMs;
+  }
+
   const rawValue = process.env.EXPO_PUBLIC_MOCK_API_DELAY_MS;
   const parsedValue = rawValue ? Number(rawValue) : DEFAULT_DELAY_MS;
 
@@ -22,6 +29,15 @@ function getFailedEndpointSet() {
 
 function shouldFailEndpoint(endpointId: MockEndpointId, shouldFail?: boolean) {
   if (shouldFail) {
+    return true;
+  }
+
+  const runtimeState = useDevToolsStore.getState();
+
+  if (
+    runtimeState.failAllEndpoints ||
+    runtimeState.failedEndpointIds.includes(endpointId)
+  ) {
     return true;
   }
 

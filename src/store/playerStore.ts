@@ -9,6 +9,7 @@ type PlayerState = {
   isPlaying: boolean;
   playlistId?: string;
   source: PlayerSource;
+  clearTrack: () => void;
   setTrack: (track: Track, playlistId?: string) => void;
   toggle: () => void;
 };
@@ -16,6 +17,13 @@ type PlayerState = {
 export const usePlayerStore = create<PlayerState>((set) => ({
   isPlaying: false,
   source: 'none',
+  clearTrack: () =>
+    set({
+      currentTrack: undefined,
+      isPlaying: false,
+      playlistId: undefined,
+      source: 'none',
+    }),
   setTrack: (track, playlistId) =>
     set({
       currentTrack: track,
