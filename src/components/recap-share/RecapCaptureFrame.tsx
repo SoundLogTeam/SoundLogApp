@@ -1,5 +1,5 @@
 import { forwardRef, PropsWithChildren, useImperativeHandle, useRef } from 'react';
-import ViewShot from 'react-native-view-shot';
+import ViewShot, { ViewShotRef } from 'react-native-view-shot';
 
 export type RecapCaptureFrameHandle = {
   capture: () => Promise<string | undefined>;
@@ -9,7 +9,7 @@ type RecapCaptureFrameProps = PropsWithChildren;
 
 export const RecapCaptureFrame = forwardRef<RecapCaptureFrameHandle, RecapCaptureFrameProps>(
   function RecapCaptureFrame({ children }, ref) {
-    const viewShotRef = useRef<ViewShot>(null);
+    const viewShotRef = useRef<ViewShotRef>(null);
 
     useImperativeHandle(ref, () => ({
       capture: () => viewShotRef.current?.capture?.() ?? Promise.resolve(undefined),
