@@ -15,8 +15,8 @@ import { createRecommendationEventContext } from '@/utils/recommendationEventCon
 import { getTrackKeyColor, hexToRgba } from '@/utils/trackVisuals';
 
 const webGlassPlayerStyle = {
-  backdropFilter: 'blur(24px) saturate(155%)',
-  WebkitBackdropFilter: 'blur(24px) saturate(155%)',
+  backdropFilter: 'blur(30px) saturate(170%)',
+  WebkitBackdropFilter: 'blur(30px) saturate(170%)',
 };
 
 export function MiniPlayer() {
@@ -155,9 +155,9 @@ export function MiniPlayer() {
   return (
     <>
       <View
-        className="absolute left-5 right-5 h-[96px] overflow-hidden rounded-[28px] border border-white/30"
+        className="absolute left-5 right-5 h-[96px] overflow-hidden rounded-[28px]"
         style={{
-          backgroundColor: 'rgba(255,255,255,0.16)',
+          backgroundColor: 'rgba(6,10,22,0.62)',
           bottom: getMiniPlayerBottom(insets.bottom),
           boxShadow: '0 18px 46px rgba(0,0,0,0.36)',
           shadowColor: '#000',
@@ -168,7 +168,7 @@ export function MiniPlayer() {
         }}
       >
         <LinearGradient
-          colors={['rgba(255,255,255,0.32)', 'rgba(255,255,255,0.14)', playerSoftGlow]}
+          colors={['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.06)', playerSoftGlow]}
           end={{ x: 1, y: 1 }}
           start={{ x: 0, y: 0 }}
           style={{
@@ -207,12 +207,14 @@ export function MiniPlayer() {
 
           <View className="ml-3 flex-row items-center gap-1">
             <Pressable
-              accessibilityLabel={liked ? '좋아요 취소' : '좋아요'}
+              accessibilityLabel="이전 곡"
               accessibilityRole="button"
               className="h-10 w-10 items-center justify-center"
-              onPress={handleToggleLike}
+              disabled={!canSkip}
+              onPress={handlePlayPrevious}
+              style={{ opacity: canSkip ? 1 : 0.35 }}
             >
-              <Feather color={liked ? '#F5D0FE' : '#fff'} name="heart" size={18} />
+              <Feather color="#fff" name="skip-back" size={18} />
             </Pressable>
             <Pressable
               accessibilityLabel={isPlaying ? '일시정지' : '재생'}
@@ -224,12 +226,14 @@ export function MiniPlayer() {
               <Feather color="#fff" name={isPlaying ? 'pause' : 'play'} size={20} />
             </Pressable>
             <Pressable
-              accessibilityLabel="현재 곡 옵션 열기"
+              accessibilityLabel="다음 곡"
               accessibilityRole="button"
               className="h-10 w-10 items-center justify-center"
-              onPress={() => setIsActionMenuVisible(true)}
+              disabled={!canSkip}
+              onPress={handlePlayNext}
+              style={{ opacity: canSkip ? 1 : 0.35 }}
             >
-              <Feather color="#fff" name="more-horizontal" size={18} />
+              <Feather color="#fff" name="skip-forward" size={18} />
             </Pressable>
           </View>
         </View>
