@@ -62,13 +62,11 @@ function HomeContent() {
     recommendationMode,
     selectedMode,
     session,
-    endSession,
+    resetSession,
     setLocation,
     setLocationStatus,
-    setMode,
     setPlace,
     setRecommendationMode,
-    startSession,
   } = useTravelSessionStore();
 
   const nearbyPlacesQuery = useNearbyPlacesQuery({
@@ -250,10 +248,9 @@ function HomeContent() {
 
         <TravelSessionCard
           endedAt={session.endedAt}
-          onEndSession={endSession}
+          onDismissEnded={resetSession}
           onOpenRecap={() => router.push('/recap')}
-          onSelectMode={setMode}
-          onStartSession={startSession}
+          onOpenTravel={() => router.push('/travel')}
           selectedMode={selectedMode}
           startedAt={session.startedAt}
           status={session.status}
