@@ -6,10 +6,12 @@ export function createRecommendationEventContext(
   overrides: RecommendationEventContext = {},
 ): RecommendationEventContext {
   const { selectedMoodFilter, selectedTopFilter } = useHomeFilterStore.getState();
-  const { currentPlace, selectedMode } = useTravelSessionStore.getState();
+  const { currentPlace, recommendationMode, selectedMode } =
+    useTravelSessionStore.getState();
 
   return {
     moodFilter: selectedMoodFilter,
+    recommendationMode,
     placeCategory: currentPlace?.category,
     placeId: currentPlace?.id,
     placeName: currentPlace?.title,

@@ -12,6 +12,7 @@ type LocationContextCardProps = {
   isLoading?: boolean;
   isPlaceLoading?: boolean;
   location?: GeoPoint;
+  onDismiss?: () => void;
   onEnable: () => void;
   onRefresh: () => void;
   place?: PlaceContext;
@@ -35,7 +36,7 @@ const statusCopy: Record<HomeLocationStatus, { description: string; icon: keyof 
   idle: {
     description: '현재 장소를 확인하면 가까운 관광 맥락에 맞춰 추천 순서를 조정해요.',
     icon: 'map-pin',
-    title: '위치를 확인해볼까요?',
+    title: '위치 기반 추천 준비',
   },
   loading: {
     description: '위치 권한과 현재 좌표를 확인하고 있어요.',
@@ -54,6 +55,7 @@ export function LocationContextCard({
   isLoading = false,
   isPlaceLoading = false,
   location,
+  onDismiss,
   onEnable,
   onRefresh,
   place,
@@ -112,16 +114,27 @@ export function LocationContextCard({
             </View>
           ) : null}
         </View>
+
+        {onDismiss ? (
+          <Pressable
+            accessibilityLabel="위치 확인 카드 삭제"
+            accessibilityRole="button"
+            className="h-9 w-9 items-center justify-center rounded-full bg-white/10"
+            onPress={onDismiss}
+          >
+            <Feather color="rgba(255,255,255,0.72)" name="x" size={18} />
+          </Pressable>
+        ) : null}
       </View>
 
       <Pressable
         accessibilityRole="button"
-        className="mt-5 h-11 items-center justify-center rounded-full bg-white"
+        className="mt-5 h-11 items-center justify-center rounded-full border border-[#9EA8FF]/70 bg-[#243A75]/70"
         disabled={isLoading}
         onPress={enabled ? onRefresh : onEnable}
         style={{ opacity: isLoading ? 0.55 : 1 }}
       >
-        <AppText className="text-sm font-semibold text-[#050916]">{buttonLabel}</AppText>
+        <AppText className="text-sm font-semibold text-white">{buttonLabel}</AppText>
       </Pressable>
     </View>
   );
