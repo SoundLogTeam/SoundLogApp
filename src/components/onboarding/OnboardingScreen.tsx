@@ -147,8 +147,8 @@ export function OnboardingScreen() {
   };
 
   const applyHomeFilters = (input: UserProfileInput) => {
-    setSelectedTopFilter(input.preferredMoods[0] ?? '전체');
-    setSelectedMoodFilter(input.travelStyles[0] ?? '전체');
+    setSelectedTopFilter('전체');
+    setSelectedMoodFilter(input.preferredMoods[0] ?? '전체');
   };
 
   const finish = (input: UserProfileInput) => {

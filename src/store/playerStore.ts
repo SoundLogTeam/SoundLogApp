@@ -12,6 +12,7 @@ type PlayerState = {
   source: PlayerSource;
   playNext: () => void;
   playPrevious: () => void;
+  clearTrack: () => void;
   setTrack: (track: Track, playlistId?: string, queue?: Track[]) => void;
   toggle: () => void;
 };
@@ -48,6 +49,14 @@ export const usePlayerStore = create<PlayerState>((set) => ({
         currentTrack: state.queue[previousIndex],
         isPlaying: true,
       };
+    }),
+  clearTrack: () =>
+    set({
+      currentTrack: undefined,
+      isPlaying: false,
+      playlistId: undefined,
+      queue: [],
+      source: 'none',
     }),
   setTrack: (track, playlistId, queue) =>
     set({
