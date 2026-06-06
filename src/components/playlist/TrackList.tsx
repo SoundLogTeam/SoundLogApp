@@ -1,4 +1,4 @@
-import { FlatList, View } from 'react-native';
+import { View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { TrackRow } from '@/components/playlist/TrackRow';
@@ -37,14 +37,10 @@ export function TrackList({
   }
 
   return (
-    <FlatList
-      className="flex-1"
-      contentContainerStyle={{ paddingBottom: bottomPadding }}
-      data={tracks}
-      keyExtractor={(item) => item.id}
-      nestedScrollEnabled
-      renderItem={({ item }) => (
+    <View style={{ paddingBottom: bottomPadding }}>
+      {tracks.map((item) => (
         <TrackRow
+          key={item.id}
           isActive={currentTrackId === item.id}
           isLiked={likedTrackIds.has(item.id)}
           isSaved={savedTrackIds.has(item.id)}
@@ -52,8 +48,7 @@ export function TrackList({
           onPress={onSelectTrack}
           track={item}
         />
-      )}
-      showsVerticalScrollIndicator={false}
-    />
+      ))}
+    </View>
   );
 }

@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { Tabs, router } from 'expo-router';
-import { Alert, Pressable, View } from 'react-native';
+import { Alert, Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/colors';
@@ -8,6 +8,11 @@ import { getTabBarHeight } from '@/constants/layout';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 
 type TabIconName = keyof typeof Feather.glyphMap;
+
+const webGlassTabBarStyle = {
+  backdropFilter: 'blur(22px) saturate(150%)',
+  WebkitBackdropFilter: 'blur(22px) saturate(150%)',
+};
 
 function TabIcon({ name, color }: { name: TabIconName; color: string }) {
   return <Feather color={color} name={name} size={22} />;
@@ -38,10 +43,12 @@ function CameraTabButton() {
     <Pressable
       accessibilityLabel="순간 저장 카메라 열기"
       accessibilityRole="button"
-      className="-mt-6 h-[68px] w-[68px] items-center justify-center rounded-full border-4 border-white/40 bg-[#f4f4f4]"
+      className="-mt-6 h-[70px] w-[70px] items-center justify-center rounded-full border border-white/15 bg-soundlog-bg"
       onPress={handlePress}
     >
-      <View className="h-[58px] w-[58px] rounded-full bg-white" />
+      <View className="h-[58px] w-[58px] items-center justify-center rounded-full border-[3px] border-soundlog-lime bg-black/25">
+        <View className="h-[44px] w-[44px] rounded-full bg-soundlog-lime" />
+      </View>
     </Pressable>
   );
 }
@@ -53,8 +60,8 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#ffffff',
-        tabBarInactiveTintColor: '#ffffff',
+        tabBarActiveTintColor: colors.accent.lime,
+        tabBarInactiveTintColor: colors.text.muted,
         tabBarShowLabel: false,
         tabBarStyle: {
           position: 'absolute',
@@ -62,10 +69,16 @@ export default function TabsLayout() {
           paddingBottom: Math.max(insets.bottom, 12),
           paddingTop: 10,
           borderTopWidth: 1,
-          borderTopColor: 'rgba(255,255,255,0.08)',
+          borderTopColor: 'rgba(255,255,255,0.24)',
           backgroundColor: colors.surface.tab,
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
+          boxShadow: '0 -18px 42px rgba(0,0,0,0.34)',
+          shadowColor: '#000',
+          shadowOffset: { height: -14, width: 0 },
+          shadowOpacity: 0.34,
+          shadowRadius: 24,
+          ...(Platform.OS === 'web' ? webGlassTabBarStyle : {}),
         },
       }}
     >

@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,13 +11,17 @@ import {
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
-import { HomeHeader, isHomeTopFilter } from '@/components/home/HomeHeader';
-import { LocationContextCard } from '@/components/home/LocationContextCard';
+import {
+  HomeHeader,
+  HomeTopFilterBar,
+  isHomeTopFilter,
+} from '@/components/home/HomeHeader';
 import {
   MoodRecommendationSection,
   isMoodRecommendationFilter,
 } from '@/components/home/MoodRecommendationSection';
 import { MusicLogSection } from '@/components/home/MusicLogSection';
+import { TravelModeSuggestionSheet } from '@/components/home/TravelModeSuggestionSheet';
 import { TravelSessionCard } from '@/components/home/TravelSessionCard';
 import { Screen } from '@/components/Screen';
 import { getHomeContentBottomPadding } from '@/constants/layout';
@@ -36,6 +40,8 @@ import { createRecommendationEventContext } from '@/utils/recommendationEventCon
 
 function HomeContent() {
   const insets = useSafeAreaInsets();
+  const [dismissedSuggestionPlaceId, setDismissedSuggestionPlaceId] =
+    useState<string>();
   const {
     selectedMoodFilter,
     selectedTopFilter,
@@ -53,6 +59,7 @@ function HomeContent() {
     currentPlace,
     locationStatus,
     locationUpdatedAt,
+    recommendationMode,
     selectedMode,
     session,
     endSession,
@@ -60,6 +67,7 @@ function HomeContent() {
     setLocationStatus,
     setMode,
     setPlace,
+    setRecommendationMode,
     startSession,
   } = useTravelSessionStore();
 
@@ -72,11 +80,14 @@ function HomeContent() {
     location: currentLocation,
     locationRecommendationEnabled: profile.locationRecommendationEnabled,
     place: currentPlace,
+    recommendationMode,
   });
   const moodRecommendationsQuery = useMoodRecommendationsQuery({
+    currentPlace,
     moodFilter: selectedMoodFilter,
     preferredGenres: profile.preferredGenres,
     preferredMoods: profile.preferredMoods,
+    recommendationMode,
     topFilter: selectedTopFilter,
     travelStyles: profile.travelStyles,
   });
@@ -152,6 +163,21 @@ function HomeContent() {
     },
     [addRecommendationEvent, selectedMoodFilter, setSelectedMoodFilter],
   );
+  const handleSelectRecommendationMode = useCallback(
+    (mode: typeof recommendationMode) => {
+      if (mode === recommendationMode) {
+        return;
+      }
+
+      setRecommendationMode(mode);
+      addRecommendationEvent({
+        context: createRecommendationEventContext({ recommendationMode: mode }),
+        type: 'recommendation_mode_change',
+        value: mode,
+      });
+    },
+    [addRecommendationEvent, recommendationMode, setRecommendationMode],
+  );
   const handleEnableLocationRecommendation = () => {
     updateProfile({
       companionType: profile.companionType,
@@ -181,6 +207,23 @@ function HomeContent() {
       setLocationStatus('unavailable');
     }
   }, [locationStatus, setLocation, setLocationStatus]);
+  const handleSetCurrentLocation = useCallback(() => {
+    if (!profile.locationRecommendationEnabled) {
+      handleEnableLocationRecommendation();
+    }
+
+    void handleRefreshLocation();
+  }, [
+    handleEnableLocationRecommendation,
+    handleRefreshLocation,
+    profile.locationRecommendationEnabled,
+  ]);
+
+  const shouldShowTravelModeSuggestion =
+    Boolean(currentPlace) &&
+    profile.locationRecommendationEnabled &&
+    recommendationMode === 'everyday' &&
+    dismissedSuggestionPlaceId !== currentPlace?.id;
 
   return (
     <Screen>
@@ -198,26 +241,11 @@ function HomeContent() {
         showsVerticalScrollIndicator={false}
       >
         <HomeHeader
-          onSelectTopFilter={handleSelectTopFilter}
-          selectedTopFilter={selectedTopFilter}
-        />
-
-        <LocationContextCard
-          enabled={profile.locationRecommendationEnabled}
-          isLoading={locationStatus === 'loading'}
-          isPlaceLoading={nearbyPlacesQuery.isLoading}
-          location={currentLocation}
-          onEnable={handleEnableLocationRecommendation}
-          onRefresh={handleRefreshLocation}
-          place={currentPlace}
-          placeCount={nearbyPlacesQuery.data?.length ?? 0}
-          placeInfoMessage={
-            currentPlace?.source === 'mock'
-              ? 'TourAPI 키가 없거나 실패해 임시 장소 데이터를 사용 중이에요.'
-              : undefined
-          }
-          status={locationStatus}
-          updatedAt={locationUpdatedAt}
+          currentPlace={currentPlace}
+          isLocationLoading={locationStatus === 'loading'}
+          onSelectRecommendationMode={handleSelectRecommendationMode}
+          onSetCurrentLocation={handleSetCurrentLocation}
+          recommendationMode={recommendationMode}
         />
 
         <TravelSessionCard
@@ -229,6 +257,11 @@ function HomeContent() {
           selectedMode={selectedMode}
           startedAt={session.startedAt}
           status={session.status}
+        />
+
+        <HomeTopFilterBar
+          onSelectTopFilter={handleSelectTopFilter}
+          selectedTopFilter={selectedTopFilter}
         />
 
         <FeaturedPlaylistSection
@@ -255,6 +288,16 @@ function HomeContent() {
         />
       </ScrollView>
       {currentTrack ? <MiniPlayer /> : null}
+      {shouldShowTravelModeSuggestion && currentPlace ? (
+        <TravelModeSuggestionSheet
+          onDismiss={() => setDismissedSuggestionPlaceId(currentPlace.id)}
+          onStartTravelMode={() => {
+            handleSelectRecommendationMode('travel');
+            setDismissedSuggestionPlaceId(currentPlace.id);
+          }}
+          place={currentPlace}
+        />
+      ) : null}
     </Screen>
   );
 }

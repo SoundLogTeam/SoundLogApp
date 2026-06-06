@@ -1,6 +1,7 @@
 import {
   FeaturedPlaylist,
   GeoPoint,
+  MusicRecommendationMode,
   MoodRecommendation,
   MusicLogItem,
   PlaceContext,
@@ -26,11 +27,14 @@ export type MockDelayOptions = {
 export type FeaturedPlaylistMockParams = {
   location?: GeoPoint;
   locationRecommendationEnabled: boolean;
+  recommendationMode: MusicRecommendationMode;
   place?: PlaceContext;
 };
 
 export type MoodRecommendationMockParams = {
+  currentPlace?: PlaceContext;
   moodFilter: string;
+  recommendationMode: MusicRecommendationMode;
   preferredGenres?: string[];
   preferredMoods?: string[];
   topFilter: string;

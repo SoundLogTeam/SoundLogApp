@@ -2,7 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { GeoPoint, PlaceContext, TravelMode } from '@/types/domain';
+import {
+  GeoPoint,
+  MusicRecommendationMode,
+  PlaceContext,
+  TravelMode,
+} from '@/types/domain';
 
 export type HomeLocationStatus = 'denied' | 'granted' | 'idle' | 'loading' | 'unavailable';
 
@@ -18,6 +23,7 @@ type TravelSessionState = {
   currentPlace?: PlaceContext;
   locationStatus: HomeLocationStatus;
   locationUpdatedAt?: string;
+  recommendationMode: MusicRecommendationMode;
   selectedMode?: TravelMode;
   session: TravelSession;
   clearLocation: () => void;
@@ -27,6 +33,7 @@ type TravelSessionState = {
   setPlace: (place?: PlaceContext) => void;
   setLocationStatus: (status: HomeLocationStatus) => void;
   setMode: (mode: TravelMode) => void;
+  setRecommendationMode: (mode: MusicRecommendationMode) => void;
   startSession: () => void;
 };
 
@@ -40,6 +47,7 @@ export const useTravelSessionStore = create<TravelSessionState>()(
     (set, get) => ({
       session: idleSession,
       locationStatus: 'idle',
+      recommendationMode: 'everyday',
       clearLocation: () =>
         set({
           currentLocation: undefined,
@@ -75,6 +83,7 @@ export const useTravelSessionStore = create<TravelSessionState>()(
       setLocationStatus: (locationStatus) => set({ locationStatus }),
       setMode: (selectedMode) => set({ selectedMode }),
       setPlace: (currentPlace) => set({ currentPlace }),
+      setRecommendationMode: (recommendationMode) => set({ recommendationMode }),
       startSession: () =>
         set({
           session: {
@@ -87,6 +96,7 @@ export const useTravelSessionStore = create<TravelSessionState>()(
     {
       name: 'soundlog-travel-session',
       partialize: (state) => ({
+        recommendationMode: state.recommendationMode,
         selectedMode: state.selectedMode,
         session: state.session,
       }),

@@ -1,6 +1,6 @@
 export const layout = {
   miniPlayerGap: 12,
-  miniPlayerHeight: 67,
+  miniPlayerHeight: 96,
   screenX: 20,
   tabBarBaseHeight: 76,
 } as const;

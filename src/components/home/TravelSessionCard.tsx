@@ -1,9 +1,9 @@
 import { Feather } from '@expo/vector-icons';
-import { Pressable, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Chip } from '@/components/Chip';
-import { TravelMode } from '@/types/domain';
+import type { TravelMode } from '@/types/domain';
 import { formatRecapRecordedAt } from '@/utils/dateFormat';
 
 type TravelSessionStatus = 'active' | 'ended' | 'idle';
@@ -81,56 +81,84 @@ export function TravelSessionCard({
 }: TravelSessionCardProps) {
   const copy = statusCopy[status];
   const onPrimaryPress = status === 'active' ? onEndSession : onStartSession;
+  const sessionTime = formatSessionTime(status, startedAt, endedAt);
+  const selectedModeLabel = travelModeOptions.find(
+    (mode) => mode.value === selectedMode,
+  )?.label;
 
   return (
-    <View className="rounded-[22px] border border-white/10 bg-white/10 p-5">
-      <View className="flex-row items-start gap-3">
-        <View className="h-11 w-11 items-center justify-center rounded-full bg-white/10">
-          <Feather color="#fff" name={copy.icon} size={19} />
+    <View className="rounded-[20px] border border-white/10 bg-white/10 px-4 py-3.5">
+      <View className="flex-row items-center gap-3">
+        <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
+          <Feather color="#fff" name={copy.icon} size={18} />
         </View>
 
         <View className="min-w-0 flex-1">
-          <AppText className="text-base font-semibold text-white">{copy.title}</AppText>
-          <AppText className="mt-2 text-sm leading-6 text-white/55">{copy.description}</AppText>
-          <AppText className="mt-3 text-xs text-[#9EA8FF]">
-            {formatSessionTime(status, startedAt, endedAt)}
+          <View className="flex-row items-center gap-2">
+            <View className="min-w-0 flex-1">
+              <AppText className="text-base font-semibold text-white" numberOfLines={1}>
+                {copy.title}
+              </AppText>
+            </View>
+            {selectedModeLabel ? (
+              <View className="rounded-full bg-white/10 px-2 py-1">
+                <AppText className="text-[10px] font-semibold text-white/70">
+                  {selectedModeLabel}
+                </AppText>
+              </View>
+            ) : null}
+          </View>
+          <AppText className="mt-1 text-xs text-[#9EA8FF]" numberOfLines={1}>
+            {sessionTime}
           </AppText>
         </View>
-      </View>
 
-      <View className="mt-5">
-        <AppText className="mb-3 text-xs font-semibold text-white/45">여행 모드</AppText>
-        <View className="flex-row flex-wrap gap-2">
-          {travelModeOptions.map((mode) => (
-            <Chip
-              key={mode.value}
-              label={mode.label}
-              onPress={() => onSelectMode(mode.value)}
-              selected={selectedMode === mode.value}
-            />
-          ))}
-        </View>
-      </View>
-
-      <View className="mt-5 flex-row gap-3">
         <Pressable
           accessibilityRole="button"
-          className="h-11 flex-1 items-center justify-center rounded-full bg-white"
+          className="h-10 items-center justify-center rounded-full border border-[#9EA8FF]/70 bg-[#243A75]/70 px-4"
           onPress={onPrimaryPress}
         >
-          <AppText className="text-sm font-semibold text-[#050916]">{copy.cta}</AppText>
+          <AppText className="text-xs font-semibold text-white">{copy.cta}</AppText>
         </Pressable>
+      </View>
 
-        {status === 'ended' ? (
+      {status !== 'active' ? (
+        <AppText className="mt-3 text-xs leading-5 text-white/50" numberOfLines={1}>
+          {copy.description}
+        </AppText>
+      ) : null}
+
+      <View className="mt-3 flex-row items-center gap-3">
+        <AppText className="text-xs font-semibold text-white/45">여행 모드</AppText>
+        <ScrollView
+          className="min-w-0 flex-1"
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          <View className="flex-row gap-2 pr-1">
+            {travelModeOptions.map((mode) => (
+              <Chip
+                key={mode.value}
+                label={mode.label}
+                onPress={() => onSelectMode(mode.value)}
+                selected={selectedMode === mode.value}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+
+      {status === 'ended' ? (
+        <View className="mt-3 flex-row">
           <Pressable
             accessibilityRole="button"
-            className="h-11 flex-1 items-center justify-center rounded-full border border-white/15"
+            className="h-10 flex-1 items-center justify-center rounded-full border border-white/15"
             onPress={onOpenRecap}
           >
-            <AppText className="text-sm font-semibold text-white/80">Recap 보기</AppText>
+            <AppText className="text-xs font-semibold text-white/80">Recap 보기</AppText>
           </Pressable>
-        ) : null}
-      </View>
+        </View>
+      ) : null}
     </View>
   );
 }

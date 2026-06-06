@@ -7,13 +7,20 @@ module.exports = {
     extend: {
       colors: {
         soundlog: {
-          bg: '#050916',
+          bg: '#070B1F',
+          bg2: '#0B102A',
           card: '#080D18',
-          chip: '#0E1E3A',
+          elevated: '#090E1B',
+          chip: '#171B2A',
+          selected: '#B7E628',
           border: '#364283',
+          focus: '#B7E628',
+          blue: '#6EA8FF',
           purple: '#7A2CFF',
           gold: '#B1913A',
+          lime: '#B7E628',
           player: '#45343D',
+          inverse: '#090515',
         },
       },
     },

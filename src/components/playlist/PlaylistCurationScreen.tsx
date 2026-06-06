@@ -81,7 +81,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       return;
     }
 
-    setTrack(track, playlist.id);
+    setTrack(track, playlist.id, playlist.tracks);
     addRecommendationEvent({
       context: createRecommendationEventContext(),
       playlistId: playlist.id,
@@ -136,7 +136,17 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     <View className="flex-1 bg-soundlog-bg">
       <PlaylistBackground imageUrl={playlist?.backgroundImageUrl} />
 
-      <PlaylistBottomSheet>
+      <PlaylistBottomSheet
+        stickyHeader={
+          playlist ? (
+            <PlaylistHeroInfo
+              disabled={playlist.tracks.length === 0}
+              onPlay={playFirstTrack}
+              playlist={playlist}
+            />
+          ) : undefined
+        }
+      >
         {isLoading ? (
           <PlaylistLoadingState />
         ) : isError ? (
@@ -144,22 +154,15 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
         ) : !playlist ? (
           <PlaylistEmptyState />
         ) : (
-          <>
-            <PlaylistHeroInfo
-              disabled={playlist.tracks.length === 0}
-              onPlay={playFirstTrack}
-              playlist={playlist}
-            />
-            <TrackList
-              bottomPadding={listBottomPadding}
-              currentTrackId={currentTrack?.id}
-              likedTrackIds={likedTrackIds}
-              onOpenMenu={(track) => setSelectedTrackId(track.id)}
-              onSelectTrack={playTrack}
-              savedTrackIds={savedTrackIds}
-              tracks={playlist.tracks}
-            />
-          </>
+          <TrackList
+            bottomPadding={listBottomPadding}
+            currentTrackId={currentTrack?.id}
+            likedTrackIds={likedTrackIds}
+            onOpenMenu={(track) => setSelectedTrackId(track.id)}
+            onSelectTrack={playTrack}
+            savedTrackIds={savedTrackIds}
+            tracks={playlist.tracks}
+          />
         )}
       </PlaylistBottomSheet>
 
