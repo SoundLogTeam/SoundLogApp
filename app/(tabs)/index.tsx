@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useCallback, useEffect } from 'react';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -273,21 +273,25 @@ function HomeContent() {
           onRetry={() => void featuredPlaylistsQuery.refetch()}
         />
 
-        <MoodRecommendationSection
-          data={moodRecommendationsQuery.data}
-          isError={moodRecommendationsQuery.isError}
-          isLoading={moodRecommendationsQuery.isLoading}
-          onSelectMoodFilter={handleSelectMoodFilter}
-          onSelectRecommendation={handleSelectRecommendation}
-          selectedMoodFilter={selectedMoodFilter}
-        />
+        <View className="mt-2">
+          <MoodRecommendationSection
+            data={moodRecommendationsQuery.data}
+            isError={moodRecommendationsQuery.isError}
+            isLoading={moodRecommendationsQuery.isLoading}
+            onSelectMoodFilter={handleSelectMoodFilter}
+            onSelectRecommendation={handleSelectRecommendation}
+            selectedMoodFilter={selectedMoodFilter}
+          />
+        </View>
 
-        <MusicLogSection
-          data={musicLogs}
-          isError={recentMusicLogsQuery.isError}
-          isLoading={recentMusicLogsQuery.isLoading && momentLogs.length === 0}
-          onSelectLog={handleSelectMusicLog}
-        />
+        <View className="mt-2">
+          <MusicLogSection
+            data={musicLogs}
+            isError={recentMusicLogsQuery.isError}
+            isLoading={recentMusicLogsQuery.isLoading && momentLogs.length === 0}
+            onSelectLog={handleSelectMusicLog}
+          />
+        </View>
       </ScrollView>
       {currentTrack ? <MiniPlayer /> : null}
     </Screen>
