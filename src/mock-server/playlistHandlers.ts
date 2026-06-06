@@ -5,6 +5,6 @@ export const playlistMockHandlers = {
   getPlaylist: (id?: string) =>
     mockServerDelay(
       'playlist.detail',
-      id ? playlistCurationById[id] : playlistDetail,
+      id ? playlistCurationById[id] ?? playlistDetail : playlistDetail,
     ),
 };

@@ -3,10 +3,11 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 
 type PlaylistBackgroundProps = {
+  accentColor?: string;
   imageUrl?: string;
 };
 
-export function PlaylistBackground({ imageUrl }: PlaylistBackgroundProps) {
+export function PlaylistBackground({ accentColor, imageUrl }: PlaylistBackgroundProps) {
   const { height, width } = useWindowDimensions();
   const repeatedImageStyle = { height: height / 2, width };
 
@@ -42,6 +43,14 @@ export function PlaylistBackground({ imageUrl }: PlaylistBackgroundProps) {
         start={{ x: 0.5, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
+      {accentColor ? (
+        <LinearGradient
+          colors={[accentColor, `${accentColor}00`]}
+          end={{ x: 0.5, y: 1 }}
+          start={{ x: 0.5, y: 0 }}
+          style={{ height: 150, left: 0, pointerEvents: 'none', position: 'absolute', right: 0, top: 0 }}
+        />
+      ) : null}
     </View>
   );
 }

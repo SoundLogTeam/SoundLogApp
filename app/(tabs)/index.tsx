@@ -118,6 +118,17 @@ function HomeContent() {
   }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
 
   const handleSelectRecommendation = (item: MoodRecommendation) => {
+    if (item.playlistId) {
+      router.push(`/playlist/${item.playlistId}`);
+      addRecommendationEvent({
+        context: createRecommendationEventContext(),
+        playlistId: item.playlistId,
+        type: 'playlist_open',
+        value: item.playlistId,
+      });
+      return;
+    }
+
     setTrack(item.track);
     addRecommendationEvent({
       context: createRecommendationEventContext(),

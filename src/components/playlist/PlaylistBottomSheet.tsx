@@ -35,9 +35,8 @@ export function PlaylistBottomSheet({ children, stickyHeader }: PlaylistBottomSh
           <LinearGradient
             colors={['rgba(255,255,255,0.11)', 'rgba(255,255,255,0.01)']}
             end={{ x: 1, y: 1 }}
-            pointerEvents="none"
             start={{ x: 0, y: 0 }}
-            style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }}
+            style={{ bottom: 0, left: 0, pointerEvents: 'none', position: 'absolute', right: 0, top: 0 }}
           />
           <View className="mx-auto mb-5 h-[5px] w-9 rounded-full bg-white/80" />
           {stickyHeader}
@@ -51,9 +50,8 @@ export function PlaylistBottomSheet({ children, stickyHeader }: PlaylistBottomSh
           <LinearGradient
             colors={['rgba(255,255,255,0.11)', 'rgba(255,255,255,0.02)']}
             end={{ x: 1, y: 1 }}
-            pointerEvents="none"
             start={{ x: 0, y: 0 }}
-            style={{ bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 }}
+            style={{ bottom: 0, left: 0, pointerEvents: 'none', position: 'absolute', right: 0, top: 0 }}
           />
           <View className="mx-auto mb-5 h-[5px] w-9 rounded-full bg-white/80" />
           {children}
