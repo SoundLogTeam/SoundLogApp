@@ -1,9 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Track } from '@/types/domain';
+import { getTrackKeyColor, hexToRgba } from '@/utils/trackVisuals';
 
 type TrackRowProps = {
   isActive: boolean;
@@ -15,45 +17,84 @@ type TrackRowProps = {
 };
 
 export function TrackRow({ isActive, isLiked, isSaved, onMore, onPress, track }: TrackRowProps) {
+  const keyColor = getTrackKeyColor(track);
+  const activeBackground = hexToRgba(keyColor, 0.78);
+  const activeGlow = hexToRgba(keyColor, 0.24);
+
   return (
-    <Pressable
-      className="h-[66px] flex-row items-center px-5"
-      onPress={() => onPress(track)}
-      style={{ backgroundColor: isActive ? 'rgba(255,255,255,0.08)' : 'transparent' }}
+    <View
+      className="mx-5 mb-2 min-h-[72px] overflow-hidden rounded-[18px] border"
+      style={{
+        backgroundColor: isActive ? activeBackground : 'rgba(255,255,255,0.04)',
+        borderColor: isActive ? hexToRgba(keyColor, 0.95) : 'rgba(255,255,255,0.08)',
+      }}
     >
-      <View
-        className="h-[42px] w-[42px] overflow-hidden rounded-[10px] border"
+      <LinearGradient
+        colors={[
+          isActive ? activeGlow : 'rgba(255,255,255,0.04)',
+          isActive ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0)',
+        ]}
+        end={{ x: 1, y: 1 }}
+        start={{ x: 0, y: 0 }}
         style={{
-          backgroundColor: track.fallbackColor ?? '#fff',
-          borderColor: isActive ? '#8B5CF6' : 'rgba(255,255,255,0.08)',
+          bottom: 0,
+          left: 0,
+          pointerEvents: 'none',
+          position: 'absolute',
+          right: 0,
+          top: 0,
         }}
-      >
-        {track.albumImageUrl ? (
-          <Image contentFit="cover" source={{ uri: track.albumImageUrl }} style={{ flex: 1 }} />
-        ) : null}
-      </View>
+      />
 
-      <View className="ml-3 flex-1">
-        <View className="flex-row items-center gap-2">
-          <AppText className="max-w-[82%] text-base font-medium text-white" numberOfLines={1}>
-            {track.title}
-          </AppText>
-          {isLiked ? <Feather color="#E879F9" name="heart" size={12} /> : null}
-          {isSaved ? <Feather color="#C4B5FD" name="bookmark" size={12} /> : null}
-        </View>
-        <AppText className="mt-1 text-xs text-white/50" numberOfLines={1}>
-          {track.artist}
-        </AppText>
-      </View>
+      <View className="min-h-[72px] flex-row items-center px-3">
+        <Pressable
+          accessibilityLabel={`${track.title} 재생`}
+          accessibilityRole="button"
+          className="min-w-0 flex-1 flex-row items-center"
+          onPress={() => onPress(track)}
+        >
+          <View
+            className="h-[52px] w-[52px] overflow-hidden rounded-[14px] border"
+            style={{
+              backgroundColor: keyColor,
+              borderColor: isActive ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.08)',
+            }}
+          >
+            {track.albumImageUrl ? (
+              <Image contentFit="cover" source={{ uri: track.albumImageUrl }} style={{ flex: 1 }} />
+            ) : (
+              <LinearGradient
+                colors={[hexToRgba(keyColor, 1), hexToRgba('#050916', 0.72)]}
+                end={{ x: 1, y: 1 }}
+                start={{ x: 0, y: 0 }}
+                style={{ flex: 1 }}
+              />
+            )}
+          </View>
 
-      <Pressable
-        accessibilityLabel={`${track.title} 더보기`}
-        accessibilityRole="button"
-        className="h-11 w-11 items-center justify-center rounded-full"
-        onPress={() => onMore(track)}
-      >
-        <Feather color="#fff" name="more-horizontal" size={22} />
-      </Pressable>
-    </Pressable>
+          <View className="ml-3 min-w-0 flex-1">
+            <View className="flex-row items-center gap-2">
+              <AppText className="max-w-[82%] text-base font-semibold text-white" numberOfLines={1}>
+                {track.title}
+              </AppText>
+              {isLiked ? <Feather color="#F5D0FE" name="heart" size={12} /> : null}
+              {isSaved ? <Feather color="#DDD6FE" name="bookmark" size={12} /> : null}
+            </View>
+            <AppText className="mt-1 text-xs font-medium text-white/65" numberOfLines={1}>
+              {track.artist}
+            </AppText>
+          </View>
+        </Pressable>
+
+        <Pressable
+          accessibilityLabel={`${track.title} 더보기`}
+          accessibilityRole="button"
+          className="h-11 w-11 items-center justify-center rounded-full"
+          onPress={() => onMore(track)}
+        >
+          <Feather color="#fff" name="more-horizontal" size={22} />
+        </Pressable>
+      </View>
+    </View>
   );
 }

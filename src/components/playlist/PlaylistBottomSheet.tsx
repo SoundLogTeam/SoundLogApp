@@ -17,7 +17,6 @@ export function PlaylistBottomSheet({ children, stickyHeader }: PlaylistBottomSh
       contentContainerStyle={{ minHeight: height + COLLAPSED_TOP, paddingTop: COLLAPSED_TOP }}
       scrollEventThrottle={16}
       showsVerticalScrollIndicator={false}
-      stickyHeaderIndices={stickyHeader ? [0] : undefined}
     >
       {stickyHeader ? (
         [

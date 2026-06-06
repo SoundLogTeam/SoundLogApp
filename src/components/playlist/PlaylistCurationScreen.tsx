@@ -81,7 +81,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       return;
     }
 
-    setTrack(track, playlist.id);
+    setTrack(track, playlist.id, playlist.tracks);
     addRecommendationEvent({
       context: createRecommendationEventContext(),
       playlistId: playlist.id,

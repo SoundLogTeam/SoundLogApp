@@ -38,10 +38,10 @@ function CameraTabButton() {
     <Pressable
       accessibilityLabel="순간 저장 카메라 열기"
       accessibilityRole="button"
-      className="-mt-6 h-[68px] w-[68px] items-center justify-center rounded-full border-4 border-white/40 bg-[#f4f4f4]"
+      className="-mt-6 h-[68px] w-[68px] items-center justify-center rounded-full border-4 border-soundlog-lime/30 bg-soundlog-lime"
       onPress={handlePress}
     >
-      <View className="h-[58px] w-[58px] rounded-full bg-white" />
+      <View className="h-[58px] w-[58px] rounded-full border border-white/45 bg-soundlog-lime" />
     </Pressable>
   );
 }
@@ -53,8 +53,8 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#ffffff',
-        tabBarInactiveTintColor: '#ffffff',
+        tabBarActiveTintColor: colors.accent.lime,
+        tabBarInactiveTintColor: colors.text.muted,
         tabBarShowLabel: false,
         tabBarStyle: {
           position: 'absolute',
@@ -62,7 +62,7 @@ export default function TabsLayout() {
           paddingBottom: Math.max(insets.bottom, 12),
           paddingTop: 10,
           borderTopWidth: 1,
-          borderTopColor: 'rgba(255,255,255,0.08)',
+          borderTopColor: colors.border.subtle,
           backgroundColor: colors.surface.tab,
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
