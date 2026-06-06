@@ -1,11 +1,10 @@
-import { Feather } from '@expo/vector-icons';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Chip } from '@/components/Chip';
 import { colors } from '@/constants/colors';
-import type { MusicRecommendationMode, PlaceContext } from '@/types/domain';
+import type { MusicRecommendationMode } from '@/types/domain';
 
 const topFilters = ['전체', '근처', '지역 트렌드', '내 취향', '저장 많은'];
 
@@ -14,11 +13,8 @@ export function isHomeTopFilter(filter: string) {
 }
 
 type HomeHeaderProps = {
-  currentPlace?: PlaceContext;
-  isLocationLoading?: boolean;
   recommendationMode: MusicRecommendationMode;
   onSelectRecommendationMode: (mode: MusicRecommendationMode) => void;
-  onSetCurrentLocation: () => void;
 };
 
 type HomeTopFilterBarProps = {
@@ -33,12 +29,12 @@ const musicModeOptions: Array<{
 }> = [
   {
     accent: colors.accent.blue,
-    label: '평소 취향 중심 추천',
+    label: '일상 모드',
     value: 'everyday',
   },
   {
     accent: colors.accent.lime,
-    label: '여행지에 맞는 음악',
+    label: '여행 모드',
     value: 'travel',
   },
 ];
@@ -55,20 +51,12 @@ export function HomeNavigationBar() {
 }
 
 export function HomeHeader({
-  currentPlace,
-  isLocationLoading = false,
   onSelectRecommendationMode,
-  onSetCurrentLocation,
   recommendationMode,
 }: HomeHeaderProps) {
-  const activeMode =
-    musicModeOptions.find((mode) => mode.value === recommendationMode) ??
-    musicModeOptions[0];
-  const locationLabel = currentPlace?.title ?? '위치를 확인해 볼까요?';
-
   return (
-    <View className="rounded-[22px] border border-white/15 bg-soundlog-elevated/80 p-3">
-      <View className="rounded-full border border-white/10 bg-black/25 p-1">
+    <View className="rounded-[20px] bg-soundlog-elevated/80 p-2">
+      <View className="rounded-full bg-black/25 p-1">
         <View className="flex-row gap-1">
           {musicModeOptions.map((mode) => {
             const selected = recommendationMode === mode.value;
@@ -86,7 +74,7 @@ export function HomeHeader({
                 }}
               >
                 <AppText
-                  className="text-[13px] font-semibold"
+                  className="text-[15px] font-semibold"
                   style={{
                     color: selected ? colors.text.inverse : 'rgba(255,255,255,0.72)',
                   }}
@@ -97,27 +85,6 @@ export function HomeHeader({
             );
           })}
         </View>
-      </View>
-
-      <View className="mt-3 flex-row items-center gap-2.5 rounded-[16px] border border-white/10 bg-black/20 px-3 py-2.5">
-        <Feather color={activeMode.accent} name="map-pin" size={16} />
-        <View className="min-w-0 flex-1">
-          <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
-            {locationLabel}
-          </AppText>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          className="h-8 flex-row items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5"
-          disabled={isLocationLoading}
-          onPress={onSetCurrentLocation}
-          style={{ opacity: isLocationLoading ? 0.55 : 1 }}
-        >
-          <Feather color="rgba(255,255,255,0.78)" name="crosshair" size={14} />
-          <AppText className="text-xs font-semibold text-white">
-            {isLocationLoading ? '확인 중' : '위치 설정'}
-          </AppText>
-        </Pressable>
       </View>
     </View>
   );

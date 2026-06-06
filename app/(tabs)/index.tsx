@@ -244,27 +244,31 @@ function HomeContent() {
         <HomeNavigationBar />
 
         <HomeHeader
-          currentPlace={currentPlace}
-          isLocationLoading={locationStatus === 'loading'}
           onSelectRecommendationMode={handleSelectRecommendationMode}
-          onSetCurrentLocation={handleSetCurrentLocation}
           recommendationMode={recommendationMode}
         />
 
-        <TravelSessionCard
-          endedAt={session.endedAt}
-          onDismissEnded={resetSession}
-          onOpenRecap={() => router.push('/recap')}
-          onOpenTravel={() => router.push('/travel')}
-          selectedMode={selectedMode}
-          startedAt={session.startedAt}
-          status={session.status}
-        />
+        {recommendationMode === 'travel' ? (
+          <View className="-mt-2">
+            <TravelSessionCard
+              currentPlace={currentPlace}
+              endedAt={session.endedAt}
+              onDismissEnded={resetSession}
+              onOpenRecap={() => router.push('/recap')}
+              onOpenTravel={() => router.push('/travel')}
+              selectedMode={selectedMode}
+              startedAt={session.startedAt}
+              status={session.status}
+            />
+          </View>
+        ) : null}
 
-        <HomeTopFilterBar
-          onSelectTopFilter={handleSelectTopFilter}
-          selectedTopFilter={selectedTopFilter}
-        />
+        <View className={recommendationMode === 'travel' ? '' : '-mt-2'}>
+          <HomeTopFilterBar
+            onSelectTopFilter={handleSelectTopFilter}
+            selectedTopFilter={selectedTopFilter}
+          />
+        </View>
 
         <FeaturedPlaylistSection
           data={featuredPlaylistsQuery.data}

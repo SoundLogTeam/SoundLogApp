@@ -2,13 +2,14 @@ import { Feather } from '@expo/vector-icons';
 import { Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
-import type { TravelMode } from '@/types/domain';
+import type { PlaceContext, TravelMode } from '@/types/domain';
 import { formatRecapRecordedAt } from '@/utils/dateFormat';
 
 type TravelSessionStatus = 'active' | 'ended' | 'idle';
 
 type TravelSessionCardProps = {
   endedAt?: string;
+  currentPlace?: PlaceContext;
   onDismissEnded?: () => void;
   onOpenRecap: () => void;
   onOpenTravel: () => void;
@@ -68,6 +69,7 @@ function formatSessionTime(status: TravelSessionStatus, startedAt?: string, ende
 }
 
 export function TravelSessionCard({
+  currentPlace,
   endedAt,
   onDismissEnded,
   onOpenRecap,
@@ -82,17 +84,25 @@ export function TravelSessionCard({
   const selectedModeLabel = travelModeOptions.find(
     (mode) => mode.value === selectedMode,
   )?.label;
+  const isActive = status === 'active';
+  const locationLabel = currentPlace?.title ?? '현재 위치 확인 중';
 
   return (
-    <View className="rounded-[18px] border border-white/10 bg-white/10 px-3.5 py-2.5">
-      <View className="flex-row items-center gap-2.5">
-        <View className="h-9 w-9 items-center justify-center rounded-full bg-white/10">
-          <Feather color="#fff" name={copy.icon} size={16} />
+    <View
+      className={`rounded-[18px] border px-3.5 ${
+        isActive ? 'border-[#9EA8FF]/45 bg-[#182755]/55 py-3.5' : 'border-white/10 bg-white/10 py-2.5'
+      }`}
+    >
+      <View className={`flex-row ${isActive ? 'items-start gap-3' : 'items-center gap-2.5'}`}>
+        <View
+          className={`${isActive ? 'h-11 w-11 bg-[#9EA8FF]/20' : 'h-9 w-9 bg-white/10'} items-center justify-center rounded-full`}
+        >
+          <Feather color={isActive ? '#9EA8FF' : '#fff'} name={copy.icon} size={isActive ? 18 : 16} />
         </View>
 
         <View className="min-w-0 flex-1">
           <View className="flex-row items-center gap-2">
-            <AppText className="shrink text-[15px] font-semibold text-white" numberOfLines={1}>
+            <AppText className={`${isActive ? 'text-[17px]' : 'text-[15px]'} shrink font-semibold text-white`} numberOfLines={1}>
               {copy.title}
             </AppText>
             {status === 'idle' ? (
@@ -101,14 +111,26 @@ export function TravelSessionCard({
               </AppText>
             ) : null}
             {status === 'active' && selectedModeLabel ? (
-              <View className="rounded-full bg-white/10 px-2 py-1">
-                <AppText className="text-[10px] font-semibold text-white/70">
+              <View className="rounded-full bg-[#9EA8FF]/20 px-2.5 py-1">
+                <AppText className="text-[10px] font-semibold text-[#E4E8FF]">
                   {selectedModeLabel}
                 </AppText>
               </View>
             ) : null}
           </View>
-          {status !== 'idle' ? (
+          {isActive ? (
+            <View className="mt-2 flex-row items-center gap-1.5">
+              <Feather color="#9EA8FF" name="clock" size={12} />
+              <AppText className="text-[12px] font-medium text-[#DCE3FF]" numberOfLines={1}>
+                {sessionTime}
+              </AppText>
+              <AppText className="text-[12px] font-medium text-[#DCE3FF]">·</AppText>
+              <Feather color="#9EA8FF" name="map-pin" size={12} />
+              <AppText className="min-w-0 flex-1 text-[12px] font-medium text-[#DCE3FF]" numberOfLines={1}>
+                {locationLabel}
+              </AppText>
+            </View>
+          ) : status !== 'idle' ? (
             <AppText className="mt-0.5 text-[11px] text-[#9EA8FF]" numberOfLines={1}>
               {sessionTime}
             </AppText>
@@ -117,7 +139,7 @@ export function TravelSessionCard({
 
         <Pressable
           accessibilityRole="button"
-          className="h-9 items-center justify-center rounded-full border border-[#9EA8FF]/70 bg-[#243A75]/70 px-3"
+          className={`${isActive ? 'h-10 border-[#B9C2FF]/80 bg-[#9EA8FF]/22 px-4' : 'h-9 border-[#9EA8FF]/70 bg-[#243A75]/70 px-3'} items-center justify-center rounded-full border`}
           onPress={onPrimaryPress}
         >
           <AppText className="text-xs font-semibold text-white">{copy.cta}</AppText>
