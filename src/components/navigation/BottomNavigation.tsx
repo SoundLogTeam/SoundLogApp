@@ -1,6 +1,13 @@
 import { Feather } from '@expo/vector-icons';
 import { Tabs, router } from 'expo-router';
-import { Alert, Platform, Pressable, View } from 'react-native';
+import {
+  Alert,
+  Platform,
+  Pressable,
+  StyleProp,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/constants/colors';
@@ -18,7 +25,7 @@ function TabIcon({ name, color }: { name: TabIconName; color: string }) {
   return <Feather color={color} name={name} size={22} />;
 }
 
-function CameraTabButton() {
+function CameraTabButton({ style }: { style?: StyleProp<ViewStyle> }) {
   const { session, startSession } = useTravelSessionStore();
   const openCamera = () => router.push('/camera');
   const handlePress = () => {
@@ -40,16 +47,18 @@ function CameraTabButton() {
   };
 
   return (
-    <Pressable
-      accessibilityLabel="순간 저장 카메라 열기"
-      accessibilityRole="button"
-      className="-mt-6 h-[70px] w-[70px] items-center justify-center rounded-full border border-white/15 bg-soundlog-bg"
-      onPress={handlePress}
-    >
-      <View className="h-[58px] w-[58px] items-center justify-center rounded-full border-[3px] border-soundlog-lime bg-black/25">
-        <View className="h-[44px] w-[44px] rounded-full bg-soundlog-lime" />
-      </View>
-    </Pressable>
+    <View className="flex-1 items-center" style={style}>
+      <Pressable
+        accessibilityLabel="순간 저장 카메라 열기"
+        accessibilityRole="button"
+        className="-mt-6 h-[70px] w-[70px] items-center justify-center rounded-full border border-white/15 bg-soundlog-bg"
+        onPress={handlePress}
+      >
+        <View className="h-[58px] w-[58px] items-center justify-center rounded-full border-[3px] border-soundlog-lime bg-black/25">
+          <View className="h-[44px] w-[44px] rounded-full bg-soundlog-lime" />
+        </View>
+      </Pressable>
+    </View>
   );
 }
 
@@ -68,6 +77,9 @@ export function BottomNavigation() {
           marginTop: 2,
         },
         tabBarShowLabel: true,
+        tabBarItemStyle: {
+          flex: 1,
+        },
         tabBarStyle: {
           position: 'absolute',
           height: getTabBarHeight(insets.bottom),
@@ -91,35 +103,35 @@ export function BottomNavigation() {
         name="index"
         options={{
           tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="home" />,
-          title: 'Home',
+          title: '홈',
         }}
       />
       <Tabs.Screen
         name="travel"
         options={{
           tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="map" />,
-          title: 'Travel',
+          title: '여행',
         }}
       />
       <Tabs.Screen
         name="capture"
         options={{
-          tabBarButton: () => <CameraTabButton />,
-          title: 'Camera',
+          tabBarButton: ({ style }) => <CameraTabButton style={style} />,
+          title: '카메라',
         }}
       />
       <Tabs.Screen
         name="library"
         options={{
           tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="heart" />,
-          title: 'Library',
+          title: '보관함',
         }}
       />
       <Tabs.Screen
         name="my"
         options={{
           tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="user" />,
-          title: 'My',
+          title: '마이',
         }}
       />
       <Tabs.Screen

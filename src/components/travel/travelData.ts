@@ -13,6 +13,7 @@ export type TravelRecap = {
   locations: string[];
   mode: TravelMode;
   momentCount: number;
+  periodText: string;
   playCount: number;
   playTimeText: string;
   representativeTrack: string;
@@ -117,6 +118,7 @@ export const sampleRecaps: TravelRecap[] = [
     locations: ['성수 카페거리', '서울숲 입구', '뚝섬 전망대'],
     mode: 'cafe',
     momentCount: 12,
+    periodText: '2026.06.06 13:02 - 15:16',
     playCount: 48,
     playTimeText: '총 음악 재생 1시간 52분',
     representativeTrack: 'IU - Love wins all',
@@ -137,6 +139,7 @@ export const sampleRecaps: TravelRecap[] = [
     locations: ['광안리 해변', '민락수변공원', '광안대교 전망'],
     mode: 'ocean',
     momentCount: 8,
+    periodText: '2026.05.25 16:41 - 18:29',
     playCount: 36,
     playTimeText: '총 음악 재생 1시간 20분',
     representativeTrack: 'NewJeans - Ditto',
@@ -157,6 +160,7 @@ export const sampleRecaps: TravelRecap[] = [
     locations: ['남산 산책로', '해방촌', '서울 야경 전망대'],
     mode: 'night',
     momentCount: 15,
+    periodText: '2026.05.11 19:08 - 22:10',
     playCount: 64,
     playTimeText: '총 음악 재생 2시간 36분',
     representativeTrack: 'JENNIE - Seoul City',
