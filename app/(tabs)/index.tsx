@@ -13,6 +13,7 @@ import { MiniPlayer } from '@/components/MiniPlayer';
 import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
 import {
   HomeHeader,
+  HomeNavigationBar,
   HomeTopFilterBar,
   isHomeTopFilter,
 } from '@/components/home/HomeHeader';
@@ -238,6 +239,8 @@ function HomeContent() {
         }}
         showsVerticalScrollIndicator={false}
       >
+        <HomeNavigationBar />
+
         <HomeHeader
           currentPlace={currentPlace}
           isLocationLoading={locationStatus === 'loading'}
