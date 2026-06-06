@@ -2,7 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { Modal, Pressable, View } from 'react-native';
+import { Modal, Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
@@ -13,6 +13,11 @@ import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 import { getTrackKeyColor, hexToRgba } from '@/utils/trackVisuals';
+
+const webGlassPlayerStyle = {
+  backdropFilter: 'blur(24px) saturate(155%)',
+  WebkitBackdropFilter: 'blur(24px) saturate(155%)',
+};
 
 export function MiniPlayer() {
   const insets = useSafeAreaInsets();
@@ -85,23 +90,14 @@ export function MiniPlayer() {
     <View
       className={`overflow-hidden border ${radiusClassName} ${sizeClassName}`}
       style={{
-        backgroundColor: keyColor,
+        backgroundColor: hexToRgba(keyColor, 0.24),
         borderColor: 'rgba(255,255,255,0.24)',
       }}
     >
       {currentTrack.albumImageUrl ? (
         <Image contentFit="cover" source={{ uri: currentTrack.albumImageUrl }} style={{ flex: 1 }} />
       ) : (
-        <LinearGradient
-          colors={[
-            hexToRgba(keyColor, 1),
-            hexToRgba(keyColor, 0.42),
-            'rgba(5,9,22,0.84)',
-          ]}
-          end={{ x: 1, y: 1 }}
-          start={{ x: 0, y: 0 }}
-          style={{ flex: 1 }}
-        />
+        <View className="flex-1" style={{ backgroundColor: hexToRgba(keyColor, 0.32) }} />
       )}
     </View>
   );
@@ -138,23 +134,14 @@ export function MiniPlayer() {
       <View
         className="h-[118px] w-[118px] overflow-hidden rounded-full border"
         style={{
-          backgroundColor: keyColor,
+          backgroundColor: hexToRgba(keyColor, 0.24),
           borderColor: 'rgba(255,255,255,0.22)',
         }}
       >
         {currentTrack.albumImageUrl ? (
           <Image contentFit="cover" source={{ uri: currentTrack.albumImageUrl }} style={{ flex: 1 }} />
         ) : (
-          <LinearGradient
-            colors={[
-              hexToRgba(keyColor, 1),
-              hexToRgba(keyColor, 0.42),
-              'rgba(5,9,22,0.88)',
-            ]}
-            end={{ x: 1, y: 1 }}
-            start={{ x: 0, y: 0 }}
-            style={{ flex: 1 }}
-          />
+          <View className="flex-1" style={{ backgroundColor: hexToRgba(keyColor, 0.32) }} />
         )}
       </View>
       <View className="absolute h-[18px] w-[18px] rounded-full border border-white/25 bg-black/80" />
@@ -168,14 +155,20 @@ export function MiniPlayer() {
   return (
     <>
       <View
-        className="absolute left-5 right-5 h-[96px] overflow-hidden rounded-[28px] border border-white/15"
+        className="absolute left-5 right-5 h-[96px] overflow-hidden rounded-[28px] border border-white/30"
         style={{
-          backgroundColor: 'rgba(5,9,22,0.82)',
+          backgroundColor: 'rgba(255,255,255,0.16)',
           bottom: getMiniPlayerBottom(insets.bottom),
+          boxShadow: '0 18px 46px rgba(0,0,0,0.36)',
+          shadowColor: '#000',
+          shadowOffset: { height: 18, width: 0 },
+          shadowOpacity: 0.34,
+          shadowRadius: 26,
+          ...(Platform.OS === 'web' ? webGlassPlayerStyle : {}),
         }}
       >
         <LinearGradient
-          colors={[playerSoftGlow, 'rgba(255,255,255,0.06)', 'rgba(5,9,22,0.48)']}
+          colors={['rgba(255,255,255,0.32)', 'rgba(255,255,255,0.14)', playerSoftGlow]}
           end={{ x: 1, y: 1 }}
           start={{ x: 0, y: 0 }}
           style={{

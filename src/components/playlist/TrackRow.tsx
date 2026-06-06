@@ -54,21 +54,15 @@ export function TrackRow({ isActive, isLiked, isSaved, onMore, onPress, track }:
           onPress={() => onPress(track)}
         >
           <View
-            className="h-[52px] w-[52px] overflow-hidden rounded-[14px] border"
+            className="h-[52px] w-[52px] overflow-hidden rounded-[14px]"
             style={{
-              backgroundColor: keyColor,
-              borderColor: isActive ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.08)',
+              backgroundColor: hexToRgba(keyColor, 0.24),
             }}
           >
             {track.albumImageUrl ? (
               <Image contentFit="cover" source={{ uri: track.albumImageUrl }} style={{ flex: 1 }} />
             ) : (
-              <LinearGradient
-                colors={[hexToRgba(keyColor, 1), hexToRgba('#050916', 0.72)]}
-                end={{ x: 1, y: 1 }}
-                start={{ x: 0, y: 0 }}
-                style={{ flex: 1 }}
-              />
+              <View className="flex-1" style={{ backgroundColor: hexToRgba(keyColor, 0.32) }} />
             )}
           </View>
 
