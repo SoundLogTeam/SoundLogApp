@@ -91,35 +91,35 @@ export function BottomNavigation() {
         name="index"
         options={{
           tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="home" />,
-          title: 'Home',
+          title: '홈',
         }}
       />
       <Tabs.Screen
         name="travel"
         options={{
           tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="map" />,
-          title: 'Travel',
+          title: '여행',
         }}
       />
       <Tabs.Screen
         name="capture"
         options={{
           tabBarButton: () => <CameraTabButton />,
-          title: 'Camera',
+          title: '카메라',
         }}
       />
       <Tabs.Screen
         name="library"
         options={{
           tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="heart" />,
-          title: 'Library',
+          title: '보관함',
         }}
       />
       <Tabs.Screen
         name="my"
         options={{
           tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="user" />,
-          title: 'My',
+          title: '마이',
         }}
       />
       <Tabs.Screen
