@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
 import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -22,7 +22,6 @@ import {
   isMoodRecommendationFilter,
 } from '@/components/home/MoodRecommendationSection';
 import { MusicLogSection } from '@/components/home/MusicLogSection';
-import { TravelModeSuggestionSheet } from '@/components/home/TravelModeSuggestionSheet';
 import { TravelSessionCard } from '@/components/home/TravelSessionCard';
 import { Screen } from '@/components/Screen';
 import { getHomeContentBottomPadding } from '@/constants/layout';
@@ -41,8 +40,6 @@ import { createRecommendationEventContext } from '@/utils/recommendationEventCon
 
 function HomeContent() {
   const insets = useSafeAreaInsets();
-  const [dismissedSuggestionPlaceId, setDismissedSuggestionPlaceId] =
-    useState<string>();
   const {
     selectedMoodFilter,
     selectedTopFilter,
@@ -218,12 +215,6 @@ function HomeContent() {
     profile.locationRecommendationEnabled,
   ]);
 
-  const shouldShowTravelModeSuggestion =
-    Boolean(currentPlace) &&
-    profile.locationRecommendationEnabled &&
-    recommendationMode === 'everyday' &&
-    dismissedSuggestionPlaceId !== currentPlace?.id;
-
   return (
     <Screen>
       <ScrollView
@@ -288,16 +279,6 @@ function HomeContent() {
         />
       </ScrollView>
       {currentTrack ? <MiniPlayer /> : null}
-      {shouldShowTravelModeSuggestion && currentPlace ? (
-        <TravelModeSuggestionSheet
-          onDismiss={() => setDismissedSuggestionPlaceId(currentPlace.id)}
-          onStartTravelMode={() => {
-            handleSelectRecommendationMode('travel');
-            setDismissedSuggestionPlaceId(currentPlace.id);
-          }}
-          place={currentPlace}
-        />
-      ) : null}
     </Screen>
   );
 }
