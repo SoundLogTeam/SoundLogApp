@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   View,
 } from 'react-native';
 
@@ -44,10 +46,37 @@ export function MusicLogSection({
   const carouselSidePadding =
     sectionWidth > 0 ? Math.max(0, (sectionWidth - MUSIC_LOG_CARD_WIDTH) / 2) : 0;
   const initialIndex = data.length > MUSIC_LOG_INITIAL_INDEX ? MUSIC_LOG_INITIAL_INDEX : 0;
-  const initialOffset = initialIndex * MUSIC_LOG_SNAP_INTERVAL;
+  const canLoop = data.length > 1;
+  const carouselData = canLoop ? [...data, ...data, ...data] : data;
+  const initialCarouselIndex = canLoop ? data.length + initialIndex : initialIndex;
+  const initialOffset = initialCarouselIndex * MUSIC_LOG_SNAP_INTERVAL;
 
   const handleLayout = (event: LayoutChangeEvent) => {
     setSectionWidth(event.nativeEvent.layout.width);
+  };
+
+  const resetLoopEdge = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!canLoop) {
+      return;
+    }
+
+    const currentIndex = Math.round(event.nativeEvent.contentOffset.x / MUSIC_LOG_SNAP_INTERVAL);
+
+    if (currentIndex >= data.length && currentIndex < data.length * 2) {
+      return;
+    }
+
+    const realIndex = ((currentIndex % data.length) + data.length) % data.length;
+    const nextIndex = data.length + realIndex;
+
+    const nextOffset = nextIndex * MUSIC_LOG_SNAP_INTERVAL;
+
+    scrollX.setValue(nextOffset);
+    scrollRef.current?.scrollTo({
+      animated: false,
+      x: nextOffset,
+      y: 0,
+    });
   };
 
   useEffect(() => {
@@ -56,19 +85,21 @@ export function MusicLogSection({
     }
 
     const nextIndex = data.length > MUSIC_LOG_INITIAL_INDEX ? MUSIC_LOG_INITIAL_INDEX : 0;
+    const nextCarouselIndex = canLoop ? data.length + nextIndex : nextIndex;
+    const nextOffset = nextCarouselIndex * MUSIC_LOG_SNAP_INTERVAL;
 
-    scrollX.setValue(nextIndex * MUSIC_LOG_SNAP_INTERVAL);
+    scrollX.setValue(nextOffset);
     requestAnimationFrame(() => {
       scrollRef.current?.scrollTo({
         animated: false,
-        x: nextIndex * MUSIC_LOG_SNAP_INTERVAL,
+        x: nextOffset,
         y: 0,
       });
     });
-  }, [data.length, scrollX]);
+  }, [canLoop, data.length, scrollX]);
 
   return (
-    <View className="gap-4" onLayout={handleLayout}>
+    <View className="gap-4 pb-6" onLayout={handleLayout}>
       <AppText className="text-[26px] font-semibold text-white">Music Log</AppText>
 
       {isLoading ? (
@@ -99,13 +130,15 @@ export function MusicLogSection({
             [{ nativeEvent: { contentOffset: { x: scrollX } } }],
             { useNativeDriver: true },
           )}
+          onScrollEndDrag={resetLoopEdge}
+          onMomentumScrollEnd={resetLoopEdge}
           ref={scrollRef}
           scrollEventThrottle={16}
           showsHorizontalScrollIndicator={false}
           snapToAlignment="start"
           snapToInterval={MUSIC_LOG_SNAP_INTERVAL}
         >
-          {data.map((item, index) => {
+          {carouselData.map((item, index) => {
             const inputRange = [
               (index - 1) * MUSIC_LOG_SNAP_INTERVAL,
               index * MUSIC_LOG_SNAP_INTERVAL,
@@ -114,7 +147,7 @@ export function MusicLogSection({
             const rotate = scrollX.interpolate({
               extrapolate: 'clamp',
               inputRange,
-              outputRange: ['-8deg', '0deg', '8deg'],
+              outputRange: ['8deg', '0deg', '-8deg'],
             });
             const scale = scrollX.interpolate({
               extrapolate: 'clamp',
@@ -126,14 +159,15 @@ export function MusicLogSection({
               <MusicLogCard
                 animatedStyle={{
                   transform: [{ rotate }, { scale }],
+                  transformOrigin: 'bottom center',
                 }}
                 cardHeight={MUSIC_LOG_CARD_HEIGHT}
                 cardWidth={MUSIC_LOG_CARD_WIDTH}
                 index={index}
                 item={item}
-                key={item.id}
+                key={`${item.id}-${index}`}
                 onPress={onSelectLog ? () => onSelectLog(item) : undefined}
-                style={{ marginRight: index === data.length - 1 ? 0 : MUSIC_LOG_CARD_GAP }}
+                style={{ marginRight: index === carouselData.length - 1 ? 0 : MUSIC_LOG_CARD_GAP }}
               />
             );
           })}
