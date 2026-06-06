@@ -212,21 +212,43 @@ function DevTestManagerContent() {
     useHomeFilterStore();
   const { currentLocation, currentPlace, locationStatus, selectedMode, session } =
     useTravelSessionStore();
-  const travelSessionActions = useTravelSessionStore((state) => ({
-    clearLocation: state.clearLocation,
-    endSession: state.endSession,
-    resetSession: state.resetSession,
-    setLocation: state.setLocation,
-    setLocationStatus: state.setLocationStatus,
-    setMode: state.setMode,
-    setPlace: state.setPlace,
-    startSession: state.startSession,
-  }));
+  const clearLocation = useTravelSessionStore((state) => state.clearLocation);
+  const endSession = useTravelSessionStore((state) => state.endSession);
+  const resetSession = useTravelSessionStore((state) => state.resetSession);
+  const setLocation = useTravelSessionStore((state) => state.setLocation);
+  const setLocationStatus = useTravelSessionStore((state) => state.setLocationStatus);
+  const setMode = useTravelSessionStore((state) => state.setMode);
+  const setPlace = useTravelSessionStore((state) => state.setPlace);
+  const startSession = useTravelSessionStore((state) => state.startSession);
+  const travelSessionActions = useMemo(
+    () => ({
+      clearLocation,
+      endSession,
+      resetSession,
+      setLocation,
+      setLocationStatus,
+      setMode,
+      setPlace,
+      startSession,
+    }),
+    [
+      clearLocation,
+      endSession,
+      resetSession,
+      setLocation,
+      setLocationStatus,
+      setMode,
+      setPlace,
+      startSession,
+    ],
+  );
   const {
+    apiSource,
     failedEndpointIds,
     failAllEndpoints,
     mockDelayMs,
     resetMockRuntime,
+    setApiSource,
     setFailAllEndpoints,
     setMockDelayMs,
     toggleFailedEndpoint,
@@ -361,6 +383,10 @@ function DevTestManagerContent() {
     toggleFailedEndpoint(endpointId);
     invalidateMockQueries();
   };
+  const selectApiSource = (nextApiSource: typeof apiSource) => {
+    setApiSource(nextApiSource);
+    invalidateMockQueries();
+  };
 
   return (
     <>
@@ -422,8 +448,25 @@ function DevTestManagerContent() {
                 <StatusPill label={`모드 ${selectedMode ?? '없음'}`} />
                 <StatusPill label={`장소 ${currentPlace?.title ?? '없음'}`} />
                 <StatusPill label={`곡 ${currentTrack?.title ?? '없음'}`} />
+                <StatusPill label={`API ${apiSource === 'server' ? 'Server' : 'Mock'}`} />
                 <StatusPill
                   label={`Mock ${failAllEndpoints ? '전체 실패' : `${mockDelayMs ?? DEFAULT_DELAY_MS}ms`}`}
+                />
+              </ManagerSection>
+
+              <ManagerSection
+                subtitle="Mock은 앱 내부 데이터를, Server는 로컬 SoundLogServer API를 사용합니다."
+                title="API Source"
+              >
+                <ManagerButton
+                  active={apiSource === 'mock'}
+                  label="Mock"
+                  onPress={() => selectApiSource('mock')}
+                />
+                <ManagerButton
+                  active={apiSource === 'server'}
+                  label="Server"
+                  onPress={() => selectApiSource('server')}
                 />
               </ManagerSection>
 
