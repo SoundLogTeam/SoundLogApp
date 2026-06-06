@@ -17,8 +17,8 @@ export function FeaturedPlaylistCard({ playlist }: FeaturedPlaylistCardProps) {
     >
       <View className="absolute inset-0 bg-black/10" />
       <View className="absolute left-3 top-4 flex-row gap-2">
-        <Chip label={`${playlist.trackCount}곡`} />
-        <Chip label={playlist.durationText} />
+        <Chip label={`${playlist.trackCount}곡`} size="small" />
+        <Chip label={playlist.durationText} size="small" />
       </View>
       <AppText className="text-[30px] font-semibold text-white">{playlist.regionName}</AppText>
       <AppText className="mt-2 text-[13px] leading-5 text-white">{playlist.description}</AppText>

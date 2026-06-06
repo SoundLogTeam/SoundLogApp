@@ -2,44 +2,32 @@
 
 ## Palette
 
-The Soundlog palette is built from the reference colors:
+Soundlog keeps the original dark navy and muted violet UI, with one new highlight color:
 
 | Token | Hex | Role |
 | --- | --- | --- |
-| `brand.pulseMagenta` | `#D718F1` | Personal taste, emotional highlights, everyday music energy |
-| `brand.electricViolet` | `#4F2AEC` | Selected states, primary brand surfaces, active chips |
-| `brand.signalPurple` | `#872BA8` | Supporting depth, recap and memory moments |
-| `brand.limeWave` | `#B7E628` | High-priority action, travel mode, focus borders |
-| `brand.deepIndigo` | `#3B11C4` | Deep anchors, player and navigation depth |
+| `background.primary` | `#070B1F` | App background |
+| `surface.card` | `#080D18` | Standard cards |
+| `surface.chip` | `#0E1E3A` | Default chips and compact controls |
+| `surface.chipSelected` | `#243A75` | Selected chips |
+| `accent.purple` | `#7A2CFF` | Existing Soundlog purple accent |
+| `accent.lime` | `#B7E628` | High-priority action and active focus only |
 
-## Color Roles
+## Color Rules
 
-Use role tokens from `src/constants/colors.ts` before adding screen-local colors.
-
-- Backgrounds use near-black violet tones so the bright palette feels musical instead of flat.
-- Surfaces use glassy purple cards and chips with white borders at low opacity.
-- Active selections use electric violet with lime focus where the action should feel immediate.
-- Primary CTAs and travel-state highlights use lime with `text.inverse`.
-- Magenta is reserved for taste, mood, and expressive music moments.
+- Use dark navy surfaces as the default visual language.
+- Use fluorescent lime sparingly: camera action, active tab, selected/focused border, and Travel mode.
+- Do not use the full reference palette across chips or cards.
+- Keep chips compact and calm: default navy, selected muted blue, lime only as the selection border.
+- Avoid adding new bright hex values inside components unless the color comes from content data.
 
 ## Tailwind Tokens
 
-NativeWind tokens live under `soundlog` in `tailwind.config.js`.
-
 - `bg-soundlog-bg`: app background
 - `bg-soundlog-card`: standard cards
-- `bg-soundlog-elevated`: emphasized panels
-- `bg-soundlog-chip`: unselected chips and compact controls
-- `bg-soundlog-selected`: selected chips and segmented controls
-- `bg-soundlog-lime`: high-priority actions
-- `border-soundlog-border`: standard purple border
-- `border-soundlog-focus`: focus or active emphasis
-- `text-soundlog-inverse`: text on lime or bright selected surfaces
-
-## Component Rules
-
-- Keep the camera capture action lime so it is recognizable across tabs.
-- Keep tab active state lime and inactive state muted white.
-- Chips should stay compact, rounded, and role-based: selected violet, unselected purple.
-- Do not use the five source colors evenly on every screen. Each screen should have one dominant role and one accent.
-- Avoid adding new hex values in components unless the value is data-driven, such as track artwork fallback colors.
+- `bg-soundlog-elevated`: emphasized dark panels
+- `bg-soundlog-chip`: unselected chips
+- `bg-soundlog-selected`: selected chips
+- `bg-soundlog-lime`: high-priority action only
+- `border-soundlog-border`: standard chip border
+- `border-soundlog-focus`: active/focused lime border

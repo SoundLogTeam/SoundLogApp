@@ -32,7 +32,7 @@ const musicModeOptions: Array<{
   value: MusicRecommendationMode;
 }> = [
   {
-    accent: colors.accent.magenta,
+    accent: colors.accent.blue,
     label: 'Everyday',
     value: 'everyday',
   },

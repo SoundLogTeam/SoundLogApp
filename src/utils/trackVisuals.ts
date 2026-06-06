@@ -1,12 +1,12 @@
 import { Track } from '@/types/domain';
 
 const fallbackPalette = [
-  '#D718F1',
-  '#4F2AEC',
-  '#872BA8',
-  '#B7E628',
-  '#3B11C4',
-  '#170D35',
+  '#243A75',
+  '#20146F',
+  '#2D6A72',
+  '#45536B',
+  '#7A2CFF',
+  '#1D7F8C',
 ];
 
 function hashString(value: string) {
