@@ -84,17 +84,22 @@ export function TravelSessionCard({
   )?.label;
 
   return (
-    <View className="rounded-[20px] border border-white/10 bg-white/10 px-4 py-3.5">
-      <View className="flex-row items-center gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
-          <Feather color="#fff" name={copy.icon} size={18} />
+    <View className="rounded-[18px] border border-white/10 bg-white/10 px-3.5 py-2.5">
+      <View className="flex-row items-center gap-2.5">
+        <View className="h-9 w-9 items-center justify-center rounded-full bg-white/10">
+          <Feather color="#fff" name={copy.icon} size={16} />
         </View>
 
         <View className="min-w-0 flex-1">
           <View className="flex-row items-center gap-2">
-            <AppText className="shrink text-base font-semibold text-white" numberOfLines={1}>
+            <AppText className="shrink text-[15px] font-semibold text-white" numberOfLines={1}>
               {copy.title}
             </AppText>
+            {status === 'idle' ? (
+              <AppText className="text-[11px] text-[#9EA8FF]" numberOfLines={1}>
+                {sessionTime}
+              </AppText>
+            ) : null}
             {status === 'active' && selectedModeLabel ? (
               <View className="rounded-full bg-white/10 px-2 py-1">
                 <AppText className="text-[10px] font-semibold text-white/70">
@@ -103,14 +108,16 @@ export function TravelSessionCard({
               </View>
             ) : null}
           </View>
-          <AppText className="mt-1 text-xs text-[#9EA8FF]" numberOfLines={1}>
-            {sessionTime}
-          </AppText>
+          {status !== 'idle' ? (
+            <AppText className="mt-0.5 text-[11px] text-[#9EA8FF]" numberOfLines={1}>
+              {sessionTime}
+            </AppText>
+          ) : null}
         </View>
 
         <Pressable
           accessibilityRole="button"
-          className="h-10 items-center justify-center rounded-full border border-[#9EA8FF]/70 bg-[#243A75]/70 px-4"
+          className="h-9 items-center justify-center rounded-full border border-[#9EA8FF]/70 bg-[#243A75]/70 px-3"
           onPress={onPrimaryPress}
         >
           <AppText className="text-xs font-semibold text-white">{copy.cta}</AppText>
@@ -120,7 +127,7 @@ export function TravelSessionCard({
           <Pressable
             accessibilityLabel="여행 종료 카드 닫기"
             accessibilityRole="button"
-            className="h-9 w-9 items-center justify-center rounded-full bg-white/10"
+            className="h-8 w-8 items-center justify-center rounded-full bg-white/10"
             onPress={onDismissEnded}
           >
             <Feather color="#fff" name="x" size={16} />

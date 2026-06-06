@@ -220,13 +220,13 @@ function HomeContent() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          gap: 32,
+          gap: 20,
           paddingBottom: getHomeContentBottomPadding(
             insets.bottom,
             Boolean(currentTrack),
           ),
           paddingHorizontal: 20,
-          paddingTop: 24,
+          paddingTop: 16,
         }}
         showsVerticalScrollIndicator={false}
       >

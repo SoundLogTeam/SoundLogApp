@@ -46,9 +46,9 @@ const musicModeOptions: Array<{
 export function HomeNavigationBar() {
   return (
     <View className="flex-row items-center">
-      <View className="flex-row items-center gap-3">
-        <BrandLogo className="border border-white/25" size={36} />
-        <AppText className="text-lg font-semibold text-white">Soundlog</AppText>
+      <View className="flex-row items-center gap-2.5">
+        <BrandLogo className="border border-white/25" size={32} />
+        <AppText className="text-base font-semibold text-white">Soundlog</AppText>
       </View>
     </View>
   );
@@ -67,7 +67,7 @@ export function HomeHeader({
   const locationLabel = currentPlace?.title ?? '위치를 확인해 볼까요?';
 
   return (
-    <View className="rounded-[28px] border border-white/15 bg-soundlog-elevated/80 p-4">
+    <View className="rounded-[22px] border border-white/15 bg-soundlog-elevated/80 p-3">
       <View className="rounded-full border border-white/10 bg-black/25 p-1">
         <View className="flex-row gap-1">
           {musicModeOptions.map((mode) => {
@@ -77,7 +77,7 @@ export function HomeHeader({
               <Pressable
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
-                className="h-11 flex-1 items-center justify-center rounded-full"
+                className="h-10 flex-1 items-center justify-center rounded-full"
                 key={mode.value}
                 onPress={() => onSelectRecommendationMode(mode.value)}
                 style={{
@@ -99,7 +99,7 @@ export function HomeHeader({
         </View>
       </View>
 
-      <View className="mt-4 flex-row items-center gap-3 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3">
+      <View className="mt-3 flex-row items-center gap-2.5 rounded-[16px] border border-white/10 bg-black/20 px-3 py-2.5">
         <Feather color={activeMode.accent} name="map-pin" size={16} />
         <View className="min-w-0 flex-1">
           <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
@@ -108,7 +108,7 @@ export function HomeHeader({
         </View>
         <Pressable
           accessibilityRole="button"
-          className="h-9 flex-row items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3"
+          className="h-8 flex-row items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5"
           disabled={isLocationLoading}
           onPress={onSetCurrentLocation}
           style={{ opacity: isLocationLoading ? 0.55 : 1 }}
