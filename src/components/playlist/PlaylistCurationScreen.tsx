@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { usePlaylistCurationQuery } from '@/api/playlistQueries';
@@ -27,6 +27,7 @@ type PlaylistCurationScreenProps = {
 
 export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenProps) {
   const insets = useSafeAreaInsets();
+  const { height } = useWindowDimensions();
   const { currentTrack, setTrack } = usePlayerStore();
   const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
   const {
@@ -75,6 +76,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
 
   const hasMiniPlayer = Boolean(currentTrack);
   const listBottomPadding = getCurationListBottomPadding(insets.bottom, hasMiniPlayer);
+  const usesPlainMoodPage = playlistId === 'calm-walk' || Boolean(playlist?.accentColor);
 
   const playTrack = (track: Track) => {
     if (!playlist) {
@@ -131,40 +133,59 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
   };
 
   const closeMenu = () => setSelectedTrackId(undefined);
+  const playlistContent = isLoading ? (
+    <PlaylistLoadingState />
+  ) : isError ? (
+    <PlaylistErrorState onRetry={() => refetch()} />
+  ) : !playlist ? (
+    <PlaylistEmptyState />
+  ) : (
+    <TrackList
+      bottomPadding={listBottomPadding}
+      currentTrackId={currentTrack?.id}
+      likedTrackIds={likedTrackIds}
+      onOpenMenu={(track) => setSelectedTrackId(track.id)}
+      onSelectTrack={playTrack}
+      savedTrackIds={savedTrackIds}
+      tracks={playlist.tracks}
+    />
+  );
 
   return (
     <View className="flex-1 bg-soundlog-bg">
-      <PlaylistBackground imageUrl={playlist?.backgroundImageUrl} />
+      <PlaylistBackground accentColor={playlist?.accentColor} imageUrl={playlist?.backgroundImageUrl} />
 
-      <PlaylistBottomSheet
-        stickyHeader={
-          playlist ? (
+      {usesPlainMoodPage ? (
+        <ScrollView
+          className="absolute inset-0"
+          contentContainerStyle={{ minHeight: height + 205, paddingTop: 205 }}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+        >
+          {playlist ? (
             <PlaylistHeroInfo
               disabled={playlist.tracks.length === 0}
               onPlay={playFirstTrack}
               playlist={playlist}
             />
-          ) : undefined
-        }
-      >
-        {isLoading ? (
-          <PlaylistLoadingState />
-        ) : isError ? (
-          <PlaylistErrorState onRetry={() => refetch()} />
-        ) : !playlist ? (
-          <PlaylistEmptyState />
-        ) : (
-          <TrackList
-            bottomPadding={listBottomPadding}
-            currentTrackId={currentTrack?.id}
-            likedTrackIds={likedTrackIds}
-            onOpenMenu={(track) => setSelectedTrackId(track.id)}
-            onSelectTrack={playTrack}
-            savedTrackIds={savedTrackIds}
-            tracks={playlist.tracks}
-          />
-        )}
-      </PlaylistBottomSheet>
+          ) : null}
+          {playlistContent}
+        </ScrollView>
+      ) : (
+        <PlaylistBottomSheet
+          stickyHeader={
+            playlist ? (
+              <PlaylistHeroInfo
+                disabled={playlist.tracks.length === 0}
+                onPlay={playFirstTrack}
+                playlist={playlist}
+              />
+            ) : undefined
+          }
+        >
+          {playlistContent}
+        </PlaylistBottomSheet>
+      )}
 
       <TrackActionMenu
         isLiked={isLiked(selectedTrack?.id)}

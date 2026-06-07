@@ -12,6 +12,7 @@ export type RecommendationEventType =
   | 'track_unlike'
   | 'track_save'
   | 'track_unsave'
+  | 'playlist_open'
   | 'mood_filter_change'
   | 'recommendation_mode_change'
   | 'top_filter_change';

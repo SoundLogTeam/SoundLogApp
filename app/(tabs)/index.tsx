@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { ScrollView } from 'react-native';
+import { useCallback, useEffect } from 'react';
+import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -13,6 +13,7 @@ import { MiniPlayer } from '@/components/MiniPlayer';
 import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
 import {
   HomeHeader,
+  HomeNavigationBar,
   HomeTopFilterBar,
   isHomeTopFilter,
 } from '@/components/home/HomeHeader';
@@ -21,7 +22,6 @@ import {
   isMoodRecommendationFilter,
 } from '@/components/home/MoodRecommendationSection';
 import { MusicLogSection } from '@/components/home/MusicLogSection';
-import { TravelModeSuggestionSheet } from '@/components/home/TravelModeSuggestionSheet';
 import { TravelSessionCard } from '@/components/home/TravelSessionCard';
 import { Screen } from '@/components/Screen';
 import { getHomeContentBottomPadding } from '@/constants/layout';
@@ -40,8 +40,6 @@ import { createRecommendationEventContext } from '@/utils/recommendationEventCon
 
 function HomeContent() {
   const insets = useSafeAreaInsets();
-  const [dismissedSuggestionPlaceId, setDismissedSuggestionPlaceId] =
-    useState<string>();
   const {
     selectedMoodFilter,
     selectedTopFilter,
@@ -62,13 +60,11 @@ function HomeContent() {
     recommendationMode,
     selectedMode,
     session,
-    endSession,
+    resetSession,
     setLocation,
     setLocationStatus,
-    setMode,
     setPlace,
     setRecommendationMode,
-    startSession,
   } = useTravelSessionStore();
 
   const nearbyPlacesQuery = useNearbyPlacesQuery({
@@ -122,6 +118,17 @@ function HomeContent() {
   }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
 
   const handleSelectRecommendation = (item: MoodRecommendation) => {
+    if (item.playlistId) {
+      router.push(`/playlist/${item.playlistId}`);
+      addRecommendationEvent({
+        context: createRecommendationEventContext(),
+        playlistId: item.playlistId,
+        type: 'playlist_open',
+        value: item.playlistId,
+      });
+      return;
+    }
+
     setTrack(item.track);
     addRecommendationEvent({
       context: createRecommendationEventContext(),
@@ -219,50 +226,49 @@ function HomeContent() {
     profile.locationRecommendationEnabled,
   ]);
 
-  const shouldShowTravelModeSuggestion =
-    Boolean(currentPlace) &&
-    profile.locationRecommendationEnabled &&
-    recommendationMode === 'everyday' &&
-    dismissedSuggestionPlaceId !== currentPlace?.id;
-
   return (
     <Screen>
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          gap: 32,
+          gap: 20,
           paddingBottom: getHomeContentBottomPadding(
             insets.bottom,
             Boolean(currentTrack),
           ),
           paddingHorizontal: 20,
-          paddingTop: 24,
+          paddingTop: 16,
         }}
         showsVerticalScrollIndicator={false}
       >
+        <HomeNavigationBar />
+
         <HomeHeader
-          currentPlace={currentPlace}
-          isLocationLoading={locationStatus === 'loading'}
           onSelectRecommendationMode={handleSelectRecommendationMode}
-          onSetCurrentLocation={handleSetCurrentLocation}
           recommendationMode={recommendationMode}
         />
 
-        <TravelSessionCard
-          endedAt={session.endedAt}
-          onEndSession={endSession}
-          onOpenRecap={() => router.push('/recap')}
-          onSelectMode={setMode}
-          onStartSession={startSession}
-          selectedMode={selectedMode}
-          startedAt={session.startedAt}
-          status={session.status}
-        />
+        {recommendationMode === 'travel' ? (
+          <View className="-mt-2">
+            <TravelSessionCard
+              currentPlace={currentPlace}
+              endedAt={session.endedAt}
+              onDismissEnded={resetSession}
+              onOpenRecap={() => router.push('/recap')}
+              onOpenTravel={() => router.push('/travel')}
+              selectedMode={selectedMode}
+              startedAt={session.startedAt}
+              status={session.status}
+            />
+          </View>
+        ) : null}
 
-        <HomeTopFilterBar
-          onSelectTopFilter={handleSelectTopFilter}
-          selectedTopFilter={selectedTopFilter}
-        />
+        <View className={recommendationMode === 'travel' ? '' : '-mt-2'}>
+          <HomeTopFilterBar
+            onSelectTopFilter={handleSelectTopFilter}
+            selectedTopFilter={selectedTopFilter}
+          />
+        </View>
 
         <FeaturedPlaylistSection
           data={featuredPlaylistsQuery.data}
@@ -271,33 +277,27 @@ function HomeContent() {
           onRetry={() => void featuredPlaylistsQuery.refetch()}
         />
 
-        <MoodRecommendationSection
-          data={moodRecommendationsQuery.data}
-          isError={moodRecommendationsQuery.isError}
-          isLoading={moodRecommendationsQuery.isLoading}
-          onSelectMoodFilter={handleSelectMoodFilter}
-          onSelectRecommendation={handleSelectRecommendation}
-          selectedMoodFilter={selectedMoodFilter}
-        />
+        <View className="mt-2">
+          <MoodRecommendationSection
+            data={moodRecommendationsQuery.data}
+            isError={moodRecommendationsQuery.isError}
+            isLoading={moodRecommendationsQuery.isLoading}
+            onSelectMoodFilter={handleSelectMoodFilter}
+            onSelectRecommendation={handleSelectRecommendation}
+            selectedMoodFilter={selectedMoodFilter}
+          />
+        </View>
 
-        <MusicLogSection
-          data={musicLogs}
-          isError={recentMusicLogsQuery.isError}
-          isLoading={recentMusicLogsQuery.isLoading && momentLogs.length === 0}
-          onSelectLog={handleSelectMusicLog}
-        />
+        <View className="mt-2">
+          <MusicLogSection
+            data={musicLogs}
+            isError={recentMusicLogsQuery.isError}
+            isLoading={recentMusicLogsQuery.isLoading && momentLogs.length === 0}
+            onSelectLog={handleSelectMusicLog}
+          />
+        </View>
       </ScrollView>
       {currentTrack ? <MiniPlayer /> : null}
-      {shouldShowTravelModeSuggestion && currentPlace ? (
-        <TravelModeSuggestionSheet
-          onDismiss={() => setDismissedSuggestionPlaceId(currentPlace.id)}
-          onStartTravelMode={() => {
-            handleSelectRecommendationMode('travel');
-            setDismissedSuggestionPlaceId(currentPlace.id);
-          }}
-          place={currentPlace}
-        />
-      ) : null}
     </Screen>
   );
 }

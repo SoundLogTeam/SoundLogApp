@@ -1,4 +1,11 @@
-import { ScrollView, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  LayoutChangeEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  View,
+} from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { MusicLogCard } from '@/components/home/MusicLogCard';
@@ -11,11 +18,17 @@ type MusicLogSectionProps = {
   onSelectLog?: (item: MusicLogItem) => void;
 };
 
+const MUSIC_LOG_CARD_WIDTH = 164;
+const MUSIC_LOG_CARD_HEIGHT = 216;
+const MUSIC_LOG_CARD_GAP = 14;
+const MUSIC_LOG_SNAP_INTERVAL = MUSIC_LOG_CARD_WIDTH + MUSIC_LOG_CARD_GAP;
+const MUSIC_LOG_INITIAL_INDEX = 1;
+
 function MusicLogSkeleton() {
   return (
-    <View className="flex-row">
+    <View className="flex-row overflow-hidden">
       {[0, 1, 2].map((item) => (
-        <View key={item} className="mr-3 h-[170px] w-[116px] rounded-[18px] bg-white/10" />
+        <View key={item} className="mr-[14px] h-[216px] w-[164px] rounded-[18px] bg-white/10" />
       ))}
     </View>
   );
@@ -27,9 +40,67 @@ export function MusicLogSection({
   isLoading = false,
   onSelectLog,
 }: MusicLogSectionProps) {
+  const scrollRef = useRef<any>(null);
+  const scrollX = useRef(new Animated.Value(MUSIC_LOG_INITIAL_INDEX * MUSIC_LOG_SNAP_INTERVAL)).current;
+  const [sectionWidth, setSectionWidth] = useState(0);
+  const carouselSidePadding =
+    sectionWidth > 0 ? Math.max(0, (sectionWidth - MUSIC_LOG_CARD_WIDTH) / 2) : 0;
+  const initialIndex = data.length > MUSIC_LOG_INITIAL_INDEX ? MUSIC_LOG_INITIAL_INDEX : 0;
+  const canLoop = data.length > 1;
+  const carouselData = canLoop ? [...data, ...data, ...data] : data;
+  const initialCarouselIndex = canLoop ? data.length + initialIndex : initialIndex;
+  const initialOffset = initialCarouselIndex * MUSIC_LOG_SNAP_INTERVAL;
+
+  const handleLayout = (event: LayoutChangeEvent) => {
+    setSectionWidth(event.nativeEvent.layout.width);
+  };
+
+  const resetLoopEdge = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (!canLoop) {
+      return;
+    }
+
+    const currentIndex = Math.round(event.nativeEvent.contentOffset.x / MUSIC_LOG_SNAP_INTERVAL);
+
+    if (currentIndex >= data.length && currentIndex < data.length * 2) {
+      return;
+    }
+
+    const realIndex = ((currentIndex % data.length) + data.length) % data.length;
+    const nextIndex = data.length + realIndex;
+
+    const nextOffset = nextIndex * MUSIC_LOG_SNAP_INTERVAL;
+
+    scrollX.setValue(nextOffset);
+    scrollRef.current?.scrollTo({
+      animated: false,
+      x: nextOffset,
+      y: 0,
+    });
+  };
+
+  useEffect(() => {
+    if (data.length === 0) {
+      return;
+    }
+
+    const nextIndex = data.length > MUSIC_LOG_INITIAL_INDEX ? MUSIC_LOG_INITIAL_INDEX : 0;
+    const nextCarouselIndex = canLoop ? data.length + nextIndex : nextIndex;
+    const nextOffset = nextCarouselIndex * MUSIC_LOG_SNAP_INTERVAL;
+
+    scrollX.setValue(nextOffset);
+    requestAnimationFrame(() => {
+      scrollRef.current?.scrollTo({
+        animated: false,
+        x: nextOffset,
+        y: 0,
+      });
+    });
+  }, [canLoop, data.length, scrollX]);
+
   return (
-    <View className="gap-4">
-      <AppText className="text-[22px] font-semibold text-white">Music Log</AppText>
+    <View className="gap-4 pb-6" onLayout={handleLayout}>
+      <AppText className="text-[26px] font-semibold text-white">Music Log</AppText>
 
       {isLoading ? (
         <MusicLogSkeleton />
@@ -46,18 +117,61 @@ export function MusicLogSection({
           </AppText>
         </View>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View className="flex-row pr-5">
-            {data.map((item, index) => (
+        <Animated.ScrollView
+          contentContainerStyle={{
+            paddingLeft: carouselSidePadding,
+            paddingRight: carouselSidePadding,
+          }}
+          contentOffset={{ x: initialOffset, y: 0 }}
+          decelerationRate="fast"
+          disableIntervalMomentum
+          horizontal
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { useNativeDriver: true },
+          )}
+          onScrollEndDrag={resetLoopEdge}
+          onMomentumScrollEnd={resetLoopEdge}
+          ref={scrollRef}
+          scrollEventThrottle={16}
+          showsHorizontalScrollIndicator={false}
+          snapToAlignment="start"
+          snapToInterval={MUSIC_LOG_SNAP_INTERVAL}
+        >
+          {carouselData.map((item, index) => {
+            const inputRange = [
+              (index - 1) * MUSIC_LOG_SNAP_INTERVAL,
+              index * MUSIC_LOG_SNAP_INTERVAL,
+              (index + 1) * MUSIC_LOG_SNAP_INTERVAL,
+            ];
+            const rotate = scrollX.interpolate({
+              extrapolate: 'clamp',
+              inputRange,
+              outputRange: ['8deg', '0deg', '-8deg'],
+            });
+            const scale = scrollX.interpolate({
+              extrapolate: 'clamp',
+              inputRange,
+              outputRange: [0.9, 1, 0.9],
+            });
+
+            return (
               <MusicLogCard
-                key={item.id}
+                animatedStyle={{
+                  transform: [{ rotate }, { scale }],
+                  transformOrigin: 'bottom center',
+                }}
+                cardHeight={MUSIC_LOG_CARD_HEIGHT}
+                cardWidth={MUSIC_LOG_CARD_WIDTH}
                 index={index}
                 item={item}
+                key={`${item.id}-${index}`}
                 onPress={onSelectLog ? () => onSelectLog(item) : undefined}
+                style={{ marginRight: index === carouselData.length - 1 ? 0 : MUSIC_LOG_CARD_GAP }}
               />
-            ))}
-          </View>
-        </ScrollView>
+            );
+          })}
+        </Animated.ScrollView>
       )}
     </View>
   );
