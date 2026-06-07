@@ -2,7 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { TravelMode } from '@/types/domain';
+import { MusicRecommendationMode, TravelMode } from '@/types/domain';
 
 export type RecommendationEventType =
   | 'track_play'
@@ -13,10 +13,12 @@ export type RecommendationEventType =
   | 'track_save'
   | 'track_unsave'
   | 'mood_filter_change'
+  | 'recommendation_mode_change'
   | 'top_filter_change';
 
 export type RecommendationEventContext = {
   moodFilter?: string;
+  recommendationMode?: MusicRecommendationMode;
   placeCategory?: string;
   placeId?: string;
   placeName?: string;

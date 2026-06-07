@@ -26,6 +26,17 @@ function getMatchScore(
   const itemGenres = item.genres ?? [];
   const itemMoods = item.moods ?? [];
   const itemTravelStyles = item.travelStyles ?? [];
+  const placeContext = [
+    params.currentPlace?.title,
+    params.currentPlace?.category,
+    params.currentPlace?.contentType,
+    params.currentPlace?.overview,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+  const travelModeWeight = params.recommendationMode === 'travel' ? 2.4 : 1;
+  const tasteWeight = params.recommendationMode === 'travel' ? 0.7 : 1.4;
 
   if (params.topFilter !== '전체' && itemMoods.includes(params.topFilter)) {
     score += 8;
@@ -37,14 +48,30 @@ function getMatchScore(
 
   score +=
     (params.preferredGenres ?? []).filter((genre) => itemGenres.includes(genre))
-      .length * 3;
+      .length * 3 * tasteWeight;
   score +=
     (params.preferredMoods ?? []).filter((mood) => itemMoods.includes(mood))
-      .length * 2;
+      .length * 2 * tasteWeight;
   score +=
     (params.travelStyles ?? []).filter((style) =>
       itemTravelStyles.includes(style),
-    ).length * 2;
+    ).length * 2 * travelModeWeight;
+
+  if (params.recommendationMode === 'travel') {
+    if (/궁|궁궐|문화|역사|전통|palace|heritage/.test(placeContext)) {
+      score += itemGenres.some((genre) => /국악|ambient|fusion|클래식/i.test(genre))
+        ? 18
+        : 0;
+    }
+
+    if (/해변|바다|해수욕장|ocean|beach/.test(placeContext)) {
+      score += itemMoods.some((mood) => /청량한|잔잔한|신나는/.test(mood)) ? 18 : 0;
+    }
+
+    if (/야경|타워|전망|city|night/.test(placeContext)) {
+      score += item.travelStyles?.includes('야경 감상') ? 18 : 0;
+    }
+  }
 
   return score;
 }
@@ -53,7 +80,11 @@ function getFeaturedPlaylistLocationScore(
   item: FeaturedPlaylist,
   params?: FeaturedPlaylistMockParams,
 ) {
-  if (!params?.locationRecommendationEnabled || !params.location) {
+  if (
+    !params?.locationRecommendationEnabled ||
+    !params.location ||
+    params.recommendationMode !== 'travel'
+  ) {
     return 0;
   }
 

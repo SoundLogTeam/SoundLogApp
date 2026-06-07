@@ -1,15 +1,20 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useCallback, useEffect } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { AppText } from '@/components/AppText';
+import { LocationContextCard } from '@/components/home/LocationContextCard';
 import { MusicPlatformSettingsCard } from '@/components/my/MusicPlatformSettingsCard';
 import { PermissionSettingsCard } from '@/components/my/PermissionSettingsCard';
 import { Screen } from '@/components/Screen';
 import { useNativePermissionSettings } from '@/hooks/useNativePermissionSettings';
 import { useMusicPlatformStore } from '@/store/musicPlatformStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
+import { requestForegroundLocationWithStatus } from '@/utils/location';
 
 type MyMenuItem = {
   description?: string;
@@ -33,15 +38,72 @@ function formatEventTime(value?: string) {
 }
 
 export default function MyScreen() {
-  const { profile, resetOnboarding } = useUserProfileStore();
+  const { profile, resetOnboarding, updateProfile } = useUserProfileStore();
   const { clearEvents, events, isHydrated } = useRecommendationEventStore();
   const permissionSettings = useNativePermissionSettings();
   const { selectedPlatformId, setSelectedPlatform } = useMusicPlatformStore();
+  const {
+    currentLocation,
+    currentPlace,
+    locationStatus,
+    locationUpdatedAt,
+    setLocation,
+    setLocationStatus,
+    setPlace,
+  } = useTravelSessionStore();
+  const nearbyPlacesQuery = useNearbyPlacesQuery({
+    enabled: profile.locationRecommendationEnabled,
+    location: currentLocation,
+    radiusMeters: 2000,
+  });
   const selectedSummary = [
     ...profile.preferredGenres.slice(0, 2),
     ...profile.preferredMoods.slice(0, 1),
     ...profile.travelStyles.slice(0, 1),
   ].join(' · ');
+
+  useEffect(() => {
+    if (!nearbyPlacesQuery.data) {
+      return;
+    }
+
+    const nextPlace = nearbyPlacesQuery.data[0];
+
+    if (nextPlace?.id !== currentPlace?.id) {
+      setPlace(nextPlace);
+    }
+  }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
+
+  const handleEnableLocationRecommendation = useCallback(() => {
+    updateProfile({
+      companionType: profile.companionType,
+      locationRecommendationEnabled: true,
+      preferredGenres: profile.preferredGenres,
+      preferredMoods: profile.preferredMoods,
+      travelStyles: profile.travelStyles,
+    });
+  }, [profile, updateProfile]);
+
+  const handleRefreshLocation = useCallback(async () => {
+    if (locationStatus === 'loading') {
+      return;
+    }
+
+    setLocationStatus('loading');
+
+    try {
+      const result = await requestForegroundLocationWithStatus();
+
+      if (result.location) {
+        setLocation(result.location);
+        return;
+      }
+
+      setLocationStatus(result.status === 'denied' ? 'denied' : 'unavailable');
+    } catch {
+      setLocationStatus('unavailable');
+    }
+  }, [locationStatus, setLocation, setLocationStatus]);
 
   const menuItems: MyMenuItem[] = [
     {
@@ -99,6 +161,26 @@ export default function MyScreen() {
           onRefresh={permissionSettings.refreshPermissions}
           onRequest={permissionSettings.requestPermission}
         />
+
+        <View className="mt-6">
+          <LocationContextCard
+            enabled={profile.locationRecommendationEnabled}
+            isLoading={locationStatus === 'loading'}
+            isPlaceLoading={nearbyPlacesQuery.isLoading}
+            location={currentLocation}
+            onEnable={handleEnableLocationRecommendation}
+            onRefresh={handleRefreshLocation}
+            place={currentPlace}
+            placeCount={nearbyPlacesQuery.data?.length ?? 0}
+            placeInfoMessage={
+              currentPlace?.source === 'mock'
+                ? 'TourAPI 키가 없거나 실패해 임시 장소 데이터를 사용 중이에요.'
+                : undefined
+            }
+            status={locationStatus}
+            updatedAt={locationUpdatedAt}
+          />
+        </View>
 
         <MusicPlatformSettingsCard
           onSelectPlatform={setSelectedPlatform}

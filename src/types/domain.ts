@@ -18,6 +18,8 @@ export type PlaceContext = {
 
 export type TravelMode = 'walk' | 'drive' | 'cafe' | 'ocean' | 'festival' | 'night';
 
+export type MusicRecommendationMode = 'everyday' | 'travel';
+
 export type MoodTag = 'calm' | 'fresh' | 'emotional' | 'active' | 'local';
 
 export type MusicPlatformId = 'melon' | 'none' | 'spotify' | 'youtubeMusic';
