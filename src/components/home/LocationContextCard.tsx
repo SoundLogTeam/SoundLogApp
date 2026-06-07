@@ -34,9 +34,9 @@ const statusCopy: Record<HomeLocationStatus, { description: string; icon: keyof 
     title: '현재 위치 기반 추천 중',
   },
   idle: {
-    description: '현재 장소를 확인하면 가까운 관광 맥락에 맞춰 추천 순서를 조정해요.',
+    description: '위치 설정을 켜면 현재 장소와 가까운 관광 맥락에 맞춰 추천 순서를 조정해요.',
     icon: 'map-pin',
-    title: '위치 기반 추천 준비',
+    title: '위치를 확인해 볼까요?',
   },
   loading: {
     description: '위치 권한과 현재 좌표를 확인하고 있어요.',
@@ -71,7 +71,7 @@ export function LocationContextCard({
         icon: 'map-pin' as const,
         title: '위치 추천이 꺼져 있어요',
       };
-  const buttonLabel = enabled ? (location ? '위치 새로고침' : '현재 위치 확인') : '위치 추천 켜기';
+  const buttonLabel = enabled ? (location ? '위치 새로고침' : '위치 설정') : '위치 추천 켜기';
 
   return (
     <View className="rounded-[22px] border border-white/10 bg-white/10 p-5">

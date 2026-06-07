@@ -128,6 +128,119 @@ const geojeTracks: Track[] = [
   },
 ];
 
+const calmWalkTracks: Track[] = [
+  {
+    artist: 'JENNIE',
+    fallbackColor: '#2B176C',
+    id: 'calm-walk-seoul-city',
+    platformUrls: {
+      spotify: 'https://open.spotify.com/search/JENNIE%20Seoul%20City',
+      youtubeMusic: 'https://music.youtube.com/search?q=JENNIE%20Seoul%20City',
+    },
+    title: 'Seoul City',
+  },
+  {
+    artist: '아이유',
+    fallbackColor: '#6E4FD3',
+    id: 'calm-walk-night-letter',
+    platformUrls: {
+      spotify:
+        'https://open.spotify.com/search/%EC%95%84%EC%9D%B4%EC%9C%A0%20%EB%B0%A4%ED%8E%B8%EC%A7%80',
+      youtubeMusic:
+        'https://music.youtube.com/search?q=%EC%95%84%EC%9D%B4%EC%9C%A0%20%EB%B0%A4%ED%8E%B8%EC%A7%80',
+    },
+    title: '밤편지',
+  },
+  {
+    artist: 'wave to earth',
+    fallbackColor: '#2D6A72',
+    id: 'calm-walk-seasons',
+    platformUrls: {
+      spotify: 'https://open.spotify.com/search/wave%20to%20earth%20seasons',
+      youtubeMusic: 'https://music.youtube.com/search?q=wave%20to%20earth%20seasons',
+    },
+    title: 'seasons',
+  },
+  {
+    artist: '카더가든',
+    fallbackColor: '#334D3F',
+    id: 'calm-walk-tree',
+    platformUrls: {
+      spotify:
+        'https://open.spotify.com/search/%EC%B9%B4%EB%8D%94%EA%B0%80%EB%93%A0%20%EB%82%98%EB%AC%B4',
+      youtubeMusic:
+        'https://music.youtube.com/search?q=%EC%B9%B4%EB%8D%94%EA%B0%80%EB%93%A0%20%EB%82%98%EB%AC%B4',
+    },
+    title: '나무',
+  },
+  {
+    artist: '혁오',
+    fallbackColor: '#45536B',
+    id: 'calm-walk-wi-ing',
+    platformUrls: {
+      spotify: 'https://open.spotify.com/search/hyukoh%20wi%20ing%20wi%20ing',
+      youtubeMusic: 'https://music.youtube.com/search?q=hyukoh%20wi%20ing%20wi%20ing',
+    },
+    title: '위잉위잉',
+  },
+  {
+    artist: '오존',
+    fallbackColor: '#6C7F99',
+    id: 'calm-walk-down',
+    platformUrls: {
+      spotify: 'https://open.spotify.com/search/O3ohn%20Down',
+      youtubeMusic: 'https://music.youtube.com/search?q=O3ohn%20Down',
+    },
+    title: 'Down',
+  },
+];
+
+function createMoodPlaylistTracks(playlistId: string, sourceTracks: Track[], colors: string[]) {
+  return sourceTracks.map((track, index) => ({
+    ...track,
+    fallbackColor: colors[index % colors.length] ?? track.fallbackColor,
+    id: `${playlistId}-${track.id}`,
+    isLiked: undefined,
+    isSaved: undefined,
+  }));
+}
+
+const driveTracks = createMoodPlaylistTracks('drive', [
+  geojeTracks[1],
+  tracks[1],
+  geojeTracks[0],
+  geojeTracks[2],
+  tracks[5],
+  geojeTracks[7],
+], ['#B1913A', '#D29B42', '#1D7F8C', '#DA6C51']);
+
+const cityNightTracks = createMoodPlaylistTracks('city-night', [
+  tracks[2],
+  tracks[0],
+  tracks[3],
+  geojeTracks[3],
+  geojeTracks[7],
+  tracks[5],
+], ['#1F2937', '#45536B', '#526391', '#D70D31']);
+
+const cafeIndieTracks = createMoodPlaylistTracks('cafe-indie', [
+  tracks[5],
+  geojeTracks[6],
+  geojeTracks[3],
+  geojeTracks[5],
+  tracks[3],
+  geojeTracks[4],
+], ['#3F2C6B', '#814D2B', '#334D3F', '#6E4FD3']);
+
+const festivalKpopTracks = createMoodPlaylistTracks('festival-kpop', [
+  tracks[0],
+  geojeTracks[1],
+  geojeTracks[0],
+  tracks[4],
+  tracks[1],
+  geojeTracks[2],
+], ['#9A3E62', '#D70D31', '#E66A73', '#29376B']);
+
 export const playlistDetail: PlaylistCuration = {
   backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
   coverImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/97/4033397_image2_1.jpg',
@@ -141,6 +254,61 @@ export const playlistDetail: PlaylistCuration = {
 };
 
 export const playlistCurationById: Record<string, PlaylistCuration> = {
+  'calm-walk': {
+    accentColor: '#2B176C',
+    coverImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/85/2613985_image2_1.jpg',
+    durationText: '28:00분',
+    id: 'calm-walk',
+    placeName: '느린 걸음의 산책길',
+    reason: '잔잔한 산책 무드에 맞춰 천천히 이어지는 음악을 추천했어요',
+    regionName: '잔잔한 산책',
+    trackCount: calmWalkTracks.length,
+    tracks: calmWalkTracks,
+  },
+  drive: {
+    accentColor: '#B1913A',
+    coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
+    durationText: '34:00분',
+    id: 'drive',
+    placeName: '해안도로 드라이브',
+    reason: '드라이브 팝 채널의 경쾌한 색감에 맞춰 이동감 있는 음악을 추천했어요',
+    regionName: '드라이브 팝',
+    trackCount: driveTracks.length,
+    tracks: driveTracks,
+  },
+  'city-night': {
+    accentColor: '#1F2937',
+    coverImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/97/4033397_image2_1.jpg',
+    durationText: '31:00분',
+    id: 'city-night',
+    placeName: '도시 야경 산책',
+    reason: '도시의 야경 채널에 맞춰 밤공기와 어울리는 감성적인 음악을 추천했어요',
+    regionName: '도시의 야경',
+    trackCount: cityNightTracks.length,
+    tracks: cityNightTracks,
+  },
+  'cafe-indie': {
+    accentColor: '#3F2C6B',
+    coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+    durationText: '29:00분',
+    id: 'cafe-indie',
+    placeName: '창가 자리와 오후 산책',
+    reason: '카페 인디 채널의 차분한 색감에 맞춰 오래 머물기 좋은 음악을 추천했어요',
+    regionName: '카페 인디',
+    trackCount: cafeIndieTracks.length,
+    tracks: cafeIndieTracks,
+  },
+  'festival-kpop': {
+    accentColor: '#9A3E62',
+    coverImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/33/3010733_image2_1.jpg',
+    durationText: '33:00분',
+    id: 'festival-kpop',
+    placeName: '페스티벌 광장',
+    reason: '페스티벌 K-POP 채널의 에너지에 맞춰 밝고 리듬감 있는 음악을 추천했어요',
+    regionName: '페스티벌 K-POP',
+    trackCount: festivalKpopTracks.length,
+    tracks: festivalKpopTracks,
+  },
   'geoje-ocean': {
     backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
     coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',

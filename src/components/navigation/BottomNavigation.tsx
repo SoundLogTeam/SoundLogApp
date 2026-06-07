@@ -69,8 +69,8 @@ export function BottomNavigation() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: colors.accent.purple,
-        tabBarInactiveTintColor: colors.text.secondary,
+        tabBarActiveTintColor: colors.accent.lime,
+        tabBarInactiveTintColor: colors.text.muted,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '700',

@@ -54,6 +54,7 @@ export type MoodRecommendation = {
   color: string;
   genres?: string[];
   moods?: string[];
+  playlistId?: string;
   track: Track;
   travelStyles?: string[];
 };
@@ -63,6 +64,7 @@ export type PlaylistCuration = {
   regionName: string;
   placeName?: string;
   reason: string;
+  accentColor?: string;
   coverImageUrl?: string;
   backgroundImageUrl?: string;
   trackCount: number;
