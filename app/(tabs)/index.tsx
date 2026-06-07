@@ -255,7 +255,7 @@ function HomeContent() {
               endedAt={session.endedAt}
               onDismissEnded={resetSession}
               onOpenRecap={() => router.push('/recap')}
-              onOpenTravel={() => router.push('/travel')}
+              onOpenTravel={() => router.push('/(tabs)/travel' as never)}
               selectedMode={selectedMode}
               startedAt={session.startedAt}
               status={session.status}
