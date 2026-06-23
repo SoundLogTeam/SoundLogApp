@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -327,7 +327,7 @@ export default function HomeScreen() {
   }, [isHydrated, profile.completedOnboarding]);
 
   if (!isHydrated || !profile.completedOnboarding) {
-    return <Screen />;
+    return isHydrated ? <Redirect href="/onboarding" /> : <Screen />;
   }
 
   return <HomeContent />;

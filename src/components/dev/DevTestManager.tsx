@@ -213,18 +213,21 @@ function DevTestManagerContent() {
 
   const { selectedMoodFilter, selectedTopFilter, setSelectedMoodFilter, setSelectedTopFilter } =
     useHomeFilterStore();
-  const { currentLocation, currentPlace, locationStatus, selectedMode, session } =
-    useTravelSessionStore();
-  const travelSessionActions = useTravelSessionStore((state) => ({
-    clearLocation: state.clearLocation,
-    endSession: state.endSession,
-    resetSession: state.resetSession,
-    setLocation: state.setLocation,
-    setLocationStatus: state.setLocationStatus,
-    setMode: state.setMode,
-    setPlace: state.setPlace,
-    startSession: state.startSession,
-  }));
+  const {
+    clearLocation,
+    currentLocation,
+    currentPlace,
+    endSession,
+    locationStatus,
+    resetSession,
+    selectedMode,
+    session,
+    setLocation,
+    setLocationStatus,
+    setMode,
+    setPlace,
+    startSession,
+  } = useTravelSessionStore();
   const {
     failedEndpointIds,
     failAllEndpoints,
@@ -295,13 +298,13 @@ function DevTestManagerContent() {
     router.replace('/onboarding' as never);
   };
   const applyPlacePreset = (preset: (typeof placePresets)[number]) => {
-    travelSessionActions.setLocation(preset.location);
-    travelSessionActions.setPlace(preset.place);
+    setLocation(preset.location);
+    setPlace(preset.place);
     invalidateMockQueries();
   };
   const setLocationState = (status: 'denied' | 'idle' | 'unavailable') => {
-    travelSessionActions.clearLocation();
-    travelSessionActions.setLocationStatus(status);
+    clearLocation();
+    setLocationStatus(status);
     invalidateMockQueries();
   };
   const addSampleMomentLogs = () => {
@@ -547,20 +550,20 @@ function DevTestManagerContent() {
                 <ManagerButton
                   active={session.status === 'active'}
                   label="여행 시작"
-                  onPress={travelSessionActions.startSession}
+                  onPress={startSession}
                 />
                 <ManagerButton
                   active={session.status === 'ended'}
                   label="여행 종료"
-                  onPress={travelSessionActions.endSession}
+                  onPress={endSession}
                 />
-                <ManagerButton destructive label="세션 리셋" onPress={travelSessionActions.resetSession} />
+                <ManagerButton destructive label="세션 리셋" onPress={resetSession} />
                 {travelModeOptions.map((mode) => (
                   <ManagerButton
                     key={mode.value}
                     active={selectedMode === mode.value}
                     label={mode.label}
-                    onPress={() => travelSessionActions.setMode(mode.value)}
+                    onPress={() => setMode(mode.value)}
                   />
                 ))}
               </ManagerSection>

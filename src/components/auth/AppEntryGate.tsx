@@ -1,5 +1,4 @@
-import { router, usePathname } from 'expo-router';
-import { useEffect } from 'react';
+import { Redirect, usePathname } from 'expo-router';
 
 import { useAuthStore } from '@/store/authStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
@@ -9,32 +8,25 @@ export function AppEntryGate() {
   const { isHydrated: authHydrated, status } = useAuthStore();
   const { isHydrated: profileHydrated, profile } = useUserProfileStore();
 
-  useEffect(() => {
-    if (!authHydrated || !profileHydrated || status === 'checking') {
-      return;
-    }
+  if (!authHydrated || !profileHydrated || status === 'checking') {
+    return null;
+  }
 
-    const isAuthRoute = pathname.startsWith('/auth');
-    const isOnboardingRoute = pathname.startsWith('/onboarding');
-    const hasAppSession = status === 'authenticated' || status === 'guest';
+  const isAuthRoute = pathname.startsWith('/auth');
+  const isOnboardingRoute = pathname.startsWith('/onboarding');
+  const hasAppSession = status === 'authenticated' || status === 'guest';
 
-    if (!hasAppSession) {
-      if (!isAuthRoute) {
-        router.replace('/auth/login' as never);
-      }
+  if (!hasAppSession && !isAuthRoute) {
+    return <Redirect href="/auth/login" />;
+  }
 
-      return;
-    }
+  if (isAuthRoute && status === 'authenticated') {
+    return <Redirect href={profile.completedOnboarding ? '/' : '/onboarding'} />;
+  }
 
-    if (isAuthRoute && status === 'authenticated') {
-      router.replace((profile.completedOnboarding ? '/' : '/onboarding') as never);
-      return;
-    }
-
-    if (!profile.completedOnboarding && !isOnboardingRoute) {
-      router.replace('/onboarding' as never);
-    }
-  }, [authHydrated, pathname, profile.completedOnboarding, profileHydrated, status]);
+  if (hasAppSession && !profile.completedOnboarding && !isOnboardingRoute) {
+    return <Redirect href="/onboarding" />;
+  }
 
   return null;
 }
