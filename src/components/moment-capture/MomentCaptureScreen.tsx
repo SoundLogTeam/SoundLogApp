@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
+import { momentLogApi } from '@/api/momentLogApi';
 import { AppText } from '@/components/AppText';
 import { CameraCaptureView } from '@/components/moment-capture/CameraCaptureView';
 import { CameraPermissionState } from '@/components/moment-capture/CameraPermissionState';
@@ -12,7 +13,7 @@ import { useHomeFilterStore } from '@/store/homeFilterStore';
 import { useMomentLogStore } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
-import { GeoPoint } from '@/types/domain';
+import { GeoPoint, MomentLog } from '@/types/domain';
 import { getForegroundLocationWithTimeout } from '@/utils/location';
 import { getMoodTagsFromFilter } from '@/utils/moodTags';
 import { persistMomentPhoto } from '@/utils/momentFiles';
@@ -30,6 +31,7 @@ export function MomentCaptureScreen() {
   const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
 
   const addLog = useMomentLogStore((state) => state.addLog);
+  const removeLog = useMomentLogStore((state) => state.removeLog);
   const { selectedMoodFilter } = useHomeFilterStore();
   const { currentTrack } = usePlayerStore();
   const { currentLocation, currentPlace, selectedMode, session, setLocation, startSession } =
@@ -115,8 +117,7 @@ export function MomentCaptureScreen() {
       const locationSnapshot: GeoPoint | undefined = currentLocation;
       const photoUri = await persistMomentPhoto(capturedPhotoUri, id);
       const createdAt = new Date().toISOString();
-
-      addLog({
+      const localLog: MomentLog = {
         createdAt,
         id,
         location: locationSnapshot,
@@ -130,7 +131,34 @@ export function MomentCaptureScreen() {
         syncStatus: 'local',
         track: currentTrack,
         travelMode: selectedMode,
-      });
+      };
+
+      addLog(localLog);
+      void momentLogApi
+        .createMomentLog({
+          createdAt,
+          idempotencyKey: id,
+          location: locationSnapshot,
+          moodTags,
+          photoUri,
+          placeCategory: currentPlace?.category,
+          placeId: currentPlace?.id,
+          placeName: currentPlace?.title ?? formatPlaceLabel(locationSnapshot),
+          sessionId: session.id,
+          track: currentTrack,
+          travelMode: selectedMode,
+        })
+        .then((serverLog) => {
+          if (!serverLog) {
+            return;
+          }
+
+          removeLog(id);
+          addLog(serverLog);
+        })
+        .catch(() => {
+          addLog({ ...localLog, syncStatus: 'failed' });
+        });
 
       router.replace('/');
     } catch {

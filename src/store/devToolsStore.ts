@@ -3,6 +3,11 @@ import { create } from 'zustand';
 import { MockEndpointId } from '@/mock-server/types';
 
 export const mockEndpointIds: MockEndpointId[] = [
+  'auth.socialLogin',
+  'auth.refresh',
+  'auth.logout',
+  'auth.me',
+  'auth.migrateLocalData',
   'home.featuredPlaylists',
   'home.moodRecommendations',
   'home.recentMusicLogs',

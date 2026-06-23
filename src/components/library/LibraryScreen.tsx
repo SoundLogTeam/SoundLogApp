@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { libraryApi } from '@/api/libraryApi';
+import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
 import { LibraryEmptyState } from '@/components/library/LibraryEmptyState';
 import { LibraryTrackRow } from '@/components/library/LibraryTrackRow';
@@ -36,12 +38,14 @@ export function LibraryScreen() {
   };
   const playRecord = (record: LibraryTrackRecord) => {
     setTrack(record.track, record.playlistId);
-    addRecommendationEvent({
-      context: createRecommendationEventContext(),
-      playlistId: record.playlistId,
-      trackId: record.track.id,
-      type: 'track_play',
-    });
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context: createRecommendationEventContext(),
+        playlistId: record.playlistId,
+        trackId: record.track.id,
+        type: 'track_play',
+      }),
+    );
   };
   const toggleSelectedLike = () => {
     if (!selectedRecord) {
@@ -49,13 +53,23 @@ export function LibraryScreen() {
     }
 
     const nextLiked = !isLiked(selectedRecord.track.id);
+    const context = createRecommendationEventContext();
     toggleLike(selectedRecord.track, selectedRecord.playlistId);
-    addRecommendationEvent({
-      context: createRecommendationEventContext(),
-      playlistId: selectedRecord.playlistId,
-      trackId: selectedRecord.track.id,
-      type: nextLiked ? 'track_like' : 'track_unlike',
-    });
+    void libraryApi
+      .updateTrackState(selectedRecord.track.id, {
+        action: nextLiked ? 'like' : 'unlike',
+        context,
+        playlistId: selectedRecord.playlistId,
+      })
+      .catch(() => undefined);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context,
+        playlistId: selectedRecord.playlistId,
+        trackId: selectedRecord.track.id,
+        type: nextLiked ? 'track_like' : 'track_unlike',
+      }),
+    );
 
     if (selectedTab === 'liked' && !nextLiked) {
       closeMenu();
@@ -67,13 +81,23 @@ export function LibraryScreen() {
     }
 
     const nextSaved = !isSaved(selectedRecord.track.id);
+    const context = createRecommendationEventContext();
     toggleSave(selectedRecord.track, selectedRecord.playlistId);
-    addRecommendationEvent({
-      context: createRecommendationEventContext(),
-      playlistId: selectedRecord.playlistId,
-      trackId: selectedRecord.track.id,
-      type: nextSaved ? 'track_save' : 'track_unsave',
-    });
+    void libraryApi
+      .updateTrackState(selectedRecord.track.id, {
+        action: nextSaved ? 'save' : 'unsave',
+        context,
+        playlistId: selectedRecord.playlistId,
+      })
+      .catch(() => undefined);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context,
+        playlistId: selectedRecord.playlistId,
+        trackId: selectedRecord.track.id,
+        type: nextSaved ? 'track_save' : 'track_unsave',
+      }),
+    );
 
     if (selectedTab === 'saved' && !nextSaved) {
       closeMenu();

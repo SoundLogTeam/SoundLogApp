@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { queryClient } from '@/providers/queryClient';
 import { AppText } from '@/components/AppText';
 import { playlistCurationById } from '@/mocks/playlistMocks';
+import { useAuthStore } from '@/store/authStore';
 import { mockEndpointIds, useDevToolsStore } from '@/store/devToolsStore';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
 import { useLibraryStore } from '@/store/libraryStore';
@@ -23,6 +24,7 @@ import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
+import { AuthProvider, AuthSession } from '@/types/auth';
 import { GeoPoint, MomentLog, PlaceContext, Track, TravelMode } from '@/types/domain';
 
 const BUTTON_SIZE = 58;
@@ -76,6 +78,7 @@ const travelModeOptions: Array<{ label: string; value: TravelMode }> = [
   { label: '축제', value: 'festival' },
   { label: '야경', value: 'night' },
 ];
+const authProviderOptions: AuthProvider[] = ['apple', 'google', 'kakao'];
 
 type ManagerButtonProps = {
   active?: boolean;
@@ -232,6 +235,8 @@ function DevTestManagerContent() {
     toggleFailedEndpoint,
   } = useDevToolsStore();
   const { completeOnboarding, resetOnboarding } = useUserProfileStore();
+  const { continueAsGuest, finishLogin, logoutLocal, status: authStatus, user: authUser } =
+    useAuthStore();
   const { logs, addLog, removeLog } = useMomentLogStore();
   const { likedTracks, savedTracks, removeLikedTrack, removeSavedTrack, toggleLike, toggleSave } =
     useLibraryStore();
@@ -241,6 +246,34 @@ function DevTestManagerContent() {
   const navigate = (path: string) => {
     setIsOpen(false);
     router.push(path as never);
+  };
+  const applyMockLogin = (provider: AuthProvider) => {
+    const session: AuthSession = {
+      accessToken: `dev-access-${provider}-${Date.now()}`,
+      expiresIn: 3600,
+      isNewUser: false,
+      refreshToken: `dev-refresh-${provider}-${Date.now()}`,
+      user: {
+        displayName: `${provider.toUpperCase()} 테스트 유저`,
+        email: `${provider}@soundlog.test`,
+        id: `dev-user-${provider}`,
+        provider,
+      },
+    };
+
+    finishLogin(session);
+    setIsOpen(false);
+    router.replace('/' as never);
+  };
+  const applyGuestSession = () => {
+    continueAsGuest();
+    setIsOpen(false);
+    router.replace('/' as never);
+  };
+  const applyLogout = () => {
+    logoutLocal();
+    setIsOpen(false);
+    router.replace('/auth/login' as never);
   };
   const applyProfilePreset = () => {
     completeOnboarding({
@@ -422,6 +455,7 @@ function DevTestManagerContent() {
                 <StatusPill label={`모드 ${selectedMode ?? '없음'}`} />
                 <StatusPill label={`장소 ${currentPlace?.title ?? '없음'}`} />
                 <StatusPill label={`곡 ${currentTrack?.title ?? '없음'}`} />
+                <StatusPill label={`Auth ${authUser?.displayName ?? authStatus}`} />
                 <StatusPill
                   label={`Mock ${failAllEndpoints ? '전체 실패' : `${mockDelayMs ?? DEFAULT_DELAY_MS}ms`}`}
                 />
@@ -429,6 +463,7 @@ function DevTestManagerContent() {
 
               <ManagerSection title="페이지 이동">
                 <ManagerButton label="홈" onPress={() => navigate('/')} />
+                <ManagerButton label="로그인" onPress={() => navigate('/auth/login')} />
                 <ManagerButton label="온보딩" onPress={() => navigate('/onboarding')} />
                 <ManagerButton
                   label="부산 플레이리스트"
@@ -443,6 +478,23 @@ function DevTestManagerContent() {
                 <ManagerButton label="보관함" onPress={() => navigate('/library')} />
                 <ManagerButton label="마이" onPress={() => navigate('/my')} />
                 <ManagerButton label="카메라" onPress={() => navigate('/camera')} />
+              </ManagerSection>
+
+              <ManagerSection subtitle="로그인 gate, 게스트 모드, 로그아웃 분기를 강제로 테스트합니다." title="인증">
+                {authProviderOptions.map((provider) => (
+                  <ManagerButton
+                    key={provider}
+                    active={authUser?.provider === provider}
+                    label={`${provider} 로그인`}
+                    onPress={() => applyMockLogin(provider)}
+                  />
+                ))}
+                <ManagerButton
+                  active={authStatus === 'guest'}
+                  label="게스트"
+                  onPress={applyGuestSession}
+                />
+                <ManagerButton destructive label="로그아웃" onPress={applyLogout} />
               </ManagerSection>
 
               <ManagerSection subtitle="온보딩 gate와 홈 필터 기본값을 테스트합니다." title="프로필">

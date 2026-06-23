@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { libraryApi } from '@/api/libraryApi';
 import { usePlaylistCurationQuery } from '@/api/playlistQueries';
+import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { PlaylistBackground } from '@/components/playlist/PlaylistBackground';
 import { PlaylistBottomSheet } from '@/components/playlist/PlaylistBottomSheet';
@@ -84,12 +86,14 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     }
 
     setTrack(track, playlist.id, playlist.tracks);
-    addRecommendationEvent({
-      context: createRecommendationEventContext(),
-      playlistId: playlist.id,
-      trackId: track.id,
-      type: 'track_play',
-    });
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context: createRecommendationEventContext(),
+        playlistId: playlist.id,
+        trackId: track.id,
+        type: 'track_play',
+      }),
+    );
   };
 
   const playFirstTrack = () => {
@@ -108,13 +112,23 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     }
 
     const nextLiked = !isLiked(selectedTrack.id);
+    const context = createRecommendationEventContext();
     toggleLike(selectedTrack, playlist?.id);
-    addRecommendationEvent({
-      context: createRecommendationEventContext(),
-      playlistId: playlist?.id,
-      trackId: selectedTrack.id,
-      type: nextLiked ? 'track_like' : 'track_unlike',
-    });
+    void libraryApi
+      .updateTrackState(selectedTrack.id, {
+        action: nextLiked ? 'like' : 'unlike',
+        context,
+        playlistId: playlist?.id,
+      })
+      .catch(() => undefined);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context,
+        playlistId: playlist?.id,
+        trackId: selectedTrack.id,
+        type: nextLiked ? 'track_like' : 'track_unlike',
+      }),
+    );
   };
 
   const toggleSaved = () => {
@@ -123,13 +137,23 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     }
 
     const nextSaved = !isSaved(selectedTrack.id);
+    const context = createRecommendationEventContext();
     toggleSave(selectedTrack, playlist?.id);
-    addRecommendationEvent({
-      context: createRecommendationEventContext(),
-      playlistId: playlist?.id,
-      trackId: selectedTrack.id,
-      type: nextSaved ? 'track_save' : 'track_unsave',
-    });
+    void libraryApi
+      .updateTrackState(selectedTrack.id, {
+        action: nextSaved ? 'save' : 'unsave',
+        context,
+        playlistId: playlist?.id,
+      })
+      .catch(() => undefined);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context,
+        playlistId: playlist?.id,
+        trackId: selectedTrack.id,
+        type: nextSaved ? 'track_save' : 'track_unsave',
+      }),
+    );
   };
 
   const closeMenu = () => setSelectedTrackId(undefined);

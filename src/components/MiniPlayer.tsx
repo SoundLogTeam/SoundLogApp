@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { Modal, Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { libraryApi } from '@/api/libraryApi';
+import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
 import { TrackActionMenu } from '@/components/playlist/TrackActionMenu';
 import { getMiniPlayerBottom } from '@/constants/layout';
@@ -46,31 +48,55 @@ export function MiniPlayer() {
   const playerSoftGlow = hexToRgba(keyColor, 0.24);
   const canSkip = queue.length > 1;
   const handleToggleLike = () => {
+    const context = createRecommendationEventContext();
+
     toggleLike(currentTrack, playlistId);
-    addRecommendationEvent({
-      context: createRecommendationEventContext(),
-      playlistId,
-      trackId: currentTrack.id,
-      type: liked ? 'track_unlike' : 'track_like',
-    });
+    void libraryApi
+      .updateTrackState(currentTrack.id, {
+        action: liked ? 'unlike' : 'like',
+        context,
+        playlistId,
+      })
+      .catch(() => undefined);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context,
+        playlistId,
+        trackId: currentTrack.id,
+        type: liked ? 'track_unlike' : 'track_like',
+      }),
+    );
   };
   const handleTogglePlayback = () => {
     toggle();
-    addRecommendationEvent({
-      context: createRecommendationEventContext(),
-      playlistId,
-      trackId: currentTrack.id,
-      type: isPlaying ? 'track_pause' : 'track_resume',
-    });
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context: createRecommendationEventContext(),
+        playlistId,
+        trackId: currentTrack.id,
+        type: isPlaying ? 'track_pause' : 'track_resume',
+      }),
+    );
   };
   const handleToggleSave = () => {
+    const context = createRecommendationEventContext();
+
     toggleSave(currentTrack, playlistId);
-    addRecommendationEvent({
-      context: createRecommendationEventContext(),
-      playlistId,
-      trackId: currentTrack.id,
-      type: saved ? 'track_unsave' : 'track_save',
-    });
+    void libraryApi
+      .updateTrackState(currentTrack.id, {
+        action: saved ? 'unsave' : 'save',
+        context,
+        playlistId,
+      })
+      .catch(() => undefined);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context,
+        playlistId,
+        trackId: currentTrack.id,
+        type: saved ? 'track_unsave' : 'track_save',
+      }),
+    );
   };
   const handlePlayNext = () => {
     if (!canSkip) {

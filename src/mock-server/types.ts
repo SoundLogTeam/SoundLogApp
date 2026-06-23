@@ -1,4 +1,11 @@
 import {
+  AuthMe,
+  AuthSession,
+  LocalDataMigrationPayload,
+  LocalDataMigrationResult,
+  SocialLoginRequest,
+} from '@/types/auth';
+import {
   FeaturedPlaylist,
   GeoPoint,
   MusicRecommendationMode,
@@ -11,6 +18,11 @@ import {
 } from '@/types/domain';
 
 export type MockEndpointId =
+  | 'auth.logout'
+  | 'auth.me'
+  | 'auth.migrateLocalData'
+  | 'auth.refresh'
+  | 'auth.socialLogin'
   | 'home.featuredPlaylists'
   | 'home.moodRecommendations'
   | 'home.recentMusicLogs'
@@ -47,6 +59,15 @@ export type NearbyPlacesMockParams = {
 };
 
 export type MockServer = {
+  auth: {
+    getMe: () => Promise<AuthMe>;
+    logout: () => Promise<{ accepted: boolean }>;
+    migrateLocalData: (
+      payload: LocalDataMigrationPayload,
+    ) => Promise<LocalDataMigrationResult>;
+    refresh: (refreshToken?: string) => Promise<AuthSession>;
+    socialLogin: (request: SocialLoginRequest) => Promise<AuthSession>;
+  };
   home: {
     getFeaturedPlaylists: (
       params?: FeaturedPlaylistMockParams,

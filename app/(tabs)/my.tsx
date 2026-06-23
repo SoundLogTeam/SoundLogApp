@@ -3,9 +3,11 @@ import { router } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { meApi } from '@/api/meApi';
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { AppText } from '@/components/AppText';
 import { LocationContextCard } from '@/components/home/LocationContextCard';
+import { AuthAccountCard } from '@/components/my/AuthAccountCard';
 import { MusicPlatformSettingsCard } from '@/components/my/MusicPlatformSettingsCard';
 import { PermissionSettingsCard } from '@/components/my/PermissionSettingsCard';
 import { Screen } from '@/components/Screen';
@@ -15,6 +17,7 @@ import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
+import { MusicPlatformId } from '@/types/domain';
 
 type MyMenuItem = {
   description?: string;
@@ -75,14 +78,30 @@ export default function MyScreen() {
   }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
 
   const handleEnableLocationRecommendation = useCallback(() => {
-    updateProfile({
+    const nextProfile = {
       companionType: profile.companionType,
       locationRecommendationEnabled: true,
       preferredGenres: profile.preferredGenres,
       preferredMoods: profile.preferredMoods,
       travelStyles: profile.travelStyles,
-    });
+    };
+
+    updateProfile(nextProfile);
+    void meApi.updateProfile(nextProfile).catch(() => undefined);
   }, [profile, updateProfile]);
+
+  const handleSelectMusicPlatform = useCallback(
+    (platformId: MusicPlatformId) => {
+      setSelectedPlatform(platformId);
+      void meApi
+        .updateMusicPlatform({
+          connected: platformId !== 'none',
+          selectedPlatformId: platformId,
+        })
+        .catch(() => undefined);
+    },
+    [setSelectedPlatform],
+  );
 
   const handleRefreshLocation = useCallback(async () => {
     if (locationStatus === 'loading') {
@@ -142,6 +161,8 @@ export default function MyScreen() {
       >
         <AppText className="text-[26px] font-semibold text-white">My</AppText>
 
+        <AuthAccountCard />
+
         <View className="mt-5 rounded-[22px] border border-white/10 bg-white/10 p-5">
           <AppText className="text-sm font-semibold text-white/45">내 추천 프로필</AppText>
           <AppText className="mt-3 text-[20px] font-semibold text-white">
@@ -183,7 +204,7 @@ export default function MyScreen() {
         </View>
 
         <MusicPlatformSettingsCard
-          onSelectPlatform={setSelectedPlatform}
+          onSelectPlatform={handleSelectMusicPlatform}
           selectedPlatformId={selectedPlatformId}
         />
 

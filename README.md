@@ -32,6 +32,12 @@ EXPO_PUBLIC_MOCK_API_DELAY_MS=1500 npm run web
 EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=playlist.detail npm run web
 ```
 
+실제 서버와 연동할 때는 Expo 환경변수로 API base URL을 지정합니다. 이 값이 없으면 앱은 기존 mock API를 사용합니다.
+
+```bash
+EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.example.com npm run web
+```
+
 ## 문서
 
 - [문서 인덱스](docs/README.md)
