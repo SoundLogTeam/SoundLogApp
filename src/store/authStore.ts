@@ -1,7 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { createAuthStorage } from '@/store/authStorage';
 import {
   AuthProvider,
   AuthSession,
@@ -81,7 +81,7 @@ export const useAuthStore = create<AuthState>()(
         updatedAt: state.updatedAt,
         user: state.user,
       }),
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(createAuthStorage),
     },
   ),
 );

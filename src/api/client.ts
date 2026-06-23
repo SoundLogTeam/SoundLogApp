@@ -18,6 +18,8 @@ type ApiErrorResponse = {
   };
 };
 
+let refreshSessionPromise: Promise<string | undefined> | undefined;
+
 export class ApiError extends Error {
   code?: string;
   status: number;
@@ -131,6 +133,14 @@ async function refreshSession(baseUrl: string) {
   return session.accessToken;
 }
 
+function refreshSessionOnce(baseUrl: string) {
+  refreshSessionPromise ??= refreshSession(baseUrl).finally(() => {
+    refreshSessionPromise = undefined;
+  });
+
+  return refreshSessionPromise;
+}
+
 async function sendRequest<T>(
   path: string,
   options: ApiRequestOptions,
@@ -193,7 +203,7 @@ export async function requestApi<T>(path: string, options: ApiRequestOptions = {
       options.auth !== false &&
       options.retryOnUnauthorized !== false
     ) {
-      const nextAccessToken = await refreshSession(getApiBaseUrl() ?? '');
+      const nextAccessToken = await refreshSessionOnce(getApiBaseUrl() ?? '');
 
       if (nextAccessToken) {
         return sendRequest<T>(path, { ...options, retryOnUnauthorized: false }, nextAccessToken);

@@ -4,6 +4,10 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Platform, Pressable, ScrollView, View } from 'react-native';
 
+import {
+  canUseDevSocialLoginFallback,
+  createDevProviderAccessToken,
+} from '@/api/authConfig';
 import { useSocialLoginMutation } from '@/api/authQueries';
 import { AppText } from '@/components/AppText';
 import { BrandLogo } from '@/components/BrandLogo';
@@ -51,6 +55,7 @@ function getNextRoute(completedOnboarding: boolean) {
 export default function LoginScreen() {
   const [selectedProvider, setSelectedProvider] = useState<AuthProvider>();
   const socialLoginMutation = useSocialLoginMutation();
+  const isDevAuthFallbackEnabled = canUseDevSocialLoginFallback();
   const {
     clearAuthError,
     continueAsGuest,
@@ -71,6 +76,12 @@ export default function LoginScreen() {
     clearAuthError();
 
     try {
+      const providerAccessToken = createDevProviderAccessToken(provider);
+
+      if (!providerAccessToken) {
+        throw new Error('social_login_not_configured');
+      }
+
       const session = await socialLoginMutation.mutateAsync({
         device: {
           appVersion: '1.0.0',
@@ -83,7 +94,7 @@ export default function LoginScreen() {
                 : 'web',
         },
         provider,
-        providerAccessToken: `mock-${provider}-provider-token`,
+        providerAccessToken,
         redirectUri: 'soundlog://auth/callback',
       });
 
@@ -151,8 +162,9 @@ export default function LoginScreen() {
                     계정으로 이어지는 기록
                   </AppText>
                   <AppText className="mt-1 text-xs leading-5 text-white/48">
-                    지금은 mock 로그인으로 플로우를 검증하고, 이후 실제 OAuth
-                    provider를 연결해요.
+                    {isDevAuthFallbackEnabled
+                      ? '개발 빌드에서는 mock 로그인으로 플로우를 검증하고, 실제 배포 전 OAuth provider를 연결해요.'
+                      : '실제 배포 빌드에서는 OAuth provider 설정 후 로그인할 수 있어요.'}
                   </AppText>
                 </View>
               </View>

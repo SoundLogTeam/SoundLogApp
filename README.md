@@ -38,6 +38,12 @@ EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=playlist.detail npm run web
 EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.example.com npm run web
 ```
 
+네이티브 실배포 빌드는 HTTPS API를 사용해야 합니다. 개발 빌드에서는 mock 소셜 로그인 fallback을 사용할 수 있지만, production 빌드에서는 실제 OAuth provider 토큰/idToken 연동이 필요합니다.
+
+```bash
+EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK=false npm run ios
+```
+
 ## 문서
 
 - [문서 인덱스](docs/README.md)

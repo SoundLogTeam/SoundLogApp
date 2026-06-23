@@ -8,11 +8,6 @@
     "scheme": "soundlog",
     "userInterfaceStyle": "dark",
     "ios": {
-      "infoPlist": {
-        "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true
-        }
-      },
       "supportsTablet": true,
       "bundleIdentifier": "com.mannomi.soundlog"
     },
@@ -63,7 +58,9 @@
           "photosPermission": "Soundlog가 리캡 이미지를 저장하기 위해 사진 접근 권한이 필요합니다.",
           "savePhotosPermission": "Soundlog가 리캡 이미지를 사진 보관함에 저장하기 위해 권한이 필요합니다."
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-image"
     ],
     "experiments": {
       "typedRoutes": true
