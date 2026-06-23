@@ -44,6 +44,23 @@ EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.example.com npm run web
 EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK=false npm run ios
 ```
 
+## 테스트 설치 빌드
+
+`development`, `preview` EAS profile은 현재 EC2 mock DB 서버를 바라보도록 설정되어 있습니다.
+
+- API: `http://52.79.185.121:4000`
+- mock auth: `EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK=true`
+- iOS: 해당 IP에 한해 ATS HTTP 예외 적용
+- Android: preview 빌드에서 cleartext HTTP 허용
+
+Android 지인 테스트용 내부 배포 빌드는 아래 명령으로 생성합니다.
+
+```bash
+npx eas build --profile preview --platform android
+```
+
+iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/TestFlight에 올릴 실제 production profile은 HTTPS API와 실제 OAuth provider 연결 후 사용합니다.
+
 ## 문서
 
 - [문서 인덱스](docs/README.md)
