@@ -1,13 +1,14 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Alert, Linking, Pressable, View } from 'react-native';
 
 import {
   useLocalDataMigrationMutation,
   useLogoutMutation,
 } from '@/api/authQueries';
 import { AppText } from '@/components/AppText';
+import { SOUNDLOG_SUPPORT_EMAIL } from '@/constants/legal';
 import { useAuthStore } from '@/store/authStore';
 import { useLibraryStore } from '@/store/libraryStore';
 import { useMomentLogStore } from '@/store/momentLogStore';
@@ -20,6 +21,22 @@ const providerLabels = {
 
 function createMigrationKey() {
   return `migration-${Date.now()}`;
+}
+
+function openAccountDeletionEmail(userId?: string, email?: string) {
+  const subject = encodeURIComponent('Soundlog 계정 삭제 요청');
+  const body = encodeURIComponent(
+    [
+      'Soundlog 계정 삭제를 요청합니다.',
+      '',
+      `계정 ID: ${userId ?? '확인 필요'}`,
+      `계정 이메일: ${email ?? '확인 필요'}`,
+      '',
+      '삭제 요청 처리에 필요한 추가 확인 절차가 있다면 안내해주세요.',
+    ].join('\n'),
+  );
+
+  return Linking.openURL(`mailto:${SOUNDLOG_SUPPORT_EMAIL}?subject=${subject}&body=${body}`);
 }
 
 export function AuthAccountCard() {
@@ -70,6 +87,27 @@ export function AuthAccountCard() {
     router.push('/auth/login' as never);
   };
 
+  const handleDeleteAccountRequest = () => {
+    Alert.alert(
+      '계정 삭제 요청',
+      '요청을 보내면 계정과 서버에 동기화된 여행 기록 삭제 절차를 안내받게 됩니다.',
+      [
+        { style: 'cancel', text: '취소' },
+        {
+          onPress: () => {
+            void openAccountDeletionEmail(user?.id, user?.email).catch(() => {
+              setMigrationMessage(
+                `메일 앱을 열지 못했어요. ${SOUNDLOG_SUPPORT_EMAIL} 으로 계정 삭제를 요청해주세요.`,
+              );
+            });
+          },
+          style: 'destructive',
+          text: '요청 메일 작성',
+        },
+      ],
+    );
+  };
+
   if (status === 'authenticated' && user) {
     return (
       <View className="mt-5 rounded-[22px] border border-[#1DB954]/25 bg-[#0D1D15] p-5">
@@ -113,6 +151,16 @@ export function AuthAccountCard() {
             </AppText>
           </Pressable>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          className="mt-3 min-h-11 items-center justify-center rounded-full border border-[#FF6B6B]/30 px-4"
+          onPress={handleDeleteAccountRequest}
+        >
+          <AppText className="text-xs font-semibold text-[#FFB3B3]">
+            계정 삭제 요청
+          </AppText>
+        </Pressable>
 
         {migrationMessage ? (
           <AppText className="mt-3 text-xs leading-5 text-[#7CFF8A]/70">

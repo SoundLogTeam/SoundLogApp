@@ -1,9 +1,14 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { momentLogApi } from '@/api/momentLogApi';
+import { recapApi } from '@/api/recapApi';
+import { recapQueryKeys } from '@/api/recapQueries';
 import { MiniPlayer } from '@/components/MiniPlayer';
+import { RecapListCard } from '@/components/recap/RecapListCard';
 import { Screen } from '@/components/Screen';
 import { AppText } from '@/components/AppText';
 import { getHomeContentBottomPadding } from '@/constants/layout';
@@ -14,27 +19,22 @@ import type { TravelMode } from '@/types/domain';
 
 import { EndTravelConfirmModal } from './EndTravelConfirmModal';
 import { MomentCard } from './MomentCard';
-import { RecapCard } from './RecapCard';
 import { TravelModeBottomSheet } from './TravelModeBottomSheet';
-import { TravelReportModal } from './TravelReportModal';
 import { TravelStatusCard } from './TravelStatusCard';
-import { sampleMoments, sampleRecaps, type TravelRecap } from './travelData';
-
-const sampleMomentMusicLogIds: Record<string, string> = {
-  'sample-gwangalli': 'log-1',
-  'sample-night': 'log-3',
-  'sample-seongsu': 'log-2',
-};
-
-function getMomentMusicLogId(momentId: string) {
-  return sampleMomentMusicLogIds[momentId] ?? momentId;
-}
+import {
+  createMomentLogGroups,
+  createSessionRecapId,
+  momentLogGroupToRecapItem,
+} from '@/utils/recapMappers';
+import type { MomentLog } from '@/types/domain';
 
 export function TravelScreen() {
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const [isModeSheetVisible, setIsModeSheetVisible] = useState(false);
   const [isEndConfirmVisible, setIsEndConfirmVisible] = useState(false);
-  const [selectedReport, setSelectedReport] = useState<TravelRecap>();
+  const [isCreatingRecap, setIsCreatingRecap] = useState(false);
+  const [recapMessage, setRecapMessage] = useState<string>();
   const [, setClockTick] = useState(0);
   const {
     currentPlace,
@@ -43,15 +43,35 @@ export function TravelScreen() {
     endSession,
     resetSession,
     setMode,
+    setSessionRecapId,
     startSession,
   } = useTravelSessionStore();
   const { currentTrack } = usePlayerStore();
-  const momentLogs = useMomentLogStore((state) => state.logs);
+  const { addLog, logs: momentLogs, removeLog, updateLog } = useMomentLogStore();
+  const sessionLogs = useMemo(
+    () => momentLogs.filter((log) => log.sessionId === session.id),
+    [momentLogs, session.id],
+  );
   const moments = useMemo(
-    () => [...momentLogs, ...sampleMoments].slice(0, 3),
+    () => (session.status === 'idle' ? momentLogs : sessionLogs).slice(0, 3),
+    [momentLogs, session.status, sessionLogs],
+  );
+  const momentCount = session.status === 'idle' ? 0 : sessionLogs.length;
+  const trackCount = useMemo(
+    () => new Set(sessionLogs.map((log) => log.track?.id).filter(Boolean)).size,
+    [sessionLogs],
+  );
+  const localRecaps = useMemo(
+    () =>
+      createMomentLogGroups(momentLogs)
+        .slice(0, 3)
+        .map((group) => ({
+          imageUrl: group.logs[0]?.photoUri,
+          item: momentLogGroupToRecapItem(group),
+          shareId: group.id,
+        })),
     [momentLogs],
   );
-  const momentCount = Math.max(momentLogs.length, session.status === 'active' ? 8 : 0);
 
   useEffect(() => {
     if (session.status !== 'active') {
@@ -83,9 +103,96 @@ export function TravelScreen() {
     startSession();
     setIsModeSheetVisible(false);
   };
-  const handleConfirmEnd = () => {
+  const retryMomentLog = async (log: MomentLog) => {
+    if (log.syncStatus === 'pending') {
+      return;
+    }
+
+    updateLog(log.id, { syncStatus: 'pending' });
+
+    try {
+      const serverLog = await momentLogApi.createMomentLog({
+        createdAt: log.createdAt,
+        idempotencyKey: log.id,
+        location: log.location,
+        moodTags: log.moodTags,
+        photoUri: log.photoUri,
+        placeCategory: log.placeCategory,
+        placeId: log.placeId,
+        placeName: log.placeName,
+        sessionId: log.sessionId,
+        track: log.track,
+        travelMode: log.travelMode,
+      });
+
+      if (!serverLog) {
+        updateLog(log.id, { syncStatus: 'local' });
+        return;
+      }
+
+      removeLog(log.id);
+      addLog(serverLog);
+    } catch {
+      updateLog(log.id, { syncStatus: 'failed' });
+    }
+  };
+  const handleConfirmEnd = async () => {
+    if (isCreatingRecap) {
+      return;
+    }
+
+    const endedSessionId = session.id;
+    const logsForSession = sessionLogs;
+    const localRecapId = createSessionRecapId(endedSessionId);
+
+    setRecapMessage(undefined);
     endSession();
     setIsEndConfirmVisible(false);
+
+    if (logsForSession.length === 0) {
+      setSessionRecapId(undefined);
+      setRecapMessage('저장한 Moment가 없어 Recap 대신 빈 기록 화면으로 이동할 수 있어요.');
+      return;
+    }
+
+    const syncedLogs = logsForSession.filter((log) => log.syncStatus === 'synced');
+    const hasOnlySyncedLogs = syncedLogs.length === logsForSession.length;
+    const representativeTrackId = logsForSession.find((log) => log.track?.id)?.track?.id;
+
+    if (!hasOnlySyncedLogs) {
+      setSessionRecapId(localRecapId);
+      setRecapMessage('아직 동기화되지 않은 Moment가 있어 로컬 Recap으로 먼저 만들었어요.');
+      router.push(`/recap-share/${localRecapId}`);
+      return;
+    }
+
+    setIsCreatingRecap(true);
+
+    try {
+      const serverRecap = await recapApi.createRecap({
+        momentLogIds: syncedLogs.map((log) => log.id),
+        representativeTrackId,
+        sessionId: endedSessionId,
+        templateId: 'lp',
+        title: `${logsForSession[0]?.placeName ?? '여행'} Recap`,
+      });
+      const recapId = serverRecap?.id ?? localRecapId;
+
+      setSessionRecapId(recapId);
+      await queryClient.invalidateQueries({ queryKey: recapQueryKeys.list });
+      router.push(`/recap-share/${recapId}`);
+    } catch {
+      setSessionRecapId(localRecapId);
+      setRecapMessage('서버 Recap 생성이 실패해서 로컬 Recap으로 먼저 보여드릴게요.');
+      router.push(`/recap-share/${localRecapId}`);
+    } finally {
+      setIsCreatingRecap(false);
+    }
+  };
+  const openCurrentRecap = () => {
+    const recapId = session.recapId ?? createSessionRecapId(session.id);
+
+    router.push(`/recap-share/${recapId}`);
   };
 
   return (
@@ -112,15 +219,23 @@ export function TravelScreen() {
           currentPlace={currentPlace}
           currentTrack={currentTrack}
           endedAt={session.endedAt}
+          isCreatingRecap={isCreatingRecap}
           momentCount={momentCount}
           onEndTravel={() => setIsEndConfirmVisible(true)}
-          onOpenRecap={() => router.push('/recap-share/seoul-night')}
+          onOpenRecap={openCurrentRecap}
           onSaveMoment={() => router.push('/camera')}
           onStartTravel={openModeSheet}
           selectedMode={selectedMode}
           startedAt={session.startedAt}
           status={session.status}
+          trackCount={trackCount}
         />
+
+        {recapMessage ? (
+          <View className="mt-4 rounded-[16px] border border-white/10 bg-white/10 px-4 py-3">
+            <AppText className="text-sm leading-5 text-white/68">{recapMessage}</AppText>
+          </View>
+        ) : null}
 
         <View className="mt-8">
           <View className="flex-row items-center justify-between">
@@ -134,13 +249,22 @@ export function TravelScreen() {
           </View>
 
           <View className="mt-4 gap-3">
-            {moments.map((moment) => (
-              <MomentCard
-                key={moment.id}
-                item={moment}
-                onPress={() => router.push(`/recap-share/${getMomentMusicLogId(moment.id)}`)}
-              />
-            ))}
+            {moments.length === 0 ? (
+              <View className="rounded-[18px] border border-white/10 bg-white/10 p-4">
+                <AppText className="text-sm leading-6 text-white/58">
+                  아직 저장한 Moment가 없어요. 여행 중 카메라 버튼으로 첫 순간을 남겨보세요.
+                </AppText>
+              </View>
+            ) : (
+              moments.map((moment) => (
+                <MomentCard
+                  key={moment.id}
+                  item={moment}
+                  onPress={() => router.push(`/recap-share/${moment.id}`)}
+                  onRetry={(item) => void retryMomentLog(item)}
+                />
+              ))
+            )}
           </View>
         </View>
 
@@ -155,13 +279,22 @@ export function TravelScreen() {
           </View>
 
           <View className="mt-4 gap-3">
-            {sampleRecaps.slice(0, session.status === 'idle' ? 3 : 2).map((recap) => (
-              <RecapCard
-                key={recap.id}
-                item={recap}
-                onPress={() => setSelectedReport(recap)}
-              />
-            ))}
+            {localRecaps.length === 0 ? (
+              <View className="rounded-[18px] border border-white/10 bg-white/10 p-4">
+                <AppText className="text-sm leading-6 text-white/58">
+                  여행이 끝나면 저장한 Moment가 Recap으로 묶여요.
+                </AppText>
+              </View>
+            ) : (
+              localRecaps.map(({ imageUrl, item, shareId }) => (
+                <RecapListCard
+                  key={item.id}
+                  imageUrl={imageUrl}
+                  item={item}
+                  onPress={() => router.push(`/recap-share/${shareId}`)}
+                />
+              ))
+            )}
           </View>
         </View>
       </ScrollView>
@@ -178,13 +311,8 @@ export function TravelScreen() {
       <EndTravelConfirmModal
         momentCount={momentCount}
         onCancel={() => setIsEndConfirmVisible(false)}
-        onConfirm={handleConfirmEnd}
+        onConfirm={() => void handleConfirmEnd()}
         visible={isEndConfirmVisible}
-      />
-      <TravelReportModal
-        item={selectedReport}
-        onClose={() => setSelectedReport(undefined)}
-        visible={Boolean(selectedReport)}
       />
     </Screen>
   );

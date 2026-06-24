@@ -15,7 +15,7 @@ export default function AuthCallbackScreen() {
         로그인 연결을 확인 중이에요
       </AppText>
       <AppText className="mt-3 text-center text-sm leading-6 text-white/55">
-        실제 OAuth provider 연결 시 이 화면에서 웹 redirect 결과를 처리합니다.
+        계정 연결 결과를 확인하고 있어요. 잠시만 기다려주세요.
       </AppText>
       <Pressable
         accessibilityRole="button"

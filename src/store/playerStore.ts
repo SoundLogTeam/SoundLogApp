@@ -64,7 +64,7 @@ export const usePlayerStore = create<PlayerState>((set) => ({
       isPlaying: true,
       playlistId,
       queue: queue?.length ? queue : [track],
-      source: 'external',
+      source: track.previewUrl ? 'preview' : 'external',
     }),
   toggle: () => set((state) => ({ isPlaying: !state.isPlaying })),
 }));

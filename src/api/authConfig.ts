@@ -11,10 +11,22 @@ export function canUseDevSocialLoginFallback() {
   );
 }
 
+export function canUseSocialLogin() {
+  return canUseDevSocialLoginFallback() || process.env.EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN === 'true';
+}
+
+export function canUseRealSocialLogin() {
+  return process.env.EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN === 'true';
+}
+
 export function createDevProviderAccessToken(provider: AuthProvider) {
   if (!canUseDevSocialLoginFallback()) {
     return undefined;
   }
 
   return `mock-${provider}-provider-token`;
+}
+
+export function getKakaoNativeAppKey() {
+  return process.env.EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY;
 }

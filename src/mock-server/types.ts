@@ -15,6 +15,7 @@ import {
   PlaylistCuration,
   RecapItem,
   RecapShare,
+  RecapTemplateId,
 } from '@/types/domain';
 
 export type MockEndpointId =
@@ -27,6 +28,7 @@ export type MockEndpointId =
   | 'home.moodRecommendations'
   | 'home.recentMusicLogs'
   | 'playlist.detail'
+  | 'recap.create'
   | 'recap.list'
   | 'recap.share'
   | 'tour.nearbyPlaces';
@@ -81,6 +83,17 @@ export type MockServer = {
     getPlaylist: (id?: string) => Promise<PlaylistCuration | undefined>;
   };
   recap: {
+    createShareEvent: (
+      recapId: string,
+      type: 'os_share' | 'save_image',
+    ) => Promise<{ accepted: boolean }>;
+    createRecap: (input: {
+      momentLogIds?: string[];
+      representativeTrackId?: string;
+      sessionId?: string;
+      templateId: RecapTemplateId | 'video';
+      title?: string;
+    }) => Promise<RecapItem | undefined>;
     getRecapList: () => Promise<RecapItem[]>;
     getRecapShare: (id?: string) => Promise<RecapShare | undefined>;
   };

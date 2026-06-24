@@ -8,6 +8,7 @@ import {
   RecapCaptureFrame,
   RecapCaptureFrameHandle,
 } from '@/components/recap-share/RecapCaptureFrame';
+import { RecapMusicSummary } from '@/components/recap-share/RecapMusicSummary';
 import { RecapPreviewCard } from '@/components/recap-share/RecapPreviewCard';
 import {
   RecapShareEmptyState,
@@ -102,8 +103,9 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
               <AppText className="mt-5 text-sm text-white/70">
                 {formatRecapRecordedAt(recap.recordedAt)}
               </AppText>
+              <RecapMusicSummary recap={recap} />
 
-              <View className="mt-12 w-full items-center">
+              <View className="mt-10 w-full items-center">
                 <ShareActionList
                   activeAction={activeAction}
                   isBusy={Boolean(activeAction)}

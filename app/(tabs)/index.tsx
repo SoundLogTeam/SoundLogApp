@@ -34,6 +34,7 @@ import {
 } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+import { playSelectedSpotifyOrFallback } from '@/spotify/spotifyPlayback';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { MoodRecommendation, MusicLogItem } from '@/types/domain';
@@ -134,6 +135,7 @@ function HomeContent() {
     }
 
     setTrack(item.track);
+    void playSelectedSpotifyOrFallback(item.track);
     syncRecommendationEvent(
       addRecommendationEvent({
         context: createRecommendationEventContext(),

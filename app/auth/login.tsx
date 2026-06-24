@@ -2,13 +2,20 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Platform, Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View } from 'react-native';
 
 import {
   canUseDevSocialLoginFallback,
+  canUseSocialLogin,
   createDevProviderAccessToken,
 } from '@/api/authConfig';
 import { useSocialLoginMutation } from '@/api/authQueries';
+import {
+  createAuthDeviceInfo,
+  createNativeSocialLoginRequest,
+  getNativeSocialLoginErrorMessage,
+  isNativeSocialProviderSupported,
+} from '@/auth/nativeSocialLogin';
 import { AppText } from '@/components/AppText';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Screen } from '@/components/Screen';
@@ -27,17 +34,10 @@ type ProviderOption = {
 const providerOptions: ProviderOption[] = [
   {
     accent: '#F5F5F7',
-    description: 'iOS 배포 전 필수 제공자로 준비해요.',
+    description: 'Apple 계정으로 빠르게 이어서 사용할 수 있어요.',
     icon: 'smartphone',
     id: 'apple',
     label: 'Apple로 계속하기',
-  },
-  {
-    accent: '#8AB4F8',
-    description: 'Expo AuthSession 연동 검증이 쉬운 기본 제공자예요.',
-    icon: 'search',
-    id: 'google',
-    label: 'Google로 계속하기',
   },
   {
     accent: '#FEE500',
@@ -56,6 +56,13 @@ export default function LoginScreen() {
   const [selectedProvider, setSelectedProvider] = useState<AuthProvider>();
   const socialLoginMutation = useSocialLoginMutation();
   const isDevAuthFallbackEnabled = canUseDevSocialLoginFallback();
+  const isSocialLoginEnabled = canUseSocialLogin();
+  const visibleProviderOptions = providerOptions.filter(
+    (provider) =>
+      isDevAuthFallbackEnabled || isNativeSocialProviderSupported(provider.id),
+  );
+  const canRenderProviderButtons =
+    isSocialLoginEnabled && visibleProviderOptions.length > 0;
   const {
     clearAuthError,
     continueAsGuest,
@@ -67,7 +74,7 @@ export default function LoginScreen() {
   const { profile } = useUserProfileStore();
 
   const handleProviderLogin = async (provider: AuthProvider) => {
-    if (socialLoginMutation.isPending) {
+    if (socialLoginMutation.isPending || !isSocialLoginEnabled) {
       return;
     }
 
@@ -77,32 +84,21 @@ export default function LoginScreen() {
 
     try {
       const providerAccessToken = createDevProviderAccessToken(provider);
-
-      if (!providerAccessToken) {
-        throw new Error('social_login_not_configured');
-      }
-
-      const session = await socialLoginMutation.mutateAsync({
-        device: {
-          appVersion: '1.0.0',
-          deviceId: `mock-${Platform.OS}-device`,
-          platform:
-            Platform.OS === 'ios'
-              ? 'ios'
-              : Platform.OS === 'android'
-                ? 'android'
-                : 'web',
-        },
-        provider,
-        providerAccessToken,
-        redirectUri: 'soundlog://auth/callback',
-      });
+      const request = providerAccessToken
+        ? {
+            device: createAuthDeviceInfo(),
+            provider,
+            providerAccessToken,
+            redirectUri: 'soundlog://auth/callback',
+          }
+        : await createNativeSocialLoginRequest(provider);
+      const session = await socialLoginMutation.mutateAsync(request);
 
       finishLogin(session);
       router.replace(getNextRoute(profile.completedOnboarding));
-    } catch {
+    } catch (error) {
       setStatus('unauthenticated');
-      setAuthError('로그인에 실패했어요. 잠시 후 다시 시도해주세요.');
+      setAuthError(getNativeSocialLoginErrorMessage(error));
     }
   };
 
@@ -163,8 +159,8 @@ export default function LoginScreen() {
                   </AppText>
                   <AppText className="mt-1 text-xs leading-5 text-white/48">
                     {isDevAuthFallbackEnabled
-                      ? '개발 빌드에서는 mock 로그인으로 플로우를 검증하고, 실제 배포 전 OAuth provider를 연결해요.'
-                      : '실제 배포 빌드에서는 OAuth provider 설정 후 로그인할 수 있어요.'}
+                      ? '로그인하면 취향, 좋아요, 순간 기록을 계정에 안전하게 이어둘 수 있어요.'
+                      : 'Apple 또는 Kakao 계정으로 로그인해 Soundlog 기록을 여러 기기에서 이어보세요.'}
                   </AppText>
                 </View>
               </View>
@@ -173,39 +169,59 @@ export default function LoginScreen() {
         </View>
 
         <View className="mt-10 gap-3">
-          {providerOptions.map((provider) => {
-            const isPending =
-              socialLoginMutation.isPending && selectedProvider === provider.id;
+          {canRenderProviderButtons ? (
+            visibleProviderOptions.map((provider) => {
+              const isPending =
+                socialLoginMutation.isPending && selectedProvider === provider.id;
 
-            return (
-              <Pressable
-                key={provider.id}
-                accessibilityRole="button"
-                className={`min-h-[58px] flex-row items-center rounded-[18px] border px-5 ${
-                  isPending
-                    ? 'border-[#1DB954]/50 bg-[#1DB954]/15'
-                    : 'border-white/10 bg-white/10'
-                }`}
-                disabled={socialLoginMutation.isPending}
-                onPress={() => handleProviderLogin(provider.id)}
-              >
-                <View
-                  className="h-10 w-10 items-center justify-center rounded-full"
-                  style={{ backgroundColor: `${provider.accent}22` }}
+              return (
+                <Pressable
+                  key={provider.id}
+                  accessibilityRole="button"
+                  className={`min-h-[58px] flex-row items-center rounded-[18px] border px-5 ${
+                    isPending
+                      ? 'border-[#1DB954]/50 bg-[#1DB954]/15'
+                      : 'border-white/10 bg-white/10'
+                  }`}
+                  disabled={socialLoginMutation.isPending}
+                  onPress={() => handleProviderLogin(provider.id)}
                 >
-                  <Feather color={provider.accent} name={provider.icon} size={18} />
+                  <View
+                    className="h-10 w-10 items-center justify-center rounded-full"
+                    style={{ backgroundColor: `${provider.accent}22` }}
+                  >
+                    <Feather color={provider.accent} name={provider.icon} size={18} />
+                  </View>
+                  <View className="ml-3 min-w-0 flex-1">
+                    <AppText className="text-base font-semibold text-white">
+                      {isPending ? '연결 중...' : provider.label}
+                    </AppText>
+                    <AppText className="mt-1 text-xs leading-5 text-white/45">
+                      {provider.description}
+                    </AppText>
+                  </View>
+                </Pressable>
+              );
+            })
+          ) : (
+            <View className="rounded-[18px] border border-white/10 bg-white/10 px-5 py-4">
+              <View className="flex-row items-start gap-3">
+                <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
+                  <Feather color="#7CFF8A" name="shield" size={18} />
                 </View>
-                <View className="ml-3 min-w-0 flex-1">
+                <View className="min-w-0 flex-1">
                   <AppText className="text-base font-semibold text-white">
-                    {isPending ? '연결 중...' : provider.label}
+                    계정 로그인 준비 중
                   </AppText>
                   <AppText className="mt-1 text-xs leading-5 text-white/45">
-                    {provider.description}
+                    {isSocialLoginEnabled
+                      ? '현재 빌드에서는 iOS Apple/Kakao 로그인만 사용할 수 있어요. 다른 환경에서는 둘러보기를 이용해주세요.'
+                      : '지금은 로그인 없이 둘러보기로 여행 추천과 기록 흐름을 먼저 사용할 수 있어요.'}
                   </AppText>
                 </View>
-              </Pressable>
-            );
-          })}
+              </View>
+            </View>
+          )}
 
           {errorMessage ? (
             <View className="rounded-[16px] border border-[#FF6B6B]/30 bg-[#2A1215] px-4 py-3">
@@ -226,10 +242,30 @@ export default function LoginScreen() {
             </AppText>
           </Pressable>
 
-          <AppText className="mt-3 text-center text-[11px] leading-5 text-white/35">
-            계속 진행하면 Soundlog 서비스 이용약관과 개인정보 처리방침에 동의한 것으로
-            간주됩니다.
-          </AppText>
+          <View className="mt-3 items-center">
+            <AppText className="text-center text-[11px] leading-5 text-white/35">
+              계속 진행하면 Soundlog 정책에 동의한 것으로 간주됩니다.
+            </AppText>
+            <View className="mt-2 flex-row items-center justify-center gap-3">
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => router.push('/legal/terms' as never)}
+              >
+                <AppText className="text-[11px] font-semibold text-white/62">
+                  이용약관
+                </AppText>
+              </Pressable>
+              <AppText className="text-[11px] text-white/20">|</AppText>
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => router.push('/legal/privacy' as never)}
+              >
+                <AppText className="text-[11px] font-semibold text-white/62">
+                  개인정보 처리방침
+                </AppText>
+              </Pressable>
+            </View>
+          </View>
         </View>
       </ScrollView>
     </Screen>

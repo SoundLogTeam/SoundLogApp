@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { Pressable, View } from 'react-native';
+import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import type { MomentLog } from '@/types/domain';
@@ -11,10 +11,19 @@ import { moodLabelByValue } from './travelData';
 type MomentCardProps = {
   item: MomentLog;
   onPress?: () => void;
+  onRetry?: (item: MomentLog) => void;
 };
 
-export function MomentCard({ item, onPress }: MomentCardProps) {
+export function MomentCard({ item, onPress, onRetry }: MomentCardProps) {
   const moodLabel = item.moodTags[0] ? moodLabelByValue[item.moodTags[0]] : '무드 기록';
+  const isRetrying = item.syncStatus === 'pending';
+  const showRetry = item.syncStatus === 'failed' && onRetry;
+  const syncLabel =
+    item.syncStatus === 'failed'
+      ? '업로드 실패'
+      : item.syncStatus === 'pending'
+        ? '동기화 중'
+        : undefined;
 
   return (
     <Pressable
@@ -40,6 +49,13 @@ export function MomentCard({ item, onPress }: MomentCardProps) {
             <View className="rounded-full bg-white/10 px-2.5 py-1">
               <AppText className="text-[10px] font-semibold text-white/70">Moment</AppText>
             </View>
+            {syncLabel ? (
+              <View className="rounded-full bg-amber-300/12 px-2.5 py-1">
+                <AppText className="text-[10px] font-semibold text-amber-100">
+                  {syncLabel}
+                </AppText>
+              </View>
+            ) : null}
             <AppText className="text-[11px] font-semibold text-soundlog-lime">
               {moodLabel}
             </AppText>
@@ -60,9 +76,26 @@ export function MomentCard({ item, onPress }: MomentCardProps) {
           </View>
         </View>
 
-        <AppText className="text-[11px] text-white/45">
-          {formatKoreanDateTime(item.createdAt)}
-        </AppText>
+        <View className="flex-row items-center justify-between gap-3">
+          <AppText className="min-w-0 flex-1 text-[11px] text-white/45">
+            {formatKoreanDateTime(item.createdAt)}
+          </AppText>
+          {isRetrying ? <ActivityIndicator color="#B7E628" size="small" /> : null}
+          {showRetry ? (
+            <Pressable
+              accessibilityRole="button"
+              className="rounded-full bg-soundlog-lime px-3 py-1.5"
+              onPress={(event) => {
+                event.stopPropagation();
+                onRetry(item);
+              }}
+            >
+              <AppText className="text-[11px] font-semibold text-soundlog-inverse">
+                재시도
+              </AppText>
+            </Pressable>
+          ) : null}
+        </View>
       </View>
     </Pressable>
   );

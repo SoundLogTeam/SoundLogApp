@@ -78,7 +78,7 @@ const travelModeOptions: Array<{ label: string; value: TravelMode }> = [
   { label: '축제', value: 'festival' },
   { label: '야경', value: 'night' },
 ];
-const authProviderOptions: AuthProvider[] = ['apple', 'google', 'kakao'];
+const authProviderOptions: AuthProvider[] = ['apple', 'kakao'];
 
 type ManagerButtonProps = {
   active?: boolean;

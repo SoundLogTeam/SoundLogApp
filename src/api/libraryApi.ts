@@ -4,6 +4,7 @@ import {
   requestApi,
 } from '@/api/client';
 import { RecommendationEventContext } from '@/store/recommendationEventStore';
+import { Track } from '@/types/domain';
 
 type LibraryTrackAction = 'like' | 'save' | 'unlike' | 'unsave';
 
@@ -14,7 +15,24 @@ type LibraryTrackState = {
   updatedAt: string;
 };
 
+export type RemoteLibraryTrackRecord = {
+  createdAt: string;
+  id: string;
+  kind: 'liked' | 'saved';
+  playlistId?: string;
+  track: Track;
+};
+
 export const libraryApi = {
+  getTracks: (kind: 'all' | 'liked' | 'saved' = 'all') => {
+    if (!canUseAuthenticatedApi()) {
+      return Promise.resolve<RemoteLibraryTrackRecord[]>([]);
+    }
+
+    return requestApi<RemoteLibraryTrackRecord[]>('/v1/library/tracks', {
+      query: { kind, limit: 50 },
+    });
+  },
   updateTrackState: (
     trackId: string,
     input: {

@@ -2,7 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { Modal, Platform, Pressable, View } from 'react-native';
+import { ActivityIndicator, Modal, Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { libraryApi } from '@/api/libraryApi';
@@ -11,8 +11,16 @@ import { AppText } from '@/components/AppText';
 import { TrackActionMenu } from '@/components/playlist/TrackActionMenu';
 import { getMiniPlayerBottom } from '@/constants/layout';
 import { useLibraryStore } from '@/store/libraryStore';
+import { useMusicPlatformStore } from '@/store/musicPlatformStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+import { useSpotifyAuthStore } from '@/store/spotifyAuthStore';
+import {
+  getSpotifyPlaybackFailureMessage,
+  pauseSpotifyPlayback,
+  playSpotifyTrack,
+} from '@/spotify/spotifyPlayback';
+import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 import { getTrackKeyColor, hexToRgba } from '@/utils/trackVisuals';
 
@@ -32,10 +40,15 @@ export function MiniPlayer() {
     queue,
     toggle,
   } = usePlayerStore();
-  const { isLiked, isSaved, toggleLike, toggleSave } = useLibraryStore();
+  const { isLiked, isSaved, setLikeState, setSaveState } = useLibraryStore();
+  const selectedPlatformId = useMusicPlatformStore((state) => state.selectedPlatformId);
   const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
+  const spotifySession = useSpotifyAuthStore((state) => state.session);
+  const [actionMessage, setActionMessage] = useState<string>();
+  const [externalMessage, setExternalMessage] = useState<string>();
   const [isActionMenuVisible, setIsActionMenuVisible] = useState(false);
   const [isFullPlayerVisible, setIsFullPlayerVisible] = useState(false);
+  const [isOpeningExternal, setIsOpeningExternal] = useState(false);
 
   if (!currentTrack) {
     return null;
@@ -47,17 +60,47 @@ export function MiniPlayer() {
   const playerGlow = hexToRgba(keyColor, 0.72);
   const playerSoftGlow = hexToRgba(keyColor, 0.24);
   const canSkip = queue.length > 1;
+  const externalLink = getTrackExternalLink(currentTrack, selectedPlatformId);
+  const shouldControlSpotify = selectedPlatformId === 'spotify' && Boolean(spotifySession);
+  const openSpotifyFallback = async (track = currentTrack) => {
+    const spotifyLink = getTrackExternalLink(track, 'spotify');
+
+    if (!spotifyLink.url) {
+      return;
+    }
+
+    await openMusicPlatformUrl(spotifyLink);
+  };
+  const getAdjacentTrack = (direction: 'next' | 'previous') => {
+    if (!currentTrack || queue.length < 2) {
+      return undefined;
+    }
+
+    const currentIndex = queue.findIndex((track) => track.id === currentTrack.id);
+
+    if (direction === 'next') {
+      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % queue.length : 0;
+      return queue[nextIndex];
+    }
+
+    const previousIndex = currentIndex > 0 ? currentIndex - 1 : Math.max(queue.length - 1, 0);
+    return queue[previousIndex];
+  };
   const handleToggleLike = () => {
     const context = createRecommendationEventContext();
 
-    toggleLike(currentTrack, playlistId);
+    setActionMessage(undefined);
+    setLikeState(currentTrack, !liked, playlistId);
     void libraryApi
       .updateTrackState(currentTrack.id, {
         action: liked ? 'unlike' : 'like',
         context,
         playlistId,
       })
-      .catch(() => undefined);
+      .catch(() => {
+        setLikeState(currentTrack, liked, playlistId);
+        setActionMessage('서버 저장에 실패해서 좋아요 상태를 되돌렸어요.');
+      });
     syncRecommendationEvent(
       addRecommendationEvent({
         context,
@@ -67,7 +110,25 @@ export function MiniPlayer() {
       }),
     );
   };
-  const handleTogglePlayback = () => {
+  const handleTogglePlayback = async () => {
+    setExternalMessage(undefined);
+
+    if (shouldControlSpotify) {
+      const spotifyResult = isPlaying
+        ? await pauseSpotifyPlayback()
+        : await playSpotifyTrack(currentTrack);
+
+      if (!spotifyResult.ok) {
+        setExternalMessage(getSpotifyPlaybackFailureMessage(spotifyResult.code));
+
+        if (!isPlaying) {
+          await openSpotifyFallback().catch(() => undefined);
+        }
+
+        return;
+      }
+    }
+
     toggle();
     syncRecommendationEvent(
       addRecommendationEvent({
@@ -81,14 +142,18 @@ export function MiniPlayer() {
   const handleToggleSave = () => {
     const context = createRecommendationEventContext();
 
-    toggleSave(currentTrack, playlistId);
+    setActionMessage(undefined);
+    setSaveState(currentTrack, !saved, playlistId);
     void libraryApi
       .updateTrackState(currentTrack.id, {
         action: saved ? 'unsave' : 'save',
         context,
         playlistId,
       })
-      .catch(() => undefined);
+      .catch(() => {
+        setSaveState(currentTrack, saved, playlistId);
+        setActionMessage('서버 저장에 실패해서 저장 상태를 되돌렸어요.');
+      });
     syncRecommendationEvent(
       addRecommendationEvent({
         context,
@@ -98,19 +163,85 @@ export function MiniPlayer() {
       }),
     );
   };
-  const handlePlayNext = () => {
+  const handlePlayNext = async () => {
     if (!canSkip) {
       return;
     }
 
+    const nextTrack = getAdjacentTrack('next');
+
+    if (shouldControlSpotify && nextTrack) {
+      setExternalMessage(undefined);
+      const spotifyResult = await playSpotifyTrack(nextTrack);
+
+      if (!spotifyResult.ok) {
+        setExternalMessage(getSpotifyPlaybackFailureMessage(spotifyResult.code));
+        await openSpotifyFallback(nextTrack).catch(() => undefined);
+      }
+    }
+
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context: createRecommendationEventContext(),
+        playlistId,
+        trackId: currentTrack.id,
+        type: 'track_skip',
+      }),
+    );
     playNext();
   };
-  const handlePlayPrevious = () => {
+  const handlePlayPrevious = async () => {
     if (!canSkip) {
       return;
     }
 
+    const previousTrack = getAdjacentTrack('previous');
+
+    if (shouldControlSpotify && previousTrack) {
+      setExternalMessage(undefined);
+      const spotifyResult = await playSpotifyTrack(previousTrack);
+
+      if (!spotifyResult.ok) {
+        setExternalMessage(getSpotifyPlaybackFailureMessage(spotifyResult.code));
+        await openSpotifyFallback(previousTrack).catch(() => undefined);
+      }
+    }
+
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context: createRecommendationEventContext(),
+        playlistId,
+        trackId: currentTrack.id,
+        type: 'track_skip',
+      }),
+    );
     playPrevious();
+  };
+  const handleOpenExternal = async () => {
+    if (!externalLink.url || isOpeningExternal) {
+      setExternalMessage('이 곡을 열 수 있는 링크를 만들지 못했어요.');
+      return;
+    }
+
+    setIsOpeningExternal(true);
+    setExternalMessage(undefined);
+
+    try {
+      await openMusicPlatformUrl(externalLink);
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext(),
+          playlistId,
+          trackId: currentTrack.id,
+          type: 'track_external_open',
+          value: externalLink.platformId,
+        }),
+      );
+    } catch {
+      setExternalMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
+    } finally {
+      setIsOpeningExternal(false);
+    }
   };
   const renderCover = (sizeClassName: string, radiusClassName: string) => (
     <View
@@ -344,8 +475,12 @@ export function MiniPlayer() {
                 />
               </View>
               <View className="mt-3 flex-row justify-between">
-                <AppText className="text-xs text-white/45">{isPlaying ? '0:48' : '0:00'}</AppText>
-                <AppText className="text-xs text-white/45">2:58</AppText>
+                <AppText className="text-xs text-white/45">
+                  {isPlaying ? '컨텍스트 재생 중' : '대기 중'}
+                </AppText>
+                <AppText className="text-xs text-white/45">
+                  {shouldControlSpotify ? 'Spotify 제어 중' : '외부 앱 전체 재생'}
+                </AppText>
               </View>
             </View>
 
@@ -383,6 +518,32 @@ export function MiniPlayer() {
               </Pressable>
             </View>
 
+            <View className="mt-6">
+              <Pressable
+                accessibilityRole="button"
+                className="h-12 flex-row items-center justify-center gap-2 rounded-full bg-white"
+                disabled={isOpeningExternal}
+                onPress={() => void handleOpenExternal()}
+                style={{ opacity: isOpeningExternal ? 0.72 : 1 }}
+              >
+                {isOpeningExternal ? (
+                  <ActivityIndicator color="#050916" size="small" />
+                ) : (
+                  <Feather color="#050916" name="external-link" size={17} />
+                )}
+                <AppText className="text-sm font-semibold text-[#050916]">
+                  {externalLink.label}
+                </AppText>
+              </Pressable>
+              {externalMessage ? (
+                <View className="mt-3 rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
+                  <AppText className="text-center text-xs leading-5 text-amber-100">
+                    {externalMessage}
+                  </AppText>
+                </View>
+              ) : null}
+            </View>
+
             <View className="mt-7 flex-row justify-center gap-8">
               <Pressable
                 accessibilityLabel={liked ? '좋아요 취소' : '좋아요'}
@@ -401,11 +562,20 @@ export function MiniPlayer() {
                 <Feather color={saved ? '#DDD6FE' : '#fff'} name="bookmark" size={21} />
               </Pressable>
             </View>
+
+            {actionMessage ? (
+              <View className="mt-4 rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
+                <AppText className="text-center text-xs leading-5 text-amber-100">
+                  {actionMessage}
+                </AppText>
+              </View>
+            ) : null}
           </View>
         </View>
       </Modal>
 
       <TrackActionMenu
+        actionMessage={actionMessage}
         isLiked={liked}
         isSaved={saved}
         onClose={() => setIsActionMenuVisible(false)}

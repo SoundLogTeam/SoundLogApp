@@ -1,8 +1,59 @@
-import { canUseAuthenticatedApi, isRealApiEnabled, requestApi } from '@/api/client';
+import {
+  canUseAuthenticatedApi,
+  createIdempotencyKey,
+  isRealApiEnabled,
+  requestApi,
+} from '@/api/client';
 import { mockServer } from '@/mock-server';
-import { RecapItem, RecapShare } from '@/types/domain';
+import { RecapItem, RecapShare, RecapTemplateId } from '@/types/domain';
+
+type CreateRecapInput = {
+  momentLogIds?: string[];
+  representativeTrackId?: string;
+  sessionId?: string;
+  templateId: RecapTemplateId | 'video';
+  title?: string;
+};
+
+type RecapShareEventType = 'os_share' | 'save_image';
 
 export const recapApi = {
+  createShareEvent: (recapId: string, type: RecapShareEventType) => {
+    if (!isRealApiEnabled()) {
+      return mockServer.recap.createShareEvent(recapId, type);
+    }
+
+    if (!canUseAuthenticatedApi()) {
+      return Promise.resolve({ accepted: false });
+    }
+
+    return requestApi<{ accepted: boolean }>(
+      `/v1/recaps/${encodeURIComponent(recapId)}/share-events`,
+      {
+        body: {
+          createdAt: new Date().toISOString(),
+          type,
+        },
+        idempotencyKey: createIdempotencyKey(`recap-share-${recapId}-${type}`),
+        method: 'POST',
+      },
+    );
+  },
+  createRecap: (input: CreateRecapInput) => {
+    if (!isRealApiEnabled()) {
+      return mockServer.recap.createRecap(input);
+    }
+
+    if (!canUseAuthenticatedApi()) {
+      return Promise.resolve<RecapItem | undefined>(undefined);
+    }
+
+    return requestApi<RecapItem>('/v1/recaps', {
+      body: input,
+      idempotencyKey: createIdempotencyKey(`recap-${input.sessionId ?? 'session'}`),
+      method: 'POST',
+    });
+  },
   getRecapList: () => {
     if (!isRealApiEnabled()) {
       return mockServer.recap.getRecapList();

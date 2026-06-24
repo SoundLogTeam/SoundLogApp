@@ -29,6 +29,7 @@ export type SocialLoginRequest = {
   idToken?: string;
   provider: AuthProvider;
   providerAccessToken?: string;
+  providerDisplayName?: string;
   providerToken?: string;
   redirectUri?: string;
 };

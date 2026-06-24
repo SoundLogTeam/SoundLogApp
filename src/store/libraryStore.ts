@@ -19,6 +19,8 @@ type LibraryState = {
   removeLikedTrack: (trackId: string) => void;
   removeSavedTrack: (trackId: string) => void;
   seedFromPlaylist: (playlistId: string, tracks: Track[]) => void;
+  setLikeState: (track: Track, isLiked: boolean, playlistId?: string) => void;
+  setSaveState: (track: Track, isSaved: boolean, playlistId?: string) => void;
   toggleLike: (track: Track, playlistId?: string) => void;
   toggleSave: (track: Track, playlistId?: string) => void;
 };
@@ -71,6 +73,18 @@ export const useLibraryStore = create<LibraryState>()(
             seededPlaylistIds: [...state.seededPlaylistIds, playlistId],
           };
         }),
+      setLikeState: (track, nextLiked, playlistId) =>
+        set((state) => ({
+          likedTracks: nextLiked
+            ? upsertRecord(state.likedTracks, track, playlistId)
+            : state.likedTracks.filter((record) => record.track.id !== track.id),
+        })),
+      setSaveState: (track, nextSaved, playlistId) =>
+        set((state) => ({
+          savedTracks: nextSaved
+            ? upsertRecord(state.savedTracks, track, playlistId)
+            : state.savedTracks.filter((record) => record.track.id !== track.id),
+        })),
       toggleLike: (track, playlistId) =>
         set((state) => {
           const isLiked = state.likedTracks.some((record) => record.track.id === track.id);

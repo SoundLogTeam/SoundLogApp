@@ -20,7 +20,12 @@
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK": "false",
+        "EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN": "true",
+        "EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL": "support@soundlog.app"
+      }
     }
   },
   "submit": {

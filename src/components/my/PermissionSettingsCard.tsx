@@ -61,7 +61,7 @@ export function PermissionSettingsCard({
       {isUnavailable ? (
         <View className="mt-4 rounded-[14px] bg-white/5 px-4 py-3">
           <AppText className="text-xs leading-5 text-white/50">
-            웹에서는 실제 기기 권한을 확인할 수 없어요. Dev Build 앱에서 확인해주세요.
+            웹에서는 실제 기기 권한을 확인할 수 없어요. 모바일 앱에서 확인해주세요.
           </AppText>
         </View>
       ) : null}

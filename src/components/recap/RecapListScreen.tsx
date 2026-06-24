@@ -26,18 +26,19 @@ export function RecapListScreen() {
     isError,
     isLoading,
   } = useRecapListQuery();
-  const localRecaps: RecapListEntry[] = createMomentLogGroups(momentLogs).map(
-    (group) => ({
-      imageUrl: group.logs[0]?.photoUri,
-      item: momentLogGroupToRecapItem(group),
-      shareId: group.id,
-    }),
-  );
   const serverRecaps: RecapListEntry[] = serverRecapItems.map((item) => ({
     imageUrl: item.representativeTrack.albumImageUrl,
     item,
     shareId: item.id,
   }));
+  const serverSessionIds = new Set(serverRecaps.map(({ item }) => item.sessionId).filter(Boolean));
+  const localRecaps: RecapListEntry[] = createMomentLogGroups(momentLogs)
+    .filter((group) => !group.sessionId || !serverSessionIds.has(group.sessionId))
+    .map((group) => ({
+      imageUrl: group.logs[0]?.photoUri,
+      item: momentLogGroupToRecapItem(group),
+      shareId: group.id,
+    }));
   const recaps = [...localRecaps, ...serverRecaps];
   const hasRecaps = recaps.length > 0;
   const savedMomentCount = recaps.reduce(

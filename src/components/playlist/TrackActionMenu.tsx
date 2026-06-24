@@ -3,12 +3,16 @@ import { Image } from 'expo-image';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, View } from 'react-native';
 
+import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
 import { useMusicPlatformStore } from '@/store/musicPlatformStore';
+import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { Track } from '@/types/domain';
 import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
+import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type TrackActionMenuProps = {
+  actionMessage?: string;
   isLiked: boolean;
   isSaved: boolean;
   onClose: () => void;
@@ -46,6 +50,7 @@ function MenuAction({ disabled = false, icon, isLoading = false, label, onPress 
 }
 
 export function TrackActionMenu({
+  actionMessage,
   isLiked,
   isSaved,
   onClose,
@@ -55,6 +60,7 @@ export function TrackActionMenu({
   visible,
 }: TrackActionMenuProps) {
   const selectedPlatformId = useMusicPlatformStore((state) => state.selectedPlatformId);
+  const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
   const [externalMessage, setExternalMessage] = useState<string>();
   const [isOpeningExternal, setIsOpeningExternal] = useState(false);
   const externalLink = useMemo(
@@ -89,7 +95,15 @@ export function TrackActionMenu({
     setExternalMessage(undefined);
 
     try {
-      await openMusicPlatformUrl(externalLink.url);
+      await openMusicPlatformUrl(externalLink);
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext(),
+          trackId: track.id,
+          type: 'track_external_open',
+          value: externalLink.platformId,
+        }),
+      );
       onClose();
     } catch {
       setExternalMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
@@ -148,10 +162,10 @@ export function TrackActionMenu({
               onPress={openExternalUrl}
             />
           ) : null}
-          {externalMessage ? (
+          {actionMessage || externalMessage ? (
             <View className="mt-2 rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
               <AppText className="text-xs leading-5 text-amber-100">
-                {externalMessage}
+                {actionMessage ?? externalMessage}
               </AppText>
             </View>
           ) : null}

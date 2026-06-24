@@ -3,12 +3,27 @@ const baseConfig = {
   slug: 'soundlog',
   version: '1.0.0',
   orientation: 'portrait',
-  icon: './assets/soundlog-logo.png',
+  icon: './assets/icon.png',
   scheme: 'soundlog',
   userInterfaceStyle: 'dark',
   ios: {
+    infoPlist: {
+      CFBundleAllowMixedLocalizations: true,
+      LSApplicationQueriesSchemes: ['spotify'],
+      NSCameraUsageDescription:
+        'Soundlog가 여행 순간을 사진으로 기록하기 위해 카메라 권한이 필요합니다.',
+      NSFaceIDUsageDescription:
+        'Soundlog가 저장된 로그인 정보를 안전하게 보호하기 위해 Face ID를 사용할 수 있습니다.',
+      NSLocationWhenInUseUsageDescription:
+        'Soundlog가 현재 장소에 맞는 음악을 추천하고 여행 순간의 위치를 기록하기 위해 위치 권한이 필요합니다.',
+      NSPhotoLibraryAddUsageDescription:
+        'Soundlog가 리캡 이미지를 사진 보관함에 저장하기 위해 권한이 필요합니다.',
+      NSPhotoLibraryUsageDescription:
+        'Soundlog가 리캡 이미지를 저장하기 위해 사진 접근 권한이 필요합니다.',
+    },
     supportsTablet: true,
     bundleIdentifier: 'com.mannomi.soundlog',
+    usesAppleSignIn: true,
   },
   android: {
     package: 'com.mannomi.soundlog',
@@ -19,17 +34,18 @@ const baseConfig = {
       monochromeImage: './assets/android-icon-monochrome.png',
     },
     predictiveBackGestureEnabled: false,
+    blockedPermissions: [
+      'android.permission.RECORD_AUDIO',
+      'android.permission.READ_MEDIA_AUDIO',
+      'android.permission.READ_MEDIA_VIDEO',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+    ],
     permissions: [
       'android.permission.CAMERA',
-      'android.permission.RECORD_AUDIO',
       'android.permission.ACCESS_COARSE_LOCATION',
       'android.permission.ACCESS_FINE_LOCATION',
-      'android.permission.READ_EXTERNAL_STORAGE',
-      'android.permission.WRITE_EXTERNAL_STORAGE',
       'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
       'android.permission.READ_MEDIA_IMAGES',
-      'android.permission.READ_MEDIA_VIDEO',
-      'android.permission.READ_MEDIA_AUDIO',
     ],
   },
   web: {
@@ -65,20 +81,48 @@ const baseConfig = {
     ],
     'expo-secure-store',
     'expo-image',
+    'expo-web-browser',
+    'expo-apple-authentication',
+    [
+      'expo-build-properties',
+      {
+        android: {
+          extraMavenRepos: ['https://devrepo.kakao.com/nexus/content/groups/public/'],
+        },
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,
   },
   extra: {
+    legal: {
+      privacyPolicyUrl: process.env.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL,
+      supportEmail: process.env.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL ?? 'support@soundlog.app',
+      termsUrl: process.env.EXPO_PUBLIC_SOUNDLOG_TERMS_URL,
+    },
+    spotify: {
+      clientId: process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID,
+    },
     eas: {
       projectId: '4b07627b-36bf-463d-a15e-b4839022ecbb',
     },
   },
 };
 
-function getHttpApiHost() {
-  const apiBaseUrl = process.env.EXPO_PUBLIC_SOUNDLOG_API_BASE_URL;
+function getKakaoNativeAppKey() {
+  return process.env.EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY;
+}
 
+function getApiBaseUrl() {
+  return process.env.EXPO_PUBLIC_SOUNDLOG_API_BASE_URL?.replace(/\/+$/, '');
+}
+
+function isProductionBuildProfile() {
+  return process.env.EAS_BUILD_PROFILE === 'production';
+}
+
+function getHttpApiHost(apiBaseUrl) {
   if (!apiBaseUrl?.startsWith('http://')) {
     return undefined;
   }
@@ -90,11 +134,86 @@ function getHttpApiHost() {
   }
 }
 
+function assertProductionConfig(apiBaseUrl) {
+  if (!isProductionBuildProfile()) {
+    return;
+  }
+
+  if (!apiBaseUrl?.startsWith('https://')) {
+    throw new Error(
+      'Production builds require EXPO_PUBLIC_SOUNDLOG_API_BASE_URL to be an HTTPS URL.',
+    );
+  }
+
+  if (process.env.EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK === 'true') {
+    throw new Error('Production builds cannot enable EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK.');
+  }
+}
+
+function upsertBuildPropertiesPlugin(config, nextAndroidConfig) {
+  const plugins = config.plugins ?? [];
+  const buildPropertiesIndex = plugins.findIndex(
+    (plugin) => Array.isArray(plugin) && plugin[0] === 'expo-build-properties',
+  );
+
+  if (buildPropertiesIndex === -1) {
+    config.plugins = [
+      ...plugins,
+      [
+        'expo-build-properties',
+        {
+          android: nextAndroidConfig,
+        },
+      ],
+    ];
+    return;
+  }
+
+  const [pluginName, pluginConfig = {}] = plugins[buildPropertiesIndex];
+
+  config.plugins = plugins.map((plugin, index) =>
+    index === buildPropertiesIndex
+      ? [
+          pluginName,
+          {
+            ...pluginConfig,
+            android: {
+              ...(pluginConfig.android ?? {}),
+              ...nextAndroidConfig,
+            },
+          },
+        ]
+      : plugin,
+  );
+}
+
 module.exports = () => {
   const nextConfig = JSON.parse(JSON.stringify(baseConfig));
-  const httpApiHost = getHttpApiHost();
+  const apiBaseUrl = getApiBaseUrl();
+  const httpApiHost = getHttpApiHost(apiBaseUrl);
+  const kakaoNativeAppKey = getKakaoNativeAppKey();
 
-  if (!httpApiHost) {
+  assertProductionConfig(apiBaseUrl);
+
+  if (kakaoNativeAppKey) {
+    nextConfig.plugins = [
+      ...(nextConfig.plugins ?? []),
+      [
+        '@react-native-kakao/core',
+        {
+          nativeAppKey: kakaoNativeAppKey,
+          android: {
+            authCodeHandlerActivity: true,
+          },
+          ios: {
+            handleKakaoOpenUrl: true,
+          },
+        },
+      ],
+    ];
+  }
+
+  if (!httpApiHost || isProductionBuildProfile()) {
     return nextConfig;
   }
 
@@ -116,17 +235,9 @@ module.exports = () => {
     },
   };
 
-  nextConfig.plugins = [
-    ...(nextConfig.plugins ?? []),
-    [
-      'expo-build-properties',
-      {
-        android: {
-          usesCleartextTraffic: true,
-        },
-      },
-    ],
-  ];
+  upsertBuildPropertiesPlugin(nextConfig, {
+    usesCleartextTraffic: true,
+  });
 
   return nextConfig;
 };

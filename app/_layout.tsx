@@ -14,7 +14,10 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="auth/login" />
         <Stack.Screen name="auth/callback" />
+        <Stack.Screen name="legal/privacy" />
+        <Stack.Screen name="legal/terms" />
         <Stack.Screen name="onboarding" />
+        <Stack.Screen name="spotify-auth" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="camera/index" options={{ presentation: 'modal' }} />
       </Stack>
