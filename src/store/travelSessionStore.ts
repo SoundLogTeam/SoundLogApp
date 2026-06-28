@@ -14,6 +14,7 @@ export type HomeLocationStatus = 'denied' | 'granted' | 'idle' | 'loading' | 'un
 type TravelSession = {
   endedAt?: string;
   id: string;
+  recapId?: string;
   startedAt?: string;
   status: 'idle' | 'active' | 'ended';
 };
@@ -34,6 +35,7 @@ type TravelSessionState = {
   setLocationStatus: (status: HomeLocationStatus) => void;
   setMode: (mode: TravelMode) => void;
   setRecommendationMode: (mode: MusicRecommendationMode) => void;
+  setSessionRecapId: (recapId?: string) => void;
   startSession: () => void;
 };
 
@@ -84,6 +86,13 @@ export const useTravelSessionStore = create<TravelSessionState>()(
       setMode: (selectedMode) => set({ selectedMode }),
       setPlace: (currentPlace) => set({ currentPlace }),
       setRecommendationMode: (recommendationMode) => set({ recommendationMode }),
+      setSessionRecapId: (recapId) =>
+        set((state) => ({
+          session: {
+            ...state.session,
+            recapId,
+          },
+        })),
       startSession: () =>
         set({
           session: {
@@ -96,6 +105,9 @@ export const useTravelSessionStore = create<TravelSessionState>()(
     {
       name: 'soundlog-travel-session',
       partialize: (state) => ({
+        currentLocation: state.currentLocation,
+        currentPlace: state.currentPlace,
+        locationUpdatedAt: state.locationUpdatedAt,
         recommendationMode: state.recommendationMode,
         selectedMode: state.selectedMode,
         session: state.session,

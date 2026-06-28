@@ -13,6 +13,7 @@ type TravelStatusCardProps = {
   currentPlace?: PlaceContext;
   currentTrack?: Track;
   endedAt?: string;
+  isCreatingRecap?: boolean;
   momentCount: number;
   onEndTravel: () => void;
   onOpenRecap: () => void;
@@ -21,6 +22,7 @@ type TravelStatusCardProps = {
   selectedMode?: TravelMode;
   startedAt?: string;
   status: TravelStatus;
+  trackCount?: number;
 };
 
 function Metric({ label, value }: { label: string; value: string }) {
@@ -49,6 +51,7 @@ export function TravelStatusCard({
   currentPlace,
   currentTrack,
   endedAt,
+  isCreatingRecap = false,
   momentCount,
   onEndTravel,
   onOpenRecap,
@@ -57,13 +60,14 @@ export function TravelStatusCard({
   selectedMode,
   startedAt,
   status,
+  trackCount = 0,
 }: TravelStatusCardProps) {
-  const modeLabel = selectedMode ? modeLabelByValue[selectedMode] : '카페 투어';
-  const modeIcon = selectedMode ? modeIconByValue[selectedMode] : '☕';
-  const placeLabel = currentPlace?.title ?? '성수 카페거리';
+  const modeLabel = selectedMode ? modeLabelByValue[selectedMode] : '미설정';
+  const modeIcon = selectedMode ? modeIconByValue[selectedMode] : '🧭';
+  const placeLabel = currentPlace?.title ?? '위치 확인 전';
   const currentTrackLabel = currentTrack
     ? `${currentTrack.artist} - ${currentTrack.title}`
-    : 'NewJeans - Ditto';
+    : '재생 중인 음악 없음';
 
   if (status === 'active') {
     return (
@@ -136,18 +140,21 @@ export function TravelStatusCard({
         <View className="mt-5 flex-row flex-wrap gap-3">
           <Metric label="여행 모드" value={modeLabel} />
           <Metric label="총 여행 시간" value={formatDurationText(startedAt, endedAt)} />
-          <Metric label="저장한 순간" value={`${Math.max(momentCount, 12)}개`} />
-          <Metric label="총 음악 재생 시간" value="1시간 42분" />
-          <Metric label="들은 곡" value="31곡" />
+          <Metric label="저장한 순간" value={`${momentCount}개`} />
+          <Metric label="기록된 음악" value={`${trackCount}곡`} />
         </View>
 
         <View className="mt-5 flex-row gap-3">
           <Pressable
             accessibilityRole="button"
             className="h-14 flex-1 items-center justify-center rounded-full bg-soundlog-lime"
+            disabled={isCreatingRecap || momentCount === 0}
             onPress={onOpenRecap}
+            style={{ opacity: isCreatingRecap || momentCount === 0 ? 0.62 : 1 }}
           >
-            <AppText className="text-base font-semibold text-soundlog-inverse">Recap 보기</AppText>
+            <AppText className="text-base font-semibold text-soundlog-inverse">
+              {isCreatingRecap ? 'Recap 생성 중' : 'Recap 보기'}
+            </AppText>
           </Pressable>
           <Pressable
             accessibilityRole="button"

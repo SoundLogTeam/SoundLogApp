@@ -1,7 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { Tabs, router } from 'expo-router';
 import {
-  Alert,
   Platform,
   Pressable,
   StyleProp,
@@ -26,7 +25,7 @@ function TabIcon({ name, color }: { name: TabIconName; color: string }) {
 }
 
 function CameraTabButton({ style }: { style?: StyleProp<ViewStyle> }) {
-  const { session, startSession } = useTravelSessionStore();
+  const { session } = useTravelSessionStore();
   const openCamera = () => router.push('/camera');
   const handlePress = () => {
     if (session.status === 'active') {
@@ -34,16 +33,7 @@ function CameraTabButton({ style }: { style?: StyleProp<ViewStyle> }) {
       return;
     }
 
-    Alert.alert('여행을 시작할까요?', '순간 저장은 현재 여행에 연결돼요.', [
-      { style: 'cancel', text: '취소' },
-      {
-        onPress: () => {
-          startSession();
-          openCamera();
-        },
-        text: '시작하고 촬영',
-      },
-    ]);
+    openCamera();
   };
 
   return (
@@ -107,17 +97,18 @@ export function BottomNavigation() {
         }}
       />
       <Tabs.Screen
-        name="travel"
+        name="recap"
         options={{
-          tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="map" />,
-          title: '여행',
+          tabBarIcon: ({ color }) => <TabIcon color={String(color)} name="disc" />,
+          title: 'Recap',
         }}
       />
       <Tabs.Screen
         name="capture"
         options={{
+          tabBarLabel: () => null,
           tabBarButton: ({ style }) => <CameraTabButton style={style} />,
-          title: '카메라',
+          title: '',
         }}
       />
       <Tabs.Screen
@@ -135,10 +126,10 @@ export function BottomNavigation() {
         }}
       />
       <Tabs.Screen
-        name="recap"
+        name="travel"
         options={{
           href: null,
-          title: 'Recap',
+          title: '여행',
         }}
       />
       <Tabs.Screen

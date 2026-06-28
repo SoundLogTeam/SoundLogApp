@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Switch, View } from 'react-native';
 
+import { meApi } from '@/api/meApi';
 import { AppText } from '@/components/AppText';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Screen } from '@/components/Screen';
@@ -155,12 +156,14 @@ export function OnboardingScreen() {
     if (isEditMode) {
       updateProfile(input);
       applyHomeFilters(input);
+      void meApi.updateProfile(input).catch(() => undefined);
       router.replace('/my' as never);
       return;
     }
 
     completeOnboarding(input);
     applyHomeFilters(input);
+    void meApi.updateProfile(input).catch(() => undefined);
     router.replace('/');
   };
 
@@ -184,6 +187,15 @@ export function OnboardingScreen() {
     }
 
     skipOnboarding();
+    void meApi
+      .updateProfile({
+        companionType: undefined,
+        locationRecommendationEnabled: true,
+        preferredGenres: [],
+        preferredMoods: [],
+        travelStyles: [],
+      })
+      .catch(() => undefined);
     setSelectedTopFilter('전체');
     setSelectedMoodFilter('전체');
     router.replace('/');

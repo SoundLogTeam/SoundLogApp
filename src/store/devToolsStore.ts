@@ -5,6 +5,11 @@ import { MockEndpointId } from '@/mock-server/types';
 export type ApiSource = 'mock' | 'server';
 
 export const mockEndpointIds: MockEndpointId[] = [
+  'auth.socialLogin',
+  'auth.refresh',
+  'auth.logout',
+  'auth.me',
+  'auth.migrateLocalData',
   'home.featuredPlaylists',
   'home.moodRecommendations',
   'home.recentMusicLogs',
@@ -27,9 +32,18 @@ type DevToolsState = {
 };
 
 function getInitialApiSource(): ApiSource {
-  return process.env.EXPO_PUBLIC_SOUNDLOG_API_SOURCE === 'server'
-    ? 'server'
-    : 'mock';
+  if (process.env.EXPO_PUBLIC_SOUNDLOG_API_SOURCE === 'mock') {
+    return 'mock';
+  }
+
+  if (
+    process.env.EXPO_PUBLIC_SOUNDLOG_API_SOURCE === 'server' ||
+    process.env.EXPO_PUBLIC_SOUNDLOG_API_BASE_URL
+  ) {
+    return 'server';
+  }
+
+  return 'mock';
 }
 
 export const useDevToolsStore = create<DevToolsState>((set) => ({

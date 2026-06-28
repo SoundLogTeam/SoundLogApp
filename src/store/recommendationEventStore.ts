@@ -8,10 +8,12 @@ export type RecommendationEventType =
   | 'track_play'
   | 'track_pause'
   | 'track_resume'
+  | 'track_external_open'
   | 'track_like'
   | 'track_unlike'
   | 'track_save'
   | 'track_unsave'
+  | 'track_skip'
   | 'playlist_open'
   | 'mood_filter_change'
   | 'recommendation_mode_change'
@@ -48,7 +50,7 @@ type RecommendationEventInput = {
 
 type RecommendationEventState = {
   clearEvents: () => void;
-  addEvent: (input: RecommendationEventInput) => void;
+  addEvent: (input: RecommendationEventInput) => RecommendationEvent | undefined;
   events: RecommendationEvent[];
   isHydrated: boolean;
   sessionId: string;
@@ -73,7 +75,7 @@ export const useRecommendationEventStore = create<RecommendationEventState>()(
       sessionId: createLocalId('session'),
       addEvent: (input) => {
         if (!get().isHydrated) {
-          return;
+          return undefined;
         }
 
         const event: RecommendationEvent = {
@@ -90,6 +92,8 @@ export const useRecommendationEventStore = create<RecommendationEventState>()(
         set((state) => ({
           events: [event, ...state.events].slice(0, MAX_EVENTS),
         }));
+
+        return event;
       },
       clearEvents: () => set({ events: [] }),
       setHydrated: (isHydrated) => set({ isHydrated }),

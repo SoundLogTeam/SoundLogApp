@@ -1,11 +1,20 @@
 import { isServerApiSource } from '@/api/apiSource';
-import { requestEnvelope } from '@/api/soundlogClient';
+import { isRealApiEnabled, requestApi } from '@/api/client';
 import { mockServer } from '@/mock-server';
 import type { PlaylistCuration } from '@/types/domain';
 
+function shouldUseServerApi() {
+  return isServerApiSource() && isRealApiEnabled();
+}
+
 export const playlistApi = {
-  getPlaylist: (id?: string) =>
-    isServerApiSource()
-      ? requestEnvelope<PlaylistCuration>(`/v1/playlists/${id ?? 'seoul-night'}`)
-      : mockServer.playlist.getPlaylist(id),
+  getPlaylist: (id?: string) => {
+    if (!shouldUseServerApi()) {
+      return mockServer.playlist.getPlaylist(id);
+    }
+
+    return requestApi<PlaylistCuration>(
+      `/v1/playlists/${encodeURIComponent(id ?? 'fallback')}`,
+    ).catch(() => mockServer.playlist.getPlaylist(id));
+  },
 };

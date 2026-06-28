@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Platform } from 'react-native';
 
+import { recapApi } from '@/api/recapApi';
 import { ShareActionId } from '@/components/recap-share/ShareActionButton';
 
 export type RecapShareMessage = {
@@ -51,11 +52,19 @@ export function useRecapShareActions({ capture, recapId }: UseRecapShareActionsP
     return uri;
   };
 
+  const syncShareEvent = (type: 'os_share' | 'save_image') => {
+    if (!recapId) {
+      return;
+    }
+
+    void recapApi.createShareEvent(recapId, type).catch(() => undefined);
+  };
+
   const save = () =>
     runAction('save', async () => {
       if (Platform.OS === 'web') {
         setMessage({
-          text: '웹에서는 저장 기능을 확인할 수 없어요. Dev Build 앱에서 테스트해주세요.',
+          text: '웹에서는 저장 기능을 확인할 수 없어요. 모바일 앱에서 다시 시도해주세요.',
           type: 'info',
         });
         return;
@@ -75,6 +84,7 @@ export function useRecapShareActions({ capture, recapId }: UseRecapShareActionsP
         }
 
         await MediaLibrary.createAssetAsync(uri);
+        syncShareEvent('save_image');
         setMessage({
           text: '리캡 이미지가 사진 보관함에 저장됐어요.',
           type: 'success',
@@ -91,7 +101,7 @@ export function useRecapShareActions({ capture, recapId }: UseRecapShareActionsP
     runAction('share', async () => {
       if (Platform.OS === 'web') {
         setMessage({
-          text: '웹에서는 공유 기능을 확인할 수 없어요. Dev Build 앱에서 테스트해주세요.',
+          text: '웹에서는 공유 기능을 확인할 수 없어요. 모바일 앱에서 다시 시도해주세요.',
           type: 'info',
         });
         return;
@@ -115,6 +125,7 @@ export function useRecapShareActions({ capture, recapId }: UseRecapShareActionsP
           dialogTitle: 'Soundlog Recap 공유',
           mimeType: 'image/png',
         });
+        syncShareEvent('os_share');
       } catch {
         setMessage({
           text: '리캡 이미지를 공유하지 못했어요. 다시 시도해주세요.',

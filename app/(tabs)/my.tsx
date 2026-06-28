@@ -3,18 +3,27 @@ import { router } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { meApi } from '@/api/meApi';
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { AppText } from '@/components/AppText';
 import { LocationContextCard } from '@/components/home/LocationContextCard';
+import { AuthAccountCard } from '@/components/my/AuthAccountCard';
 import { MusicPlatformSettingsCard } from '@/components/my/MusicPlatformSettingsCard';
 import { PermissionSettingsCard } from '@/components/my/PermissionSettingsCard';
 import { Screen } from '@/components/Screen';
 import { useNativePermissionSettings } from '@/hooks/useNativePermissionSettings';
 import { useMusicPlatformStore } from '@/store/musicPlatformStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+import { useSpotifyAuthStore } from '@/store/spotifyAuthStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
+import {
+  connectSpotifyAccount,
+  getSpotifyAuthErrorMessage,
+  isSpotifyConfigured,
+} from '@/spotify/spotifyAuth';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
+import { MusicPlatformId } from '@/types/domain';
 
 type MyMenuItem = {
   description?: string;
@@ -42,6 +51,15 @@ export default function MyScreen() {
   const { clearEvents, events, isHydrated } = useRecommendationEventStore();
   const permissionSettings = useNativePermissionSettings();
   const { selectedPlatformId, setSelectedPlatform } = useMusicPlatformStore();
+  const {
+    clearSession: clearSpotifySession,
+    errorMessage: spotifyErrorMessage,
+    isConnecting: isSpotifyConnecting,
+    session: spotifySession,
+    setConnecting: setSpotifyConnecting,
+    setError: setSpotifyError,
+    setSession: setSpotifySession,
+  } = useSpotifyAuthStore();
   const {
     currentLocation,
     currentPlace,
@@ -75,14 +93,74 @@ export default function MyScreen() {
   }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
 
   const handleEnableLocationRecommendation = useCallback(() => {
-    updateProfile({
+    const nextProfile = {
       companionType: profile.companionType,
       locationRecommendationEnabled: true,
       preferredGenres: profile.preferredGenres,
       preferredMoods: profile.preferredMoods,
       travelStyles: profile.travelStyles,
-    });
+    };
+
+    updateProfile(nextProfile);
+    void meApi.updateProfile(nextProfile).catch(() => undefined);
   }, [profile, updateProfile]);
+
+  const handleSelectMusicPlatform = useCallback(
+    (platformId: MusicPlatformId) => {
+      setSelectedPlatform(platformId);
+      void meApi
+        .updateMusicPlatform({
+          connected: platformId === 'spotify' ? Boolean(spotifySession) : platformId !== 'none',
+          selectedPlatformId: platformId,
+        })
+        .catch(() => undefined);
+    },
+    [setSelectedPlatform, spotifySession],
+  );
+
+  const handleConnectSpotify = useCallback(async () => {
+    if (isSpotifyConnecting) {
+      return;
+    }
+
+    setSelectedPlatform('spotify');
+    setSpotifyConnecting(true);
+    setSpotifyError(undefined);
+
+    try {
+      const session = await connectSpotifyAccount();
+
+      setSpotifySession(session);
+      void meApi
+        .updateMusicPlatform({
+          connected: true,
+          providerUserId: session.userId,
+          selectedPlatformId: 'spotify',
+        })
+        .catch(() => undefined);
+    } catch (error) {
+      setSpotifyError(getSpotifyAuthErrorMessage(error));
+    } finally {
+      setSpotifyConnecting(false);
+    }
+  }, [
+    isSpotifyConnecting,
+    setSelectedPlatform,
+    setSpotifyConnecting,
+    setSpotifyError,
+    setSpotifySession,
+  ]);
+
+  const handleDisconnectSpotify = useCallback(() => {
+    clearSpotifySession();
+    setSelectedPlatform('none');
+    void meApi
+      .updateMusicPlatform({
+        connected: false,
+        selectedPlatformId: 'none',
+      })
+      .catch(() => undefined);
+  }, [clearSpotifySession, setSelectedPlatform]);
 
   const handleRefreshLocation = useCallback(async () => {
     if (locationStatus === 'loading') {
@@ -124,6 +202,18 @@ export default function MyScreen() {
       label: '위치/카메라 권한',
     },
     {
+      description: '데이터 수집과 보관, 삭제 요청 방법을 확인합니다.',
+      icon: 'shield',
+      label: '개인정보 처리방침',
+      onPress: () => router.push('/legal/privacy' as never),
+    },
+    {
+      description: '서비스 이용 조건과 사용자 콘텐츠 기준을 확인합니다.',
+      icon: 'file-text',
+      label: '서비스 이용약관',
+      onPress: () => router.push('/legal/terms' as never),
+    },
+    {
       description: '온보딩을 다시 볼 수 있도록 초기화합니다.',
       icon: 'rotate-ccw',
       label: '온보딩 초기화',
@@ -141,6 +231,8 @@ export default function MyScreen() {
         showsVerticalScrollIndicator={false}
       >
         <AppText className="text-[26px] font-semibold text-white">My</AppText>
+
+        <AuthAccountCard />
 
         <View className="mt-5 rounded-[22px] border border-white/10 bg-white/10 p-5">
           <AppText className="text-sm font-semibold text-white/45">내 추천 프로필</AppText>
@@ -174,7 +266,7 @@ export default function MyScreen() {
             placeCount={nearbyPlacesQuery.data?.length ?? 0}
             placeInfoMessage={
               currentPlace?.source === 'mock'
-                ? 'TourAPI 키가 없거나 실패해 임시 장소 데이터를 사용 중이에요.'
+                ? '주변 장소 정보를 임시 데이터로 보여주고 있어요.'
                 : undefined
             }
             status={locationStatus}
@@ -183,8 +275,15 @@ export default function MyScreen() {
         </View>
 
         <MusicPlatformSettingsCard
-          onSelectPlatform={setSelectedPlatform}
+          isSpotifyConfigured={isSpotifyConfigured()}
+          isSpotifyConnected={Boolean(spotifySession)}
+          isSpotifyConnecting={isSpotifyConnecting}
+          onConnectSpotify={handleConnectSpotify}
+          onDisconnectSpotify={handleDisconnectSpotify}
+          onSelectPlatform={handleSelectMusicPlatform}
           selectedPlatformId={selectedPlatformId}
+          spotifyDisplayName={spotifySession?.displayName}
+          spotifyErrorMessage={spotifyErrorMessage}
         />
 
         <View className="mt-6 gap-3">

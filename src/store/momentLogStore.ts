@@ -9,6 +9,7 @@ type MomentLogState = {
   addLog: (log: MomentLog) => void;
   getRecentLogs: (limit?: number) => MomentLog[];
   removeLog: (id: string) => void;
+  updateLog: (id: string, patch: Partial<MomentLog>) => void;
 };
 
 export function momentLogToMusicLogItem(log: MomentLog): MusicLogItem {
@@ -35,6 +36,10 @@ export const useMomentLogStore = create<MomentLogState>()(
       removeLog: (id) =>
         set((state) => ({
           logs: state.logs.filter((item) => item.id !== id),
+        })),
+      updateLog: (id, patch) =>
+        set((state) => ({
+          logs: state.logs.map((item) => (item.id === id ? { ...item, ...patch } : item)),
         })),
     }),
     {

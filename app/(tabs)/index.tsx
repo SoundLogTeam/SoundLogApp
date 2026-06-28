@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,8 @@ import {
   useMoodRecommendationsQuery,
   useRecentMusicLogsQuery,
 } from '@/api/homeQueries';
+import { meApi } from '@/api/meApi';
+import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
@@ -32,6 +34,7 @@ import {
 } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+import { playSelectedSpotifyOrFallback } from '@/spotify/spotifyPlayback';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { MoodRecommendation, MusicLogItem } from '@/types/domain';
@@ -120,22 +123,27 @@ function HomeContent() {
   const handleSelectRecommendation = (item: MoodRecommendation) => {
     if (item.playlistId) {
       router.push(`/playlist/${item.playlistId}`);
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        playlistId: item.playlistId,
-        type: 'playlist_open',
-        value: item.playlistId,
-      });
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext(),
+          playlistId: item.playlistId,
+          type: 'playlist_open',
+          value: item.playlistId,
+        }),
+      );
       return;
     }
 
     setTrack(item.track);
-    addRecommendationEvent({
-      context: createRecommendationEventContext(),
-      trackId: item.track.id,
-      type: 'track_play',
-      value: item.id,
-    });
+    void playSelectedSpotifyOrFallback(item.track);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context: createRecommendationEventContext(),
+        trackId: item.track.id,
+        type: 'track_play',
+        value: item.id,
+      }),
+    );
   };
   const handleSelectMusicLog = useCallback((item: MusicLogItem) => {
     router.push(`/recap-share/${item.recapShareId ?? item.id}`);
@@ -147,11 +155,13 @@ function HomeContent() {
       }
 
       setSelectedTopFilter(filter);
-      addRecommendationEvent({
-        context: createRecommendationEventContext({ topFilter: filter }),
-        type: 'top_filter_change',
-        value: filter,
-      });
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext({ topFilter: filter }),
+          type: 'top_filter_change',
+          value: filter,
+        }),
+      );
     },
     [addRecommendationEvent, selectedTopFilter, setSelectedTopFilter],
   );
@@ -162,11 +172,13 @@ function HomeContent() {
       }
 
       setSelectedMoodFilter(filter);
-      addRecommendationEvent({
-        context: createRecommendationEventContext({ moodFilter: filter }),
-        type: 'mood_filter_change',
-        value: filter,
-      });
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext({ moodFilter: filter }),
+          type: 'mood_filter_change',
+          value: filter,
+        }),
+      );
     },
     [addRecommendationEvent, selectedMoodFilter, setSelectedMoodFilter],
   );
@@ -177,22 +189,27 @@ function HomeContent() {
       }
 
       setRecommendationMode(mode);
-      addRecommendationEvent({
-        context: createRecommendationEventContext({ recommendationMode: mode }),
-        type: 'recommendation_mode_change',
-        value: mode,
-      });
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext({ recommendationMode: mode }),
+          type: 'recommendation_mode_change',
+          value: mode,
+        }),
+      );
     },
     [addRecommendationEvent, recommendationMode, setRecommendationMode],
   );
   const handleEnableLocationRecommendation = () => {
-    updateProfile({
+    const nextProfile = {
       companionType: profile.companionType,
       locationRecommendationEnabled: true,
       preferredGenres: profile.preferredGenres,
       preferredMoods: profile.preferredMoods,
       travelStyles: profile.travelStyles,
-    });
+    };
+
+    updateProfile(nextProfile);
+    void meApi.updateProfile(nextProfile).catch(() => undefined);
   };
   const handleRefreshLocation = useCallback(async () => {
     if (locationStatus === 'loading') {
@@ -312,7 +329,7 @@ export default function HomeScreen() {
   }, [isHydrated, profile.completedOnboarding]);
 
   if (!isHydrated || !profile.completedOnboarding) {
-    return <Screen />;
+    return isHydrated ? <Redirect href="/onboarding" /> : <Screen />;
   }
 
   return <HomeContent />;
