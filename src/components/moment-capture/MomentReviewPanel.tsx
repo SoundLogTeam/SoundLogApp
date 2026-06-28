@@ -24,11 +24,11 @@ const travelModeLabels: Partial<Record<TravelMode, string>> = {
 };
 
 const moodLabels: Record<MoodTag, string> = {
-  active: '활기찬',
+  active: '신나는',
   calm: '잔잔한',
   emotional: '감성적인',
-  fresh: '청량한',
-  local: '로컬한',
+  fresh: '시원한',
+  local: '설레는',
 };
 
 type MomentReviewPanelProps = {

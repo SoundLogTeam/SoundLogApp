@@ -1,5 +1,5 @@
 import { Redirect, router } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,6 +9,8 @@ import {
   useRecentMusicLogsQuery,
 } from '@/api/homeQueries';
 import { meApi } from '@/api/meApi';
+import { playlistApi, PlaylistMlMood, PlaylistMlState } from '@/api/playlistApi';
+import { playlistQueryKeys } from '@/api/playlistQueries';
 import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { MiniPlayer } from '@/components/MiniPlayer';
@@ -34,15 +36,49 @@ import {
 } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+import { queryClient } from '@/providers/queryClient';
 import { playSelectedSpotifyOrFallback } from '@/spotify/spotifyPlayback';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
-import { MoodRecommendation, MusicLogItem } from '@/types/domain';
+import { FeaturedPlaylist, MoodRecommendation, MusicLogItem, TravelMode } from '@/types/domain';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
+import { getMoodTagsFromFilter } from '@/utils/moodTags';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
+
+const moodFilterToMlMood: Record<string, PlaylistMlMood> = {
+  감성적인: '감성적인',
+  로컬한: '설레는',
+  설레는: '설레는',
+  시원한: '시원한',
+  신나는: '신나는',
+  잔잔한: '잔잔한',
+  청량한: '시원한',
+  활기찬: '신나는',
+};
+
+const travelModeToMlState: Partial<Record<TravelMode, PlaylistMlState>> = {
+  cafe: '카페',
+  drive: '드라이브',
+  night: '야경',
+  ocean: '바다',
+  walk: '산책',
+};
+
+function resolvePlaylistMood(filter: string, preferredMoods: string[]): PlaylistMlMood {
+  if (filter !== '전체' && moodFilterToMlMood[filter]) {
+    return moodFilterToMlMood[filter];
+  }
+
+  return preferredMoods.map((mood) => moodFilterToMlMood[mood]).find(Boolean) ?? '잔잔한';
+}
+
+function resolvePlaylistState(mode?: TravelMode): PlaylistMlState {
+  return (mode ? travelModeToMlState[mode] : undefined) ?? '산책';
+}
 
 function HomeContent() {
   const insets = useSafeAreaInsets();
+  const [creatingPlaylistId, setCreatingPlaylistId] = useState<string>();
   const {
     selectedMoodFilter,
     selectedTopFilter,
@@ -145,6 +181,61 @@ function HomeContent() {
       }),
     );
   };
+  const handleSelectFeaturedPlaylist = useCallback(
+    async (playlist: FeaturedPlaylist) => {
+      if (creatingPlaylistId) {
+        return;
+      }
+
+      setCreatingPlaylistId(playlist.id);
+
+      try {
+        const contextualPlaylist = await playlistApi.createContextualPlaylist(
+          {
+            location: currentLocation ?? currentPlace?.location,
+            mood: resolvePlaylistMood(selectedMoodFilter, profile.preferredMoods),
+            moodTags: getMoodTagsFromFilter(selectedMoodFilter),
+            placeId: currentPlace?.id,
+            preferredMoods: profile.preferredMoods,
+            state: resolvePlaylistState(selectedMode),
+            travelMode: selectedMode,
+          },
+          playlist.id,
+        );
+        const nextPlaylistId = contextualPlaylist?.id ?? playlist.id;
+
+        if (contextualPlaylist) {
+          queryClient.setQueryData(
+            playlistQueryKeys.detail(nextPlaylistId),
+            contextualPlaylist,
+          );
+        }
+
+        syncRecommendationEvent(
+          addRecommendationEvent({
+            context: createRecommendationEventContext({
+              moodFilter: selectedMoodFilter,
+            }),
+            playlistId: nextPlaylistId,
+            type: 'playlist_open',
+            value: nextPlaylistId,
+          }),
+        );
+        router.push(`/playlist/${nextPlaylistId}`);
+      } finally {
+        setCreatingPlaylistId(undefined);
+      }
+    },
+    [
+      addRecommendationEvent,
+      creatingPlaylistId,
+      currentLocation,
+      currentPlace,
+      profile.preferredMoods,
+      selectedMode,
+      selectedMoodFilter,
+    ],
+  );
   const handleSelectMusicLog = useCallback((item: MusicLogItem) => {
     router.push(`/recap-share/${item.recapShareId ?? item.id}`);
   }, []);
@@ -291,6 +382,7 @@ function HomeContent() {
           data={featuredPlaylistsQuery.data}
           isError={featuredPlaylistsQuery.isError}
           isLoading={featuredPlaylistsQuery.isLoading}
+          onSelectPlaylist={handleSelectFeaturedPlaylist}
           onRetry={() => void featuredPlaylistsQuery.refetch()}
         />
 

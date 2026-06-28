@@ -9,6 +9,7 @@ type FeaturedPlaylistSectionProps = {
   data?: FeaturedPlaylist[];
   isError?: boolean;
   isLoading?: boolean;
+  onSelectPlaylist?: (playlist: FeaturedPlaylist) => void;
   onRetry?: () => void;
 };
 
@@ -29,6 +30,7 @@ export function FeaturedPlaylistSection({
   data = [],
   isError = false,
   isLoading = false,
+  onSelectPlaylist,
   onRetry,
 }: FeaturedPlaylistSectionProps) {
   return (
@@ -53,7 +55,11 @@ export function FeaturedPlaylistSection({
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View className="flex-row pr-5">
             {data.map((playlist) => (
-              <FeaturedPlaylistCard key={playlist.id} playlist={playlist} />
+              <FeaturedPlaylistCard
+                key={playlist.id}
+                onPress={onSelectPlaylist}
+                playlist={playlist}
+              />
             ))}
           </View>
         </ScrollView>

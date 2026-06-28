@@ -23,7 +23,6 @@ const travelModeOptions: Array<{ label: string; value: TravelMode }> = [
   { label: '드라이브', value: 'drive' },
   { label: '카페 투어', value: 'cafe' },
   { label: '바다 보기', value: 'ocean' },
-  { label: '축제', value: 'festival' },
   { label: '야경 감상', value: 'night' },
 ];
 

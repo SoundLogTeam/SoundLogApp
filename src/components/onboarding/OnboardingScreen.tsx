@@ -58,9 +58,9 @@ const options: Record<MultiSelectKey, string[]> = {
   preferredMoods: [
     '잔잔한',
     '신나는',
-    '청량한',
+    '시원한',
+    '설레는',
     '감성적인',
-    '활기찬',
     '몽환적인',
     '드라이브',
   ],
@@ -69,7 +69,6 @@ const options: Record<MultiSelectKey, string[]> = {
     '드라이브',
     '카페 투어',
     '바다 보기',
-    '축제',
     '야경 감상',
   ],
 };

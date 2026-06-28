@@ -69,13 +69,12 @@ const placePresets: Array<{
 ];
 
 const topFilterOptions = ['전체', '근처', '지역 트렌드', '내 취향', '저장 많은'];
-const moodFilterOptions = ['전체', '잔잔한', '신나는', '감성적인', '청량한', '활기찬', '로컬한'];
+const moodFilterOptions = ['전체', '잔잔한', '신나는', '시원한', '설레는', '감성적인'];
 const travelModeOptions: Array<{ label: string; value: TravelMode }> = [
   { label: '산책', value: 'walk' },
   { label: '드라이브', value: 'drive' },
   { label: '카페', value: 'cafe' },
   { label: '바다', value: 'ocean' },
-  { label: '축제', value: 'festival' },
   { label: '야경', value: 'night' },
 ];
 const authProviderOptions: AuthProvider[] = ['apple', 'kakao'];
@@ -280,11 +279,11 @@ function DevTestManagerContent() {
       companionType: '친구',
       locationRecommendationEnabled: true,
       preferredGenres: ['K-POP', '인디', '팝'],
-      preferredMoods: ['청량한', '잔잔한'],
+      preferredMoods: ['시원한', '잔잔한'],
       travelStyles: ['산책', '바다 보기'],
     });
     setSelectedTopFilter('전체');
-    setSelectedMoodFilter('청량한');
+    setSelectedMoodFilter('시원한');
     router.replace('/' as never);
   };
   const resetProfile = () => {
