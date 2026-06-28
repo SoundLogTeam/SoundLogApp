@@ -9,10 +9,9 @@ const moodFilters = [
   '전체',
   '잔잔한',
   '신나는',
+  '시원한',
+  '설레는',
   '감성적인',
-  '청량한',
-  '활기찬',
-  '로컬한',
 ];
 
 export function isMoodRecommendationFilter(filter: string) {

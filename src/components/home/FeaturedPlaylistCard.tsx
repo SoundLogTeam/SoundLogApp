@@ -6,14 +6,22 @@ import { Chip } from '@/components/Chip';
 import { FeaturedPlaylist } from '@/types/domain';
 
 type FeaturedPlaylistCardProps = {
+  onPress?: (playlist: FeaturedPlaylist) => void;
   playlist: FeaturedPlaylist;
 };
 
-export function FeaturedPlaylistCard({ playlist }: FeaturedPlaylistCardProps) {
+export function FeaturedPlaylistCard({ onPress, playlist }: FeaturedPlaylistCardProps) {
   return (
     <Pressable
       className="mr-4 h-[260px] w-[180px] justify-end overflow-hidden rounded-[20px] border border-white/10 bg-soundlog-card p-4"
-      onPress={() => router.push(`/playlist/${playlist.id}`)}
+      onPress={() => {
+        if (onPress) {
+          onPress(playlist);
+          return;
+        }
+
+        router.push(`/playlist/${playlist.id}`);
+      }}
     >
       <View className="absolute inset-0 bg-black/10" />
       <View className="absolute left-3 top-4 flex-row gap-2">

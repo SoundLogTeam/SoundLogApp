@@ -2,10 +2,12 @@ import { MoodTag } from '@/types/domain';
 
 const moodFilterToTags: Record<string, MoodTag[]> = {
   감성적인: ['emotional'],
+  설레는: ['local'],
   시원한: ['fresh'],
   '시원한 바람': ['fresh'],
   신나는: ['active'],
   잔잔한: ['calm'],
+  청량한: ['fresh'],
   전체: [],
   활기찬: ['active'],
 };

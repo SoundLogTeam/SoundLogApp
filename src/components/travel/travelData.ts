@@ -31,7 +31,6 @@ export const travelModeOptions: TravelModeOption[] = [
   { icon: '🚗', label: '드라이브', value: 'drive' },
   { icon: '☕', label: '카페 투어', value: 'cafe' },
   { icon: '🌊', label: '바다 보기', value: 'ocean' },
-  { icon: '🎪', label: '축제', value: 'festival' },
   { icon: '🌙', label: '야경 감상', value: 'night' },
 ];
 
@@ -52,11 +51,11 @@ export const modeIconByValue = travelModeOptions.reduce(
 );
 
 export const moodLabelByValue: Record<MoodTag, string> = {
-  active: '활기찬',
+  active: '신나는',
   calm: '잔잔한',
   emotional: '감성적인',
-  fresh: '청량한',
-  local: '로컬',
+  fresh: '시원한',
+  local: '설레는',
 };
 
 export const sampleMoments: MomentLog[] = [
