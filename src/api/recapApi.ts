@@ -1,3 +1,4 @@
+import { isServerApiSource } from '@/api/apiSource';
 import {
   canUseAuthenticatedApi,
   createIdempotencyKey,
@@ -5,7 +6,7 @@ import {
   requestApi,
 } from '@/api/client';
 import { mockServer } from '@/mock-server';
-import { RecapItem, RecapShare, RecapTemplateId } from '@/types/domain';
+import type { RecapItem, RecapShare, RecapTemplateId } from '@/types/domain';
 
 type CreateRecapInput = {
   momentLogIds?: string[];
@@ -17,9 +18,13 @@ type CreateRecapInput = {
 
 type RecapShareEventType = 'os_share' | 'save_image';
 
+function shouldUseServerApi() {
+  return isServerApiSource() && isRealApiEnabled();
+}
+
 export const recapApi = {
   createShareEvent: (recapId: string, type: RecapShareEventType) => {
-    if (!isRealApiEnabled()) {
+    if (!shouldUseServerApi()) {
       return mockServer.recap.createShareEvent(recapId, type);
     }
 
@@ -40,7 +45,7 @@ export const recapApi = {
     );
   },
   createRecap: (input: CreateRecapInput) => {
-    if (!isRealApiEnabled()) {
+    if (!shouldUseServerApi()) {
       return mockServer.recap.createRecap(input);
     }
 
@@ -55,7 +60,7 @@ export const recapApi = {
     });
   },
   getRecapList: () => {
-    if (!isRealApiEnabled()) {
+    if (!shouldUseServerApi()) {
       return mockServer.recap.getRecapList();
     }
 
@@ -65,10 +70,10 @@ export const recapApi = {
 
     return requestApi<RecapItem[]>('/v1/recaps', {
       query: { limit: 20 },
-    });
+    }).catch(() => []);
   },
   getRecapShare: (id?: string) => {
-    if (!isRealApiEnabled()) {
+    if (!shouldUseServerApi()) {
       return mockServer.recap.getRecapShare(id);
     }
 

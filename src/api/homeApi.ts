@@ -1,18 +1,23 @@
+import { isServerApiSource } from '@/api/apiSource';
 import { canUseAuthenticatedApi, isRealApiEnabled, requestApi } from '@/api/client';
 import { mockServer } from '@/mock-server';
-import {
+import type {
   FeaturedPlaylistMockParams,
   MoodRecommendationMockParams,
 } from '@/mock-server/types';
-import {
+import type {
   FeaturedPlaylist,
   MoodRecommendation,
   MusicLogItem,
 } from '@/types/domain';
 
+function shouldUseServerApi() {
+  return isServerApiSource() && isRealApiEnabled();
+}
+
 export const homeApi = {
   getFeaturedPlaylists: (params?: FeaturedPlaylistMockParams) => {
-    if (!isRealApiEnabled()) {
+    if (!shouldUseServerApi()) {
       return mockServer.home.getFeaturedPlaylists(params);
     }
 
@@ -29,7 +34,7 @@ export const homeApi = {
     }).catch(() => mockServer.home.getFeaturedPlaylists(params));
   },
   getMoodRecommendations: (params?: MoodRecommendationMockParams) => {
-    if (!isRealApiEnabled()) {
+    if (!shouldUseServerApi()) {
       return mockServer.home.getMoodRecommendations(params);
     }
 
@@ -47,7 +52,7 @@ export const homeApi = {
     }).catch(() => mockServer.home.getMoodRecommendations(params));
   },
   getRecentMusicLogs: () => {
-    if (!isRealApiEnabled()) {
+    if (!shouldUseServerApi()) {
       return mockServer.home.getRecentMusicLogs();
     }
 
@@ -57,6 +62,6 @@ export const homeApi = {
 
     return requestApi<MusicLogItem[]>('/v1/home/recent-music-logs', {
       query: { limit: 10 },
-    });
+    }).catch(() => []);
   },
 };

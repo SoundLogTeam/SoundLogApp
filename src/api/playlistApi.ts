@@ -1,10 +1,15 @@
+import { isServerApiSource } from '@/api/apiSource';
 import { isRealApiEnabled, requestApi } from '@/api/client';
 import { mockServer } from '@/mock-server';
-import { PlaylistCuration } from '@/types/domain';
+import type { PlaylistCuration } from '@/types/domain';
+
+function shouldUseServerApi() {
+  return isServerApiSource() && isRealApiEnabled();
+}
 
 export const playlistApi = {
   getPlaylist: (id?: string) => {
-    if (!isRealApiEnabled()) {
+    if (!shouldUseServerApi()) {
       return mockServer.playlist.getPlaylist(id);
     }
 
