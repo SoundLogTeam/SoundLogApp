@@ -35,7 +35,7 @@ EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=playlist.detail npm run web
 실제 서버와 연동할 때는 Expo 환경변수로 API base URL을 지정합니다. 이 값이 없으면 앱은 기존 mock API를 사용합니다.
 
 ```bash
-EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.example.com npm run web
+EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.example.com npm run web
 ```
 
 네이티브 실배포 빌드는 HTTPS API를 사용해야 합니다. 개발 빌드에서는 mock 소셜 로그인 fallback을 사용할 수 있지만, production 빌드에서는 실제 OAuth provider 토큰/idToken 연동이 필요합니다.
@@ -46,12 +46,15 @@ EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK=false npm run ios
 
 ## 테스트 설치 빌드
 
-`development`, `preview` EAS profile은 현재 EC2 mock DB 서버를 바라보도록 설정되어 있습니다.
+`development`, `preview` EAS profile은 현재 EC2 테스트 서버를 바라보도록 설정되어 있습니다.
 
-- API: `http://52.79.185.121:4000`
+- API: `http://54.226.62.131:4000`
+- API source: `server`
 - mock auth: `EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK=true`
 - iOS: 해당 IP에 한해 ATS HTTP 예외 적용
 - Android: preview 빌드에서 cleartext HTTP 허용
+
+Mock API로 되돌려 화면 상태를 확인할 때는 `EXPO_PUBLIC_SOUNDLOG_API_SOURCE=mock`으로 실행하거나 `EXPO_PUBLIC_SOUNDLOG_API_BASE_URL`을 비워둡니다.
 
 Android 지인 테스트용 내부 배포 빌드는 아래 명령으로 생성합니다.
 
