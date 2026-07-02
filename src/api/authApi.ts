@@ -1,4 +1,4 @@
-import { createIdempotencyKey, isRealApiEnabled, requestApi } from '@/api/client';
+import { createIdempotencyKey, requestApi, shouldUseServerApi } from '@/api/client';
 import { mockServer } from '@/mock-server';
 import {
   AuthMe,
@@ -10,11 +10,11 @@ import {
 
 export const authApi = {
   getMe: () =>
-    isRealApiEnabled()
+    shouldUseServerApi()
       ? requestApi<AuthMe>('/v1/me')
       : mockServer.auth.getMe(),
   logout: (refreshToken?: string) =>
-    isRealApiEnabled()
+    shouldUseServerApi()
       ? requestApi<{ accepted: boolean }>('/v1/auth/logout', {
           auth: false,
           body: { refreshToken },
@@ -22,7 +22,7 @@ export const authApi = {
         })
       : mockServer.auth.logout(),
   migrateLocalData: (payload: LocalDataMigrationPayload) =>
-    isRealApiEnabled()
+    shouldUseServerApi()
       ? requestApi<LocalDataMigrationResult>('/v1/me/migrate-local-data', {
           body: payload,
           idempotencyKey: payload.idempotencyKey ?? createIdempotencyKey('migration'),
@@ -30,7 +30,7 @@ export const authApi = {
         })
       : mockServer.auth.migrateLocalData(payload),
   refresh: (refreshToken?: string) =>
-    isRealApiEnabled()
+    shouldUseServerApi()
       ? requestApi<AuthSession>('/v1/auth/refresh', {
           auth: false,
           body: { refreshToken },
@@ -39,7 +39,7 @@ export const authApi = {
         })
       : mockServer.auth.refresh(refreshToken),
   socialLogin: (request: SocialLoginRequest) =>
-    isRealApiEnabled()
+    shouldUseServerApi()
       ? requestApi<AuthSession>('/v1/auth/social-login', {
           auth: false,
           body: request,

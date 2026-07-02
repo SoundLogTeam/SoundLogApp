@@ -1,9 +1,8 @@
-import { isServerApiSource } from '@/api/apiSource';
 import {
   canUseAuthenticatedApi,
   createIdempotencyKey,
-  isRealApiEnabled,
   requestApi,
+  shouldUseServerApi,
 } from '@/api/client';
 import { mockServer } from '@/mock-server';
 import type { GeoPoint, MoodTag, PlaylistCuration, TravelMode } from '@/types/domain';
@@ -21,10 +20,6 @@ export type ContextualPlaylistInput = {
   travelMode?: TravelMode;
 };
 
-function shouldUseServerApi() {
-  return isServerApiSource() && isRealApiEnabled();
-}
-
 export const playlistApi = {
   getPlaylist: (id?: string) => {
     if (!shouldUseServerApi()) {
@@ -33,14 +28,14 @@ export const playlistApi = {
 
     return requestApi<PlaylistCuration>(
       `/v1/playlists/${encodeURIComponent(id ?? 'fallback')}`,
-    ).catch(() => mockServer.playlist.getPlaylist(id));
+    );
   },
   createContextualPlaylist: (
     input: ContextualPlaylistInput,
     fallbackPlaylistId?: string,
   ) => {
     if (!shouldUseServerApi() || !canUseAuthenticatedApi()) {
-      return mockServer.playlist.getPlaylist(fallbackPlaylistId);
+      return playlistApi.getPlaylist(fallbackPlaylistId);
     }
 
     return requestApi<PlaylistCuration>('/v1/playlists/contextual', {

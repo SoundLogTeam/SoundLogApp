@@ -1,5 +1,4 @@
-import { isServerApiSource } from '@/api/apiSource';
-import { isRealApiEnabled, requestApi } from '@/api/client';
+import { requestApi, shouldUseServerApi } from '@/api/client';
 import { mockServer } from '@/mock-server';
 import type { GeoPoint, PlaceContext } from '@/types/domain';
 
@@ -9,10 +8,6 @@ type NearbyPlacesParams = {
 };
 
 const DEFAULT_RADIUS_METERS = 2000;
-
-function shouldUseServerApi() {
-  return isServerApiSource() && isRealApiEnabled();
-}
 
 export const tourApi = {
   async getNearbyPlaces(params: NearbyPlacesParams): Promise<PlaceContext[]> {
@@ -28,6 +23,6 @@ export const tourApi = {
         lng: params.location.lng,
         radiusMeters: params.radiusMeters ?? DEFAULT_RADIUS_METERS,
       },
-    }).catch(() => mockServer.tour.getNearbyPlaces(params));
+    });
   },
 };
