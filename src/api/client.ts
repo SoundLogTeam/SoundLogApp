@@ -1,5 +1,6 @@
 import { useAuthStore } from '@/store/authStore';
 import { AuthSession } from '@/types/auth';
+import { isServerApiSource } from '@/api/apiSource';
 
 type QueryValue = boolean | number | string | Array<boolean | number | string> | null | undefined;
 
@@ -40,10 +41,19 @@ export function isRealApiEnabled() {
   return Boolean(getApiBaseUrl());
 }
 
+export function shouldUseServerApi() {
+  return isServerApiSource();
+}
+
 export function canUseAuthenticatedApi() {
   const { accessToken, refreshToken, status } = useAuthStore.getState();
 
-  return isRealApiEnabled() && status === 'authenticated' && Boolean(accessToken || refreshToken);
+  return (
+    shouldUseServerApi() &&
+    isRealApiEnabled() &&
+    status === 'authenticated' &&
+    Boolean(accessToken || refreshToken)
+  );
 }
 
 export function createIdempotencyKey(prefix: string) {

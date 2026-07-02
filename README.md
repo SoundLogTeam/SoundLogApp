@@ -38,6 +38,11 @@ EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=playlist.detail npm run web
 EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.example.com npm run web
 ```
 
+Vercel web 배포는 HTTPS 페이지에서 HTTP EC2 API를 직접 호출하지 않도록
+`/api/soundlog` rewrite proxy를 사용합니다. `vercel.json`의 build command가
+`EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server`와
+`EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/soundlog`를 주입합니다.
+
 네이티브 실배포 빌드는 HTTPS API를 사용해야 합니다. 개발 빌드에서는 mock 소셜 로그인 fallback을 사용할 수 있지만, production 빌드에서는 실제 OAuth provider 토큰/idToken 연동이 필요합니다.
 
 ```bash
@@ -48,9 +53,9 @@ EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK=false npm run ios
 
 `development`, `preview` EAS profile은 현재 EC2 테스트 서버를 바라보도록 설정되어 있습니다.
 
-- API: `http://54.226.62.131:4000`
+- API: `http://52.79.185.121:4000`
 - API source: `server`
-- mock auth: `EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK=true`
+- auth: `EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK=false`, `EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN=true`
 - iOS: 해당 IP에 한해 ATS HTTP 예외 적용
 - Android: preview 빌드에서 cleartext HTTP 허용
 

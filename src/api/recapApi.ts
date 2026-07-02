@@ -1,9 +1,8 @@
-import { isServerApiSource } from '@/api/apiSource';
 import {
   canUseAuthenticatedApi,
   createIdempotencyKey,
-  isRealApiEnabled,
   requestApi,
+  shouldUseServerApi,
 } from '@/api/client';
 import { mockServer } from '@/mock-server';
 import type { RecapItem, RecapShare, RecapTemplateId } from '@/types/domain';
@@ -17,10 +16,6 @@ type CreateRecapInput = {
 };
 
 type RecapShareEventType = 'os_share' | 'save_image';
-
-function shouldUseServerApi() {
-  return isServerApiSource() && isRealApiEnabled();
-}
 
 export const recapApi = {
   createShareEvent: (recapId: string, type: RecapShareEventType) => {
@@ -70,7 +65,7 @@ export const recapApi = {
 
     return requestApi<RecapItem[]>('/v1/recaps', {
       query: { limit: 20 },
-    }).catch(() => []);
+    });
   },
   getRecapShare: (id?: string) => {
     if (!shouldUseServerApi()) {

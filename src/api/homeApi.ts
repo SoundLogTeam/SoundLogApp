@@ -1,5 +1,4 @@
-import { isServerApiSource } from '@/api/apiSource';
-import { canUseAuthenticatedApi, isRealApiEnabled, requestApi } from '@/api/client';
+import { canUseAuthenticatedApi, requestApi, shouldUseServerApi } from '@/api/client';
 import { mockServer } from '@/mock-server';
 import type {
   FeaturedPlaylistMockParams,
@@ -11,10 +10,6 @@ import type {
   MusicLogItem,
 } from '@/types/domain';
 
-function shouldUseServerApi() {
-  return isServerApiSource() && isRealApiEnabled();
-}
-
 export const homeApi = {
   getFeaturedPlaylists: (params?: FeaturedPlaylistMockParams) => {
     if (!shouldUseServerApi()) {
@@ -22,7 +17,6 @@ export const homeApi = {
     }
 
     return requestApi<FeaturedPlaylist[]>('/v1/home/featured-playlists', {
-      auth: false,
       query: {
         lat: params?.location?.lat,
         limit: 10,
@@ -31,7 +25,7 @@ export const homeApi = {
         placeId: params?.place?.id,
         recommendationMode: params?.recommendationMode ?? 'everyday',
       },
-    }).catch(() => mockServer.home.getFeaturedPlaylists(params));
+    });
   },
   getMoodRecommendations: (params?: MoodRecommendationMockParams) => {
     if (!shouldUseServerApi()) {
@@ -39,7 +33,6 @@ export const homeApi = {
     }
 
     return requestApi<MoodRecommendation[]>('/v1/home/mood-recommendations', {
-      auth: false,
       query: {
         limit: 10,
         moodFilter: params?.moodFilter ?? '전체',
@@ -49,7 +42,7 @@ export const homeApi = {
         topFilter: params?.topFilter ?? '전체',
         travelStyles: params?.travelStyles,
       },
-    }).catch(() => mockServer.home.getMoodRecommendations(params));
+    });
   },
   getRecentMusicLogs: () => {
     if (!shouldUseServerApi()) {
@@ -62,6 +55,6 @@ export const homeApi = {
 
     return requestApi<MusicLogItem[]>('/v1/home/recent-music-logs', {
       query: { limit: 10 },
-    }).catch(() => []);
+    });
   },
 };
