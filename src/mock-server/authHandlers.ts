@@ -120,11 +120,6 @@ export const authMockHandlers = {
     }
 
     return mockServerDelay('auth.me', {
-      musicPlatform: {
-        connected: false,
-        selectedPlatformId: 'none',
-        updatedAt: new Date().toISOString(),
-      },
       profile: activeSession.profile,
       user: activeSession.user,
     });
