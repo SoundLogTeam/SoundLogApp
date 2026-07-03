@@ -83,7 +83,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
   const listBottomPadding = getCurationListBottomPadding(insets.bottom, hasMiniPlayer);
   const usesPlainMoodPage = playlistId === 'calm-walk' || Boolean(playlist?.accentColor);
 
-  const playTrack = (track: Track) => {
+  const playTrack = async (track: Track) => {
     if (!playlist) {
       return;
     }
@@ -92,18 +92,21 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
 
     setActionMessage(undefined);
     setTrack(track, playlist.id, playlist.tracks);
-    void openMusicPlatformUrl(externalLink).catch(() => {
+
+    try {
+      await openMusicPlatformUrl(externalLink);
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext(),
+          playlistId: playlist.id,
+          trackId: track.id,
+          type: 'track_external_open',
+          value: externalLink.platformId,
+        }),
+      );
+    } catch {
       setActionMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
-    });
-    syncRecommendationEvent(
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        playlistId: playlist.id,
-        trackId: track.id,
-        type: 'track_external_open',
-        value: externalLink.platformId,
-      }),
-    );
+    }
   };
 
   const playFirstTrack = () => {

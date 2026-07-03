@@ -103,23 +103,26 @@ export function LibraryScreen() {
     setSelectedTab(tab);
     closeMenu();
   };
-  const playRecord = (record: LibraryTrackRecord) => {
+  const playRecord = async (record: LibraryTrackRecord) => {
     const externalLink = getTrackExternalLink(record.track);
 
     setActionMessage(undefined);
     setTrack(record.track, record.playlistId);
-    void openMusicPlatformUrl(externalLink).catch(() => {
+
+    try {
+      await openMusicPlatformUrl(externalLink);
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext(),
+          playlistId: record.playlistId,
+          trackId: record.track.id,
+          type: 'track_external_open',
+          value: externalLink.platformId,
+        }),
+      );
+    } catch {
       setActionMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
-    });
-    syncRecommendationEvent(
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        playlistId: record.playlistId,
-        trackId: record.track.id,
-        type: 'track_external_open',
-        value: externalLink.platformId,
-      }),
-    );
+    }
   };
   const toggleSelectedLike = () => {
     if (!selectedRecord) {

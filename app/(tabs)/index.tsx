@@ -12,6 +12,7 @@ import { meApi } from '@/api/meApi';
 import { playlistApi, PlaylistMlMood, PlaylistMlState } from '@/api/playlistApi';
 import { playlistQueryKeys } from '@/api/playlistQueries';
 import { syncRecommendationEvent } from '@/api/recommendationEventApi';
+import { AppText } from '@/components/AppText';
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
@@ -78,6 +79,7 @@ function resolvePlaylistState(mode?: TravelMode): PlaylistMlState {
 
 function HomeContent() {
   const insets = useSafeAreaInsets();
+  const [actionMessage, setActionMessage] = useState<string>();
   const [creatingPlaylistId, setCreatingPlaylistId] = useState<string>();
   const {
     selectedMoodFilter,
@@ -156,7 +158,9 @@ function HomeContent() {
     }
   }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
 
-  const handleSelectRecommendation = (item: MoodRecommendation) => {
+  const handleSelectRecommendation = async (item: MoodRecommendation) => {
+    setActionMessage(undefined);
+
     if (item.playlistId) {
       router.push(`/playlist/${item.playlistId}`);
       syncRecommendationEvent(
@@ -173,15 +177,20 @@ function HomeContent() {
     const externalLink = getTrackExternalLink(item.track);
 
     setTrack(item.track);
-    void openMusicPlatformUrl(externalLink).catch(() => undefined);
-    syncRecommendationEvent(
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        trackId: item.track.id,
-        type: 'track_external_open',
-        value: externalLink.platformId,
-      }),
-    );
+
+    try {
+      await openMusicPlatformUrl(externalLink);
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext(),
+          trackId: item.track.id,
+          type: 'track_external_open',
+          value: externalLink.platformId,
+        }),
+      );
+    } catch {
+      setActionMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
+    }
   };
   const handleSelectFeaturedPlaylist = useCallback(
     async (playlist: FeaturedPlaylist) => {
@@ -398,6 +407,12 @@ function HomeContent() {
             selectedMoodFilter={selectedMoodFilter}
           />
         </View>
+
+        {actionMessage ? (
+          <View className="rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
+            <AppText className="text-xs leading-5 text-amber-100">{actionMessage}</AppText>
+          </View>
+        ) : null}
 
         <View className="mt-2">
           <MusicLogSection
