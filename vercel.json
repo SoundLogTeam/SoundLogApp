@@ -5,6 +5,10 @@
     {
       "source": "/api/soundlog/:path*",
       "destination": "http://52.79.185.121:4000/:path*"
+    },
+    {
+      "source": "/:path*",
+      "destination": "/index.html"
     }
   ]
 }

@@ -22,7 +22,11 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL": "support@soundlog.app"
+        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://sound-log-app.vercel.app/api/soundlog",
+        "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server",
+        "EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL": "https://sound-log-app.vercel.app/legal/privacy",
+        "EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL": "support@soundlog.app",
+        "EXPO_PUBLIC_SOUNDLOG_TERMS_URL": "https://sound-log-app.vercel.app/legal/terms"
       }
     }
   },
