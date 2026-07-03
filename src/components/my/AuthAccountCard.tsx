@@ -191,7 +191,7 @@ export function AuthAccountCard() {
         onPress={handleLoginPress}
       >
         <AppText className="text-xs font-semibold text-[#05070C]">
-          소셜 로그인 연결하기
+          Soundlog 계정으로 로그인
         </AppText>
       </Pressable>
     </View>
