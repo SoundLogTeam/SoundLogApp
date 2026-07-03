@@ -28,3 +28,6 @@ jobs:
 
       - name: Check server web export
         run: npm run check:server-web-export
+
+      - name: Check store release config
+        run: npm run check:store-release
