@@ -3,9 +3,10 @@ import { mockServer } from '@/mock-server';
 import {
   AuthMe,
   AuthSession,
+  LoginRequest,
   LocalDataMigrationPayload,
   LocalDataMigrationResult,
-  SocialLoginRequest,
+  RegisterRequest,
 } from '@/types/auth';
 
 export const authApi = {
@@ -13,6 +14,15 @@ export const authApi = {
     shouldUseServerApi()
       ? requestApi<AuthMe>('/v1/me')
       : mockServer.auth.getMe(),
+  login: (request: LoginRequest) =>
+    shouldUseServerApi()
+      ? requestApi<AuthSession>('/v1/auth/login', {
+          auth: false,
+          body: request,
+          method: 'POST',
+          retryOnUnauthorized: false,
+        })
+      : mockServer.auth.login(request),
   logout: (refreshToken?: string) =>
     shouldUseServerApi()
       ? requestApi<{ accepted: boolean }>('/v1/auth/logout', {
@@ -38,13 +48,13 @@ export const authApi = {
           retryOnUnauthorized: false,
         })
       : mockServer.auth.refresh(refreshToken),
-  socialLogin: (request: SocialLoginRequest) =>
+  register: (request: RegisterRequest) =>
     shouldUseServerApi()
-      ? requestApi<AuthSession>('/v1/auth/social-login', {
+      ? requestApi<AuthSession>('/v1/auth/register', {
           auth: false,
           body: request,
           method: 'POST',
           retryOnUnauthorized: false,
         })
-      : mockServer.auth.socialLogin(request),
+      : mockServer.auth.register(request),
 };

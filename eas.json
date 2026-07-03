@@ -8,8 +8,6 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK": "false",
-        "EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN": "true",
         "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "http://52.79.185.121:4000",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server"
       }
@@ -17,8 +15,6 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK": "false",
-        "EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN": "true",
         "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "http://52.79.185.121:4000",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server"
       }
@@ -26,8 +22,6 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK": "false",
-        "EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN": "true",
         "EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL": "support@soundlog.app"
       }
     }

@@ -1,11 +1,21 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { authApi } from '@/api/authApi';
-import { LocalDataMigrationPayload, SocialLoginRequest } from '@/types/auth';
+import {
+  LocalDataMigrationPayload,
+  LoginRequest,
+  RegisterRequest,
+} from '@/types/auth';
 
-export function useSocialLoginMutation() {
+export function useLoginMutation() {
   return useMutation({
-    mutationFn: (request: SocialLoginRequest) => authApi.socialLogin(request),
+    mutationFn: (request: LoginRequest) => authApi.login(request),
+  });
+}
+
+export function useRegisterMutation() {
+  return useMutation({
+    mutationFn: (request: RegisterRequest) => authApi.register(request),
   });
 }
 

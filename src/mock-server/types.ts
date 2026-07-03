@@ -1,9 +1,10 @@
 import {
   AuthMe,
   AuthSession,
+  LoginRequest,
   LocalDataMigrationPayload,
   LocalDataMigrationResult,
-  SocialLoginRequest,
+  RegisterRequest,
 } from '@/types/auth';
 import {
   FeaturedPlaylist,
@@ -19,11 +20,12 @@ import {
 } from '@/types/domain';
 
 export type MockEndpointId =
+  | 'auth.login'
   | 'auth.logout'
   | 'auth.me'
   | 'auth.migrateLocalData'
   | 'auth.refresh'
-  | 'auth.socialLogin'
+  | 'auth.register'
   | 'home.featuredPlaylists'
   | 'home.moodRecommendations'
   | 'home.recentMusicLogs'
@@ -63,12 +65,13 @@ export type NearbyPlacesMockParams = {
 export type MockServer = {
   auth: {
     getMe: () => Promise<AuthMe>;
+    login: (request: LoginRequest) => Promise<AuthSession>;
     logout: () => Promise<{ accepted: boolean }>;
     migrateLocalData: (
       payload: LocalDataMigrationPayload,
     ) => Promise<LocalDataMigrationResult>;
     refresh: (refreshToken?: string) => Promise<AuthSession>;
-    socialLogin: (request: SocialLoginRequest) => Promise<AuthSession>;
+    register: (request: RegisterRequest) => Promise<AuthSession>;
   };
   home: {
     getFeaturedPlaylists: (

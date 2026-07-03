@@ -23,7 +23,6 @@ const baseConfig = {
     },
     supportsTablet: true,
     bundleIdentifier: 'com.mannomi.soundlog',
-    usesAppleSignIn: true,
   },
   android: {
     package: 'com.mannomi.soundlog',
@@ -82,15 +81,6 @@ const baseConfig = {
     'expo-secure-store',
     'expo-image',
     'expo-web-browser',
-    'expo-apple-authentication',
-    [
-      'expo-build-properties',
-      {
-        android: {
-          extraMavenRepos: ['https://devrepo.kakao.com/nexus/content/groups/public/'],
-        },
-      },
-    ],
   ],
   experiments: {
     typedRoutes: true,
@@ -109,10 +99,6 @@ const baseConfig = {
     },
   },
 };
-
-function getKakaoNativeAppKey() {
-  return process.env.EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY;
-}
 
 function getApiBaseUrl() {
   return process.env.EXPO_PUBLIC_SOUNDLOG_API_BASE_URL?.replace(/\/+$/, '');
@@ -145,9 +131,6 @@ function assertProductionConfig(apiBaseUrl) {
     );
   }
 
-  if (process.env.EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK === 'true') {
-    throw new Error('Production builds cannot enable EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK.');
-  }
 }
 
 function upsertBuildPropertiesPlugin(config, nextAndroidConfig) {
@@ -191,27 +174,8 @@ module.exports = () => {
   const nextConfig = JSON.parse(JSON.stringify(baseConfig));
   const apiBaseUrl = getApiBaseUrl();
   const httpApiHost = getHttpApiHost(apiBaseUrl);
-  const kakaoNativeAppKey = getKakaoNativeAppKey();
 
   assertProductionConfig(apiBaseUrl);
-
-  if (kakaoNativeAppKey) {
-    nextConfig.plugins = [
-      ...(nextConfig.plugins ?? []),
-      [
-        '@react-native-kakao/core',
-        {
-          nativeAppKey: kakaoNativeAppKey,
-          android: {
-            authCodeHandlerActivity: true,
-          },
-          ios: {
-            handleKakaoOpenUrl: true,
-          },
-        },
-      ],
-    ];
-  }
 
   if (!httpApiHost || isProductionBuildProfile()) {
     return nextConfig;

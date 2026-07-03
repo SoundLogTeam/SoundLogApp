@@ -77,7 +77,7 @@ const travelModeOptions: Array<{ label: string; value: TravelMode }> = [
   { label: '바다', value: 'ocean' },
   { label: '야경', value: 'night' },
 ];
-const authProviderOptions: AuthProvider[] = ['apple', 'kakao'];
+const authProviderOptions: AuthProvider[] = ['email'];
 
 type ManagerButtonProps = {
   active?: boolean;
@@ -253,8 +253,8 @@ function DevTestManagerContent() {
       isNewUser: false,
       refreshToken: `dev-refresh-${provider}-${Date.now()}`,
       user: {
-        displayName: `${provider.toUpperCase()} 테스트 유저`,
-        email: `${provider}@soundlog.test`,
+        displayName: 'Soundlog 테스트 유저',
+        email: 'dev@soundlog.test',
         id: `dev-user-${provider}`,
         provider,
       },
@@ -505,7 +505,7 @@ function DevTestManagerContent() {
                   <ManagerButton
                     key={provider}
                     active={authUser?.provider === provider}
-                    label={`${provider} 로그인`}
+                    label="자체 로그인"
                     onPress={() => applyMockLogin(provider)}
                   />
                 ))}

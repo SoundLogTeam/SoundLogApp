@@ -1,6 +1,6 @@
 import { UserProfile } from '@/store/userProfileStore';
 
-export type AuthProvider = 'apple' | 'google' | 'kakao';
+export type AuthProvider = 'email';
 
 export type AuthStatus =
   | 'authenticated'
@@ -16,22 +16,13 @@ export type AuthUser = {
   provider: AuthProvider;
 };
 
-export type AuthDeviceInfo = {
-  appVersion?: string;
-  deviceId?: string;
-  platform: 'android' | 'ios' | 'web';
+export type LoginRequest = {
+  email: string;
+  password: string;
 };
 
-export type SocialLoginRequest = {
-  authorizationCode?: string;
-  codeVerifier?: string;
-  device?: AuthDeviceInfo;
-  idToken?: string;
-  provider: AuthProvider;
-  providerAccessToken?: string;
-  providerDisplayName?: string;
-  providerToken?: string;
-  redirectUri?: string;
+export type RegisterRequest = LoginRequest & {
+  displayName?: string;
 };
 
 export type AuthSession = {
