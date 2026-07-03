@@ -76,14 +76,25 @@ function verifyBundle(bundleText) {
   );
   assertIncludes(
     bundleText,
-    /apiSource\s*:\s*['"]server['"]/,
-    'Server web export must initialize apiSource as server.',
+    'shouldUseServerApi=function(){return!0}',
+    'Server web export must compile shouldUseServerApi as always true.',
   );
   assertExcludes(
     bundleText,
     'http://52.79.185.121:4000',
     'Server web export must not inline the direct EC2 HTTP API URL.',
   );
+  [
+    ['authMockHandlers', 'Server web export must not include auth mock handlers.'],
+    ['homeMockHandlers', 'Server web export must not include home mock handlers.'],
+    ['playlistMockHandlers', 'Server web export must not include playlist mock handlers.'],
+    ['recapMockHandlers', 'Server web export must not include recap mock handlers.'],
+    ['tourMockHandlers', 'Server web export must not include tour mock handlers.'],
+    ['mockServerDelay', 'Server web export must not include mock server delay helpers.'],
+    ['mock-user-email', 'Server web export must not include seeded mock auth data.'],
+  ].forEach(([pattern, message]) => {
+    assertExcludes(bundleText, pattern, message);
+  });
   assertExcludes(
     bundleText,
     'spotify-auth',

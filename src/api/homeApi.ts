@@ -1,23 +1,33 @@
-import { requestApi, shouldAttemptAuthenticatedApi, shouldUseServerApi } from '@/api/client';
-import { getMockServer } from '@/api/mockServerClient';
-import type {
-  FeaturedPlaylistMockParams,
-  MoodRecommendationMockParams,
-} from '@/mock-server/types';
+import { requestApi, shouldAttemptAuthenticatedApi } from '@/api/client';
 import type {
   FeaturedPlaylist,
+  GeoPoint,
   MoodRecommendation,
   MusicLogItem,
+  MusicRecommendationMode,
+  PlaceContext,
 } from '@/types/domain';
 import { sanitizeMoodRecommendation } from '@/utils/trackSanitizer';
 
-export const homeApi = {
-  getFeaturedPlaylists: async (params?: FeaturedPlaylistMockParams) => {
-    if (!shouldUseServerApi()) {
-      const mockServer = await getMockServer();
-      return mockServer.home.getFeaturedPlaylists(params);
-    }
+type FeaturedPlaylistParams = {
+  location?: GeoPoint;
+  locationRecommendationEnabled?: boolean;
+  recommendationMode?: MusicRecommendationMode;
+  place?: PlaceContext;
+};
 
+type MoodRecommendationParams = {
+  currentPlace?: PlaceContext;
+  moodFilter?: string;
+  recommendationMode?: MusicRecommendationMode;
+  preferredGenres?: string[];
+  preferredMoods?: string[];
+  topFilter?: string;
+  travelStyles?: string[];
+};
+
+export const homeApi = {
+  getFeaturedPlaylists: async (params?: FeaturedPlaylistParams) => {
     return requestApi<FeaturedPlaylist[]>('/v1/home/featured-playlists', {
       query: {
         lat: params?.location?.lat,
@@ -29,12 +39,7 @@ export const homeApi = {
       },
     });
   },
-  getMoodRecommendations: async (params?: MoodRecommendationMockParams) => {
-    if (!shouldUseServerApi()) {
-      const mockServer = await getMockServer();
-      return mockServer.home.getMoodRecommendations(params);
-    }
-
+  getMoodRecommendations: async (params?: MoodRecommendationParams) => {
     const recommendations = await requestApi<MoodRecommendation[]>('/v1/home/mood-recommendations', {
       query: {
         limit: 10,
@@ -50,11 +55,6 @@ export const homeApi = {
     return recommendations.map(sanitizeMoodRecommendation);
   },
   getRecentMusicLogs: async () => {
-    if (!shouldUseServerApi()) {
-      const mockServer = await getMockServer();
-      return mockServer.home.getRecentMusicLogs();
-    }
-
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<MusicLogItem[]>([]);
     }

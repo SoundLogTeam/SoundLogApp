@@ -8,6 +8,7 @@ Keep the frontend from regressing to mock API mode or reintroducing removed musi
 
 - The Vercel/web build is compiled with `EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server`.
 - The compiled web bundle points API requests at `/api/soundlog`.
+- The compiled web bundle does not ship the development mock server handlers or seeded mock DB data.
 - The app no longer ships Spotify auth/playback route markers in the web bundle.
 - PR checks fail before merge if these deployment-critical assumptions are broken.
 
@@ -15,6 +16,8 @@ Keep the frontend from regressing to mock API mode or reintroducing removed musi
 
 - Add a Node script that runs a server-mode Expo web export into a temporary directory.
 - Inspect the generated JS bundles for server API markers and removed streaming markers.
+- Prevent the mock server dynamic import from being bundled into production web exports.
+- Add bundle assertions for mock handler names and seeded mock route/data markers.
 - Add an npm script for local/CI use.
 - Run the new check in the GitHub PR workflow after typecheck.
 
@@ -27,6 +30,8 @@ Keep the frontend from regressing to mock API mode or reintroducing removed musi
 
 ## Files
 
+- `src/api/*Api.ts`
+- `src/api/client.ts`
 - `scripts/check-server-web-export.js`
 - `package.json`
 - `.github/workflows/pr-check.yml`
@@ -41,4 +46,5 @@ Keep the frontend from regressing to mock API mode or reintroducing removed musi
 ## Risks
 
 - Expo export can add CI time, but it is the closest automated proof that the deployed web bundle is server-mode.
-- Bundle text is minified, so the script should check robust markers such as `/api/soundlog`, `apiSource:'server'` or equivalent, and absence of `spotify-auth`.
+- Bundle text is minified, so the script should check robust markers such as `/api/soundlog`, `shouldUseServerApi=function(){return!0}`, and absence of `spotify-auth`, `homeMockHandlers`, and `authMockHandlers`.
+- Legacy mock source files may remain in the repo for reference, but app API facades must not import them.

@@ -2,9 +2,7 @@ import {
   createIdempotencyKey,
   requestApi,
   shouldAttemptAuthenticatedApi,
-  shouldUseServerApi,
 } from '@/api/client';
-import { getMockServer } from '@/api/mockServerClient';
 import type { GeoPoint, MoodTag, PlaylistCuration, TravelMode } from '@/types/domain';
 import { sanitizePlaylistCuration } from '@/utils/trackSanitizer';
 
@@ -24,11 +22,6 @@ export type ContextualPlaylistInput = {
 
 export const playlistApi = {
   getPlaylist: async (id?: string) => {
-    if (!shouldUseServerApi()) {
-      const mockServer = await getMockServer();
-      return mockServer.playlist.getPlaylist(id);
-    }
-
     const playlist = await requestApi<PlaylistCuration>(
       `/v1/playlists/${encodeURIComponent(id ?? 'fallback')}`,
     );
@@ -39,7 +32,7 @@ export const playlistApi = {
     input: ContextualPlaylistInput,
     fallbackPlaylistId?: string,
   ) => {
-    if (!shouldUseServerApi() || !shouldAttemptAuthenticatedApi()) {
+    if (!shouldAttemptAuthenticatedApi()) {
       return playlistApi.getPlaylist(fallbackPlaylistId);
     }
 

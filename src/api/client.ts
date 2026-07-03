@@ -1,6 +1,5 @@
 import { useAuthStore } from '@/store/authStore';
 import { AuthSession } from '@/types/auth';
-import { isServerApiSource } from '@/api/apiSource';
 
 type QueryValue = boolean | number | string | Array<boolean | number | string> | null | undefined;
 
@@ -42,14 +41,13 @@ export function isRealApiEnabled() {
 }
 
 export function shouldUseServerApi() {
-  return isServerApiSource();
+  return true;
 }
 
 export function shouldAttemptAuthenticatedApi() {
   const { status } = useAuthStore.getState();
 
   return (
-    shouldUseServerApi() &&
     status === 'authenticated'
   );
 }

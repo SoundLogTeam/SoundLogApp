@@ -2,9 +2,7 @@ import {
   createIdempotencyKey,
   requestApi,
   shouldAttemptAuthenticatedApi,
-  shouldUseServerApi,
 } from '@/api/client';
-import { getMockServer } from '@/api/mockServerClient';
 import type { RecapItem, RecapShare, RecapTemplateId } from '@/types/domain';
 import { sanitizeRecapItem } from '@/utils/trackSanitizer';
 
@@ -20,11 +18,6 @@ type RecapShareEventType = 'os_share' | 'save_image';
 
 export const recapApi = {
   createShareEvent: async (recapId: string, type: RecapShareEventType) => {
-    if (!shouldUseServerApi()) {
-      const mockServer = await getMockServer();
-      return mockServer.recap.createShareEvent(recapId, type);
-    }
-
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve({ accepted: false });
     }
@@ -42,11 +35,6 @@ export const recapApi = {
     );
   },
   createRecap: async (input: CreateRecapInput) => {
-    if (!shouldUseServerApi()) {
-      const mockServer = await getMockServer();
-      return mockServer.recap.createRecap(input);
-    }
-
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapItem | undefined>(undefined);
     }
@@ -60,11 +48,6 @@ export const recapApi = {
     return sanitizeRecapItem(recap);
   },
   getRecapList: async () => {
-    if (!shouldUseServerApi()) {
-      const mockServer = await getMockServer();
-      return mockServer.recap.getRecapList();
-    }
-
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapItem[]>([]);
     }
@@ -76,11 +59,6 @@ export const recapApi = {
     return recaps.map(sanitizeRecapItem);
   },
   getRecapShare: async (id?: string) => {
-    if (!shouldUseServerApi()) {
-      const mockServer = await getMockServer();
-      return mockServer.recap.getRecapShare(id);
-    }
-
     if (!id || !shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapShare | undefined>(undefined);
     }

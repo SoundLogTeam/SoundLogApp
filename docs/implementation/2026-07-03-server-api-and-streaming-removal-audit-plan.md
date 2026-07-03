@@ -5,18 +5,18 @@
 Make the app behavior honest and testable:
 
 - production/web server mode must call the real Soundlog API, not the in-app mock server
-- mock data must remain an explicit local/dev fallback only
+- mock data must not be reachable through the app API facades
 - music recommendation can stay, but in-app music streaming and Spotify playback control must be removed
 - any music action shown to users must either open an external music link/search or clearly behave as local selection only
 
 ## Evidence gathered
 
 - Live `https://sound-log-app.vercel.app/api/soundlog/v1/health` returns the EC2 server health payload.
-- The current live web bundle contains `getApiBaseUrl() => "/api/soundlog"` and initializes `apiSource: "server"`.
+- The checked web export contains `getApiBaseUrl() => "/api/soundlog"` and compiles `shouldUseServerApi()` to always true.
 - Live home endpoints respond through the Vercel proxy:
   - `/api/soundlog/v1/home/mood-recommendations`
   - `/api/soundlog/v1/playlists/{id}`
-- The app still bundles `mockServer` modules because API facades statically import them for local fallback.
+- The app no longer imports `mockServer` from API facades; the web export check fails if mock handlers are bundled again.
 - Main server-backed read APIs use server mode, but authenticated APIs intentionally return empty/no-op values when the user is a guest or has no token.
 - Current playback UI is misleading: `playerStore.setTrack()` sets `isPlaying: true` even when no preview or stream exists.
 - Spotify auth/playback code remains in the app even though streaming will be removed.
@@ -26,9 +26,9 @@ Make the app behavior honest and testable:
 ### App changes
 
 1. Server/mock audit hardening
-   - Keep mock server available for explicit local/dev mode.
-   - Add a small runtime helper that can report whether the app is using server or mock mode.
-   - Add documentation/verification notes explaining why mock code may exist in the JS bundle but should not be selected at runtime in server mode.
+   - Remove mock server fallback branches from API facades.
+   - Compile `shouldUseServerApi()` as server-only.
+   - Add documentation/verification notes explaining that source-level legacy mocks are not part of the app API runtime.
 
 2. Remove in-app streaming and Spotify playback
    - Remove Spotify OAuth callback route and Spotify auth/playback modules.
@@ -50,7 +50,7 @@ Make the app behavior honest and testable:
    - `npm run check:store-release` without Spotify client id
    - web export with server proxy env
    - search for removed Spotify playback/auth imports
-   - search built bundle for `/api/soundlog` and runtime `apiSource: "server"`
+   - search built bundle for `/api/soundlog`, always-server mode, and absence of mock handlers
 
 ## Non-goals for this first loop
 
@@ -63,4 +63,4 @@ Make the app behavior honest and testable:
 
 - Removing `expo-web-browser` is safe only if no other active route imports it.
 - Some users may still expect a persistent mini-player; it should become a selected-track/external-open panel rather than a streaming control.
-- The server seed data intentionally resembles mock data, so visual similarity alone does not prove mock usage.
+- The server seed data intentionally resembles old mock data, so visual similarity alone does not prove mock usage; network and bundle evidence are required.
