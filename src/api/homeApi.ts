@@ -9,6 +9,7 @@ import type {
   MoodRecommendation,
   MusicLogItem,
 } from '@/types/domain';
+import { sanitizeMoodRecommendation } from '@/utils/trackSanitizer';
 
 export const homeApi = {
   getFeaturedPlaylists: async (params?: FeaturedPlaylistMockParams) => {
@@ -34,7 +35,7 @@ export const homeApi = {
       return mockServer.home.getMoodRecommendations(params);
     }
 
-    return requestApi<MoodRecommendation[]>('/v1/home/mood-recommendations', {
+    const recommendations = await requestApi<MoodRecommendation[]>('/v1/home/mood-recommendations', {
       query: {
         limit: 10,
         moodFilter: params?.moodFilter ?? '전체',
@@ -45,6 +46,8 @@ export const homeApi = {
         travelStyles: params?.travelStyles,
       },
     });
+
+    return recommendations.map(sanitizeMoodRecommendation);
   },
   getRecentMusicLogs: async () => {
     if (!shouldUseServerApi()) {

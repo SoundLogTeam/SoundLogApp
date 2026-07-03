@@ -4,6 +4,7 @@ import {
   shouldAttemptAuthenticatedApi,
 } from '@/api/client';
 import { GeoPoint, MomentLog, MoodTag, Track, TravelMode } from '@/types/domain';
+import { sanitizeTrack } from '@/utils/trackSanitizer';
 
 type CreateMomentLogInput = {
   createdAt: string;
@@ -66,6 +67,9 @@ export const momentLogApi = {
       body: toFormData(input),
       idempotencyKey: input.idempotencyKey ?? createIdempotencyKey('moment-log'),
       method: 'POST',
-    });
+    }).then((log) => ({
+      ...log,
+      track: log.track ? sanitizeTrack(log.track) : undefined,
+    }));
   },
 };

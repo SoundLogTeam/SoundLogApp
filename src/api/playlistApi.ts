@@ -6,6 +6,7 @@ import {
 } from '@/api/client';
 import { getMockServer } from '@/api/mockServerClient';
 import type { GeoPoint, MoodTag, PlaylistCuration, TravelMode } from '@/types/domain';
+import { sanitizePlaylistCuration } from '@/utils/trackSanitizer';
 
 export type PlaylistMlMood = '감성적인' | '설레는' | '시원한' | '신나는' | '잔잔한';
 export type PlaylistMlState = '바다' | '드라이브' | '산책' | '카페' | '야경';
@@ -28,9 +29,11 @@ export const playlistApi = {
       return mockServer.playlist.getPlaylist(id);
     }
 
-    return requestApi<PlaylistCuration>(
+    const playlist = await requestApi<PlaylistCuration>(
       `/v1/playlists/${encodeURIComponent(id ?? 'fallback')}`,
     );
+
+    return sanitizePlaylistCuration(playlist);
   },
   createContextualPlaylist: async (
     input: ContextualPlaylistInput,
@@ -40,10 +43,12 @@ export const playlistApi = {
       return playlistApi.getPlaylist(fallbackPlaylistId);
     }
 
-    return requestApi<PlaylistCuration>('/v1/playlists/contextual', {
+    const playlist = await requestApi<PlaylistCuration>('/v1/playlists/contextual', {
       body: input,
       idempotencyKey: createIdempotencyKey('playlist-contextual'),
       method: 'POST',
     });
+
+    return sanitizePlaylistCuration(playlist);
   },
 };

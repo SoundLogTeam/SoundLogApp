@@ -5,6 +5,7 @@ import {
 } from '@/api/client';
 import { RecommendationEventContext } from '@/store/recommendationEventStore';
 import { Track } from '@/types/domain';
+import { sanitizeTrack } from '@/utils/trackSanitizer';
 
 type LibraryTrackAction = 'like' | 'save' | 'unlike' | 'unsave';
 
@@ -24,14 +25,19 @@ export type RemoteLibraryTrackRecord = {
 };
 
 export const libraryApi = {
-  getTracks: (kind: 'all' | 'liked' | 'saved' = 'all') => {
+  getTracks: async (kind: 'all' | 'liked' | 'saved' = 'all') => {
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RemoteLibraryTrackRecord[]>([]);
     }
 
-    return requestApi<RemoteLibraryTrackRecord[]>('/v1/library/tracks', {
+    const records = await requestApi<RemoteLibraryTrackRecord[]>('/v1/library/tracks', {
       query: { kind, limit: 50 },
     });
+
+    return records.map((record) => ({
+      ...record,
+      track: sanitizeTrack(record.track),
+    }));
   },
   updateTrackState: (
     trackId: string,

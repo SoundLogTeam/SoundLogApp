@@ -6,6 +6,7 @@ import {
 } from '@/api/client';
 import { getMockServer } from '@/api/mockServerClient';
 import type { RecapItem, RecapShare, RecapTemplateId } from '@/types/domain';
+import { sanitizeRecapItem } from '@/utils/trackSanitizer';
 
 type CreateRecapInput = {
   momentLogIds?: string[];
@@ -50,11 +51,13 @@ export const recapApi = {
       return Promise.resolve<RecapItem | undefined>(undefined);
     }
 
-    return requestApi<RecapItem>('/v1/recaps', {
+    const recap = await requestApi<RecapItem>('/v1/recaps', {
       body: input,
       idempotencyKey: createIdempotencyKey(`recap-${input.sessionId ?? 'session'}`),
       method: 'POST',
     });
+
+    return sanitizeRecapItem(recap);
   },
   getRecapList: async () => {
     if (!shouldUseServerApi()) {
@@ -66,9 +69,11 @@ export const recapApi = {
       return Promise.resolve<RecapItem[]>([]);
     }
 
-    return requestApi<RecapItem[]>('/v1/recaps', {
+    const recaps = await requestApi<RecapItem[]>('/v1/recaps', {
       query: { limit: 20 },
     });
+
+    return recaps.map(sanitizeRecapItem);
   },
   getRecapShare: async (id?: string) => {
     if (!shouldUseServerApi()) {
