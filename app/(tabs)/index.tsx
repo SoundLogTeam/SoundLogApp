@@ -198,6 +198,7 @@ function HomeContent() {
         return;
       }
 
+      setActionMessage(undefined);
       setCreatingPlaylistId(playlist.id);
 
       try {
@@ -233,6 +234,8 @@ function HomeContent() {
           }),
         );
         router.push(`/playlist/${nextPlaylistId}`);
+      } catch {
+        setActionMessage('맞춤 플레이리스트를 만들지 못했어요. 잠시 후 다시 시도해주세요.');
       } finally {
         setCreatingPlaylistId(undefined);
       }

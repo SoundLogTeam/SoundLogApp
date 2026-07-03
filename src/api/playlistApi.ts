@@ -43,6 +43,6 @@ export const playlistApi = {
       body: input,
       idempotencyKey: createIdempotencyKey('playlist-contextual'),
       method: 'POST',
-    }).catch(() => playlistApi.getPlaylist(fallbackPlaylistId));
+    });
   },
 };
