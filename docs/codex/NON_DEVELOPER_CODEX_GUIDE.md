@@ -67,7 +67,19 @@ npm run check:server-web-export
 
 이 검사는 `src/api`가 `src/mock-server`나 `src/mocks`를 import하거나, 프로덕션 웹 export에 mock handler/seed 데이터가 포함되면 실패합니다.
 
-API 실패 상태를 보고 싶다면 실제 dev 서버나 Vercel preview의 `/api/soundlog/v1/...` 요청을 기준으로 재현합니다.
+배포된 URL에서 실제 API proxy와 번들을 함께 확인:
+
+```bash
+npm run check:deployed-web -- https://sound-log-app.vercel.app
+```
+
+Vercel preview가 Deployment Protection으로 보호되어 있으면 `/api/soundlog/v1/...` 요청이 JSON이 아니라 Vercel SSO로 리다이렉트됩니다. 이 경우 Vercel 프로젝트의 Protection Bypass for Automation secret을 받아 아래처럼 실행합니다.
+
+```bash
+SOUNDLOG_VERCEL_PROTECTION_BYPASS=... npm run check:deployed-web -- https://preview-url.vercel.app
+```
+
+API 실패 상태를 보고 싶다면 실제 dev 서버, 보호가 해제된 Vercel preview, 또는 bypass secret을 적용한 preview의 `/api/soundlog/v1/...` 요청을 기준으로 재현합니다.
 
 ## 검증을 요청할 때
 

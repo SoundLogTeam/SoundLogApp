@@ -56,6 +56,7 @@
     "build:production": "eas build --profile production --platform all",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
+    "check:deployed-web": "node scripts/check-deployed-web.js",
     "check:server-web-export": "node scripts/check-server-web-export.js",
     "check:store-release": "node scripts/check-store-release.js",
     "check": "npm run typecheck && npm run doctor",
