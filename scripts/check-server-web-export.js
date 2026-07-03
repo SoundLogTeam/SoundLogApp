@@ -36,6 +36,15 @@ function readBundleText() {
   return jsFiles.map((filePath) => fs.readFileSync(filePath, 'utf8')).join('\n');
 }
 
+function readTextFiles(dir) {
+  return listFiles(dir)
+    .filter((filePath) => /\.(ts|tsx|js|jsx)$/.test(filePath))
+    .map((filePath) => ({
+      filePath,
+      text: fs.readFileSync(filePath, 'utf8'),
+    }));
+}
+
 function assertIncludes(bundleText, pattern, message) {
   if (typeof pattern === 'string' ? !bundleText.includes(pattern) : !pattern.test(bundleText)) {
     addError(message);
@@ -46,6 +55,27 @@ function assertExcludes(bundleText, pattern, message) {
   if (typeof pattern === 'string' ? bundleText.includes(pattern) : pattern.test(bundleText)) {
     addError(message);
   }
+}
+
+function verifyApiSourceFiles() {
+  const apiDir = path.join(projectRoot, 'src/api');
+  const blockedApiImports = [
+    '@/mock-server',
+    '@/mocks',
+    '@/api/mockDelay',
+    '@/api/apiSource',
+    '@/api/mockServerClient',
+  ];
+
+  readTextFiles(apiDir).forEach(({ filePath, text }) => {
+    blockedApiImports.forEach((blockedImport) => {
+      if (text.includes(blockedImport)) {
+        addError(
+          `Server API facade must not import ${blockedImport}: ${path.relative(projectRoot, filePath)}`,
+        );
+      }
+    });
+  });
 }
 
 function runExport() {
@@ -92,6 +122,21 @@ function verifyBundle(bundleText) {
     ['tourMockHandlers', 'Server web export must not include tour mock handlers.'],
     ['mockServerDelay', 'Server web export must not include mock server delay helpers.'],
     ['mock-user-email', 'Server web export must not include seeded mock auth data.'],
+    ['DevTestManager', 'Server web export must not include the native development test manager.'],
+    ['dev-access-', 'Server web export must not include development auth tokens.'],
+    ['dev-refresh-', 'Server web export must not include development refresh tokens.'],
+    ['Soundlog 테스트 유저', 'Server web export must not include development test users.'],
+    ['playlistCurationById', 'Server web export must not include seeded mock playlist maps.'],
+    ['mock-namsan', 'Server web export must not include seeded mock nearby places.'],
+    ['mock-gwangalli', 'Server web export must not include seeded mock nearby places.'],
+    [
+      'EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS',
+      'Server web export must not include mock API failure controls.',
+    ],
+    [
+      'EXPO_PUBLIC_MOCK_API_DELAY_MS',
+      'Server web export must not include mock API delay controls.',
+    ],
   ].forEach(([pattern, message]) => {
     assertExcludes(bundleText, pattern, message);
   });
@@ -118,6 +163,7 @@ function verifyBundle(bundleText) {
 }
 
 try {
+  verifyApiSourceFiles();
   runExport();
 
   if (errors.length === 0) {
