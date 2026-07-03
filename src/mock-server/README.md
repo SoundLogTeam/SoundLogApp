@@ -42,7 +42,8 @@ EXPO_PUBLIC_MOCK_API_DELAY_MS=1500 npm run web
 - `home.featuredPlaylists`
 - `home.moodRecommendations`
 - `home.recentMusicLogs`
-- `auth.socialLogin`
+- `auth.login`
+- `auth.register`
 - `auth.refresh`
 - `auth.logout`
 - `auth.me`

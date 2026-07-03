@@ -84,23 +84,10 @@ function assertProductionEnv(productionEnv) {
   const privacyUrl = productionEnv.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL;
   const termsUrl = productionEnv.EXPO_PUBLIC_SOUNDLOG_TERMS_URL;
   const supportEmail = productionEnv.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL;
-  const kakaoNativeAppKey = productionEnv.EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY;
   const spotifyClientId = productionEnv.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
 
   if (!apiBaseUrl?.startsWith('https://')) {
     addError('EAS production env must set EXPO_PUBLIC_SOUNDLOG_API_BASE_URL to an HTTPS URL.');
-  }
-
-  if (productionEnv.EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK === 'true') {
-    addError('EAS production env cannot enable EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK.');
-  }
-
-  if (productionEnv.EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN !== 'true') {
-    addError('EAS production env must enable EXPO_PUBLIC_ENABLE_SOCIAL_LOGIN for Apple/Kakao login.');
-  }
-
-  if (!kakaoNativeAppKey) {
-    addError('EAS production env must set EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY for Kakao login.');
   }
 
   if (!spotifyClientId) {
@@ -181,27 +168,6 @@ function assertTransportSecurity(config) {
   }
 }
 
-function assertSocialLoginConfig(config, productionEnv) {
-  if (config.ios?.usesAppleSignIn !== true) {
-    addError('iOS config must enable usesAppleSignIn for Apple login.');
-  }
-
-  if (config.ios?.infoPlist?.CFBundleAllowMixedLocalizations !== true) {
-    addError('iOS config must set CFBundleAllowMixedLocalizations for Apple login localization.');
-  }
-
-  if (!hasPlugin(config, 'expo-apple-authentication')) {
-    addError('Expo config must include expo-apple-authentication plugin.');
-  }
-
-  if (
-    productionEnv.EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY &&
-    !hasPlugin(config, '@react-native-kakao/core')
-  ) {
-    addError('Expo config must include @react-native-kakao/core plugin when Kakao login is enabled.');
-  }
-}
-
 function assertSpotifyConfig(config) {
   const querySchemes = new Set(config.ios?.infoPlist?.LSApplicationQueriesSchemes ?? []);
 
@@ -243,18 +209,12 @@ function assertNativeIosPlist() {
     );
   }
 
-  if (!plist.includes('<key>CFBundleAllowMixedLocalizations</key>')) {
-    addError('iOS native Info.plist must set CFBundleAllowMixedLocalizations for Apple login.');
-  }
-
   if (fs.existsSync(entitlementsPath)) {
     const entitlements = fs.readFileSync(entitlementsPath, 'utf8');
 
-    if (!entitlements.includes('com.apple.developer.applesignin')) {
-      addError('iOS native entitlements must include com.apple.developer.applesignin.');
+    if (entitlements.includes('com.apple.developer.applesignin')) {
+      addError('iOS native entitlements must not include Apple Sign In for first-party login.');
     }
-  } else {
-    addError('iOS native entitlements file is missing.');
   }
 }
 
@@ -274,7 +234,6 @@ function main() {
     assertAppIcon(config);
     assertAndroidPermissions(config);
     assertTransportSecurity(config);
-    assertSocialLoginConfig(config, productionEnv);
     assertSpotifyConfig(config);
   }
 

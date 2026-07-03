@@ -13,12 +13,6 @@ import { useAuthStore } from '@/store/authStore';
 import { useLibraryStore } from '@/store/libraryStore';
 import { useMomentLogStore } from '@/store/momentLogStore';
 
-const providerLabels = {
-  apple: 'Apple',
-  google: 'Google',
-  kakao: 'Kakao',
-} as const;
-
 function createMigrationKey() {
   return `migration-${Date.now()}`;
 }
@@ -123,8 +117,7 @@ export function AuthAccountCard() {
               {user.displayName}
             </AppText>
             <AppText className="mt-1 text-xs leading-5 text-white/50">
-              {providerLabels[user.provider]} 계정
-              {user.email ? ` · ${user.email}` : ''}
+              Soundlog 계정{user.email ? ` · ${user.email}` : ''}
             </AppText>
           </View>
         </View>

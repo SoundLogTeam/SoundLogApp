@@ -5,7 +5,8 @@ import { MockEndpointId } from '@/mock-server/types';
 export type ApiSource = 'mock' | 'server';
 
 export const mockEndpointIds: MockEndpointId[] = [
-  'auth.socialLogin',
+  'auth.login',
+  'auth.register',
   'auth.refresh',
   'auth.logout',
   'auth.me',
