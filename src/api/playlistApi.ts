@@ -15,6 +15,7 @@ export type ContextualPlaylistInput = {
   mood?: PlaylistMlMood;
   moodTags?: MoodTag[];
   placeId?: string;
+  preferredGenres?: string[];
   preferredMoods?: string[];
   state?: PlaylistMlState;
   travelMode?: TravelMode;
