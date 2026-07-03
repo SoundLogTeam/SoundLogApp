@@ -1,4 +1,4 @@
-import { canUseAuthenticatedApi, requestApi, shouldUseServerApi } from '@/api/client';
+import { requestApi, shouldAttemptAuthenticatedApi, shouldUseServerApi } from '@/api/client';
 import { getMockServer } from '@/api/mockServerClient';
 import type {
   FeaturedPlaylistMockParams,
@@ -52,7 +52,7 @@ export const homeApi = {
       return mockServer.home.getRecentMusicLogs();
     }
 
-    if (!canUseAuthenticatedApi()) {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<MusicLogItem[]>([]);
     }
 

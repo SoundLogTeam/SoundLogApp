@@ -1,7 +1,7 @@
 import {
-  canUseAuthenticatedApi,
   createIdempotencyKey,
   requestApi,
+  shouldAttemptAuthenticatedApi,
   shouldUseServerApi,
 } from '@/api/client';
 import { getMockServer } from '@/api/mockServerClient';
@@ -35,7 +35,7 @@ export const playlistApi = {
     input: ContextualPlaylistInput,
     fallbackPlaylistId?: string,
   ) => {
-    if (!shouldUseServerApi() || !canUseAuthenticatedApi()) {
+    if (!shouldUseServerApi() || !shouldAttemptAuthenticatedApi()) {
       return playlistApi.getPlaylist(fallbackPlaylistId);
     }
 

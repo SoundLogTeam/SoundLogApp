@@ -1,9 +1,9 @@
-import { canUseAuthenticatedApi, createIdempotencyKey, requestApi } from '@/api/client';
+import { createIdempotencyKey, requestApi, shouldAttemptAuthenticatedApi } from '@/api/client';
 import { RecommendationEvent } from '@/store/recommendationEventStore';
 
 export const recommendationEventApi = {
   createEvents: (events: RecommendationEvent[]) => {
-    if (!canUseAuthenticatedApi() || events.length === 0) {
+    if (!shouldAttemptAuthenticatedApi() || events.length === 0) {
       return Promise.resolve({ accepted: false });
     }
 

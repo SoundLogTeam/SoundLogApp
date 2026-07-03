@@ -1,7 +1,7 @@
 import {
-  canUseAuthenticatedApi,
   createIdempotencyKey,
   requestApi,
+  shouldAttemptAuthenticatedApi,
 } from '@/api/client';
 import { RecommendationEventContext } from '@/store/recommendationEventStore';
 import { Track } from '@/types/domain';
@@ -25,7 +25,7 @@ export type RemoteLibraryTrackRecord = {
 
 export const libraryApi = {
   getTracks: (kind: 'all' | 'liked' | 'saved' = 'all') => {
-    if (!canUseAuthenticatedApi()) {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RemoteLibraryTrackRecord[]>([]);
     }
 
@@ -41,7 +41,7 @@ export const libraryApi = {
       playlistId?: string;
     },
   ) => {
-    if (!canUseAuthenticatedApi()) {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<LibraryTrackState | undefined>(undefined);
     }
 

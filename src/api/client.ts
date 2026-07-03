@@ -45,14 +45,12 @@ export function shouldUseServerApi() {
   return isServerApiSource();
 }
 
-export function canUseAuthenticatedApi() {
-  const { accessToken, refreshToken, status } = useAuthStore.getState();
+export function shouldAttemptAuthenticatedApi() {
+  const { status } = useAuthStore.getState();
 
   return (
     shouldUseServerApi() &&
-    isRealApiEnabled() &&
-    status === 'authenticated' &&
-    Boolean(accessToken || refreshToken)
+    status === 'authenticated'
   );
 }
 

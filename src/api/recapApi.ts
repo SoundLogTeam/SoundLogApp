@@ -1,7 +1,7 @@
 import {
-  canUseAuthenticatedApi,
   createIdempotencyKey,
   requestApi,
+  shouldAttemptAuthenticatedApi,
   shouldUseServerApi,
 } from '@/api/client';
 import { getMockServer } from '@/api/mockServerClient';
@@ -24,7 +24,7 @@ export const recapApi = {
       return mockServer.recap.createShareEvent(recapId, type);
     }
 
-    if (!canUseAuthenticatedApi()) {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve({ accepted: false });
     }
 
@@ -46,7 +46,7 @@ export const recapApi = {
       return mockServer.recap.createRecap(input);
     }
 
-    if (!canUseAuthenticatedApi()) {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapItem | undefined>(undefined);
     }
 
@@ -62,7 +62,7 @@ export const recapApi = {
       return mockServer.recap.getRecapList();
     }
 
-    if (!canUseAuthenticatedApi()) {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapItem[]>([]);
     }
 
@@ -76,7 +76,7 @@ export const recapApi = {
       return mockServer.recap.getRecapShare(id);
     }
 
-    if (!id || !canUseAuthenticatedApi()) {
+    if (!id || !shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapShare | undefined>(undefined);
     }
 

@@ -1,4 +1,4 @@
-import { canUseAuthenticatedApi, requestApi } from '@/api/client';
+import { requestApi, shouldAttemptAuthenticatedApi } from '@/api/client';
 import { UserProfile, UserProfileInput } from '@/store/userProfileStore';
 
 type ServerCompanionType = 'couple' | 'family' | 'friends' | 'solo';
@@ -34,7 +34,7 @@ function toProfileBody(input: UserProfileInput) {
 
 export const meApi = {
   updateProfile: (input: UserProfileInput) => {
-    if (!canUseAuthenticatedApi()) {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<UserProfile | undefined>(undefined);
     }
 
