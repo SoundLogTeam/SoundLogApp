@@ -4,7 +4,7 @@ import {
   requestApi,
   shouldUseServerApi,
 } from '@/api/client';
-import { mockServer } from '@/mock-server';
+import { getMockServer } from '@/api/mockServerClient';
 import type { GeoPoint, MoodTag, PlaylistCuration, TravelMode } from '@/types/domain';
 
 export type PlaylistMlMood = '감성적인' | '설레는' | '시원한' | '신나는' | '잔잔한';
@@ -21,8 +21,9 @@ export type ContextualPlaylistInput = {
 };
 
 export const playlistApi = {
-  getPlaylist: (id?: string) => {
+  getPlaylist: async (id?: string) => {
     if (!shouldUseServerApi()) {
+      const mockServer = await getMockServer();
       return mockServer.playlist.getPlaylist(id);
     }
 
@@ -30,7 +31,7 @@ export const playlistApi = {
       `/v1/playlists/${encodeURIComponent(id ?? 'fallback')}`,
     );
   },
-  createContextualPlaylist: (
+  createContextualPlaylist: async (
     input: ContextualPlaylistInput,
     fallbackPlaylistId?: string,
   ) => {

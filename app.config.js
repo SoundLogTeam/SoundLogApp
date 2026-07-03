@@ -9,7 +9,6 @@ const baseConfig = {
   ios: {
     infoPlist: {
       CFBundleAllowMixedLocalizations: true,
-      LSApplicationQueriesSchemes: ['spotify'],
       NSCameraUsageDescription:
         'Soundlog가 여행 순간을 사진으로 기록하기 위해 카메라 권한이 필요합니다.',
       NSFaceIDUsageDescription:
@@ -80,7 +79,6 @@ const baseConfig = {
     ],
     'expo-secure-store',
     'expo-image',
-    'expo-web-browser',
   ],
   experiments: {
     typedRoutes: true,
@@ -90,9 +88,6 @@ const baseConfig = {
       privacyPolicyUrl: process.env.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL,
       supportEmail: process.env.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL ?? 'support@soundlog.app',
       termsUrl: process.env.EXPO_PUBLIC_SOUNDLOG_TERMS_URL,
-    },
-    spotify: {
-      clientId: process.env.EXPO_PUBLIC_SPOTIFY_CLIENT_ID,
     },
     eas: {
       projectId: '4b07627b-36bf-463d-a15e-b4839022ecbb',

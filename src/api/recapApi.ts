@@ -4,7 +4,7 @@ import {
   requestApi,
   shouldUseServerApi,
 } from '@/api/client';
-import { mockServer } from '@/mock-server';
+import { getMockServer } from '@/api/mockServerClient';
 import type { RecapItem, RecapShare, RecapTemplateId } from '@/types/domain';
 
 type CreateRecapInput = {
@@ -18,8 +18,9 @@ type CreateRecapInput = {
 type RecapShareEventType = 'os_share' | 'save_image';
 
 export const recapApi = {
-  createShareEvent: (recapId: string, type: RecapShareEventType) => {
+  createShareEvent: async (recapId: string, type: RecapShareEventType) => {
     if (!shouldUseServerApi()) {
+      const mockServer = await getMockServer();
       return mockServer.recap.createShareEvent(recapId, type);
     }
 
@@ -39,8 +40,9 @@ export const recapApi = {
       },
     );
   },
-  createRecap: (input: CreateRecapInput) => {
+  createRecap: async (input: CreateRecapInput) => {
     if (!shouldUseServerApi()) {
+      const mockServer = await getMockServer();
       return mockServer.recap.createRecap(input);
     }
 
@@ -54,8 +56,9 @@ export const recapApi = {
       method: 'POST',
     });
   },
-  getRecapList: () => {
+  getRecapList: async () => {
     if (!shouldUseServerApi()) {
+      const mockServer = await getMockServer();
       return mockServer.recap.getRecapList();
     }
 
@@ -67,8 +70,9 @@ export const recapApi = {
       query: { limit: 20 },
     });
   },
-  getRecapShare: (id?: string) => {
+  getRecapShare: async (id?: string) => {
     if (!shouldUseServerApi()) {
+      const mockServer = await getMockServer();
       return mockServer.recap.getRecapShare(id);
     }
 

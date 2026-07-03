@@ -22,9 +22,9 @@ export type MusicRecommendationMode = 'everyday' | 'travel';
 
 export type MoodTag = 'calm' | 'fresh' | 'emotional' | 'active' | 'local';
 
-export type MusicPlatformId = 'melon' | 'none' | 'spotify' | 'youtubeMusic';
+export type MusicPlatformId = 'none' | 'youtubeMusic';
 
-export type ExternalMusicPlatformId = Exclude<MusicPlatformId, 'none'>;
+export type ExternalMusicPlatformId = 'melon' | 'youtubeMusic';
 
 export type Track = {
   id: string;

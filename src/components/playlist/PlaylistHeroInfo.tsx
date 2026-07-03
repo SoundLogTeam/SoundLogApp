@@ -38,14 +38,14 @@ export function PlaylistHeroInfo({ disabled = false, onPlay, playlist }: Playlis
         </View>
 
         <Pressable
-          accessibilityLabel="플레이리스트 대표곡 재생"
+          accessibilityLabel="플레이리스트 대표곡 음악 링크 열기"
           accessibilityRole="button"
           className="h-[54px] w-[54px] items-center justify-center rounded-full bg-[#20146F]"
           disabled={disabled}
           onPress={onPlay}
           style={{ opacity: disabled ? 0.45 : 1 }}
         >
-          <Feather color="#fff" name="play" size={25} />
+          <Feather color="#fff" name="external-link" size={23} />
         </Pressable>
       </View>
 

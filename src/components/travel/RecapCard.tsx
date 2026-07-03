@@ -32,13 +32,13 @@ export function RecapCard({ item, onPress }: RecapCardProps) {
           </View>
 
           <AppText className="mt-1 text-xs font-semibold text-white" numberOfLines={1}>
-            {item.durationText} · {item.playTimeText.replace('총 음악 재생 ', '')}
+            {item.durationText} · {item.playTimeText.replace('음악 기록 ', '')}
           </AppText>
 
           <View className="mt-2 flex-row items-center gap-2">
             <View className="rounded-full bg-white/10 px-2 py-1">
               <AppText className="text-[10px] font-semibold text-white/70">
-                {item.playCount}회
+                {item.playCount}회 기록
               </AppText>
             </View>
             <View className="rounded-full bg-white/10 px-2 py-1">

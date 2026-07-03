@@ -1,5 +1,5 @@
 import { canUseAuthenticatedApi, requestApi, shouldUseServerApi } from '@/api/client';
-import { mockServer } from '@/mock-server';
+import { getMockServer } from '@/api/mockServerClient';
 import type {
   FeaturedPlaylistMockParams,
   MoodRecommendationMockParams,
@@ -11,8 +11,9 @@ import type {
 } from '@/types/domain';
 
 export const homeApi = {
-  getFeaturedPlaylists: (params?: FeaturedPlaylistMockParams) => {
+  getFeaturedPlaylists: async (params?: FeaturedPlaylistMockParams) => {
     if (!shouldUseServerApi()) {
+      const mockServer = await getMockServer();
       return mockServer.home.getFeaturedPlaylists(params);
     }
 
@@ -27,8 +28,9 @@ export const homeApi = {
       },
     });
   },
-  getMoodRecommendations: (params?: MoodRecommendationMockParams) => {
+  getMoodRecommendations: async (params?: MoodRecommendationMockParams) => {
     if (!shouldUseServerApi()) {
+      const mockServer = await getMockServer();
       return mockServer.home.getMoodRecommendations(params);
     }
 
@@ -44,8 +46,9 @@ export const homeApi = {
       },
     });
   },
-  getRecentMusicLogs: () => {
+  getRecentMusicLogs: async () => {
     if (!shouldUseServerApi()) {
+      const mockServer = await getMockServer();
       return mockServer.home.getRecentMusicLogs();
     }
 

@@ -8,22 +8,13 @@ import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { AppText } from '@/components/AppText';
 import { LocationContextCard } from '@/components/home/LocationContextCard';
 import { AuthAccountCard } from '@/components/my/AuthAccountCard';
-import { MusicPlatformSettingsCard } from '@/components/my/MusicPlatformSettingsCard';
 import { PermissionSettingsCard } from '@/components/my/PermissionSettingsCard';
 import { Screen } from '@/components/Screen';
 import { useNativePermissionSettings } from '@/hooks/useNativePermissionSettings';
-import { useMusicPlatformStore } from '@/store/musicPlatformStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
-import { useSpotifyAuthStore } from '@/store/spotifyAuthStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
-import {
-  connectSpotifyAccount,
-  getSpotifyAuthErrorMessage,
-  isSpotifyConfigured,
-} from '@/spotify/spotifyAuth';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
-import { MusicPlatformId } from '@/types/domain';
 
 type MyMenuItem = {
   description?: string;
@@ -50,16 +41,6 @@ export default function MyScreen() {
   const { profile, resetOnboarding, updateProfile } = useUserProfileStore();
   const { clearEvents, events, isHydrated } = useRecommendationEventStore();
   const permissionSettings = useNativePermissionSettings();
-  const { selectedPlatformId, setSelectedPlatform } = useMusicPlatformStore();
-  const {
-    clearSession: clearSpotifySession,
-    errorMessage: spotifyErrorMessage,
-    isConnecting: isSpotifyConnecting,
-    session: spotifySession,
-    setConnecting: setSpotifyConnecting,
-    setError: setSpotifyError,
-    setSession: setSpotifySession,
-  } = useSpotifyAuthStore();
   const {
     currentLocation,
     currentPlace,
@@ -104,63 +85,6 @@ export default function MyScreen() {
     updateProfile(nextProfile);
     void meApi.updateProfile(nextProfile).catch(() => undefined);
   }, [profile, updateProfile]);
-
-  const handleSelectMusicPlatform = useCallback(
-    (platformId: MusicPlatformId) => {
-      setSelectedPlatform(platformId);
-      void meApi
-        .updateMusicPlatform({
-          connected: platformId === 'spotify' ? Boolean(spotifySession) : platformId !== 'none',
-          selectedPlatformId: platformId,
-        })
-        .catch(() => undefined);
-    },
-    [setSelectedPlatform, spotifySession],
-  );
-
-  const handleConnectSpotify = useCallback(async () => {
-    if (isSpotifyConnecting) {
-      return;
-    }
-
-    setSelectedPlatform('spotify');
-    setSpotifyConnecting(true);
-    setSpotifyError(undefined);
-
-    try {
-      const session = await connectSpotifyAccount();
-
-      setSpotifySession(session);
-      void meApi
-        .updateMusicPlatform({
-          connected: true,
-          providerUserId: session.userId,
-          selectedPlatformId: 'spotify',
-        })
-        .catch(() => undefined);
-    } catch (error) {
-      setSpotifyError(getSpotifyAuthErrorMessage(error));
-    } finally {
-      setSpotifyConnecting(false);
-    }
-  }, [
-    isSpotifyConnecting,
-    setSelectedPlatform,
-    setSpotifyConnecting,
-    setSpotifyError,
-    setSpotifySession,
-  ]);
-
-  const handleDisconnectSpotify = useCallback(() => {
-    clearSpotifySession();
-    setSelectedPlatform('none');
-    void meApi
-      .updateMusicPlatform({
-        connected: false,
-        selectedPlatformId: 'none',
-      })
-      .catch(() => undefined);
-  }, [clearSpotifySession, setSelectedPlatform]);
 
   const handleRefreshLocation = useCallback(async () => {
     if (locationStatus === 'loading') {
@@ -273,18 +197,6 @@ export default function MyScreen() {
             updatedAt={locationUpdatedAt}
           />
         </View>
-
-        <MusicPlatformSettingsCard
-          isSpotifyConfigured={isSpotifyConfigured()}
-          isSpotifyConnected={Boolean(spotifySession)}
-          isSpotifyConnecting={isSpotifyConnecting}
-          onConnectSpotify={handleConnectSpotify}
-          onDisconnectSpotify={handleDisconnectSpotify}
-          onSelectPlatform={handleSelectMusicPlatform}
-          selectedPlatformId={selectedPlatformId}
-          spotifyDisplayName={spotifySession?.displayName}
-          spotifyErrorMessage={spotifyErrorMessage}
-        />
 
         <View className="mt-6 gap-3">
           {menuItems.map((item) => (

@@ -15,10 +15,9 @@ export function AppEntryGate() {
   const isAuthRoute = pathname.startsWith('/auth');
   const isLegalRoute = pathname.startsWith('/legal');
   const isOnboardingRoute = pathname.startsWith('/onboarding');
-  const isSpotifyAuthRoute = pathname.startsWith('/spotify-auth');
   const hasAppSession = status === 'authenticated' || status === 'guest';
 
-  if (!hasAppSession && !isAuthRoute && !isLegalRoute && !isSpotifyAuthRoute) {
+  if (!hasAppSession && !isAuthRoute && !isLegalRoute) {
     return <Redirect href="/auth/login" />;
   }
 
@@ -26,7 +25,7 @@ export function AppEntryGate() {
     return <Redirect href={profile.completedOnboarding ? '/' : '/onboarding'} />;
   }
 
-  if (hasAppSession && !profile.completedOnboarding && !isOnboardingRoute && !isSpotifyAuthRoute) {
+  if (hasAppSession && !profile.completedOnboarding && !isOnboardingRoute) {
     return <Redirect href="/onboarding" />;
   }
 

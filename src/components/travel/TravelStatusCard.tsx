@@ -67,7 +67,7 @@ export function TravelStatusCard({
   const placeLabel = currentPlace?.title ?? '위치 확인 전';
   const currentTrackLabel = currentTrack
     ? `${currentTrack.artist} - ${currentTrack.title}`
-    : '재생 중인 음악 없음';
+    : '선택한 음악 없음';
 
   if (status === 'active') {
     return (
@@ -99,7 +99,7 @@ export function TravelStatusCard({
         <View className="mt-3 flex-row items-center gap-2 rounded-[16px] border border-white/10 bg-black/20 px-3 py-2.5">
           <Feather color="#B7E628" name="music" size={14} />
           <View className="min-w-0 flex-1">
-            <AppText className="text-[10px] font-semibold text-white/45">현재 재생 중</AppText>
+            <AppText className="text-[10px] font-semibold text-white/45">선택한 음악</AppText>
             <AppText className="mt-0.5 text-sm font-semibold text-white" numberOfLines={1}>
               {currentTrackLabel}
             </AppText>

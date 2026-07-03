@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { MockEndpointId } from '@/mock-server/types';
+import type { MockEndpointId } from '@/mock-server/types';
 
 export type ApiSource = 'mock' | 'server';
 
@@ -34,13 +34,17 @@ type DevToolsState = {
 
 function getInitialApiSource(): ApiSource {
   if (process.env.EXPO_PUBLIC_SOUNDLOG_API_SOURCE === 'mock') {
-    return 'mock';
+    return __DEV__ ? 'mock' : 'server';
   }
 
   if (
     process.env.EXPO_PUBLIC_SOUNDLOG_API_SOURCE === 'server' ||
     process.env.EXPO_PUBLIC_SOUNDLOG_API_BASE_URL
   ) {
+    return 'server';
+  }
+
+  if (!__DEV__) {
     return 'server';
   }
 

@@ -1,5 +1,4 @@
 import { canUseAuthenticatedApi, requestApi } from '@/api/client';
-import { MusicPlatformId } from '@/types/domain';
 import { UserProfile, UserProfileInput } from '@/store/userProfileStore';
 
 type ServerCompanionType = 'couple' | 'family' | 'friends' | 'solo';
@@ -34,20 +33,6 @@ function toProfileBody(input: UserProfileInput) {
 }
 
 export const meApi = {
-  updateMusicPlatform: (input: {
-    connected?: boolean;
-    providerUserId?: string;
-    selectedPlatformId: MusicPlatformId;
-  }) => {
-    if (!canUseAuthenticatedApi()) {
-      return Promise.resolve(undefined);
-    }
-
-    return requestApi('/v1/me/music-platform', {
-      body: input,
-      method: 'PUT',
-    });
-  },
   updateProfile: (input: UserProfileInput) => {
     if (!canUseAuthenticatedApi()) {
       return Promise.resolve<UserProfile | undefined>(undefined);

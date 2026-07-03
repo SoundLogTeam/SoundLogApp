@@ -37,12 +37,12 @@ import {
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { queryClient } from '@/providers/queryClient';
-import { playSelectedSpotifyOrFallback } from '@/spotify/spotifyPlayback';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { FeaturedPlaylist, MoodRecommendation, MusicLogItem, TravelMode } from '@/types/domain';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
 import { getMoodTagsFromFilter } from '@/utils/moodTags';
+import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 const moodFilterToMlMood: Record<string, PlaylistMlMood> = {
@@ -170,14 +170,16 @@ function HomeContent() {
       return;
     }
 
+    const externalLink = getTrackExternalLink(item.track);
+
     setTrack(item.track);
-    void playSelectedSpotifyOrFallback(item.track);
+    void openMusicPlatformUrl(externalLink).catch(() => undefined);
     syncRecommendationEvent(
       addRecommendationEvent({
         context: createRecommendationEventContext(),
         trackId: item.track.id,
-        type: 'track_play',
-        value: item.id,
+        type: 'track_external_open',
+        value: externalLink.platformId,
       }),
     );
   };

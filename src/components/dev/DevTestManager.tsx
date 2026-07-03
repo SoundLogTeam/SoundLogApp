@@ -591,7 +591,7 @@ function DevTestManagerContent() {
                 <ManagerButton label="보관함 seed" onPress={seedLibrary} />
                 <ManagerButton destructive label="보관함 비우기" onPress={clearLibrary} />
                 <ManagerButton
-                  label="샘플 곡 재생"
+                  label="샘플 곡 선택"
                   onPress={() => setTrack(getSampleTrack(0), samplePlaylist.id)}
                 />
                 <ManagerButton destructive label="플레이어 비우기" onPress={clearTrack} />

@@ -5,7 +5,6 @@ import { ActivityIndicator, Modal, Pressable, View } from 'react-native';
 
 import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
-import { useMusicPlatformStore } from '@/store/musicPlatformStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { Track } from '@/types/domain';
 import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
@@ -59,13 +58,12 @@ export function TrackActionMenu({
   track,
   visible,
 }: TrackActionMenuProps) {
-  const selectedPlatformId = useMusicPlatformStore((state) => state.selectedPlatformId);
   const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
   const [externalMessage, setExternalMessage] = useState<string>();
   const [isOpeningExternal, setIsOpeningExternal] = useState(false);
   const externalLink = useMemo(
-    () => (track ? getTrackExternalLink(track, selectedPlatformId) : undefined),
-    [selectedPlatformId, track],
+    () => (track ? getTrackExternalLink(track) : undefined),
+    [track],
   );
   const canOpenExternal = Boolean(externalLink?.url);
 

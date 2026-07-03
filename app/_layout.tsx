@@ -17,7 +17,6 @@ export default function RootLayout() {
         <Stack.Screen name="legal/privacy" />
         <Stack.Screen name="legal/terms" />
         <Stack.Screen name="onboarding" />
-        <Stack.Screen name="spotify-auth" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="camera/index" options={{ presentation: 'modal' }} />
       </Stack>
