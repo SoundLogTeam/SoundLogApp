@@ -280,12 +280,9 @@ export function MiniPlayer() {
             <AppText className="mt-1 text-xs font-medium text-white/60" numberOfLines={1}>
               {currentTrack.artist}
             </AppText>
-            <View className="mt-3 h-[3px] overflow-hidden rounded-full bg-white/10">
-              <View
-                className="h-full rounded-full"
-                style={{ backgroundColor: playerGlow, width: '24%' }}
-              />
-            </View>
+            <AppText className="mt-2 text-[11px] font-semibold text-white/42" numberOfLines={1}>
+              {externalLink.label}
+            </AppText>
           </View>
 
           <View className="ml-3 flex-row items-center gap-1">
@@ -396,19 +393,9 @@ export function MiniPlayer() {
               <AppText className="mt-2 text-center text-base text-white/60" numberOfLines={1}>
                 {currentTrack.artist}
               </AppText>
-            </View>
-
-            <View className="mt-8">
-              <View className="h-[4px] overflow-hidden rounded-full bg-white/12">
-                <View
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: playerGlow, width: '24%' }}
-                />
-              </View>
-              <View className="mt-3 flex-row justify-between">
-                <AppText className="text-xs text-white/45">선택한 음악</AppText>
-                <AppText className="text-xs text-white/45">외부 링크</AppText>
-              </View>
+              <AppText className="mt-3 text-center text-xs font-semibold text-white/45">
+                {externalLink.label}
+              </AppText>
             </View>
 
             <View className="mt-auto flex-row items-center justify-center gap-5">
