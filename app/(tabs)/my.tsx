@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { meApi } from '@/api/meApi';
@@ -39,6 +39,7 @@ function formatEventTime(value?: string) {
 
 export default function MyScreen() {
   const { profile, resetOnboarding, updateProfile } = useUserProfileStore();
+  const [profileMessage, setProfileMessage] = useState<string>();
   const { clearEvents, events, isHydrated } = useRecommendationEventStore();
   const permissionSettings = useNativePermissionSettings();
   const {
@@ -73,7 +74,7 @@ export default function MyScreen() {
     }
   }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
 
-  const handleEnableLocationRecommendation = useCallback(() => {
+  const handleEnableLocationRecommendation = useCallback(async () => {
     const nextProfile = {
       companionType: profile.companionType,
       locationRecommendationEnabled: true,
@@ -82,8 +83,14 @@ export default function MyScreen() {
       travelStyles: profile.travelStyles,
     };
 
-    updateProfile(nextProfile);
-    void meApi.updateProfile(nextProfile).catch(() => undefined);
+    setProfileMessage(undefined);
+
+    try {
+      await meApi.updateProfile(nextProfile);
+      updateProfile(nextProfile);
+    } catch {
+      setProfileMessage('위치 추천 설정을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+    }
   }, [profile, updateProfile]);
 
   const handleRefreshLocation = useCallback(async () => {
@@ -196,6 +203,11 @@ export default function MyScreen() {
             status={locationStatus}
             updatedAt={locationUpdatedAt}
           />
+          {profileMessage ? (
+            <View className="mt-3 rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
+              <AppText className="text-xs leading-5 text-amber-100">{profileMessage}</AppText>
+            </View>
+          ) : null}
         </View>
 
         <View className="mt-6 gap-3">

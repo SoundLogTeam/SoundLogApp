@@ -304,7 +304,7 @@ function HomeContent() {
     },
     [addRecommendationEvent, recommendationMode, setRecommendationMode],
   );
-  const handleEnableLocationRecommendation = () => {
+  const handleEnableLocationRecommendation = useCallback(async () => {
     const nextProfile = {
       companionType: profile.companionType,
       locationRecommendationEnabled: true,
@@ -313,9 +313,17 @@ function HomeContent() {
       travelStyles: profile.travelStyles,
     };
 
-    updateProfile(nextProfile);
-    void meApi.updateProfile(nextProfile).catch(() => undefined);
-  };
+    setActionMessage(undefined);
+
+    try {
+      await meApi.updateProfile(nextProfile);
+      updateProfile(nextProfile);
+      return true;
+    } catch {
+      setActionMessage('위치 추천 설정을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+      return false;
+    }
+  }, [profile, updateProfile]);
   const handleRefreshLocation = useCallback(async () => {
     if (locationStatus === 'loading') {
       return;
@@ -336,9 +344,13 @@ function HomeContent() {
       setLocationStatus('unavailable');
     }
   }, [locationStatus, setLocation, setLocationStatus]);
-  const handleSetCurrentLocation = useCallback(() => {
+  const handleSetCurrentLocation = useCallback(async () => {
     if (!profile.locationRecommendationEnabled) {
-      handleEnableLocationRecommendation();
+      const didEnable = await handleEnableLocationRecommendation();
+
+      if (!didEnable) {
+        return;
+      }
     }
 
     void handleRefreshLocation();
