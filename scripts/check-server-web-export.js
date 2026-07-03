@@ -78,6 +78,33 @@ function verifyApiSourceFiles() {
   });
 }
 
+function verifyHonestMusicActionSourceFiles() {
+  const sourceDirs = [
+    path.join(projectRoot, 'app'),
+    path.join(projectRoot, 'src'),
+  ].filter((dir) => fs.existsSync(dir));
+  const blockedSourceMarkers = [
+    ['NOW PLAYING', 'User-facing source must not imply in-app streaming playback.'],
+    ['track_play', 'Frontend source must record track_external_open, not fake play events.'],
+    ['track_pause', 'Frontend source must not include fake pause events.'],
+    ['track_resume', 'Frontend source must not include fake resume events.'],
+    ['track_skip', 'Frontend source must not include fake skip playback events.'],
+    ['spotify-auth', 'Frontend source must not include the removed Spotify auth route.'],
+    ['open.spotify.com', 'Frontend source must not include Spotify external search URLs.'],
+    ['playSelectedSpotifyOrFallback', 'Frontend source must not include Spotify playback helpers.'],
+  ];
+
+  sourceDirs
+    .flatMap((dir) => readTextFiles(dir))
+    .forEach(({ filePath, text }) => {
+      blockedSourceMarkers.forEach(([marker, message]) => {
+        if (text.includes(marker)) {
+          addError(`${message}: ${path.relative(projectRoot, filePath)}`);
+        }
+      });
+    });
+}
+
 function runExport() {
   const result = spawnSync(
     process.platform === 'win32' ? 'npx.cmd' : 'npx',
@@ -164,6 +191,7 @@ function verifyBundle(bundleText) {
 
 try {
   verifyApiSourceFiles();
+  verifyHonestMusicActionSourceFiles();
   runExport();
 
   if (errors.length === 0) {

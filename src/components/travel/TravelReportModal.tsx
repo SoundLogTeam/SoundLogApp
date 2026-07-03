@@ -195,22 +195,6 @@ function SmallCaps({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PlayerBar({ title }: { title: string }) {
-  return (
-    <View className="flex-row items-center gap-3 rounded-[18px] bg-white px-3 py-2.5">
-      <View className="h-9 w-9 rounded-[10px] bg-black" />
-      <View className="min-w-0 flex-1">
-        <AppText className="text-[10px] font-semibold text-black/50">NOW PLAYING</AppText>
-        <AppText className="text-xs font-semibold text-black" numberOfLines={1}>
-          {title}
-        </AppText>
-      </View>
-      <Feather color="#111827" name="pause" size={14} />
-      <Feather color="#111827" name="skip-forward" size={14} />
-    </View>
-  );
-}
-
 export function TravelReportModal({ item, onClose, visible }: TravelReportModalProps) {
   const insets = useSafeAreaInsets();
   const [pageIndex, setPageIndex] = useState(0);

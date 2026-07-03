@@ -110,7 +110,7 @@ bg-black/40 overlay
 
 - 지역명: `Seoul`
 - 추천 근거: `Based on your location`
-- 재생 버튼
+- 대표곡 외부 음악 링크 버튼
 
 ### RN 컴포넌트 구조
 
@@ -118,7 +118,7 @@ bg-black/40 overlay
 PlaylistHeroInfo
   Text regionName
   Text recommendationReason
-  PlayButton
+  ExternalLinkButton
 ```
 
 ### 데이터 타입
@@ -209,7 +209,7 @@ type CuratedTrack = {
 
 | 액션 | 동작 |
 | --- | --- |
-| Row 탭 | 해당 곡 재생 |
+| Row 탭 | 현재 선택 곡으로 지정하고 외부 음악 링크 열기 |
 | 더보기 탭 | BottomSheet 메뉴 열기 |
 | 길게 누르기 | 좋아요/저장 quick action, 후순위 |
 
@@ -305,8 +305,7 @@ type PlaylistCurationRouteParams = {
 usePlaylistCurationQuery
 useTrackLikeMutation
 useTrackSaveMutation
-usePlayEventMutation
-useSkipEventMutation
+syncRecommendationEvent
 ```
 
 ### 7.3 클라이언트 상태
@@ -340,22 +339,25 @@ type PlaylistCurationResponse = {
 };
 ```
 
-### 8.2 곡 재생 이벤트
+### 8.2 외부 음악 링크 열기 이벤트
 
 ```txt
-POST /v1/events/play
+POST /v1/recommendation-events
 ```
 
 ```ts
-type PlayEventRequest = {
-  playlistId: string;
-  trackId: string;
-  placeId?: string;
-  context: {
-    source: 'playlist_curation';
-    mood?: string;
-    mode?: string;
-  };
+type RecommendationEventsRequest = {
+  events: Array<{
+    type: 'track_external_open';
+    playlistId?: string;
+    trackId: string;
+    value?: 'youtubeMusic' | 'melon' | 'none';
+    context: {
+      source?: 'playlist_curation';
+      mood?: string;
+      mode?: string;
+    };
+  }>;
 };
 ```
 
