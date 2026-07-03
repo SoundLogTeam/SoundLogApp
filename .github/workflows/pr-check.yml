@@ -25,3 +25,6 @@ jobs:
 
       - name: Run typecheck
         run: npm run typecheck
+
+      - name: Check server web export
+        run: npm run check:server-web-export
