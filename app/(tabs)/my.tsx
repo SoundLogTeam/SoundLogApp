@@ -196,7 +196,7 @@ export default function MyScreen() {
             place={currentPlace}
             placeCount={nearbyPlacesQuery.data?.length ?? 0}
             placeInfoMessage={
-              currentPlace?.source === 'mock'
+              currentPlace?.source === 'seed'
                 ? '주변 장소 정보를 기본 장소 데이터로 보여주고 있어요.'
                 : undefined
             }

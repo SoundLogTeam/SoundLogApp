@@ -154,8 +154,8 @@ function verifyBundle(bundleText) {
     ['dev-refresh-', 'Server web export must not include development refresh tokens.'],
     ['Soundlog 테스트 유저', 'Server web export must not include development test users.'],
     ['playlistCurationById', 'Server web export must not include seeded mock playlist maps.'],
-    ['mock-namsan', 'Server web export must not include seeded mock nearby places.'],
-    ['mock-gwangalli', 'Server web export must not include seeded mock nearby places.'],
+    ['seed-namsan', 'Server web export must not include seeded nearby places.'],
+    ['seed-gwangalli', 'Server web export must not include seeded nearby places.'],
     [
       'EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS',
       'Server web export must not include mock API failure controls.',

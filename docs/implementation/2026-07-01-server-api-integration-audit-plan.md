@@ -66,7 +66,7 @@ Make the Soundlog frontend clearly use the deployed server when configured for s
 - Backed up the server `.env`, changed both values to `false`, ran `pnpm db:deploy`, and restarted `soundlog-api.service`.
 - Public health now returns `{"database":"ok"}` instead of `{"mode":"mock-db"}`.
 - Fake provider-token login is now rejected, so dev/preview builds must not enable `EXPO_PUBLIC_ENABLE_DEV_AUTH_FALLBACK`.
-- Nearby places can still contain `source: "mock"` because the real DB seed data uses that source value when Tour API returns no items. That is Postgres seed/fallback data, not the app's in-memory mock server.
+- Nearby places should expose `source: "seed"` when Tour API returns no items. That is Postgres seed/fallback data, not the app's in-memory mock server.
 
 ## 2026-07-02 Vercel web audit notes
 

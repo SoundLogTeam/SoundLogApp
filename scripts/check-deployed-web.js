@@ -174,8 +174,8 @@ async function verifyBundle() {
     ['mockServerDelay', 'Deployed bundle must not include mock server delay helpers.'],
     ['mock-user-email', 'Deployed bundle must not include seeded mock auth data.'],
     ['playlistCurationById', 'Deployed bundle must not include seeded mock playlist maps.'],
-    ['mock-namsan', 'Deployed bundle must not include seeded mock nearby places.'],
-    ['mock-gwangalli', 'Deployed bundle must not include seeded mock nearby places.'],
+    ['seed-namsan', 'Deployed bundle must not include seeded nearby places.'],
+    ['seed-gwangalli', 'Deployed bundle must not include seeded nearby places.'],
     [
       'EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS',
       'Deployed bundle must not include mock API failure controls.',

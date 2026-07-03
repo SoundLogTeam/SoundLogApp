@@ -12,7 +12,7 @@ export type PlaceContext = {
   imageUrl?: string;
   location?: GeoPoint;
   overview?: string;
-  source: 'mock' | 'tour-api';
+  source: 'seed' | 'tour-api';
   title: string;
 };
 
