@@ -26,7 +26,15 @@ Vercel project domain에 아래 도메인을 추가합니다.
 - `soundlog.shop`
 - `www.soundlog.shop`
 
-Web build는 `vercel.json`에서 `EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/soundlog`를 주입합니다. `/api/soundlog/:path*` 요청은 Vercel이 서버 사이드에서 EC2 API `http://52.79.185.121:4000/:path*`로 rewrite합니다.
+Web build는 `vercel.mjs`에서 `EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/soundlog`를 주입합니다. `/api/soundlog/:path*` 요청은 Vercel이 서버 사이드에서 `SOUNDLOG_API_ORIGIN`으로 rewrite합니다.
+
+Vercel 환경변수에 아래 값을 설정합니다.
+
+```dotenv
+SOUNDLOG_API_ORIGIN=http://<EC2_HOST>:4000
+```
+
+브라우저와 앱이 호출하는 공개 API URL은 계속 `https://soundlog.shop/api/soundlog`입니다. `SOUNDLOG_API_ORIGIN`은 Vercel 서버 사이드 rewrite에서만 쓰이는 내부 origin입니다.
 
 ## EAS app env
 
@@ -54,4 +62,11 @@ dig +short soundlog.shop A
 dig +short www.soundlog.shop CNAME
 curl -I https://soundlog.shop
 curl https://soundlog.shop/api/soundlog/v1/health
+npm run check:deployed-web -- https://soundlog.shop
+```
+
+EC2 origin을 직접 검증하려면 아래 명령을 실행합니다. 이 검사는 `/openapi.yaml`, fallback 장소 source, Spotify 메타데이터 제거 여부까지 확인하므로 예전 백엔드로 잘못 붙은 경우 실패합니다.
+
+```bash
+SOUNDLOG_API_ORIGIN=http://<EC2_HOST>:4000 npm run check:api-origin
 ```

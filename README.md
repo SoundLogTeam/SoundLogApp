@@ -39,7 +39,8 @@ EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/so
 ```
 
 Vercel web 배포는 브라우저 API 호출을 같은 origin에서 처리하도록
-`https://soundlog.shop/api/soundlog` rewrite proxy를 사용합니다. 현재 rewrite 대상은 EC2 API `http://52.79.185.121:4000`입니다. `vercel.json`의 build command가
+`https://soundlog.shop/api/soundlog` rewrite proxy를 사용합니다. 브라우저와 네이티브 앱은 별도 `api` 서브도메인을 쓰지 않습니다. Vercel 내부 rewrite 대상은
+`SOUNDLOG_API_ORIGIN` 환경변수로 관리하며, 이 값은 최신 SoundLogServer origin이어야 합니다. `vercel.mjs`의 build command가
 `EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server`와
 `EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/soundlog`를 주입합니다.
 
@@ -56,6 +57,12 @@ Vercel web 배포는 브라우저 API 호출을 같은 origin에서 처리하도
 - iOS/Android: HTTPS API만 사용
 
 Mock API로 되돌리는 런타임 경로는 제거했습니다. 화면 상태 테스트가 필요하면 서버 fixture 또는 `src/mock-server` 레거시 자료를 별도 개발 도구에서만 사용합니다.
+
+API origin이 최신 서버인지 확인하려면 아래처럼 실행합니다.
+
+```bash
+SOUNDLOG_API_ORIGIN=http://<EC2_HOST>:4000 npm run check:api-origin
+```
 
 Android 지인 테스트용 내부 배포 빌드는 아래 명령으로 생성합니다.
 

@@ -113,6 +113,73 @@ async function verifyApiProxy() {
   }
 }
 
+async function verifyServerContract() {
+  try {
+    const url = withBase('/api/soundlog/openapi.yaml');
+    const { response, text } = await fetchText(url);
+
+    if (!response.ok) {
+      addError(`${url} returned HTTP ${response.status}.`);
+    }
+
+    if (!text.includes('openapi: 3.1.0') || !text.includes('/v1/auth/register')) {
+      addError('/api/soundlog/openapi.yaml does not look like the current SoundLogServer contract.');
+    }
+  } catch (error) {
+    addError(error instanceof Error ? error.message : String(error));
+  }
+
+  try {
+    const payload = await fetchJson(
+      '/api/soundlog/v1/tour/nearby-places?lat=35.1595&lng=129.1604&radiusMeters=2000&limit=1',
+    );
+    const place = payload?.data?.[0];
+
+    if (!place) {
+      addError('/api/soundlog/v1/tour/nearby-places returned an empty payload.');
+    } else {
+      if (typeof place.id === 'string' && place.id.startsWith('mock-')) {
+        addError('/api/soundlog/v1/tour/nearby-places returned a legacy mock-* place id.');
+      }
+
+      if (place.source === 'mock') {
+        addError('/api/soundlog/v1/tour/nearby-places returned legacy source="mock".');
+      }
+    }
+  } catch (error) {
+    addError(error instanceof Error ? error.message : String(error));
+  }
+
+  try {
+    const payload = await fetchJson(
+      '/api/soundlog/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday&topFilter=%EC%A0%84%EC%B2%B4',
+    );
+    const serialized = JSON.stringify(payload?.data ?? {});
+
+    if (serialized.includes('open.spotify.com') || /"spotify"\s*:/.test(serialized)) {
+      addError('/api/soundlog/v1/home/mood-recommendations still exposes Spotify metadata.');
+    }
+  } catch (error) {
+    addError(error instanceof Error ? error.message : String(error));
+  }
+
+  try {
+    const url = withBase('/api/soundlog/v1/me/music-platform');
+    const { response, text } = await fetchText(url);
+
+    if (response.status !== 404) {
+      addError(
+        `${url} returned HTTP ${response.status}; expected 404 for removed music platform API. sample=${text.slice(
+          0,
+          120,
+        )}`,
+      );
+    }
+  } catch (error) {
+    addError(error instanceof Error ? error.message : String(error));
+  }
+}
+
 function getScriptUrls(html) {
   return [...html.matchAll(/<script[^>]+src=["']([^"']+\.js)["']/g)]
     .map((match) => new URL(match[1], `${baseUrl}/`).href)
@@ -212,6 +279,7 @@ async function verifyBundle() {
 
 async function main() {
   await verifyApiProxy();
+  await verifyServerContract();
   await verifyBundle();
 
   if (errors.length > 0) {

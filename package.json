@@ -56,9 +56,11 @@
     "build:production": "eas build --profile production --platform all",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
+    "check:api-origin": "node scripts/check-api-origin.js",
     "check:deployed-web": "node scripts/check-deployed-web.js",
     "check:server-web-export": "node scripts/check-server-web-export.js",
     "check:store-release": "node scripts/check-store-release.js",
+    "check:vercel-config": "node scripts/check-vercel-config.js",
     "check": "npm run typecheck && npm run doctor",
     "prepare": "sh scripts/install-git-hooks.sh"
   },

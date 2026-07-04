@@ -138,8 +138,8 @@ function verifyBundle(bundleText) {
   );
   assertExcludes(
     bundleText,
-    'http://52.79.185.121:4000',
-    'Server web export must not inline the direct EC2 HTTP API URL.',
+    /http:\/\/\d+\.\d+\.\d+\.\d+:4000/,
+    'Server web export must not inline a direct EC2 HTTP API URL.',
   );
   [
     ['authMockHandlers', 'Server web export must not include auth mock handlers.'],
