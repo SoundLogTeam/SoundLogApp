@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 
-import type { MockEndpointId } from '@/mock-server/types';
-
-export const mockEndpointIds: MockEndpointId[] = [
+export const mockEndpointIds = [
   'auth.login',
   'auth.register',
   'auth.refresh',
@@ -13,10 +11,13 @@ export const mockEndpointIds: MockEndpointId[] = [
   'home.moodRecommendations',
   'home.recentMusicLogs',
   'playlist.detail',
+  'recap.create',
   'recap.list',
   'recap.share',
   'tour.nearbyPlaces',
-];
+] as const;
+
+export type MockEndpointId = (typeof mockEndpointIds)[number];
 
 type DevToolsState = {
   failedEndpointIds: MockEndpointId[];

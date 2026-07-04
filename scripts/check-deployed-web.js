@@ -159,6 +159,10 @@ async function verifyServerContract() {
     if (serialized.includes('open.spotify.com') || /"spotify"\s*:/.test(serialized)) {
       addError('/api/soundlog/v1/home/mood-recommendations still exposes Spotify metadata.');
     }
+
+    if (/"previewUrl"\s*:/.test(serialized)) {
+      addError('/api/soundlog/v1/home/mood-recommendations still exposes streaming preview URLs.');
+    }
   } catch (error) {
     addError(error instanceof Error ? error.message : String(error));
   }

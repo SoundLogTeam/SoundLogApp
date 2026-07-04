@@ -83,7 +83,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
   const listBottomPadding = getCurationListBottomPadding(insets.bottom, hasMiniPlayer);
   const usesPlainMoodPage = playlistId === 'calm-walk' || Boolean(playlist?.accentColor);
 
-  const playTrack = async (track: Track) => {
+  const openTrackExternal = async (track: Track) => {
     if (!playlist) {
       return;
     }
@@ -109,14 +109,14 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     }
   };
 
-  const playFirstTrack = () => {
+  const openFirstTrackExternal = () => {
     const firstTrack = playlist?.tracks[0];
 
     if (!firstTrack) {
       return;
     }
 
-    playTrack(firstTrack);
+    openTrackExternal(firstTrack);
   };
 
   const toggleLiked = () => {
@@ -193,7 +193,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       currentTrackId={currentTrack?.id}
       likedTrackIds={likedTrackIds}
       onOpenMenu={(track) => setSelectedTrackId(track.id)}
-      onSelectTrack={playTrack}
+      onSelectTrack={openTrackExternal}
       savedTrackIds={savedTrackIds}
       tracks={playlist.tracks}
     />
@@ -213,7 +213,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
           {playlist ? (
             <PlaylistHeroInfo
               disabled={playlist.tracks.length === 0}
-              onPlay={playFirstTrack}
+              onOpenFirstTrack={openFirstTrackExternal}
               playlist={playlist}
             />
           ) : null}
@@ -225,7 +225,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
             playlist ? (
               <PlaylistHeroInfo
                 disabled={playlist.tracks.length === 0}
-                onPlay={playFirstTrack}
+                onOpenFirstTrack={openFirstTrackExternal}
                 playlist={playlist}
               />
             ) : undefined

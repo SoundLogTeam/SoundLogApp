@@ -105,6 +105,61 @@ function verifyHonestMusicActionSourceFiles() {
     });
 }
 
+function isAllowedMockReferencePath(filePath) {
+  const relativePath = path.relative(projectRoot, filePath).split(path.sep).join('/');
+
+  return (
+    relativePath.startsWith('src/mock-server/') ||
+    relativePath.startsWith('src/mocks/') ||
+    relativePath.startsWith('src/components/dev/')
+  );
+}
+
+function verifyRuntimeSourceDoesNotImportMocks() {
+  const sourceDirs = [
+    path.join(projectRoot, 'app'),
+    path.join(projectRoot, 'src'),
+  ].filter((dir) => fs.existsSync(dir));
+  const blockedRuntimeImports = [
+    '@/mock-server',
+    '@/mocks',
+  ];
+
+  sourceDirs
+    .flatMap((dir) => readTextFiles(dir))
+    .filter(({ filePath }) => !isAllowedMockReferencePath(filePath))
+    .forEach(({ filePath, text }) => {
+      blockedRuntimeImports.forEach((blockedImport) => {
+        if (text.includes(blockedImport)) {
+          addError(
+            `Runtime source must not import ${blockedImport}: ${path.relative(projectRoot, filePath)}`,
+          );
+        }
+      });
+    });
+}
+
+function verifyHomeScreenUsesServerQueries() {
+  const homeRoutePath = path.join(projectRoot, 'app/(tabs)/index.tsx');
+  const text = fs.readFileSync(homeRoutePath, 'utf8');
+
+  [
+    ['useFeaturedPlaylistsQuery', 'Home screen must request featured playlists through the API query.'],
+    ['useMoodRecommendationsQuery', 'Home screen must request mood recommendations through the API query.'],
+    ['useNearbyPlacesQuery', 'Home screen must request nearby places through the API query.'],
+  ].forEach(([marker, message]) => {
+    if (!text.includes(marker)) {
+      addError(message);
+    }
+  });
+
+  ['@/mock-server', '@/mocks', 'playlistCurationById'].forEach((marker) => {
+    if (text.includes(marker)) {
+      addError(`Home screen must not use mock data marker: ${marker}`);
+    }
+  });
+}
+
 function runExport() {
   const result = spawnSync(
     process.platform === 'win32' ? 'npx.cmd' : 'npx',
@@ -192,6 +247,8 @@ function verifyBundle(bundleText) {
 try {
   verifyApiSourceFiles();
   verifyHonestMusicActionSourceFiles();
+  verifyRuntimeSourceDoesNotImportMocks();
+  verifyHomeScreenUsesServerQueries();
   runExport();
 
   if (errors.length === 0) {

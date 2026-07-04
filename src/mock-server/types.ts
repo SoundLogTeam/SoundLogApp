@@ -18,22 +18,9 @@ import {
   RecapShare,
   RecapTemplateId,
 } from '@/types/domain';
+import type { MockEndpointId } from '@/store/devToolsStore';
 
-export type MockEndpointId =
-  | 'auth.login'
-  | 'auth.logout'
-  | 'auth.me'
-  | 'auth.migrateLocalData'
-  | 'auth.refresh'
-  | 'auth.register'
-  | 'home.featuredPlaylists'
-  | 'home.moodRecommendations'
-  | 'home.recentMusicLogs'
-  | 'playlist.detail'
-  | 'recap.create'
-  | 'recap.list'
-  | 'recap.share'
-  | 'tour.nearbyPlaces';
+export type { MockEndpointId } from '@/store/devToolsStore';
 
 export type MockDelayOptions = {
   delayMs?: number;

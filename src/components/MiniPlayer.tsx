@@ -50,21 +50,6 @@ export function MiniPlayer() {
   const playerSoftGlow = hexToRgba(keyColor, 0.24);
   const canSkip = queue.length > 1;
   const externalLink = getTrackExternalLink(currentTrack);
-  const getAdjacentTrack = (direction: 'next' | 'previous') => {
-    if (!currentTrack || queue.length < 2) {
-      return undefined;
-    }
-
-    const currentIndex = queue.findIndex((track) => track.id === currentTrack.id);
-
-    if (direction === 'next') {
-      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % queue.length : 0;
-      return queue[nextIndex];
-    }
-
-    const previousIndex = currentIndex > 0 ? currentIndex - 1 : Math.max(queue.length - 1, 0);
-    return queue[previousIndex];
-  };
   const handleToggleLike = () => {
     const context = createRecommendationEventContext();
 
@@ -141,33 +126,21 @@ export function MiniPlayer() {
       }),
     );
   };
-  const handlePlayNext = async () => {
+  const handleSelectNextTrack = () => {
     if (!canSkip) {
       return;
     }
 
-    const nextTrack = getAdjacentTrack('next');
-
-    if (!nextTrack) {
-      return;
-    }
-
+    setExternalMessage(undefined);
     playNext();
-    await handleOpenTrackExternal(nextTrack);
   };
-  const handlePlayPrevious = async () => {
+  const handleSelectPreviousTrack = () => {
     if (!canSkip) {
       return;
     }
 
-    const previousTrack = getAdjacentTrack('previous');
-
-    if (!previousTrack) {
-      return;
-    }
-
+    setExternalMessage(undefined);
     playPrevious();
-    await handleOpenTrackExternal(previousTrack);
   };
   const renderCover = (sizeClassName: string, radiusClassName: string) => (
     <View
@@ -287,14 +260,14 @@ export function MiniPlayer() {
 
           <View className="ml-3 flex-row items-center gap-1">
             <Pressable
-              accessibilityLabel="이전 곡"
+              accessibilityLabel="이전 추천 곡 선택"
               accessibilityRole="button"
               className="h-10 w-10 items-center justify-center"
               disabled={!canSkip}
-              onPress={handlePlayPrevious}
+              onPress={handleSelectPreviousTrack}
               style={{ opacity: canSkip ? 1 : 0.35 }}
             >
-              <Feather color="#fff" name="skip-back" size={18} />
+              <Feather color="#fff" name="chevron-left" size={22} />
             </Pressable>
             <Pressable
               accessibilityLabel="음악 링크 열기"
@@ -311,14 +284,14 @@ export function MiniPlayer() {
               )}
             </Pressable>
             <Pressable
-              accessibilityLabel="다음 곡"
+              accessibilityLabel="다음 추천 곡 선택"
               accessibilityRole="button"
               className="h-10 w-10 items-center justify-center"
               disabled={!canSkip}
-              onPress={handlePlayNext}
+              onPress={handleSelectNextTrack}
               style={{ opacity: canSkip ? 1 : 0.35 }}
             >
-              <Feather color="#fff" name="skip-forward" size={18} />
+              <Feather color="#fff" name="chevron-right" size={22} />
             </Pressable>
           </View>
         </View>
@@ -400,14 +373,14 @@ export function MiniPlayer() {
 
             <View className="mt-auto flex-row items-center justify-center gap-5">
               <Pressable
-                accessibilityLabel="이전 곡"
+                accessibilityLabel="이전 추천 곡 선택"
                 accessibilityRole="button"
                 className="h-14 w-14 items-center justify-center rounded-full bg-white/10"
                 disabled={!canSkip}
-                onPress={handlePlayPrevious}
+                onPress={handleSelectPreviousTrack}
                 style={{ opacity: canSkip ? 1 : 0.35 }}
               >
-                <Feather color="#fff" name="skip-back" size={24} />
+                <Feather color="#fff" name="chevron-left" size={30} />
               </Pressable>
 
               <Pressable
@@ -426,14 +399,14 @@ export function MiniPlayer() {
               </Pressable>
 
               <Pressable
-                accessibilityLabel="다음 곡"
+                accessibilityLabel="다음 추천 곡 선택"
                 accessibilityRole="button"
                 className="h-14 w-14 items-center justify-center rounded-full bg-white/10"
                 disabled={!canSkip}
-                onPress={handlePlayNext}
+                onPress={handleSelectNextTrack}
                 style={{ opacity: canSkip ? 1 : 0.35 }}
               >
-                <Feather color="#fff" name="skip-forward" size={24} />
+                <Feather color="#fff" name="chevron-right" size={30} />
               </Pressable>
             </View>
 

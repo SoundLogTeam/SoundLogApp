@@ -32,7 +32,6 @@ export type Track = {
   artist: string;
   fallbackColor?: string;
   albumImageUrl?: string;
-  previewUrl?: string;
   externalUrl?: string;
   platformUrls?: Partial<Record<ExternalMusicPlatformId, string>>;
   isLiked?: boolean;

@@ -7,11 +7,15 @@ import { PlaylistCuration } from '@/types/domain';
 
 type PlaylistHeroInfoProps = {
   disabled?: boolean;
-  onPlay: () => void;
+  onOpenFirstTrack: () => void;
   playlist: PlaylistCuration;
 };
 
-export function PlaylistHeroInfo({ disabled = false, onPlay, playlist }: PlaylistHeroInfoProps) {
+export function PlaylistHeroInfo({
+  disabled = false,
+  onOpenFirstTrack,
+  playlist,
+}: PlaylistHeroInfoProps) {
   return (
     <View className="px-5 pb-5">
       <View className="flex-row items-center justify-between">
@@ -42,7 +46,7 @@ export function PlaylistHeroInfo({ disabled = false, onPlay, playlist }: Playlis
           accessibilityRole="button"
           className="h-[54px] w-[54px] items-center justify-center rounded-full bg-[#20146F]"
           disabled={disabled}
-          onPress={onPlay}
+          onPress={onOpenFirstTrack}
           style={{ opacity: disabled ? 0.45 : 1 }}
         >
           <Feather color="#fff" name="external-link" size={23} />
