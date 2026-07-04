@@ -3,7 +3,6 @@
 const apiOrigin = process.env.SOUNDLOG_API_ORIGIN?.replace(/\/+$/, '');
 const staleOrigins = new Set([
   'http://52.79.185.121:4000',
-  'http://54.226.62.131:4000',
   'https://api.soundlog.shop',
 ]);
 
