@@ -29,15 +29,28 @@ async function main() {
     addError('Missing vercel.mjs.');
   }
 
-  [
-    '52.79.185.121',
-    '54.226.62.131',
-    'api.soundlog.shop',
-  ].forEach((marker) => {
+  ['52.79.185.121', '54.226.62.131', 'api.soundlog.shop'].forEach((marker) => {
     if (configText.includes(marker)) {
       addError(`vercel.mjs must not hard-code stale API origin ${marker}.`);
     }
   });
+
+  delete process.env.SOUNDLOG_API_ORIGIN;
+
+  const missingEnvImport = await import(
+    `${pathToFileURL(vercelConfigPath).href}?check=missing-${Date.now()}`
+  );
+  const missingEnvRewrite = missingEnvImport.config?.rewrites?.find(
+    (rewrite) => rewrite.source === '/api/soundlog/:path*',
+  );
+
+  if (missingEnvRewrite?.destination !== 'https://soundlog-api-origin-missing.invalid/:path*') {
+    addError('Vercel config must keep a schema-valid placeholder when SOUNDLOG_API_ORIGIN is missing.');
+  }
+
+  if (!missingEnvImport.config?.buildCommand?.startsWith('node scripts/require-vercel-api-origin.js && ')) {
+    addError('Vercel build must validate SOUNDLOG_API_ORIGIN before exporting web assets.');
+  }
 
   process.env.SOUNDLOG_API_ORIGIN = 'http://soundlog-api-origin.test:4000';
 
