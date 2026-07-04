@@ -133,17 +133,20 @@ async function verifyServerContract() {
     const payload = await fetchJson(
       '/api/soundlog/v1/tour/nearby-places?lat=35.1595&lng=129.1604&radiusMeters=2000&limit=1',
     );
-    const place = payload?.data?.[0];
 
-    if (!place) {
-      addError('/api/soundlog/v1/tour/nearby-places returned an empty payload.');
+    if (!Array.isArray(payload?.data)) {
+      addError('/api/soundlog/v1/tour/nearby-places returned a non-array data payload.');
     } else {
-      if (typeof place.id === 'string' && place.id.startsWith('mock-')) {
-        addError('/api/soundlog/v1/tour/nearby-places returned a legacy mock-* place id.');
-      }
+      const place = payload.data[0];
 
-      if (place.source === 'mock') {
-        addError('/api/soundlog/v1/tour/nearby-places returned legacy source="mock".');
+      if (place) {
+        if (typeof place.id === 'string' && place.id.startsWith('mock-')) {
+          addError('/api/soundlog/v1/tour/nearby-places returned a legacy mock-* place id.');
+        }
+
+        if (place.source === 'mock') {
+          addError('/api/soundlog/v1/tour/nearby-places returned legacy source="mock".');
+        }
       }
     }
   } catch (error) {
