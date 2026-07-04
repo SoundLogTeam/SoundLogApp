@@ -86,7 +86,7 @@ const baseConfig = {
   extra: {
     legal: {
       privacyPolicyUrl: process.env.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL,
-      supportEmail: process.env.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL ?? 'support@soundlog.app',
+      supportEmail: process.env.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL ?? 'support@soundlog.shop',
       termsUrl: process.env.EXPO_PUBLIC_SOUNDLOG_TERMS_URL,
     },
     eas: {

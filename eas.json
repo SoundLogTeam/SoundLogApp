@@ -8,14 +8,14 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "http://52.79.185.121:4000",
+        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://sound-log-app.vercel.app/api/soundlog",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "http://52.79.185.121:4000",
+        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://sound-log-app.vercel.app/api/soundlog",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server"
       }
     },

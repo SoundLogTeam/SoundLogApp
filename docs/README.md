@@ -21,6 +21,10 @@ Soundlog 문서는 목적별로 관리합니다. 공모전 기획, RN 프론트 
 - [개발용 테스트 매니저](codex/TEST_MANAGER.md): 페이지 이동, 조건/seed 데이터 검수를 위한 개발 도구
 - [PR 전용 개발 흐름](codex/PR_ONLY_WORKFLOW.md): `main` 직접 push를 막고 PR로만 병합하는 방식
 
+## Deployment
+
+- [soundlog.shop 배포 설정](deployment/SOUNDLOG_SHOP_DOMAIN.md): Gabia DNS, Vercel, EC2 API 도메인, EAS env 설정 기준
+
 ## Legacy Mock API
 
 - [Mock Server 안내](../src/mock-server/README.md): 서버가 없던 초기 PoC용 자료입니다. 현재 앱 API facade는 서버 API를 기본으로 사용합니다.
