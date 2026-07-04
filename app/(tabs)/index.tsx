@@ -22,6 +22,7 @@ import {
   HomeTopFilterBar,
   isHomeTopFilter,
 } from '@/components/home/HomeHeader';
+import { LocationContextCard } from '@/components/home/LocationContextCard';
 import {
   MoodRecommendationSection,
   isMoodRecommendationFilter,
@@ -133,6 +134,15 @@ function HomeContent() {
     ...momentLogs.slice(0, 6).map(momentLogToMusicLogItem),
     ...(recentMusicLogsQuery.data ?? []),
   ].slice(0, 10);
+  const placeInfoMessage =
+    profile.locationRecommendationEnabled &&
+    currentLocation &&
+    !nearbyPlacesQuery.isFetching &&
+    (nearbyPlacesQuery.data?.length ?? 0) === 0
+      ? '주변 관광지 결과가 없어도 기본 추천은 계속 사용할 수 있어요.'
+      : nearbyPlacesQuery.isError
+        ? '주변 관광지를 불러오지 못했지만 기본 추천은 계속 사용할 수 있어요.'
+        : undefined;
 
   useEffect(() => {
     if (!isMoodRecommendationFilter(selectedMoodFilter)) {
@@ -382,6 +392,20 @@ function HomeContent() {
         <HomeHeader
           onSelectRecommendationMode={handleSelectRecommendationMode}
           recommendationMode={recommendationMode}
+        />
+
+        <LocationContextCard
+          enabled={profile.locationRecommendationEnabled}
+          isLoading={locationStatus === 'loading'}
+          isPlaceLoading={nearbyPlacesQuery.isFetching}
+          location={currentLocation}
+          onEnable={handleSetCurrentLocation}
+          onRefresh={handleRefreshLocation}
+          place={currentPlace}
+          placeCount={nearbyPlacesQuery.data?.length ?? 0}
+          placeInfoMessage={placeInfoMessage}
+          status={locationStatus}
+          updatedAt={locationUpdatedAt}
         />
 
         {recommendationMode === 'travel' ? (
