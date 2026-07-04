@@ -41,10 +41,10 @@ async function main() {
     `${pathToFileURL(vercelConfigPath).href}?check=missing-${Date.now()}`
   );
   const missingEnvRewrite = missingEnvImport.config?.rewrites?.find(
-    (rewrite) => rewrite.source === '/api/soundlog/:path*',
+    (rewrite) => rewrite.source === '/api/soundlog/(.*)',
   );
 
-  if (missingEnvRewrite?.destination !== 'https://soundlog-api-origin-missing.invalid/:path*') {
+  if (missingEnvRewrite?.destination !== 'https://soundlog-api-origin-missing.invalid/$1') {
     addError('Vercel config must keep a schema-valid placeholder when SOUNDLOG_API_ORIGIN is missing.');
   }
 
@@ -57,7 +57,7 @@ async function main() {
   const imported = await import(`${pathToFileURL(vercelConfigPath).href}?check=${Date.now()}`);
   const config = imported.config;
   const apiRewrite = config?.rewrites?.find(
-    (rewrite) => rewrite.source === '/api/soundlog/:path*',
+    (rewrite) => rewrite.source === '/api/soundlog/(.*)',
   );
 
   if (config?.buildCommand?.includes('EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/soundlog') !== true) {
@@ -68,7 +68,7 @@ async function main() {
     addError('Vercel outputDirectory must be dist.');
   }
 
-  if (apiRewrite?.destination !== 'http://soundlog-api-origin.test:4000/:path*') {
+  if (apiRewrite?.destination !== 'http://soundlog-api-origin.test:4000/$1') {
     addError('Vercel API rewrite must use SOUNDLOG_API_ORIGIN as its destination.');
   }
 

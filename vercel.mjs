@@ -1,3 +1,5 @@
+import { routes } from '@vercel/config/v1';
+
 const missingApiOrigin = 'https://soundlog-api-origin-missing.invalid';
 
 function getApiOriginForConfig() {
@@ -17,13 +19,7 @@ export const config = {
     'node scripts/require-vercel-api-origin.js && EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/soundlog npx expo export --platform web',
   outputDirectory: 'dist',
   rewrites: [
-    {
-      source: '/api/soundlog/:path*',
-      destination: `${apiOrigin}/:path*`,
-    },
-    {
-      source: '/:path*',
-      destination: '/index.html',
-    },
+    routes.rewrite('/api/soundlog/(.*)', `${apiOrigin}/$1`),
+    routes.rewrite('/(.*)', '/index.html'),
   ],
 };
