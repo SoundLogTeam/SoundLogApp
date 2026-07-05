@@ -265,6 +265,12 @@ async function verifyBundle() {
     ['track_skip', 'Deployed bundle must not include fake skip playback events.'],
     ['spotify-auth', 'Deployed bundle must not include the removed Spotify auth route.'],
     ['open.spotify.com', 'Deployed bundle must not include Spotify external search URLs.'],
+    ['music.youtube.com', 'Deployed bundle must not include YouTube Music URLs.'],
+    ['YouTube Music', 'Deployed bundle must not include YouTube Music action copy.'],
+    [
+      'openMusicPlatformUrl',
+      'Deployed bundle must not include external music platform open helpers.',
+    ],
     [
       'playSelectedSpotifyOrFallback',
       'Deployed bundle must not include removed Spotify playback helpers.',

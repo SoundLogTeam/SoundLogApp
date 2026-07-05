@@ -48,7 +48,7 @@ export function TrackRow({ isActive, isLiked, isSaved, onMore, onPress, track }:
 
       <View className="min-h-[72px] flex-row items-center px-3">
         <Pressable
-          accessibilityLabel={`${track.title} 음악 링크 열기`}
+          accessibilityLabel={`${track.title} SoundLog 음악으로 선택`}
           accessibilityRole="button"
           className="min-w-0 flex-1 flex-row items-center"
           onPress={() => onPress(track)}

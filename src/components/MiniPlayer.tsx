@@ -1,8 +1,9 @@
 import { Feather } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { ActivityIndicator, Modal, Platform, Pressable, View } from 'react-native';
+import { Modal, Platform, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { libraryApi } from '@/api/libraryApi';
@@ -13,7 +14,6 @@ import { getMiniPlayerBottom } from '@/constants/layout';
 import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
-import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 import { getTrackKeyColor, hexToRgba } from '@/utils/trackVisuals';
 
@@ -24,6 +24,7 @@ const webGlassPlayerStyle = {
 
 export function MiniPlayer() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const {
     currentTrack,
     playNext,
@@ -34,10 +35,8 @@ export function MiniPlayer() {
   const { isLiked, isSaved, setLikeState, setSaveState } = useLibraryStore();
   const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
   const [actionMessage, setActionMessage] = useState<string>();
-  const [externalMessage, setExternalMessage] = useState<string>();
   const [isActionMenuVisible, setIsActionMenuVisible] = useState(false);
   const [isFullPlayerVisible, setIsFullPlayerVisible] = useState(false);
-  const [isOpeningExternal, setIsOpeningExternal] = useState(false);
 
   if (!currentTrack) {
     return null;
@@ -49,7 +48,6 @@ export function MiniPlayer() {
   const playerGlow = hexToRgba(keyColor, 0.72);
   const playerSoftGlow = hexToRgba(keyColor, 0.24);
   const canSkip = queue.length > 1;
-  const externalLink = getTrackExternalLink(currentTrack);
   const handleToggleLike = () => {
     const context = createRecommendationEventContext();
 
@@ -73,34 +71,6 @@ export function MiniPlayer() {
         type: liked ? 'track_unlike' : 'track_like',
       }),
     );
-  };
-  const handleOpenTrackExternal = async (track = currentTrack) => {
-    const link = getTrackExternalLink(track);
-
-    if (!link.url || isOpeningExternal) {
-      setExternalMessage('이 곡을 열 수 있는 링크를 만들지 못했어요.');
-      return;
-    }
-
-    setIsOpeningExternal(true);
-    setExternalMessage(undefined);
-
-    try {
-      await openMusicPlatformUrl(link);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext(),
-          playlistId,
-          trackId: track.id,
-          type: 'track_external_open',
-          value: link.platformId,
-        }),
-      );
-    } catch {
-      setExternalMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
-    } finally {
-      setIsOpeningExternal(false);
-    }
   };
   const handleToggleSave = () => {
     const context = createRecommendationEventContext();
@@ -131,7 +101,6 @@ export function MiniPlayer() {
       return;
     }
 
-    setExternalMessage(undefined);
     playNext();
   };
   const handleSelectPreviousTrack = () => {
@@ -139,8 +108,11 @@ export function MiniPlayer() {
       return;
     }
 
-    setExternalMessage(undefined);
     playPrevious();
+  };
+  const handleCaptureMoment = () => {
+    setIsFullPlayerVisible(false);
+    router.push('/camera');
   };
   const renderCover = (sizeClassName: string, radiusClassName: string) => (
     <View
@@ -254,7 +226,7 @@ export function MiniPlayer() {
               {currentTrack.artist}
             </AppText>
             <AppText className="mt-2 text-[11px] font-semibold text-white/42" numberOfLines={1}>
-              {externalLink.label}
+              SoundLog 음악으로 선택됨
             </AppText>
           </View>
 
@@ -270,18 +242,13 @@ export function MiniPlayer() {
               <Feather color="#fff" name="chevron-left" size={22} />
             </Pressable>
             <Pressable
-              accessibilityLabel="음악 링크 열기"
+              accessibilityLabel="선택한 음악 상세 보기"
               accessibilityRole="button"
               className="h-12 w-12 items-center justify-center rounded-full border border-white/20"
-              disabled={isOpeningExternal}
-              onPress={() => void handleOpenTrackExternal()}
+              onPress={() => setIsFullPlayerVisible(true)}
               style={{ backgroundColor: playerGlow }}
             >
-              {isOpeningExternal ? (
-                <ActivityIndicator color="#fff" size="small" />
-              ) : (
-                <Feather color="#fff" name="external-link" size={19} />
-              )}
+              <Feather color="#fff" name="music" size={19} />
             </Pressable>
             <Pressable
               accessibilityLabel="다음 추천 곡 선택"
@@ -367,7 +334,7 @@ export function MiniPlayer() {
                 {currentTrack.artist}
               </AppText>
               <AppText className="mt-3 text-center text-xs font-semibold text-white/45">
-                {externalLink.label}
+                SoundLog 안에서 현재 여행 음악으로 선택됐어요
               </AppText>
             </View>
 
@@ -384,18 +351,13 @@ export function MiniPlayer() {
               </Pressable>
 
               <Pressable
-                accessibilityLabel="음악 링크 열기"
+                accessibilityLabel="이 곡으로 순간 기록"
                 accessibilityRole="button"
                 className="h-[86px] w-[86px] items-center justify-center rounded-full border border-white/20"
-                disabled={isOpeningExternal}
-                onPress={() => void handleOpenTrackExternal()}
+                onPress={handleCaptureMoment}
                 style={{ backgroundColor: playerGlow }}
               >
-                {isOpeningExternal ? (
-                  <ActivityIndicator color="#fff" size="large" />
-                ) : (
-                  <Feather color="#fff" name="external-link" size={32} />
-                )}
+                <Feather color="#fff" name="camera" size={32} />
               </Pressable>
 
               <Pressable
@@ -414,26 +376,18 @@ export function MiniPlayer() {
               <Pressable
                 accessibilityRole="button"
                 className="h-12 flex-row items-center justify-center gap-2 rounded-full bg-white"
-                disabled={isOpeningExternal}
-                onPress={() => void handleOpenTrackExternal()}
-                style={{ opacity: isOpeningExternal ? 0.72 : 1 }}
+                onPress={handleCaptureMoment}
               >
-                {isOpeningExternal ? (
-                  <ActivityIndicator color="#050916" size="small" />
-                ) : (
-                  <Feather color="#050916" name="external-link" size={17} />
-                )}
+                <Feather color="#050916" name="camera" size={17} />
                 <AppText className="text-sm font-semibold text-[#050916]">
-                  {externalLink.label}
+                  이 곡으로 순간 기록
                 </AppText>
               </Pressable>
-              {externalMessage ? (
-                <View className="mt-3 rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
-                  <AppText className="text-center text-xs leading-5 text-amber-100">
-                    {externalMessage}
-                  </AppText>
-                </View>
-              ) : null}
+              <View className="mt-3 rounded-[14px] border border-white/10 bg-white/5 px-4 py-3">
+                <AppText className="text-center text-xs leading-5 text-white/55">
+                  음원을 재생하지 않고 곡 정보와 여행 순간을 SoundLog 안에 기록해요.
+                </AppText>
+              </View>
             </View>
 
             <View className="mt-7 flex-row justify-center gap-8">
