@@ -85,17 +85,22 @@ function verifyHonestMusicActionSourceFiles() {
   ].filter((dir) => fs.existsSync(dir));
   const blockedSourceMarkers = [
     ['NOW PLAYING', 'User-facing source must not imply in-app streaming playback.'],
-    ['track_play', 'Frontend source must record track_external_open, not fake play events.'],
+    ['track_play', 'Frontend source must not record fake play events.'],
     ['track_pause', 'Frontend source must not include fake pause events.'],
     ['track_resume', 'Frontend source must not include fake resume events.'],
     ['track_skip', 'Frontend source must not include fake skip playback events.'],
     ['spotify-auth', 'Frontend source must not include the removed Spotify auth route.'],
     ['open.spotify.com', 'Frontend source must not include Spotify external search URLs.'],
     ['playSelectedSpotifyOrFallback', 'Frontend source must not include Spotify playback helpers.'],
+    ['openMusicPlatformUrl', 'Frontend source must not open external music platform URLs.'],
+    ['musicPlatformLinks', 'Frontend source must not import external music platform link helpers.'],
+    ['music.youtube.com', 'Frontend source must not include YouTube Music URLs.'],
+    ['YouTube Music', 'Frontend source must not mention YouTube Music actions.'],
   ];
 
   sourceDirs
     .flatMap((dir) => readTextFiles(dir))
+    .filter(({ filePath }) => !isAllowedMockReferencePath(filePath))
     .forEach(({ filePath, text }) => {
       blockedSourceMarkers.forEach(([marker, message]) => {
         if (text.includes(marker)) {
@@ -241,6 +246,21 @@ function verifyBundle(bundleText) {
     bundleText,
     'open.spotify.com',
     'Server web export must not include Spotify external search URLs.',
+  );
+  assertExcludes(
+    bundleText,
+    'music.youtube.com',
+    'Server web export must not include YouTube Music URLs.',
+  );
+  assertExcludes(
+    bundleText,
+    'YouTube Music',
+    'Server web export must not include YouTube Music action copy.',
+  );
+  assertExcludes(
+    bundleText,
+    'openMusicPlatformUrl',
+    'Server web export must not include external music platform open helpers.',
   );
 }
 

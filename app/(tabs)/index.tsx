@@ -44,7 +44,6 @@ import { useUserProfileStore } from '@/store/userProfileStore';
 import { FeaturedPlaylist, MoodRecommendation, MusicLogItem, TravelMode } from '@/types/domain';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
 import { getMoodTagsFromFilter } from '@/utils/moodTags';
-import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 const moodFilterToMlMood: Record<string, PlaylistMlMood> = {
@@ -184,23 +183,8 @@ function HomeContent() {
       return;
     }
 
-    const externalLink = getTrackExternalLink(item.track);
-
     setTrack(item.track);
-
-    try {
-      await openMusicPlatformUrl(externalLink);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext(),
-          trackId: item.track.id,
-          type: 'track_external_open',
-          value: externalLink.platformId,
-        }),
-      );
-    } catch {
-      setActionMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
-    }
+    setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
   };
   const handleSelectFeaturedPlaylist = useCallback(
     async (playlist: FeaturedPlaylist) => {

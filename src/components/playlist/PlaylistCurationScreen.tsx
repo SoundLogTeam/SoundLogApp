@@ -22,7 +22,6 @@ import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { Track } from '@/types/domain';
-import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type PlaylistCurationScreenProps = {
@@ -83,40 +82,24 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
   const listBottomPadding = getCurationListBottomPadding(insets.bottom, hasMiniPlayer);
   const usesPlainMoodPage = playlistId === 'calm-walk' || Boolean(playlist?.accentColor);
 
-  const openTrackExternal = async (track: Track) => {
+  const selectTrackForSoundlog = (track: Track) => {
     if (!playlist) {
       return;
     }
 
-    const externalLink = getTrackExternalLink(track);
-
     setActionMessage(undefined);
     setTrack(track, playlist.id, playlist.tracks);
-
-    try {
-      await openMusicPlatformUrl(externalLink);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext(),
-          playlistId: playlist.id,
-          trackId: track.id,
-          type: 'track_external_open',
-          value: externalLink.platformId,
-        }),
-      );
-    } catch {
-      setActionMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
-    }
+    setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
   };
 
-  const openFirstTrackExternal = () => {
+  const selectFirstTrack = () => {
     const firstTrack = playlist?.tracks[0];
 
     if (!firstTrack) {
       return;
     }
 
-    openTrackExternal(firstTrack);
+    selectTrackForSoundlog(firstTrack);
   };
 
   const toggleLiked = () => {
@@ -193,7 +176,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       currentTrackId={currentTrack?.id}
       likedTrackIds={likedTrackIds}
       onOpenMenu={(track) => setSelectedTrackId(track.id)}
-      onSelectTrack={openTrackExternal}
+      onSelectTrack={selectTrackForSoundlog}
       savedTrackIds={savedTrackIds}
       tracks={playlist.tracks}
     />
@@ -213,7 +196,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
           {playlist ? (
             <PlaylistHeroInfo
               disabled={playlist.tracks.length === 0}
-              onOpenFirstTrack={openFirstTrackExternal}
+              onOpenFirstTrack={selectFirstTrack}
               playlist={playlist}
             />
           ) : null}
@@ -225,7 +208,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
             playlist ? (
               <PlaylistHeroInfo
                 disabled={playlist.tracks.length === 0}
-                onOpenFirstTrack={openFirstTrackExternal}
+                onOpenFirstTrack={selectFirstTrack}
                 playlist={playlist}
               />
             ) : undefined

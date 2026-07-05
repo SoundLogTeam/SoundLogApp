@@ -21,7 +21,7 @@ export function LibraryTrackRow({
 
   return (
     <Pressable
-      accessibilityLabel={`${track.title} 음악 링크 열기`}
+      accessibilityLabel={`${track.title} SoundLog 음악으로 선택`}
       accessibilityRole="button"
       className="flex-row items-center rounded-[18px] border border-white/10 bg-white/10 p-3"
       onPress={onPress}

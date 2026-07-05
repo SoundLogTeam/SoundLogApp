@@ -1,14 +1,9 @@
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, View } from 'react-native';
+import { Modal, Pressable, View } from 'react-native';
 
-import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
-import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { Track } from '@/types/domain';
-import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
-import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type TrackActionMenuProps = {
   actionMessage?: string;
@@ -25,22 +20,17 @@ type MenuActionProps = {
   disabled?: boolean;
   icon: keyof typeof Feather.glyphMap;
   label: string;
-  isLoading?: boolean;
   onPress: () => void;
 };
 
-function MenuAction({ disabled = false, icon, isLoading = false, label, onPress }: MenuActionProps) {
+function MenuAction({ disabled = false, icon, label, onPress }: MenuActionProps) {
   return (
     <Pressable
       className="h-12 flex-row items-center gap-3"
-      disabled={disabled || isLoading}
+      disabled={disabled}
       onPress={onPress}
     >
-      {isLoading ? (
-        <ActivityIndicator color="#fff" size="small" />
-      ) : (
-        <Feather color={disabled ? 'rgba(255,255,255,0.3)' : '#fff'} name={icon} size={20} />
-      )}
+      <Feather color={disabled ? 'rgba(255,255,255,0.3)' : '#fff'} name={icon} size={20} />
       <AppText className={`text-base font-medium ${disabled ? 'text-white/30' : 'text-white'}`}>
         {label}
       </AppText>
@@ -58,56 +48,8 @@ export function TrackActionMenu({
   track,
   visible,
 }: TrackActionMenuProps) {
-  const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
-  const [externalMessage, setExternalMessage] = useState<string>();
-  const [isOpeningExternal, setIsOpeningExternal] = useState(false);
-  const externalLink = useMemo(
-    () => (track ? getTrackExternalLink(track) : undefined),
-    [track],
-  );
-  const canOpenExternal = Boolean(externalLink?.url);
-
   const handleClose = () => {
-    if (isOpeningExternal) {
-      return;
-    }
-
-    setExternalMessage(undefined);
     onClose();
-  };
-  const openExternalUrl = async () => {
-    if (!track || !externalLink) {
-      return;
-    }
-
-    if (!externalLink.url) {
-      setExternalMessage('이 곡을 열 수 있는 링크를 만들지 못했어요.');
-      return;
-    }
-
-    if (isOpeningExternal) {
-      return;
-    }
-
-    setIsOpeningExternal(true);
-    setExternalMessage(undefined);
-
-    try {
-      await openMusicPlatformUrl(externalLink);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext(),
-          trackId: track.id,
-          type: 'track_external_open',
-          value: externalLink.platformId,
-        }),
-      );
-      onClose();
-    } catch {
-      setExternalMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
-    } finally {
-      setIsOpeningExternal(false);
-    }
   };
 
   return (
@@ -152,18 +94,16 @@ export function TrackActionMenu({
             onPress={onToggleSave}
           />
           {track ? (
-            <MenuAction
-              disabled={!canOpenExternal}
-              icon="external-link"
-              isLoading={isOpeningExternal}
-              label={externalLink?.label ?? '외부 음악 앱에서 열기'}
-              onPress={openExternalUrl}
-            />
+            <View className="mt-2 rounded-[14px] border border-white/10 bg-white/5 px-4 py-3">
+              <AppText className="text-xs leading-5 text-white/55">
+                곡을 누르면 SoundLog 안에서 현재 여행 음악으로 선택돼요.
+              </AppText>
+            </View>
           ) : null}
-          {actionMessage || externalMessage ? (
+          {actionMessage ? (
             <View className="mt-2 rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
               <AppText className="text-xs leading-5 text-amber-100">
-                {actionMessage ?? externalMessage}
+                {actionMessage}
               </AppText>
             </View>
           ) : null}

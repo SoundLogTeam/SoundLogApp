@@ -5,7 +5,6 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { MusicRecommendationMode, TravelMode } from '@/types/domain';
 
 export type RecommendationEventType =
-  | 'track_external_open'
   | 'track_like'
   | 'track_unlike'
   | 'track_save'
