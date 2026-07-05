@@ -1,10 +1,12 @@
 # Soundlog Mock Server
 
-실제 서버가 아직 없는 기능을 PoC로 테스트하기 위한 앱 내부 mock server입니다.
+실제 서버가 없던 초기 PoC 단계에서 사용하던 앱 내부 mock server입니다.
+
+현재 앱 API facade(`src/api`)는 서버 API만 호출합니다. 이 디렉터리는 레거시 PoC/개발 참고용으로 남아 있으며, 프로덕션 웹 export와 앱 API runtime에 포함되면 안 됩니다. `npm run check:server-web-export`는 `src/api`가 이 디렉터리나 `src/mocks`를 import하면 실패합니다.
 
 ## 구조
 
-- `index.ts`: 앱 API 레이어가 가져다 쓰는 `mockServer` 진입점
+- `index.ts`: 레거시 PoC용 `mockServer` 진입점
 - `types.ts`: mock endpoint id, request params, 반환 계약
 - `delay.ts`: 공통 지연/실패 시뮬레이션
 - `homeHandlers.ts`: 홈 추천, 무드 추천, Music Log
@@ -13,7 +15,7 @@
 - `tourHandlers.ts`: TourAPI 실패 또는 미설정 시 주변 관광지 fallback
 - `authHandlers.ts`: 로그인, 토큰 갱신, 로그아웃, 로컬 데이터 이관 mock
 
-## 실패 상태 테스트
+## 레거시 실패 상태 테스트
 
 ```bash
 EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=playlist.detail npm run web
@@ -31,7 +33,7 @@ EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=home.featuredPlaylists,recap.share npm run w
 EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=* npm run web
 ```
 
-## 로딩 상태 테스트
+## 레거시 로딩 상태 테스트
 
 ```bash
 EXPO_PUBLIC_MOCK_API_DELAY_MS=1500 npm run web

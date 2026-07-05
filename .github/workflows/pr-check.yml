@@ -25,3 +25,12 @@ jobs:
 
       - name: Run typecheck
         run: npm run typecheck
+
+      - name: Check server web export
+        run: npm run check:server-web-export
+
+      - name: Check Vercel config
+        run: npm run check:vercel-config
+
+      - name: Check store release config
+        run: npm run check:store-release

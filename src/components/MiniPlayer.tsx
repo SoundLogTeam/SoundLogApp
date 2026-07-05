@@ -11,15 +11,8 @@ import { AppText } from '@/components/AppText';
 import { TrackActionMenu } from '@/components/playlist/TrackActionMenu';
 import { getMiniPlayerBottom } from '@/constants/layout';
 import { useLibraryStore } from '@/store/libraryStore';
-import { useMusicPlatformStore } from '@/store/musicPlatformStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
-import { useSpotifyAuthStore } from '@/store/spotifyAuthStore';
-import {
-  getSpotifyPlaybackFailureMessage,
-  pauseSpotifyPlayback,
-  playSpotifyTrack,
-} from '@/spotify/spotifyPlayback';
 import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 import { getTrackKeyColor, hexToRgba } from '@/utils/trackVisuals';
@@ -33,17 +26,13 @@ export function MiniPlayer() {
   const insets = useSafeAreaInsets();
   const {
     currentTrack,
-    isPlaying,
     playNext,
     playPrevious,
     playlistId,
     queue,
-    toggle,
   } = usePlayerStore();
   const { isLiked, isSaved, setLikeState, setSaveState } = useLibraryStore();
-  const selectedPlatformId = useMusicPlatformStore((state) => state.selectedPlatformId);
   const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
-  const spotifySession = useSpotifyAuthStore((state) => state.session);
   const [actionMessage, setActionMessage] = useState<string>();
   const [externalMessage, setExternalMessage] = useState<string>();
   const [isActionMenuVisible, setIsActionMenuVisible] = useState(false);
@@ -60,32 +49,7 @@ export function MiniPlayer() {
   const playerGlow = hexToRgba(keyColor, 0.72);
   const playerSoftGlow = hexToRgba(keyColor, 0.24);
   const canSkip = queue.length > 1;
-  const externalLink = getTrackExternalLink(currentTrack, selectedPlatformId);
-  const shouldControlSpotify = selectedPlatformId === 'spotify' && Boolean(spotifySession);
-  const openSpotifyFallback = async (track = currentTrack) => {
-    const spotifyLink = getTrackExternalLink(track, 'spotify');
-
-    if (!spotifyLink.url) {
-      return;
-    }
-
-    await openMusicPlatformUrl(spotifyLink);
-  };
-  const getAdjacentTrack = (direction: 'next' | 'previous') => {
-    if (!currentTrack || queue.length < 2) {
-      return undefined;
-    }
-
-    const currentIndex = queue.findIndex((track) => track.id === currentTrack.id);
-
-    if (direction === 'next') {
-      const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % queue.length : 0;
-      return queue[nextIndex];
-    }
-
-    const previousIndex = currentIndex > 0 ? currentIndex - 1 : Math.max(queue.length - 1, 0);
-    return queue[previousIndex];
-  };
+  const externalLink = getTrackExternalLink(currentTrack);
   const handleToggleLike = () => {
     const context = createRecommendationEventContext();
 
@@ -110,34 +74,33 @@ export function MiniPlayer() {
       }),
     );
   };
-  const handleTogglePlayback = async () => {
-    setExternalMessage(undefined);
+  const handleOpenTrackExternal = async (track = currentTrack) => {
+    const link = getTrackExternalLink(track);
 
-    if (shouldControlSpotify) {
-      const spotifyResult = isPlaying
-        ? await pauseSpotifyPlayback()
-        : await playSpotifyTrack(currentTrack);
-
-      if (!spotifyResult.ok) {
-        setExternalMessage(getSpotifyPlaybackFailureMessage(spotifyResult.code));
-
-        if (!isPlaying) {
-          await openSpotifyFallback().catch(() => undefined);
-        }
-
-        return;
-      }
+    if (!link.url || isOpeningExternal) {
+      setExternalMessage('이 곡을 열 수 있는 링크를 만들지 못했어요.');
+      return;
     }
 
-    toggle();
-    syncRecommendationEvent(
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        playlistId,
-        trackId: currentTrack.id,
-        type: isPlaying ? 'track_pause' : 'track_resume',
-      }),
-    );
+    setIsOpeningExternal(true);
+    setExternalMessage(undefined);
+
+    try {
+      await openMusicPlatformUrl(link);
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext(),
+          playlistId,
+          trackId: track.id,
+          type: 'track_external_open',
+          value: link.platformId,
+        }),
+      );
+    } catch {
+      setExternalMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
+    } finally {
+      setIsOpeningExternal(false);
+    }
   };
   const handleToggleSave = () => {
     const context = createRecommendationEventContext();
@@ -163,85 +126,21 @@ export function MiniPlayer() {
       }),
     );
   };
-  const handlePlayNext = async () => {
+  const handleSelectNextTrack = () => {
     if (!canSkip) {
       return;
     }
 
-    const nextTrack = getAdjacentTrack('next');
-
-    if (shouldControlSpotify && nextTrack) {
-      setExternalMessage(undefined);
-      const spotifyResult = await playSpotifyTrack(nextTrack);
-
-      if (!spotifyResult.ok) {
-        setExternalMessage(getSpotifyPlaybackFailureMessage(spotifyResult.code));
-        await openSpotifyFallback(nextTrack).catch(() => undefined);
-      }
-    }
-
-    syncRecommendationEvent(
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        playlistId,
-        trackId: currentTrack.id,
-        type: 'track_skip',
-      }),
-    );
+    setExternalMessage(undefined);
     playNext();
   };
-  const handlePlayPrevious = async () => {
+  const handleSelectPreviousTrack = () => {
     if (!canSkip) {
       return;
     }
 
-    const previousTrack = getAdjacentTrack('previous');
-
-    if (shouldControlSpotify && previousTrack) {
-      setExternalMessage(undefined);
-      const spotifyResult = await playSpotifyTrack(previousTrack);
-
-      if (!spotifyResult.ok) {
-        setExternalMessage(getSpotifyPlaybackFailureMessage(spotifyResult.code));
-        await openSpotifyFallback(previousTrack).catch(() => undefined);
-      }
-    }
-
-    syncRecommendationEvent(
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        playlistId,
-        trackId: currentTrack.id,
-        type: 'track_skip',
-      }),
-    );
-    playPrevious();
-  };
-  const handleOpenExternal = async () => {
-    if (!externalLink.url || isOpeningExternal) {
-      setExternalMessage('이 곡을 열 수 있는 링크를 만들지 못했어요.');
-      return;
-    }
-
-    setIsOpeningExternal(true);
     setExternalMessage(undefined);
-
-    try {
-      await openMusicPlatformUrl(externalLink);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext(),
-          playlistId,
-          trackId: currentTrack.id,
-          type: 'track_external_open',
-          value: externalLink.platformId,
-        }),
-      );
-    } catch {
-      setExternalMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
-    } finally {
-      setIsOpeningExternal(false);
-    }
+    playPrevious();
   };
   const renderCover = (sizeClassName: string, radiusClassName: string) => (
     <View
@@ -354,43 +253,45 @@ export function MiniPlayer() {
             <AppText className="mt-1 text-xs font-medium text-white/60" numberOfLines={1}>
               {currentTrack.artist}
             </AppText>
-            <View className="mt-3 h-[3px] overflow-hidden rounded-full bg-white/10">
-              <View
-                className="h-full rounded-full"
-                style={{ backgroundColor: playerGlow, width: isPlaying ? '46%' : '24%' }}
-              />
-            </View>
+            <AppText className="mt-2 text-[11px] font-semibold text-white/42" numberOfLines={1}>
+              {externalLink.label}
+            </AppText>
           </View>
 
           <View className="ml-3 flex-row items-center gap-1">
             <Pressable
-              accessibilityLabel="이전 곡"
+              accessibilityLabel="이전 추천 곡 선택"
               accessibilityRole="button"
               className="h-10 w-10 items-center justify-center"
               disabled={!canSkip}
-              onPress={handlePlayPrevious}
+              onPress={handleSelectPreviousTrack}
               style={{ opacity: canSkip ? 1 : 0.35 }}
             >
-              <Feather color="#fff" name="skip-back" size={18} />
+              <Feather color="#fff" name="chevron-left" size={22} />
             </Pressable>
             <Pressable
-              accessibilityLabel={isPlaying ? '일시정지' : '재생'}
+              accessibilityLabel="음악 링크 열기"
               accessibilityRole="button"
               className="h-12 w-12 items-center justify-center rounded-full border border-white/20"
-              onPress={handleTogglePlayback}
+              disabled={isOpeningExternal}
+              onPress={() => void handleOpenTrackExternal()}
               style={{ backgroundColor: playerGlow }}
             >
-              <Feather color="#fff" name={isPlaying ? 'pause' : 'play'} size={20} />
+              {isOpeningExternal ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Feather color="#fff" name="external-link" size={19} />
+              )}
             </Pressable>
             <Pressable
-              accessibilityLabel="다음 곡"
+              accessibilityLabel="다음 추천 곡 선택"
               accessibilityRole="button"
               className="h-10 w-10 items-center justify-center"
               disabled={!canSkip}
-              onPress={handlePlayNext}
+              onPress={handleSelectNextTrack}
               style={{ opacity: canSkip ? 1 : 0.35 }}
             >
-              <Feather color="#fff" name="skip-forward" size={18} />
+              <Feather color="#fff" name="chevron-right" size={22} />
             </Pressable>
           </View>
         </View>
@@ -465,56 +366,47 @@ export function MiniPlayer() {
               <AppText className="mt-2 text-center text-base text-white/60" numberOfLines={1}>
                 {currentTrack.artist}
               </AppText>
-            </View>
-
-            <View className="mt-8">
-              <View className="h-[4px] overflow-hidden rounded-full bg-white/12">
-                <View
-                  className="h-full rounded-full"
-                  style={{ backgroundColor: playerGlow, width: isPlaying ? '46%' : '24%' }}
-                />
-              </View>
-              <View className="mt-3 flex-row justify-between">
-                <AppText className="text-xs text-white/45">
-                  {isPlaying ? '컨텍스트 재생 중' : '대기 중'}
-                </AppText>
-                <AppText className="text-xs text-white/45">
-                  {shouldControlSpotify ? 'Spotify 제어 중' : '외부 앱 전체 재생'}
-                </AppText>
-              </View>
+              <AppText className="mt-3 text-center text-xs font-semibold text-white/45">
+                {externalLink.label}
+              </AppText>
             </View>
 
             <View className="mt-auto flex-row items-center justify-center gap-5">
               <Pressable
-                accessibilityLabel="이전 곡"
+                accessibilityLabel="이전 추천 곡 선택"
                 accessibilityRole="button"
                 className="h-14 w-14 items-center justify-center rounded-full bg-white/10"
                 disabled={!canSkip}
-                onPress={handlePlayPrevious}
+                onPress={handleSelectPreviousTrack}
                 style={{ opacity: canSkip ? 1 : 0.35 }}
               >
-                <Feather color="#fff" name="skip-back" size={24} />
+                <Feather color="#fff" name="chevron-left" size={30} />
               </Pressable>
 
               <Pressable
-                accessibilityLabel={isPlaying ? '일시정지' : '재생'}
+                accessibilityLabel="음악 링크 열기"
                 accessibilityRole="button"
                 className="h-[86px] w-[86px] items-center justify-center rounded-full border border-white/20"
-                onPress={handleTogglePlayback}
+                disabled={isOpeningExternal}
+                onPress={() => void handleOpenTrackExternal()}
                 style={{ backgroundColor: playerGlow }}
               >
-                <Feather color="#fff" name={isPlaying ? 'pause' : 'play'} size={34} />
+                {isOpeningExternal ? (
+                  <ActivityIndicator color="#fff" size="large" />
+                ) : (
+                  <Feather color="#fff" name="external-link" size={32} />
+                )}
               </Pressable>
 
               <Pressable
-                accessibilityLabel="다음 곡"
+                accessibilityLabel="다음 추천 곡 선택"
                 accessibilityRole="button"
                 className="h-14 w-14 items-center justify-center rounded-full bg-white/10"
                 disabled={!canSkip}
-                onPress={handlePlayNext}
+                onPress={handleSelectNextTrack}
                 style={{ opacity: canSkip ? 1 : 0.35 }}
               >
-                <Feather color="#fff" name="skip-forward" size={24} />
+                <Feather color="#fff" name="chevron-right" size={30} />
               </Pressable>
             </View>
 
@@ -523,7 +415,7 @@ export function MiniPlayer() {
                 accessibilityRole="button"
                 className="h-12 flex-row items-center justify-center gap-2 rounded-full bg-white"
                 disabled={isOpeningExternal}
-                onPress={() => void handleOpenExternal()}
+                onPress={() => void handleOpenTrackExternal()}
                 style={{ opacity: isOpeningExternal ? 0.72 : 1 }}
               >
                 {isOpeningExternal ? (

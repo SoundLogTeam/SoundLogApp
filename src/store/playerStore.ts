@@ -2,25 +2,18 @@ import { create } from 'zustand';
 
 import { Track } from '@/types/domain';
 
-type PlayerSource = 'none' | 'preview' | 'external';
-
 type PlayerState = {
   currentTrack?: Track;
-  isPlaying: boolean;
   playlistId?: string;
   queue: Track[];
-  source: PlayerSource;
   playNext: () => void;
   playPrevious: () => void;
   clearTrack: () => void;
   setTrack: (track: Track, playlistId?: string, queue?: Track[]) => void;
-  toggle: () => void;
 };
 
 export const usePlayerStore = create<PlayerState>((set) => ({
-  isPlaying: false,
   queue: [],
-  source: 'none',
   playNext: () =>
     set((state) => {
       if (!state.currentTrack || state.queue.length < 2) {
@@ -32,7 +25,6 @@ export const usePlayerStore = create<PlayerState>((set) => ({
 
       return {
         currentTrack: state.queue[nextIndex],
-        isPlaying: true,
       };
     }),
   playPrevious: () =>
@@ -47,24 +39,18 @@ export const usePlayerStore = create<PlayerState>((set) => ({
 
       return {
         currentTrack: state.queue[previousIndex],
-        isPlaying: true,
       };
     }),
   clearTrack: () =>
     set({
       currentTrack: undefined,
-      isPlaying: false,
       playlistId: undefined,
       queue: [],
-      source: 'none',
     }),
   setTrack: (track, playlistId, queue) =>
     set({
       currentTrack: track,
-      isPlaying: true,
       playlistId,
       queue: queue?.length ? queue : [track],
-      source: track.previewUrl ? 'preview' : 'external',
     }),
-  toggle: () => set((state) => ({ isPlaying: !state.isPlaying })),
 }));

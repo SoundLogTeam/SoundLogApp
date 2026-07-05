@@ -84,14 +84,9 @@ function assertProductionEnv(productionEnv) {
   const privacyUrl = productionEnv.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL;
   const termsUrl = productionEnv.EXPO_PUBLIC_SOUNDLOG_TERMS_URL;
   const supportEmail = productionEnv.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL;
-  const spotifyClientId = productionEnv.EXPO_PUBLIC_SPOTIFY_CLIENT_ID;
 
   if (!apiBaseUrl?.startsWith('https://')) {
     addError('EAS production env must set EXPO_PUBLIC_SOUNDLOG_API_BASE_URL to an HTTPS URL.');
-  }
-
-  if (!spotifyClientId) {
-    addError('EAS production env must set EXPO_PUBLIC_SPOTIFY_CLIENT_ID for Spotify playback.');
   }
 
   if (!privacyUrl?.startsWith('https://')) {
@@ -168,18 +163,6 @@ function assertTransportSecurity(config) {
   }
 }
 
-function assertSpotifyConfig(config) {
-  const querySchemes = new Set(config.ios?.infoPlist?.LSApplicationQueriesSchemes ?? []);
-
-  if (!querySchemes.has('spotify')) {
-    addError('iOS config must include spotify in LSApplicationQueriesSchemes.');
-  }
-
-  if (!hasPlugin(config, 'expo-web-browser')) {
-    addError('Expo config must include expo-web-browser plugin for Spotify OAuth.');
-  }
-}
-
 function assertNativeIosPlist() {
   const plistPath = path.join(projectRoot, 'ios/Soundlog/Info.plist');
   const entitlementsPath = path.join(projectRoot, 'ios/Soundlog/Soundlog.entitlements');
@@ -234,7 +217,6 @@ function main() {
     assertAppIcon(config);
     assertAndroidPermissions(config);
     assertTransportSecurity(config);
-    assertSpotifyConfig(config);
   }
 
   assertNativeIosPlist();

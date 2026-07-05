@@ -12,6 +12,7 @@ import { meApi } from '@/api/meApi';
 import { playlistApi, PlaylistMlMood, PlaylistMlState } from '@/api/playlistApi';
 import { playlistQueryKeys } from '@/api/playlistQueries';
 import { syncRecommendationEvent } from '@/api/recommendationEventApi';
+import { AppText } from '@/components/AppText';
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
@@ -21,6 +22,7 @@ import {
   HomeTopFilterBar,
   isHomeTopFilter,
 } from '@/components/home/HomeHeader';
+import { LocationContextCard } from '@/components/home/LocationContextCard';
 import {
   MoodRecommendationSection,
   isMoodRecommendationFilter,
@@ -37,12 +39,12 @@ import {
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { queryClient } from '@/providers/queryClient';
-import { playSelectedSpotifyOrFallback } from '@/spotify/spotifyPlayback';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { FeaturedPlaylist, MoodRecommendation, MusicLogItem, TravelMode } from '@/types/domain';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
 import { getMoodTagsFromFilter } from '@/utils/moodTags';
+import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 const moodFilterToMlMood: Record<string, PlaylistMlMood> = {
@@ -78,6 +80,7 @@ function resolvePlaylistState(mode?: TravelMode): PlaylistMlState {
 
 function HomeContent() {
   const insets = useSafeAreaInsets();
+  const [actionMessage, setActionMessage] = useState<string>();
   const [creatingPlaylistId, setCreatingPlaylistId] = useState<string>();
   const {
     selectedMoodFilter,
@@ -131,6 +134,15 @@ function HomeContent() {
     ...momentLogs.slice(0, 6).map(momentLogToMusicLogItem),
     ...(recentMusicLogsQuery.data ?? []),
   ].slice(0, 10);
+  const placeInfoMessage =
+    profile.locationRecommendationEnabled &&
+    currentLocation &&
+    !nearbyPlacesQuery.isFetching &&
+    (nearbyPlacesQuery.data?.length ?? 0) === 0
+      ? '주변 관광지 결과가 없어도 기본 추천은 계속 사용할 수 있어요.'
+      : nearbyPlacesQuery.isError
+        ? '주변 관광지를 불러오지 못했지만 기본 추천은 계속 사용할 수 있어요.'
+        : undefined;
 
   useEffect(() => {
     if (!isMoodRecommendationFilter(selectedMoodFilter)) {
@@ -156,7 +168,9 @@ function HomeContent() {
     }
   }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
 
-  const handleSelectRecommendation = (item: MoodRecommendation) => {
+  const handleSelectRecommendation = async (item: MoodRecommendation) => {
+    setActionMessage(undefined);
+
     if (item.playlistId) {
       router.push(`/playlist/${item.playlistId}`);
       syncRecommendationEvent(
@@ -170,16 +184,23 @@ function HomeContent() {
       return;
     }
 
+    const externalLink = getTrackExternalLink(item.track);
+
     setTrack(item.track);
-    void playSelectedSpotifyOrFallback(item.track);
-    syncRecommendationEvent(
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        trackId: item.track.id,
-        type: 'track_play',
-        value: item.id,
-      }),
-    );
+
+    try {
+      await openMusicPlatformUrl(externalLink);
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext(),
+          trackId: item.track.id,
+          type: 'track_external_open',
+          value: externalLink.platformId,
+        }),
+      );
+    } catch {
+      setActionMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
+    }
   };
   const handleSelectFeaturedPlaylist = useCallback(
     async (playlist: FeaturedPlaylist) => {
@@ -187,6 +208,7 @@ function HomeContent() {
         return;
       }
 
+      setActionMessage(undefined);
       setCreatingPlaylistId(playlist.id);
 
       try {
@@ -196,6 +218,7 @@ function HomeContent() {
             mood: resolvePlaylistMood(selectedMoodFilter, profile.preferredMoods),
             moodTags: getMoodTagsFromFilter(selectedMoodFilter),
             placeId: currentPlace?.id,
+            preferredGenres: profile.preferredGenres,
             preferredMoods: profile.preferredMoods,
             state: resolvePlaylistState(selectedMode),
             travelMode: selectedMode,
@@ -222,6 +245,8 @@ function HomeContent() {
           }),
         );
         router.push(`/playlist/${nextPlaylistId}`);
+      } catch {
+        setActionMessage('맞춤 플레이리스트를 만들지 못했어요. 잠시 후 다시 시도해주세요.');
       } finally {
         setCreatingPlaylistId(undefined);
       }
@@ -231,6 +256,7 @@ function HomeContent() {
       creatingPlaylistId,
       currentLocation,
       currentPlace,
+      profile.preferredGenres,
       profile.preferredMoods,
       selectedMode,
       selectedMoodFilter,
@@ -290,7 +316,7 @@ function HomeContent() {
     },
     [addRecommendationEvent, recommendationMode, setRecommendationMode],
   );
-  const handleEnableLocationRecommendation = () => {
+  const handleEnableLocationRecommendation = useCallback(async () => {
     const nextProfile = {
       companionType: profile.companionType,
       locationRecommendationEnabled: true,
@@ -299,9 +325,17 @@ function HomeContent() {
       travelStyles: profile.travelStyles,
     };
 
-    updateProfile(nextProfile);
-    void meApi.updateProfile(nextProfile).catch(() => undefined);
-  };
+    setActionMessage(undefined);
+
+    try {
+      await meApi.updateProfile(nextProfile);
+      updateProfile(nextProfile);
+      return true;
+    } catch {
+      setActionMessage('위치 추천 설정을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+      return false;
+    }
+  }, [profile, updateProfile]);
   const handleRefreshLocation = useCallback(async () => {
     if (locationStatus === 'loading') {
       return;
@@ -322,9 +356,13 @@ function HomeContent() {
       setLocationStatus('unavailable');
     }
   }, [locationStatus, setLocation, setLocationStatus]);
-  const handleSetCurrentLocation = useCallback(() => {
+  const handleSetCurrentLocation = useCallback(async () => {
     if (!profile.locationRecommendationEnabled) {
-      handleEnableLocationRecommendation();
+      const didEnable = await handleEnableLocationRecommendation();
+
+      if (!didEnable) {
+        return;
+      }
     }
 
     void handleRefreshLocation();
@@ -354,6 +392,20 @@ function HomeContent() {
         <HomeHeader
           onSelectRecommendationMode={handleSelectRecommendationMode}
           recommendationMode={recommendationMode}
+        />
+
+        <LocationContextCard
+          enabled={profile.locationRecommendationEnabled}
+          isLoading={locationStatus === 'loading'}
+          isPlaceLoading={nearbyPlacesQuery.isFetching}
+          location={currentLocation}
+          onEnable={handleSetCurrentLocation}
+          onRefresh={handleRefreshLocation}
+          place={currentPlace}
+          placeCount={nearbyPlacesQuery.data?.length ?? 0}
+          placeInfoMessage={placeInfoMessage}
+          status={locationStatus}
+          updatedAt={locationUpdatedAt}
         />
 
         {recommendationMode === 'travel' ? (
@@ -396,6 +448,12 @@ function HomeContent() {
             selectedMoodFilter={selectedMoodFilter}
           />
         </View>
+
+        {actionMessage ? (
+          <View className="rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
+            <AppText className="text-xs leading-5 text-amber-100">{actionMessage}</AppText>
+          </View>
+        ) : null}
 
         <View className="mt-2">
           <MusicLogSection

@@ -35,12 +35,6 @@ export type AuthSession = {
 };
 
 export type AuthMe = {
-  musicPlatform?: {
-    connected: boolean;
-    providerUserId?: string;
-    selectedPlatformId: string;
-    updatedAt?: string;
-  };
   profile?: UserProfile;
   user: AuthUser;
 };

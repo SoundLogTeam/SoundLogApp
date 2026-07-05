@@ -12,10 +12,7 @@ import { Screen } from '@/components/Screen';
 import { LibraryTrackRecord, useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
-import {
-  getSpotifyPlaybackFailureMessage,
-  playSelectedSpotifyOrFallback,
-} from '@/spotify/spotifyPlayback';
+import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type LibraryTab = 'liked' | 'playlists' | 'saved';
@@ -106,22 +103,26 @@ export function LibraryScreen() {
     setSelectedTab(tab);
     closeMenu();
   };
-  const playRecord = (record: LibraryTrackRecord) => {
+  const playRecord = async (record: LibraryTrackRecord) => {
+    const externalLink = getTrackExternalLink(record.track);
+
     setActionMessage(undefined);
     setTrack(record.track, record.playlistId);
-    void playSelectedSpotifyOrFallback(record.track).then((spotifyResult) => {
-      if (!spotifyResult.ok) {
-        setActionMessage(getSpotifyPlaybackFailureMessage(spotifyResult.code));
-      }
-    });
-    syncRecommendationEvent(
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        playlistId: record.playlistId,
-        trackId: record.track.id,
-        type: 'track_play',
-      }),
-    );
+
+    try {
+      await openMusicPlatformUrl(externalLink);
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext(),
+          playlistId: record.playlistId,
+          trackId: record.track.id,
+          type: 'track_external_open',
+          value: externalLink.platformId,
+        }),
+      );
+    } catch {
+      setActionMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
+    }
   };
   const toggleSelectedLike = () => {
     if (!selectedRecord) {

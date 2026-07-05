@@ -16,7 +16,6 @@ import { queryClient } from '@/providers/queryClient';
 import { AppText } from '@/components/AppText';
 import { playlistCurationById } from '@/mocks/playlistMocks';
 import { useAuthStore } from '@/store/authStore';
-import { mockEndpointIds, useDevToolsStore } from '@/store/devToolsStore';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
 import { useLibraryStore } from '@/store/libraryStore';
 import { useMomentLogStore } from '@/store/momentLogStore';
@@ -28,8 +27,6 @@ import { AuthProvider, AuthSession } from '@/types/auth';
 import { GeoPoint, MomentLog, PlaceContext, Track, TravelMode } from '@/types/domain';
 
 const BUTTON_SIZE = 58;
-const DEFAULT_DELAY_MS = 300;
-const SLOW_DELAY_MS = 1600;
 const samplePlaylist = playlistCurationById['busan-ocean'];
 const sampleTracks = samplePlaylist.tracks;
 
@@ -48,7 +45,7 @@ const placePresets: Array<{
       imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
       location: { lat: 35.1532, lng: 129.1186 },
       overview: '바다와 야경, 산책 맥락을 테스트하는 개발용 장소입니다.',
-      source: 'mock',
+      source: 'seed',
       title: '광안리 해수욕장',
     },
   },
@@ -62,7 +59,7 @@ const placePresets: Array<{
       imageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
       location: { lat: 37.5512, lng: 126.9882 },
       overview: '도시 야경과 감성 음악 추천을 테스트하는 개발용 장소입니다.',
-      source: 'mock',
+      source: 'seed',
       title: '남산서울타워',
     },
   },
@@ -100,7 +97,7 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
-function invalidateMockQueries() {
+function invalidateRuntimeQueries() {
   void queryClient.invalidateQueries();
 }
 
@@ -222,17 +219,6 @@ function DevTestManagerContent() {
   const setMode = useTravelSessionStore((state) => state.setMode);
   const setPlace = useTravelSessionStore((state) => state.setPlace);
   const startSession = useTravelSessionStore((state) => state.startSession);
-  const {
-    apiSource,
-    failedEndpointIds,
-    failAllEndpoints,
-    mockDelayMs,
-    resetMockRuntime,
-    setApiSource,
-    setFailAllEndpoints,
-    setMockDelayMs,
-    toggleFailedEndpoint,
-  } = useDevToolsStore();
   const { completeOnboarding, resetOnboarding } = useUserProfileStore();
   const { continueAsGuest, finishLogin, logoutLocal, status: authStatus, user: authUser } =
     useAuthStore();
@@ -296,12 +282,12 @@ function DevTestManagerContent() {
   const applyPlacePreset = (preset: (typeof placePresets)[number]) => {
     setLocation(preset.location);
     setPlace(preset.place);
-    invalidateMockQueries();
+    invalidateRuntimeQueries();
   };
   const setLocationState = (status: 'denied' | 'idle' | 'unavailable') => {
     clearLocation();
     setLocationStatus(status);
-    invalidateMockQueries();
+    invalidateRuntimeQueries();
   };
   const addSampleMomentLogs = () => {
     const baseTime = Date.now();
@@ -376,28 +362,6 @@ function DevTestManagerContent() {
     likedTracks.forEach((record) => removeLikedTrack(record.track.id));
     savedTracks.forEach((record) => removeSavedTrack(record.track.id));
   };
-  const resetMockState = () => {
-    resetMockRuntime();
-    invalidateMockQueries();
-  };
-  const setSlowMockState = () => {
-    setMockDelayMs(SLOW_DELAY_MS);
-    setFailAllEndpoints(false);
-    invalidateMockQueries();
-  };
-  const setFailAllMockState = () => {
-    setFailAllEndpoints(true);
-    invalidateMockQueries();
-  };
-  const toggleEndpoint = (endpointId: (typeof mockEndpointIds)[number]) => {
-    toggleFailedEndpoint(endpointId);
-    invalidateMockQueries();
-  };
-  const selectApiSource = (nextApiSource: typeof apiSource) => {
-    setApiSource(nextApiSource);
-    invalidateMockQueries();
-  };
-
   return (
     <>
       <Animated.View
@@ -431,7 +395,7 @@ function DevTestManagerContent() {
                     Test Manager
                   </AppText>
                   <AppText className="mt-2 text-xs leading-5 text-white/50">
-                    페이지 이동, 조건문, mock 실패/지연, 로컬 데이터를 빠르게 검수해요.
+                    페이지 이동, 조건문, 로컬 데이터를 빠르게 검수해요.
                   </AppText>
                 </View>
                 <Pressable
@@ -458,27 +422,7 @@ function DevTestManagerContent() {
                 <StatusPill label={`모드 ${selectedMode ?? '없음'}`} />
                 <StatusPill label={`장소 ${currentPlace?.title ?? '없음'}`} />
                 <StatusPill label={`곡 ${currentTrack?.title ?? '없음'}`} />
-                <StatusPill label={`API ${apiSource === 'server' ? 'Server' : 'Mock'}`} />
                 <StatusPill label={`Auth ${authUser?.displayName ?? authStatus}`} />
-                <StatusPill
-                  label={`Mock ${failAllEndpoints ? '전체 실패' : `${mockDelayMs ?? DEFAULT_DELAY_MS}ms`}`}
-                />
-              </ManagerSection>
-
-              <ManagerSection
-                subtitle="Mock은 앱 내부 데이터를, Server는 로컬 SoundLogServer API를 사용합니다."
-                title="API Source"
-              >
-                <ManagerButton
-                  active={apiSource === 'mock'}
-                  label="Mock"
-                  onPress={() => selectApiSource('mock')}
-                />
-                <ManagerButton
-                  active={apiSource === 'server'}
-                  label="Server"
-                  onPress={() => selectApiSource('server')}
-                />
               </ManagerSection>
 
               <ManagerSection title="페이지 이동">
@@ -591,40 +535,13 @@ function DevTestManagerContent() {
                 <ManagerButton label="보관함 seed" onPress={seedLibrary} />
                 <ManagerButton destructive label="보관함 비우기" onPress={clearLibrary} />
                 <ManagerButton
-                  label="샘플 곡 재생"
+                  label="샘플 곡 선택"
                   onPress={() => setTrack(getSampleTrack(0), samplePlaylist.id)}
                 />
                 <ManagerButton destructive label="플레이어 비우기" onPress={clearTrack} />
                 <ManagerButton destructive label="추천 이벤트 비우기" onPress={clearEvents} />
               </ManagerSection>
 
-              <ManagerSection subtitle="상태 변경 후 현재 화면의 React Query를 다시 불러옵니다." title="Mock API">
-                <ManagerButton
-                  active={!failAllEndpoints && failedEndpointIds.length === 0 && !mockDelayMs}
-                  label="정상"
-                  onPress={resetMockState}
-                />
-                <ManagerButton
-                  active={mockDelayMs === SLOW_DELAY_MS}
-                  label="느림 1.6s"
-                  onPress={setSlowMockState}
-                />
-                <ManagerButton
-                  active={failAllEndpoints}
-                  destructive
-                  label="전체 실패"
-                  onPress={setFailAllMockState}
-                />
-                {mockEndpointIds.map((endpointId) => (
-                  <ManagerButton
-                    key={endpointId}
-                    active={failedEndpointIds.includes(endpointId)}
-                    destructive={failedEndpointIds.includes(endpointId)}
-                    label={endpointId}
-                    onPress={() => toggleEndpoint(endpointId)}
-                  />
-                ))}
-              </ManagerSection>
             </ScrollView>
           </View>
         </View>

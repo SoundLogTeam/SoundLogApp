@@ -39,12 +39,12 @@ Soundlog에서 [기능명]을 구현하고 싶어.
 수정 후 같은 종류의 문제가 다른 파일에도 있는지 확인하고 타입체크까지 해줘.
 ```
 
-## Mock API 추가
+## Legacy Mock API 추가
 
 ```text
-아직 서버가 없는 [기능명]을 테스트할 수 있게 mock-server에 API를 추가해줘.
+명시적으로 로컬 PoC가 필요한 [기능명]만 mock-server에 API를 추가해줘.
 성공/로딩/실패 상태를 모두 테스트할 수 있게 만들고,
-React Query 훅 또는 API facade까지 연결해줘.
+현재 배포 앱 API facade에는 연결하지 말고 별도 검증 방법까지 정리해줘.
 ```
 
 ## 문서 정리

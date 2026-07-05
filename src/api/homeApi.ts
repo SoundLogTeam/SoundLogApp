@@ -1,21 +1,33 @@
-import { canUseAuthenticatedApi, requestApi, shouldUseServerApi } from '@/api/client';
-import { mockServer } from '@/mock-server';
-import type {
-  FeaturedPlaylistMockParams,
-  MoodRecommendationMockParams,
-} from '@/mock-server/types';
+import { requestApi, shouldAttemptAuthenticatedApi } from '@/api/client';
 import type {
   FeaturedPlaylist,
+  GeoPoint,
   MoodRecommendation,
   MusicLogItem,
+  MusicRecommendationMode,
+  PlaceContext,
 } from '@/types/domain';
+import { sanitizeMoodRecommendation } from '@/utils/trackSanitizer';
+
+type FeaturedPlaylistParams = {
+  location?: GeoPoint;
+  locationRecommendationEnabled?: boolean;
+  recommendationMode?: MusicRecommendationMode;
+  place?: PlaceContext;
+};
+
+type MoodRecommendationParams = {
+  currentPlace?: PlaceContext;
+  moodFilter?: string;
+  recommendationMode?: MusicRecommendationMode;
+  preferredGenres?: string[];
+  preferredMoods?: string[];
+  topFilter?: string;
+  travelStyles?: string[];
+};
 
 export const homeApi = {
-  getFeaturedPlaylists: (params?: FeaturedPlaylistMockParams) => {
-    if (!shouldUseServerApi()) {
-      return mockServer.home.getFeaturedPlaylists(params);
-    }
-
+  getFeaturedPlaylists: async (params?: FeaturedPlaylistParams) => {
     return requestApi<FeaturedPlaylist[]>('/v1/home/featured-playlists', {
       query: {
         lat: params?.location?.lat,
@@ -27,12 +39,8 @@ export const homeApi = {
       },
     });
   },
-  getMoodRecommendations: (params?: MoodRecommendationMockParams) => {
-    if (!shouldUseServerApi()) {
-      return mockServer.home.getMoodRecommendations(params);
-    }
-
-    return requestApi<MoodRecommendation[]>('/v1/home/mood-recommendations', {
+  getMoodRecommendations: async (params?: MoodRecommendationParams) => {
+    const recommendations = await requestApi<MoodRecommendation[]>('/v1/home/mood-recommendations', {
       query: {
         limit: 10,
         moodFilter: params?.moodFilter ?? '전체',
@@ -43,13 +51,11 @@ export const homeApi = {
         travelStyles: params?.travelStyles,
       },
     });
-  },
-  getRecentMusicLogs: () => {
-    if (!shouldUseServerApi()) {
-      return mockServer.home.getRecentMusicLogs();
-    }
 
-    if (!canUseAuthenticatedApi()) {
+    return recommendations.map(sanitizeMoodRecommendation);
+  },
+  getRecentMusicLogs: async () => {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<MusicLogItem[]>([]);
     }
 

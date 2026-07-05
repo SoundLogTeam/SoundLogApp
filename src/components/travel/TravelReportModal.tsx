@@ -195,22 +195,6 @@ function SmallCaps({ children }: { children: React.ReactNode }) {
   );
 }
 
-function PlayerBar({ title }: { title: string }) {
-  return (
-    <View className="flex-row items-center gap-3 rounded-[18px] bg-white px-3 py-2.5">
-      <View className="h-9 w-9 rounded-[10px] bg-black" />
-      <View className="min-w-0 flex-1">
-        <AppText className="text-[10px] font-semibold text-black/50">NOW PLAYING</AppText>
-        <AppText className="text-xs font-semibold text-black" numberOfLines={1}>
-          {title}
-        </AppText>
-      </View>
-      <Feather color="#111827" name="pause" size={14} />
-      <Feather color="#111827" name="skip-forward" size={14} />
-    </View>
-  );
-}
-
 export function TravelReportModal({ item, onClose, visible }: TravelReportModalProps) {
   const insets = useSafeAreaInsets();
   const [pageIndex, setPageIndex] = useState(0);
@@ -304,24 +288,24 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
         <View className="flex-1 justify-between">
           <View>
             <AppText className="text-[11px] font-semibold uppercase tracking-[2px] text-white">
-              Your listening time
+              Music records
             </AppText>
             <AppText className="mt-8 text-[64px] font-semibold leading-[68px] text-white">
-              {item.playTimeText.replace('총 음악 재생 ', '')}
+              {item.playTimeText.replace('음악 기록 ', '')}
             </AppText>
             <AppText className="mt-4 text-xl font-semibold leading-7 text-white">
-              음악으로 채워진{'\n'}{item.durationText}
+              음악으로 남긴{'\n'}{item.durationText}
             </AppText>
           </View>
           <View className="gap-7">
             <View>
               <AppText className="text-[11px] font-semibold uppercase tracking-[2px] text-white">
-                Total plays
+                Saved music
               </AppText>
               <AppText className="mt-1 text-[72px] font-semibold leading-[76px] text-white">
                 {item.playCount}
               </AppText>
-              <AppText className="text-xl font-semibold text-white">회 재생</AppText>
+              <AppText className="text-xl font-semibold text-white">회 기록</AppText>
             </View>
             <View className="items-end">
               <AppText className="text-[11px] font-semibold uppercase tracking-[2px] text-white">
@@ -344,9 +328,9 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
       node: (
         <View className="flex-1 justify-between">
           <View>
-            <SmallCaps>Most played</SmallCaps>
+            <SmallCaps>Most recorded</SmallCaps>
             <AppText className="mt-8 text-[38px] font-semibold leading-[44px] text-white">
-              이 여행에서{'\n'}가장 많이 들은 노래
+              이 여행에서{'\n'}가장 많이 기록한 노래
             </AppText>
           </View>
           <View className="items-center">
@@ -365,7 +349,7 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
               {mostPlayed.title}
             </AppText>
             <AppText className="mt-2 text-center text-base font-semibold text-white/72">
-              {mostPlayed.artist} · {mostPlayed.playCount}회
+              {mostPlayed.artist} · {mostPlayed.playCount}회 기록
             </AppText>
           </View>
         </View>
@@ -382,7 +366,7 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
           <View>
             <SmallCaps>Top songs</SmallCaps>
             <AppText className="mt-5 text-[36px] font-semibold leading-10 text-white">
-              많이 들은 순위
+              많이 기록한 순위
             </AppText>
           </View>
           <View className="gap-5">
@@ -472,7 +456,7 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
             <View className="flex-row gap-4">
               <View className="flex-1">
                 <AppText className="text-[11px] font-semibold uppercase tracking-[2px] text-white/70">
-                  Plays
+                  Records
                 </AppText>
                 <AppText className="mt-1 text-[52px] font-semibold leading-[56px] text-white">
                   {item.playCount}

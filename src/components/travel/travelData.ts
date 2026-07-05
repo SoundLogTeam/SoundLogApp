@@ -119,7 +119,7 @@ export const sampleRecaps: TravelRecap[] = [
     momentCount: 12,
     periodText: '2026.06.06 13:02 - 15:16',
     playCount: 48,
-    playTimeText: '총 음악 재생 1시간 52분',
+    playTimeText: '음악 기록 31곡',
     representativeTrack: 'IU - Love wins all',
     topTracks: [
       { artist: 'IU', playCount: 9, title: 'Love wins all' },
@@ -140,7 +140,7 @@ export const sampleRecaps: TravelRecap[] = [
     momentCount: 8,
     periodText: '2026.05.25 16:41 - 18:29',
     playCount: 36,
-    playTimeText: '총 음악 재생 1시간 20분',
+    playTimeText: '음악 기록 24곡',
     representativeTrack: 'NewJeans - Ditto',
     topTracks: [
       { artist: 'NewJeans', playCount: 8, title: 'Ditto' },
@@ -161,7 +161,7 @@ export const sampleRecaps: TravelRecap[] = [
     momentCount: 15,
     periodText: '2026.05.11 19:08 - 22:10',
     playCount: 64,
-    playTimeText: '총 음악 재생 2시간 36분',
+    playTimeText: '음악 기록 42곡',
     representativeTrack: 'JENNIE - Seoul City',
     topTracks: [
       { artist: 'JENNIE', playCount: 11, title: 'Seoul City' },

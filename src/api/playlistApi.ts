@@ -1,11 +1,10 @@
 import {
-  canUseAuthenticatedApi,
   createIdempotencyKey,
   requestApi,
-  shouldUseServerApi,
+  shouldAttemptAuthenticatedApi,
 } from '@/api/client';
-import { mockServer } from '@/mock-server';
 import type { GeoPoint, MoodTag, PlaylistCuration, TravelMode } from '@/types/domain';
+import { sanitizePlaylistCuration } from '@/utils/trackSanitizer';
 
 export type PlaylistMlMood = '감성적인' | '설레는' | '시원한' | '신나는' | '잔잔한';
 export type PlaylistMlState = '바다' | '드라이브' | '산책' | '카페' | '야경';
@@ -15,33 +14,34 @@ export type ContextualPlaylistInput = {
   mood?: PlaylistMlMood;
   moodTags?: MoodTag[];
   placeId?: string;
+  preferredGenres?: string[];
   preferredMoods?: string[];
   state?: PlaylistMlState;
   travelMode?: TravelMode;
 };
 
 export const playlistApi = {
-  getPlaylist: (id?: string) => {
-    if (!shouldUseServerApi()) {
-      return mockServer.playlist.getPlaylist(id);
-    }
-
-    return requestApi<PlaylistCuration>(
+  getPlaylist: async (id?: string) => {
+    const playlist = await requestApi<PlaylistCuration>(
       `/v1/playlists/${encodeURIComponent(id ?? 'fallback')}`,
     );
+
+    return sanitizePlaylistCuration(playlist);
   },
-  createContextualPlaylist: (
+  createContextualPlaylist: async (
     input: ContextualPlaylistInput,
     fallbackPlaylistId?: string,
   ) => {
-    if (!shouldUseServerApi() || !canUseAuthenticatedApi()) {
+    if (!shouldAttemptAuthenticatedApi()) {
       return playlistApi.getPlaylist(fallbackPlaylistId);
     }
 
-    return requestApi<PlaylistCuration>('/v1/playlists/contextual', {
+    const playlist = await requestApi<PlaylistCuration>('/v1/playlists/contextual', {
       body: input,
       idempotencyKey: createIdempotencyKey('playlist-contextual'),
       method: 'POST',
-    }).catch(() => playlistApi.getPlaylist(fallbackPlaylistId));
+    });
+
+    return sanitizePlaylistCuration(playlist);
   },
 };

@@ -1,10 +1,6 @@
 import { create } from 'zustand';
 
-import { MockEndpointId } from '@/mock-server/types';
-
-export type ApiSource = 'mock' | 'server';
-
-export const mockEndpointIds: MockEndpointId[] = [
+export const mockEndpointIds = [
   'auth.login',
   'auth.register',
   'auth.refresh',
@@ -15,40 +11,25 @@ export const mockEndpointIds: MockEndpointId[] = [
   'home.moodRecommendations',
   'home.recentMusicLogs',
   'playlist.detail',
+  'recap.create',
   'recap.list',
   'recap.share',
   'tour.nearbyPlaces',
-];
+] as const;
+
+export type MockEndpointId = (typeof mockEndpointIds)[number];
 
 type DevToolsState = {
-  apiSource: ApiSource;
   failedEndpointIds: MockEndpointId[];
   failAllEndpoints: boolean;
   mockDelayMs?: number;
   resetMockRuntime: () => void;
-  setApiSource: (apiSource: ApiSource) => void;
   setFailAllEndpoints: (failAllEndpoints: boolean) => void;
   setMockDelayMs: (mockDelayMs?: number) => void;
   toggleFailedEndpoint: (endpointId: MockEndpointId) => void;
 };
 
-function getInitialApiSource(): ApiSource {
-  if (process.env.EXPO_PUBLIC_SOUNDLOG_API_SOURCE === 'mock') {
-    return 'mock';
-  }
-
-  if (
-    process.env.EXPO_PUBLIC_SOUNDLOG_API_SOURCE === 'server' ||
-    process.env.EXPO_PUBLIC_SOUNDLOG_API_BASE_URL
-  ) {
-    return 'server';
-  }
-
-  return 'mock';
-}
-
 export const useDevToolsStore = create<DevToolsState>((set) => ({
-  apiSource: getInitialApiSource(),
   failedEndpointIds: [],
   failAllEndpoints: false,
   mockDelayMs: undefined,
@@ -58,7 +39,6 @@ export const useDevToolsStore = create<DevToolsState>((set) => ({
       failAllEndpoints: false,
       mockDelayMs: undefined,
     }),
-  setApiSource: (apiSource) => set({ apiSource }),
   setFailAllEndpoints: (failAllEndpoints) => set({ failAllEndpoints }),
   setMockDelayMs: (mockDelayMs) => set({ mockDelayMs }),
   toggleFailedEndpoint: (endpointId) =>

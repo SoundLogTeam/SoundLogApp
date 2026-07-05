@@ -8,25 +8,25 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://api.soundlog.shop",
+        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://soundlog.shop/api/soundlog",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://api.soundlog.shop",
+        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://soundlog.shop/api/soundlog",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://api.soundlog.shop",
+        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://soundlog.shop/api/soundlog",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server",
-        "EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL": "https://soundlog.shop/privacy",
+        "EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL": "https://soundlog.shop/legal/privacy",
         "EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL": "support@soundlog.shop",
-        "EXPO_PUBLIC_SOUNDLOG_TERMS_URL": "https://soundlog.shop/terms"
+        "EXPO_PUBLIC_SOUNDLOG_TERMS_URL": "https://soundlog.shop/legal/terms"
       }
     }
   },

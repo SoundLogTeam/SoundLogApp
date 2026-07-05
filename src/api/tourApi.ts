@@ -1,5 +1,4 @@
-import { requestApi, shouldUseServerApi } from '@/api/client';
-import { mockServer } from '@/mock-server';
+import { requestApi } from '@/api/client';
 import type { GeoPoint, PlaceContext } from '@/types/domain';
 
 type NearbyPlacesParams = {
@@ -11,10 +10,6 @@ const DEFAULT_RADIUS_METERS = 2000;
 
 export const tourApi = {
   async getNearbyPlaces(params: NearbyPlacesParams): Promise<PlaceContext[]> {
-    if (!shouldUseServerApi()) {
-      return mockServer.tour.getNearbyPlaces(params);
-    }
-
     return requestApi<PlaceContext[]>('/v1/tour/nearby-places', {
       auth: false,
       query: {

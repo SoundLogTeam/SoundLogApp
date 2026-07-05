@@ -21,11 +21,8 @@ import { getCurationListBottomPadding, getMiniPlayerBottom } from '@/constants/l
 import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
-import {
-  getSpotifyPlaybackFailureMessage,
-  playSelectedSpotifyOrFallback,
-} from '@/spotify/spotifyPlayback';
 import { Track } from '@/types/domain';
+import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type PlaylistCurationScreenProps = {
@@ -86,40 +83,40 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
   const listBottomPadding = getCurationListBottomPadding(insets.bottom, hasMiniPlayer);
   const usesPlainMoodPage = playlistId === 'calm-walk' || Boolean(playlist?.accentColor);
 
-  const requestSpotifyPlayback = async (track: Track) => {
-    const spotifyResult = await playSelectedSpotifyOrFallback(track);
-
-    if (!spotifyResult.ok) {
-      setActionMessage(getSpotifyPlaybackFailureMessage(spotifyResult.code));
-    }
-  };
-
-  const playTrack = (track: Track) => {
+  const openTrackExternal = async (track: Track) => {
     if (!playlist) {
       return;
     }
 
+    const externalLink = getTrackExternalLink(track);
+
     setActionMessage(undefined);
     setTrack(track, playlist.id, playlist.tracks);
-    void requestSpotifyPlayback(track);
-    syncRecommendationEvent(
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        playlistId: playlist.id,
-        trackId: track.id,
-        type: 'track_play',
-      }),
-    );
+
+    try {
+      await openMusicPlatformUrl(externalLink);
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext(),
+          playlistId: playlist.id,
+          trackId: track.id,
+          type: 'track_external_open',
+          value: externalLink.platformId,
+        }),
+      );
+    } catch {
+      setActionMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
+    }
   };
 
-  const playFirstTrack = () => {
+  const openFirstTrackExternal = () => {
     const firstTrack = playlist?.tracks[0];
 
     if (!firstTrack) {
       return;
     }
 
-    playTrack(firstTrack);
+    openTrackExternal(firstTrack);
   };
 
   const toggleLiked = () => {
@@ -196,7 +193,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       currentTrackId={currentTrack?.id}
       likedTrackIds={likedTrackIds}
       onOpenMenu={(track) => setSelectedTrackId(track.id)}
-      onSelectTrack={playTrack}
+      onSelectTrack={openTrackExternal}
       savedTrackIds={savedTrackIds}
       tracks={playlist.tracks}
     />
@@ -216,7 +213,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
           {playlist ? (
             <PlaylistHeroInfo
               disabled={playlist.tracks.length === 0}
-              onPlay={playFirstTrack}
+              onOpenFirstTrack={openFirstTrackExternal}
               playlist={playlist}
             />
           ) : null}
@@ -228,7 +225,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
             playlist ? (
               <PlaylistHeroInfo
                 disabled={playlist.tracks.length === 0}
-                onPlay={playFirstTrack}
+                onOpenFirstTrack={openFirstTrackExternal}
                 playlist={playlist}
               />
             ) : undefined

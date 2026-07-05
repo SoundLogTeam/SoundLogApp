@@ -1,11 +1,10 @@
 import {
-  canUseAuthenticatedApi,
   createIdempotencyKey,
   requestApi,
-  shouldUseServerApi,
+  shouldAttemptAuthenticatedApi,
 } from '@/api/client';
-import { mockServer } from '@/mock-server';
 import type { RecapItem, RecapShare, RecapTemplateId } from '@/types/domain';
+import { sanitizeRecapItem } from '@/utils/trackSanitizer';
 
 type CreateRecapInput = {
   momentLogIds?: string[];
@@ -18,12 +17,8 @@ type CreateRecapInput = {
 type RecapShareEventType = 'os_share' | 'save_image';
 
 export const recapApi = {
-  createShareEvent: (recapId: string, type: RecapShareEventType) => {
-    if (!shouldUseServerApi()) {
-      return mockServer.recap.createShareEvent(recapId, type);
-    }
-
-    if (!canUseAuthenticatedApi()) {
+  createShareEvent: async (recapId: string, type: RecapShareEventType) => {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve({ accepted: false });
     }
 
@@ -39,40 +34,32 @@ export const recapApi = {
       },
     );
   },
-  createRecap: (input: CreateRecapInput) => {
-    if (!shouldUseServerApi()) {
-      return mockServer.recap.createRecap(input);
-    }
-
-    if (!canUseAuthenticatedApi()) {
+  createRecap: async (input: CreateRecapInput) => {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapItem | undefined>(undefined);
     }
 
-    return requestApi<RecapItem>('/v1/recaps', {
+    const recap = await requestApi<RecapItem>('/v1/recaps', {
       body: input,
       idempotencyKey: createIdempotencyKey(`recap-${input.sessionId ?? 'session'}`),
       method: 'POST',
     });
-  },
-  getRecapList: () => {
-    if (!shouldUseServerApi()) {
-      return mockServer.recap.getRecapList();
-    }
 
-    if (!canUseAuthenticatedApi()) {
+    return sanitizeRecapItem(recap);
+  },
+  getRecapList: async () => {
+    if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapItem[]>([]);
     }
 
-    return requestApi<RecapItem[]>('/v1/recaps', {
+    const recaps = await requestApi<RecapItem[]>('/v1/recaps', {
       query: { limit: 20 },
     });
-  },
-  getRecapShare: (id?: string) => {
-    if (!shouldUseServerApi()) {
-      return mockServer.recap.getRecapShare(id);
-    }
 
-    if (!id || !canUseAuthenticatedApi()) {
+    return recaps.map(sanitizeRecapItem);
+  },
+  getRecapShare: async (id?: string) => {
+    if (!id || !shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapShare | undefined>(undefined);
     }
 

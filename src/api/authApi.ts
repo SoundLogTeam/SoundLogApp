@@ -1,5 +1,4 @@
-import { createIdempotencyKey, requestApi, shouldUseServerApi } from '@/api/client';
-import { mockServer } from '@/mock-server';
+import { createIdempotencyKey, requestApi } from '@/api/client';
 import {
   AuthMe,
   AuthSession,
@@ -10,51 +9,45 @@ import {
 } from '@/types/auth';
 
 export const authApi = {
-  getMe: () =>
-    shouldUseServerApi()
-      ? requestApi<AuthMe>('/v1/me')
-      : mockServer.auth.getMe(),
-  login: (request: LoginRequest) =>
-    shouldUseServerApi()
-      ? requestApi<AuthSession>('/v1/auth/login', {
-          auth: false,
-          body: request,
-          method: 'POST',
-          retryOnUnauthorized: false,
-        })
-      : mockServer.auth.login(request),
-  logout: (refreshToken?: string) =>
-    shouldUseServerApi()
-      ? requestApi<{ accepted: boolean }>('/v1/auth/logout', {
-          auth: false,
-          body: { refreshToken },
-          method: 'POST',
-        })
-      : mockServer.auth.logout(),
-  migrateLocalData: (payload: LocalDataMigrationPayload) =>
-    shouldUseServerApi()
-      ? requestApi<LocalDataMigrationResult>('/v1/me/migrate-local-data', {
-          body: payload,
-          idempotencyKey: payload.idempotencyKey ?? createIdempotencyKey('migration'),
-          method: 'POST',
-        })
-      : mockServer.auth.migrateLocalData(payload),
-  refresh: (refreshToken?: string) =>
-    shouldUseServerApi()
-      ? requestApi<AuthSession>('/v1/auth/refresh', {
-          auth: false,
-          body: { refreshToken },
-          method: 'POST',
-          retryOnUnauthorized: false,
-        })
-      : mockServer.auth.refresh(refreshToken),
-  register: (request: RegisterRequest) =>
-    shouldUseServerApi()
-      ? requestApi<AuthSession>('/v1/auth/register', {
-          auth: false,
-          body: request,
-          method: 'POST',
-          retryOnUnauthorized: false,
-        })
-      : mockServer.auth.register(request),
+  getMe: async () => {
+    return requestApi<AuthMe>('/v1/me');
+  },
+  login: async (request: LoginRequest) => {
+    return requestApi<AuthSession>('/v1/auth/login', {
+      auth: false,
+      body: request,
+      method: 'POST',
+      retryOnUnauthorized: false,
+    });
+  },
+  logout: async (refreshToken?: string) => {
+    return requestApi<{ accepted: boolean }>('/v1/auth/logout', {
+      auth: false,
+      body: { refreshToken },
+      method: 'POST',
+    });
+  },
+  migrateLocalData: async (payload: LocalDataMigrationPayload) => {
+    return requestApi<LocalDataMigrationResult>('/v1/me/migrate-local-data', {
+      body: payload,
+      idempotencyKey: payload.idempotencyKey ?? createIdempotencyKey('migration'),
+      method: 'POST',
+    });
+  },
+  refresh: async (refreshToken?: string) => {
+    return requestApi<AuthSession>('/v1/auth/refresh', {
+      auth: false,
+      body: { refreshToken },
+      method: 'POST',
+      retryOnUnauthorized: false,
+    });
+  },
+  register: async (request: RegisterRequest) => {
+    return requestApi<AuthSession>('/v1/auth/register', {
+      auth: false,
+      body: request,
+      method: 'POST',
+      retryOnUnauthorized: false,
+    });
+  },
 };

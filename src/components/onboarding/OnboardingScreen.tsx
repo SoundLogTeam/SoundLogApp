@@ -116,6 +116,8 @@ export function OnboardingScreen() {
   const [draft, setDraft] = useState<UserProfileInput>(() =>
     getInitialDraft(profile),
   );
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveErrorMessage, setSaveErrorMessage] = useState<string>();
 
   const currentStep = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
@@ -151,23 +153,42 @@ export function OnboardingScreen() {
     setSelectedMoodFilter(input.preferredMoods[0] ?? '전체');
   };
 
-  const finish = (input: UserProfileInput) => {
+  const saveProfile = async (input: UserProfileInput) => {
+    setIsSaving(true);
+    setSaveErrorMessage(undefined);
+
+    try {
+      await meApi.updateProfile(input);
+      return true;
+    } catch {
+      setSaveErrorMessage('프로필을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+      return false;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const finish = async (input: UserProfileInput) => {
+    const didSave = await saveProfile(input);
+
+    if (!didSave) {
+      return;
+    }
+
     if (isEditMode) {
       updateProfile(input);
       applyHomeFilters(input);
-      void meApi.updateProfile(input).catch(() => undefined);
       router.replace('/my' as never);
       return;
     }
 
     completeOnboarding(input);
     applyHomeFilters(input);
-    void meApi.updateProfile(input).catch(() => undefined);
     router.replace('/');
   };
 
   const handlePrimaryPress = () => {
-    if (!canProceed) {
+    if (!canProceed || isSaving) {
       return;
     }
 
@@ -176,25 +197,33 @@ export function OnboardingScreen() {
       return;
     }
 
-    finish(draft);
+    void finish(draft);
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    if (isSaving) {
+      return;
+    }
+
     if (isEditMode) {
       router.replace('/my' as never);
       return;
     }
 
+    const skippedProfile = {
+      companionType: undefined,
+      locationRecommendationEnabled: true,
+      preferredGenres: [],
+      preferredMoods: [],
+      travelStyles: [],
+    };
+    const didSave = await saveProfile(skippedProfile);
+
+    if (!didSave) {
+      return;
+    }
+
     skipOnboarding();
-    void meApi
-      .updateProfile({
-        companionType: undefined,
-        locationRecommendationEnabled: true,
-        preferredGenres: [],
-        preferredMoods: [],
-        travelStyles: [],
-      })
-      .catch(() => undefined);
     setSelectedTopFilter('전체');
     setSelectedMoodFilter('전체');
     router.replace('/');
@@ -306,7 +335,12 @@ export function OnboardingScreen() {
       >
         <View className="flex-row items-center justify-between">
           <BrandLogo className="border border-white/20" size={54} />
-          <Pressable accessibilityRole="button" onPress={handleSkip}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={isSaving}
+            onPress={() => void handleSkip()}
+            style={{ opacity: isSaving ? 0.5 : 1 }}
+          >
             <AppText className="text-sm font-semibold text-white/55">
               {isEditMode ? '변경 없이 나가기' : '나중에 하기'}
             </AppText>
@@ -407,23 +441,33 @@ export function OnboardingScreen() {
         </LinearGradient>
 
         <View className="mt-auto gap-3">
+          {saveErrorMessage ? (
+            <View className="rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
+              <AppText className="text-xs leading-5 text-amber-100">
+                {saveErrorMessage}
+              </AppText>
+            </View>
+          ) : null}
+
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: !canProceed }}
+            accessibilityState={{ disabled: !canProceed || isSaving }}
             className={`h-14 items-center justify-center rounded-full border ${
-              canProceed
+              canProceed && !isSaving
                 ? 'border-[#9EA8FF]/70 bg-[#243A75]/70'
                 : 'border-white/5 bg-white/10'
             }`}
-            disabled={!canProceed}
+            disabled={!canProceed || isSaving}
             onPress={handlePrimaryPress}
           >
             <AppText
               className={`text-base font-semibold ${
-                canProceed ? 'text-white' : 'text-white/35'
+                canProceed && !isSaving ? 'text-white' : 'text-white/35'
               }`}
             >
-              {isLastStep
+              {isSaving
+                ? '저장 중...'
+                : isLastStep
                 ? isEditMode
                   ? '수정 완료'
                   : '완료하고 시작하기'
@@ -433,13 +477,13 @@ export function OnboardingScreen() {
 
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: currentStepIndex === 0 }}
+            accessibilityState={{ disabled: currentStepIndex === 0 || isSaving }}
             className={`h-12 items-center justify-center rounded-full border ${
-              currentStepIndex === 0
+              currentStepIndex === 0 || isSaving
                 ? 'border-white/5 bg-white/5'
                 : 'border-[#9EA8FF]/45 bg-white/10'
             }`}
-            disabled={currentStepIndex === 0}
+            disabled={currentStepIndex === 0 || isSaving}
             onPress={() => setCurrentStepIndex((prev) => prev - 1)}
           >
             <AppText
