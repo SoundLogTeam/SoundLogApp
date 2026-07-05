@@ -12,7 +12,6 @@ import { Screen } from '@/components/Screen';
 import { LibraryTrackRecord, useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
-import { getTrackExternalLink, openMusicPlatformUrl } from '@/utils/musicPlatformLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type LibraryTab = 'liked' | 'playlists' | 'saved';
@@ -103,26 +102,10 @@ export function LibraryScreen() {
     setSelectedTab(tab);
     closeMenu();
   };
-  const playRecord = async (record: LibraryTrackRecord) => {
-    const externalLink = getTrackExternalLink(record.track);
-
+  const playRecord = (record: LibraryTrackRecord) => {
     setActionMessage(undefined);
     setTrack(record.track, record.playlistId);
-
-    try {
-      await openMusicPlatformUrl(externalLink);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext(),
-          playlistId: record.playlistId,
-          trackId: record.track.id,
-          type: 'track_external_open',
-          value: externalLink.platformId,
-        }),
-      );
-    } catch {
-      setActionMessage('음악 링크를 열지 못했어요. 다시 시도해주세요.');
-    }
+    setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
   };
   const toggleSelectedLike = () => {
     if (!selectedRecord) {
