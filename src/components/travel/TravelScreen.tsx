@@ -17,6 +17,7 @@ import { usePlayerStore } from '@/store/playerStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import type { TravelMode } from '@/types/domain';
 
+import { CommunityRecapCard } from './CommunityRecapCard';
 import { EndTravelConfirmModal } from './EndTravelConfirmModal';
 import { LiveSoundMapSection } from './live-sound-map';
 import { MomentCard } from './MomentCard';
@@ -196,6 +197,11 @@ export function TravelScreen() {
 
     router.push(`/recap-share/${recapId}`);
   };
+  const handleCommunityRecapCreated = async (recap: { id: string }) => {
+    setSessionRecapId(recap.id);
+    await queryClient.invalidateQueries({ queryKey: recapQueryKeys.list });
+    router.push(`/recap-share/${recap.id}`);
+  };
 
   return (
     <Screen>
@@ -243,6 +249,17 @@ export function TravelScreen() {
           currentLocation={currentLocation}
           currentPlace={currentPlace}
           currentTrack={currentTrack}
+          selectedMode={selectedMode}
+          sessionId={session.id}
+          sessionStatus={session.status}
+        />
+
+        <CommunityRecapCard
+          currentPlace={currentPlace}
+          currentTrack={currentTrack}
+          momentCount={momentCount}
+          onRecapCreated={(recap) => void handleCommunityRecapCreated(recap)}
+          sessionId={session.id}
           sessionStatus={session.status}
         />
 

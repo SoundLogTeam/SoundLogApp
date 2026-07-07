@@ -2,6 +2,17 @@ export { soundlogDesignTokens } from './tokens';
 export type { SoundlogDesignTokens } from './tokens';
 export { soundlogRecipes } from './recipes';
 export type { SoundlogRecipes } from './recipes';
+export {
+  SoundlogButton,
+  SoundlogMetric,
+  SoundlogSectionHeader,
+  SoundlogSurface,
+} from './primitives';
+export type {
+  SoundlogButtonSize,
+  SoundlogButtonVariant,
+  SoundlogSurfaceVariant,
+} from './primitives';
 
 export { AppText } from '@/components/AppText';
 export { BrandLogo } from '@/components/BrandLogo';
