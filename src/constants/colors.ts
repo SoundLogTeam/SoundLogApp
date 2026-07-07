@@ -34,6 +34,7 @@ export const colors = {
     purple: '#7A2CFF',
     gold: '#B1913A',
     lime: '#B7E628',
+    warning: '#FF8A3D',
   },
   text: {
     primary: '#FFFFFF',

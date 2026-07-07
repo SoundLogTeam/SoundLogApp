@@ -18,6 +18,7 @@ import { useTravelSessionStore } from '@/store/travelSessionStore';
 import type { TravelMode } from '@/types/domain';
 
 import { EndTravelConfirmModal } from './EndTravelConfirmModal';
+import { LiveSoundMapSection } from './live-sound-map';
 import { MomentCard } from './MomentCard';
 import { TravelModeBottomSheet } from './TravelModeBottomSheet';
 import { TravelStatusCard } from './TravelStatusCard';
@@ -37,6 +38,7 @@ export function TravelScreen() {
   const [recapMessage, setRecapMessage] = useState<string>();
   const [, setClockTick] = useState(0);
   const {
+    currentLocation,
     currentPlace,
     selectedMode,
     session,
@@ -236,6 +238,13 @@ export function TravelScreen() {
             <AppText className="text-sm leading-5 text-white/68">{recapMessage}</AppText>
           </View>
         ) : null}
+
+        <LiveSoundMapSection
+          currentLocation={currentLocation}
+          currentPlace={currentPlace}
+          currentTrack={currentTrack}
+          sessionStatus={session.status}
+        />
 
         <View className="mt-8">
           <View className="flex-row items-center justify-between">

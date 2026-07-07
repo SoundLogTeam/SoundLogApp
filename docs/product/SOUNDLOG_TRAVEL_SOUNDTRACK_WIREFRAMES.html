@@ -1,0 +1,1953 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Soundlog 여행 사운드트랙 로그 와이어프레임</title>
+    <style>
+      :root {
+        --page: #070b1f;
+        --paper: #080d18;
+        --surface: #090e1b;
+        --chip: #171b2a;
+        --ink: #ffffff;
+        --muted: #acacac;
+        --muted-soft: rgba(255, 255, 255, 0.58);
+        --line: rgba(255, 255, 255, 0.1);
+        --line-strong: rgba(255, 255, 255, 0.16);
+        --lime: #b7e628;
+        --lime-soft: rgba(183, 230, 40, 0.12);
+        --blue: #6ea8ff;
+        --blue-soft: rgba(110, 168, 255, 0.14);
+        --purple: #7a2cff;
+        --gold: #b1913a;
+        --warning: #ff8a3d;
+        --warning-soft: rgba(255, 138, 61, 0.14);
+        --inverse: #090515;
+        --shadow: none;
+        --radius: 22px;
+        --radius-panel: 20px;
+        --radius-soft: 16px;
+        --radius-pill: 999px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: var(--page);
+        color: var(--ink);
+        font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+        line-height: 1.55;
+        overflow-wrap: anywhere;
+      }
+
+      a {
+        color: inherit;
+      }
+
+      .hero {
+        border-bottom: 1px solid var(--line);
+        background: var(--page);
+      }
+
+      .hero-inner {
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 42px 0 32px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 14px;
+        color: var(--lime);
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        flex: 0 0 auto;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 50%;
+        object-fit: cover;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 820px;
+        font-size: 48px;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .hero-copy {
+        max-width: 760px;
+        margin: 18px 0 0;
+        color: var(--muted);
+        font-size: 18px;
+      }
+
+      .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 12px;
+        margin-top: 28px;
+      }
+
+      .summary-item {
+        min-height: 118px;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-panel);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .summary-item strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 15px;
+      }
+
+      .summary-item span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 248px minmax(0, 1fr);
+        gap: 24px;
+        width: min(1180px, calc(100% - 40px));
+        margin: 0 auto;
+        padding: 30px 0 64px;
+      }
+
+      .side-nav {
+        position: sticky;
+        top: 18px;
+        align-self: start;
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-panel);
+        background: rgba(9, 14, 27, 0.96);
+        backdrop-filter: blur(12px);
+      }
+
+      .side-nav-title {
+        margin: 0 0 10px;
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--muted);
+      }
+
+      .side-nav a {
+        display: block;
+        padding: 9px 10px;
+        border-radius: var(--radius-pill);
+        color: var(--ink);
+        font-size: 14px;
+        text-decoration: none;
+      }
+
+      .side-nav a:hover {
+        background: var(--lime-soft);
+        color: var(--lime);
+      }
+
+      .content {
+        min-width: 0;
+      }
+
+      .section-title {
+        margin: 0 0 14px;
+        font-size: 24px;
+        letter-spacing: 0;
+      }
+
+      .intro-panel,
+      .flow-panel,
+      .review-panel {
+        margin-bottom: 24px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-panel);
+        background: var(--paper);
+        box-shadow: var(--shadow);
+      }
+
+      .intro-panel p,
+      .review-panel p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .decision-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .decision-card {
+        padding: 16px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-panel);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .decision-card h3 {
+        margin: 0 0 8px;
+        font-size: 15px;
+      }
+
+      .decision-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .flow-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      .flow-step {
+        position: relative;
+        min-height: 112px;
+        padding: 14px 12px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-panel);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .flow-step strong {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--lime);
+        font-size: 13px;
+      }
+
+      .flow-step span {
+        display: block;
+        font-size: 14px;
+      }
+
+      .screen-card {
+        display: grid;
+        grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+        margin-bottom: 26px;
+        padding: 24px;
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        background: var(--paper);
+        box-shadow: var(--shadow);
+        scroll-margin-top: 18px;
+      }
+
+      .screen-head {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .screen-head h2 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: 0;
+      }
+
+      .screen-head p {
+        margin: 6px 0 0;
+        color: var(--muted);
+      }
+
+      .tag {
+        flex: 0 0 auto;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .phone {
+        width: min(100%, 330px);
+        margin: 0 auto;
+        padding: 12px;
+        border: 1px solid var(--line-strong);
+        border-radius: 34px;
+        background: #050916;
+        box-shadow: none;
+      }
+
+      .phone-screen {
+        min-height: 590px;
+        padding: 16px;
+        border: 1px solid var(--line-strong);
+        border-radius: 24px;
+        background: var(--page);
+      }
+
+      .app-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .app-brand strong {
+        font-size: 16px;
+        font-weight: 800;
+      }
+
+      .status-bar {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 18px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      .wire-title {
+        margin: 0 0 10px;
+        font-size: 22px;
+        line-height: 1.16;
+      }
+
+      .wire-subtitle {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .wire-section-label {
+        margin: 16px 0 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .wire-placeholder {
+        display: grid;
+        min-height: 148px;
+        place-items: center;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius-panel);
+        background: #10172a;
+        color: var(--muted);
+        text-align: center;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .wire-card,
+      .wire-row,
+      .wire-button,
+      .wire-chip,
+      .wire-input {
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius-panel);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .wire-card {
+        padding: 14px;
+      }
+
+      .wire-card + .wire-card {
+        margin-top: 10px;
+      }
+
+      .wire-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 46px;
+        padding: 10px 12px;
+        margin-bottom: 8px;
+        border-radius: var(--radius-soft);
+      }
+
+      .wire-row > div {
+        min-width: 0;
+      }
+
+      .wire-row .wire-chip,
+      .wire-row .match-score {
+        flex: 0 0 auto;
+      }
+
+      .wire-row-title {
+        display: block;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .wire-row-caption {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .wire-actions,
+      .wire-chip-group,
+      .wire-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .wire-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 0;
+        min-height: 44px;
+        padding: 9px 14px;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 800;
+        border-radius: var(--radius-pill);
+        text-align: center;
+      }
+
+      .wire-actions .wire-button {
+        flex: 1 1 0;
+      }
+
+      .wire-button.primary {
+        border-color: var(--lime);
+        background: var(--lime);
+        color: var(--inverse);
+      }
+
+      .wire-button.warning {
+        border-color: rgba(255, 138, 61, 0.42);
+        background: var(--warning-soft);
+        color: #ffd0b0;
+      }
+
+      .wire-button.full {
+        flex-basis: 100%;
+        width: 100%;
+      }
+
+      .wire-chip {
+        min-height: 32px;
+        padding: 6px 10px;
+        font-size: 12px;
+        font-weight: 800;
+        border-radius: var(--radius-pill);
+      }
+
+      .wire-chip.active {
+        border-color: var(--lime);
+        background: var(--lime);
+        color: var(--inverse);
+      }
+
+      .wire-input {
+        min-height: 42px;
+        padding: 10px 12px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .mini-metric {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+        margin: 12px 0;
+      }
+
+      .mini-metric div {
+        min-height: 54px;
+        padding: 9px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-soft);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .mini-metric strong {
+        display: block;
+        color: var(--lime);
+        font-size: 15px;
+      }
+
+      .mini-metric span {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .bottom-nav {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        margin-top: 18px;
+        padding: 12px 8px 8px;
+        border: 1px solid var(--line-strong);
+        border-radius: 20px 20px 16px 16px;
+        background: rgba(10, 16, 30, 0.58);
+      }
+
+      .bottom-nav span {
+        display: grid;
+        min-height: 30px;
+        place-items: center;
+        border: 0;
+        border-radius: var(--radius-pill);
+        color: var(--muted);
+        font-size: 10px;
+        text-align: center;
+        line-height: 1.1;
+      }
+
+      .bottom-nav span:first-child {
+        color: var(--lime);
+      }
+
+      .bottom-nav .camera-tab {
+        width: 48px;
+        height: 48px;
+        min-height: 48px;
+        margin: -22px auto 0;
+        border: 3px solid var(--lime);
+        background: var(--lime);
+        color: var(--inverse);
+      }
+
+      .spec {
+        min-width: 0;
+      }
+
+      .spec h3 {
+        margin: 0 0 12px;
+        font-size: 18px;
+      }
+
+      .spec-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .spec-block {
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-panel);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .spec-block strong {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--ink);
+        font-size: 13px;
+      }
+
+      .spec-block p,
+      .spec-block ul {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .spec-block ul {
+        padding-left: 18px;
+      }
+
+      .spec-block li + li {
+        margin-top: 5px;
+      }
+
+      .code-line {
+        margin: 12px 0 0;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-panel);
+        background: rgba(0, 0, 0, 0.2);
+        color: rgba(255, 255, 255, 0.72);
+        font-family: "SFMono-Regular", Consolas, monospace;
+        font-size: 12px;
+        overflow-wrap: anywhere;
+        white-space: normal;
+      }
+
+      .note-strip {
+        margin-top: 14px;
+        padding: 12px 14px;
+        border-left: 4px solid var(--lime);
+        border-radius: var(--radius-panel);
+        background: var(--lime-soft);
+        color: #e5f7a4;
+        font-size: 14px;
+      }
+
+      .visual-system-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 18px;
+      }
+
+      .template-preview {
+        min-height: 210px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-panel);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .template-preview h3 {
+        margin: 12px 0 6px;
+        font-size: 15px;
+      }
+
+      .template-preview p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .album-art,
+      .lp-art,
+      .film-art,
+      .map-art {
+        position: relative;
+        min-height: 116px;
+        overflow: hidden;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius-panel);
+        background: #10172a;
+      }
+
+      .album-art::after {
+        content: "강릉 바다 사운드";
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 10px;
+        color: var(--ink);
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .album-art::before {
+        content: "";
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        top: 12px;
+        height: 42px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .lp-art::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 84px;
+        height: 84px;
+        border: 16px solid #252b38;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--lime);
+      }
+
+      .film-art {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        padding: 10px;
+        background: #10172a;
+      }
+
+      .film-art span {
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.16);
+      }
+
+      .map-art {
+        background: #10172a;
+      }
+
+      .map-art::before,
+      .map-art::after {
+        content: "";
+        position: absolute;
+        width: 18px;
+        height: 18px;
+        border: 3px solid var(--page);
+        border-radius: 50%;
+        background: var(--lime);
+        box-shadow: none;
+      }
+
+      .map-art::before {
+        left: 28%;
+        top: 36%;
+      }
+
+      .map-art::after {
+        right: 26%;
+        bottom: 28%;
+        background: var(--blue);
+      }
+
+      .map-wire {
+        position: relative;
+        min-height: 210px;
+        overflow: hidden;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius-panel);
+        background: #10172a;
+      }
+
+      .sound-pin {
+        position: absolute;
+        min-width: 112px;
+        padding: 8px 10px;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        background: rgba(8, 13, 24, 0.94);
+        box-shadow: none;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .sound-pin.me {
+        left: 24px;
+        top: 48px;
+        border-color: var(--lime);
+        color: var(--lime);
+      }
+
+      .sound-pin.friend {
+        right: 20px;
+        bottom: 48px;
+        border-color: var(--warning);
+        color: #ffd0b0;
+      }
+
+      .sound-pin.nearby {
+        left: 86px;
+        bottom: 82px;
+        border-color: var(--blue);
+        color: #dbe9ff;
+      }
+
+      .match-score {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 58px;
+        min-height: 32px;
+        border-radius: 999px;
+        background: var(--lime);
+        color: var(--inverse);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .profile-card {
+        padding: 14px;
+        border: 1px solid var(--line-strong);
+        border-radius: var(--radius-panel);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .profile-card + .profile-card {
+        margin-top: 10px;
+      }
+
+      .profile-card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .safety-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .safety-list span {
+        display: block;
+        padding: 9px 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-soft);
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .avatar-stack {
+        display: flex;
+        align-items: center;
+        margin: 10px 0 14px;
+      }
+
+      .avatar-stack span {
+        display: inline-grid;
+        width: 32px;
+        height: 32px;
+        margin-right: -8px;
+        place-items: center;
+        border: 2px solid var(--page);
+        border-radius: 50%;
+        background: var(--lime);
+        color: var(--inverse);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .review-table {
+        width: 100%;
+        margin-top: 14px;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      .review-table th,
+      .review-table td {
+        padding: 12px;
+        border: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .review-table th {
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--ink);
+      }
+
+      @media (max-width: 980px) {
+        .summary-grid,
+        .decision-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .side-nav {
+          position: static;
+        }
+
+        .side-nav a {
+          display: inline-block;
+          margin: 0 4px 4px 0;
+        }
+
+        .screen-card {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .hero-inner,
+        .layout {
+          width: min(100% - 24px, 1180px);
+        }
+
+        .summary-grid,
+        .decision-grid,
+        .flow-steps,
+        .spec-grid,
+        .visual-system-grid {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 34px;
+        }
+
+        .hero-copy {
+          font-size: 15px;
+        }
+
+        .screen-head {
+          display: block;
+        }
+
+        .tag {
+          display: inline-flex;
+          margin-top: 10px;
+        }
+
+        .screen-card,
+        .intro-panel,
+        .flow-panel,
+        .review-panel {
+          padding: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <p class="eyebrow">
+          <img class="brand-mark" src="../../assets/soundlog-logo.png" alt="" />
+          Soundlog MVP Wireframes
+        </p>
+        <h1>여행 사운드트랙 로그 화면 명세</h1>
+        <p class="hero-copy">
+          Soundlog는 앱 안에서 음악을 직접 재생하지 않고, 지금 장소의 곡을 추천한 뒤
+          사용자가 선택한 음악을 사진, 장소, 시간, 무드와 함께 기록하고 Recap으로 남깁니다.
+        </p>
+
+        <div class="summary-grid" aria-label="제품 방향 요약">
+          <div class="summary-item">
+            <strong>브랜딩</strong>
+            <span>지금 이 장소의 음악을 찾아주고, 여행이 끝나면 사운드트랙 앨범으로 남깁니다.</span>
+          </div>
+          <div class="summary-item">
+            <strong>재생 방식</strong>
+            <span>Spotify, YouTube Music, YouTube 딥링크와 검색 fallback으로 감상을 외부화합니다.</span>
+          </div>
+          <div class="summary-item">
+            <strong>핵심 기록</strong>
+            <span>MomentLog는 사진, 장소, 시간, 선택 곡, 무드를 하나의 여행 순간으로 저장합니다.</span>
+          </div>
+          <div class="summary-item">
+            <strong>최종 보상</strong>
+            <span>Recap은 조연이 아니라 공유 가능한 사운드트랙 앨범 결과물입니다.</span>
+          </div>
+          <div class="summary-item">
+            <strong>커뮤니티</strong>
+            <span>동행자는 공동 Recap을 만들고, 낯선 여행자와는 익명 음악 취향으로 연결됩니다.</span>
+          </div>
+          <div class="summary-item">
+            <strong>매칭</strong>
+            <span>현재 위치를 정확히 노출하지 않고, 음악 취향이 맞는 사람끼리 여행 동행을 요청합니다.</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav class="side-nav" aria-label="화면 목록">
+        <p class="side-nav-title">화면 바로가기</p>
+        <a href="#overview">제품 방향</a>
+        <a href="#recap-design">Recap 디자인</a>
+        <a href="#community-mode">커뮤니티 모드</a>
+        <a href="#flow">핵심 루프</a>
+        <a href="#p-01">P-01 온보딩</a>
+        <a href="#p-02">P-02 취향/권한</a>
+        <a href="#p-03">P-03 홈</a>
+        <a href="#p-04">P-04 추천 상세</a>
+        <a href="#p-05">P-05 링크 패널</a>
+        <a href="#p-06">P-06 순간 기록</a>
+        <a href="#p-07">P-07 여행 로그</a>
+        <a href="#p-08">P-08 Recap 리스트</a>
+        <a href="#p-09">P-09 Recap 상세</a>
+        <a href="#p-10">P-10 보관함/마이</a>
+        <a href="#p-11">P-11 공동 Recap</a>
+        <a href="#p-12">P-12 Live 지도</a>
+        <a href="#p-13">P-13 주변 취향</a>
+        <a href="#p-14">P-14 동행 매칭</a>
+        <a href="#review">리뷰 체크</a>
+      </nav>
+
+      <main class="content">
+        <section class="intro-panel" id="overview">
+          <h2 class="section-title">제품 방향</h2>
+          <p>
+            MVP는 직접 스트리밍과 외부 플레이어 제어를 제외합니다. 대신 곡 목록, 추천 이유,
+            외부 음악 링크, MomentLog, 이미지형 Recap을 통해 "추천에서 기록, 공유로 이어지는" 흐름을 검증합니다.
+          </p>
+          <div class="decision-grid">
+            <div class="decision-card">
+              <h3>하지 않는 것</h3>
+              <p>음원 스트리밍, 재생/일시정지/스킵 제어, Spotify 로그인 필수화.</p>
+            </div>
+            <div class="decision-card">
+              <h3>반드시 하는 것</h3>
+              <p>곡 단위 추천, 외부 링크, 좋아요/저장, 순간 기록, 예쁜 Recap 생성, 공동 편집, 익명 음악 공유.</p>
+            </div>
+            <div class="decision-card">
+              <h3>리스크 보완</h3>
+              <p>앱 안에서 음악이 안 나오는 심심함은 앨범형 Recap과 지도 위 음악 공유, 취향 매칭으로 보완.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="review-panel" id="recap-design">
+          <h2 class="section-title">Recap을 예쁘게 만드는 방식</h2>
+          <p>
+            Recap은 단순 기록 목록이 아니라 여행이 끝났을 때 받는 보상입니다. 사진, 장소, 대표 곡, 무드,
+            동행자 기여를 조합해 앨범 커버처럼 저장하고 SNS에 공유하고 싶게 만드는 것이 핵심입니다.
+          </p>
+          <div class="visual-system-grid">
+            <div class="template-preview">
+              <div class="album-art"></div>
+              <h3>앨범 커버형</h3>
+              <p>대표 사진 위에 장소명, 여행명, 대표 곡을 앨범 타이포처럼 배치합니다.</p>
+            </div>
+            <div class="template-preview">
+              <div class="lp-art"></div>
+              <h3>LP 슬리브형</h3>
+              <p>대표 곡을 중심으로 여행을 한 장의 레코드처럼 보여줍니다.</p>
+            </div>
+            <div class="template-preview">
+              <div class="film-art"><span></span><span></span><span></span></div>
+              <h3>필름 타임라인형</h3>
+              <p>순간 기록을 시간순 컷으로 이어 여행의 흐름을 보여줍니다.</p>
+            </div>
+            <div class="template-preview">
+              <div class="map-art"></div>
+              <h3>지도 엽서형</h3>
+              <p>이동 경로와 장소별 대표 음악을 지도 위에 엽서처럼 남깁니다.</p>
+            </div>
+          </div>
+          <div class="note-strip">
+            Recap 디자인 원칙: 사진 원본을 크게 쓰고, 장소명과 대표 곡을 제목처럼 세우며, 무드는 색상 팔레트로 표현합니다. 공유 이미지는 1:1 앨범 커버와 9:16 스토리 비율을 우선 제공합니다.
+          </div>
+        </section>
+
+        <section class="review-panel" id="community-mode">
+          <h2 class="section-title">커뮤니티 모드</h2>
+          <p>
+            커뮤니티성은 공개 SNS 피드보다 "같이 여행 간 사람끼리 만드는 기록"에서 시작합니다.
+            같은 여행방에 들어온 동행자는 각자 사진과 곡을 붙이고, 여행 모드를 켠 사용자는 지도 위에서
+            현재 위치와 지금 듣는 음악을 표시할 수 있습니다.
+          </p>
+          <div class="decision-grid">
+            <div class="decision-card">
+              <h3>공동 Recap</h3>
+              <p>초대 코드로 여행방에 들어오고, 동행자가 남긴 순간 기록을 하나의 Recap 후보로 모읍니다.</p>
+            </div>
+            <div class="decision-card">
+              <h3>Live Sound Map</h3>
+              <p>여행 모드를 켠 사람의 현재 위치와 선택/청취 중인 곡을 지도 위 핀으로 보여줍니다.</p>
+            </div>
+            <div class="decision-card">
+              <h3>Nearby Sound Match</h3>
+              <p>주변 익명 여행자의 공개 곡, 무드, 여행 상태를 보고 취향이 맞는 사람을 발견합니다.</p>
+            </div>
+            <div class="decision-card">
+              <h3>Travel Mate Match</h3>
+              <p>서로 수락한 경우에만 대화와 동행 제안을 열고, 정확한 위치는 매칭 후에도 선택 공개합니다.</p>
+            </div>
+            <div class="decision-card">
+              <h3>공개 범위</h3>
+              <p>동행자만 보기, 주변 여행자에게 익명 공개, 비공개 중 선택하며 위치 공유는 여행 모드 중에만 켭니다.</p>
+            </div>
+          </div>
+          <div class="note-strip">
+            "현재 듣는 음악"은 외부 플랫폼 재생 상태를 직접 제어하지 않고, Soundlog에서 선택했거나 외부 링크로 연 곡을 현재 곡 상태로 표시합니다. 낯선 사람에게는 닉네임, 취향 태그, 대략 위치만 공개합니다.
+          </div>
+        </section>
+
+        <section class="flow-panel" id="flow">
+          <h2 class="section-title">핵심 루프</h2>
+          <p class="wire-subtitle">현재 장소 확인에서 공동 Recap, 주변 취향 발견, 동행 매칭까지 한 번의 여행 경험을 11단계로 봅니다.</p>
+          <div class="flow-steps">
+            <div class="flow-step"><strong>01</strong><span>현재 장소 확인</span></div>
+            <div class="flow-step"><strong>02</strong><span>상태와 무드 선택</span></div>
+            <div class="flow-step"><strong>03</strong><span>사운드트랙 추천</span></div>
+            <div class="flow-step"><strong>04</strong><span>외부 음악 링크 열기</span></div>
+            <div class="flow-step"><strong>05</strong><span>곡을 여행 순간에 붙이기</span></div>
+            <div class="flow-step"><strong>06</strong><span>동행자 기록 모으기</span></div>
+            <div class="flow-step"><strong>07</strong><span>지도에 현재 음악 표시</span></div>
+            <div class="flow-step"><strong>08</strong><span>주변 취향 맞는 사람 발견</span></div>
+            <div class="flow-step"><strong>09</strong><span>동행 매칭 요청</span></div>
+            <div class="flow-step"><strong>10</strong><span>공동 Recap 편집</span></div>
+            <div class="flow-step"><strong>11</strong><span>Recap 생성과 공유</span></div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-01">
+          <div class="screen-head">
+            <div>
+              <h2>P-01. 온보딩</h2>
+              <p>Soundlog가 음악 재생 앱이 아니라 여행 사운드트랙 로그 앱임을 첫 화면에서 설명합니다.</p>
+            </div>
+            <span class="tag">Start</span>
+          </div>
+
+          <div class="phone" aria-label="P-01 온보딩 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <div class="app-brand">
+                <img class="brand-mark" src="../../assets/soundlog-logo.png" alt="" />
+                <strong>Soundlog</strong>
+              </div>
+              <h3 class="wire-title">지금 장소의 음악을 여행 앨범으로</h3>
+              <p class="wire-subtitle">음악은 외부 앱에서 듣고, Soundlog에는 여행의 사운드트랙을 남겨요.</p>
+              <div class="wire-placeholder">Recap preview<br />album cover / film / LP</div>
+              <div class="wire-section-label">첫 액션</div>
+              <div class="wire-actions">
+                <div class="wire-button primary full">시작하기</div>
+                <div class="wire-button full">둘러보기</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>사용자 목표</strong>
+                <p>서비스의 핵심 개념과 외부 재생 방식을 빠르게 이해합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>진입/이탈</strong>
+                <p>첫 실행 또는 로그아웃 상태에서 진입하고, 취향 설정 또는 샘플 홈으로 이동합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>상태</strong>
+                <p>첫 실행 여부, 로그인 여부, 온보딩 완료 여부를 확인합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>예외</strong>
+                <p>네트워크가 없어도 샘플 Recap 이미지를 보여주고 둘러보기로 진입할 수 있어야 합니다.</p>
+              </div>
+            </div>
+            <div class="note-strip">핵심 카피: "외부 앱에서 듣고 Soundlog에는 기록한다"를 첫 화면에서 분명히 말합니다.</div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-02">
+          <div class="screen-head">
+            <div>
+              <h2>P-02. 취향/권한 설정</h2>
+              <p>추천에 필요한 최소 입력을 받고, 위치 권한은 맥락이 생긴 뒤 요청합니다.</p>
+            </div>
+            <span class="tag">Setup</span>
+          </div>
+
+          <div class="phone" aria-label="P-02 취향 권한 설정 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <h3 class="wire-title">어떤 여행 중인가요?</h3>
+              <div class="wire-chip-group">
+                <span class="wire-chip">바다</span>
+                <span class="wire-chip">드라이브</span>
+                <span class="wire-chip active">산책</span>
+                <span class="wire-chip">카페</span>
+                <span class="wire-chip">야경</span>
+              </div>
+              <p class="wire-section-label">원하는 분위기</p>
+              <div class="wire-chip-group">
+                <span class="wire-chip active">잔잔한</span>
+                <span class="wire-chip">신나는</span>
+                <span class="wire-chip">시원한</span>
+                <span class="wire-chip">설레는</span>
+                <span class="wire-chip">감성적인</span>
+              </div>
+              <p class="wire-section-label">권한</p>
+              <div class="wire-card">
+                <span class="wire-row-title">현재 위치로 추천받기</span>
+                <span class="wire-row-caption">거부해도 수동 장소 선택 가능</span>
+              </div>
+              <div class="wire-actions" style="margin-top: 14px">
+                <div class="wire-button primary full">위치 추천 켜기</div>
+                <div class="wire-button full">나중에 하기</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>입력값</strong>
+                <p>여행 상태 5개와 무드 5개를 추천 API 파라미터로 사용합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>기본값</strong>
+                <p>스킵 가능하며 기본 상태는 산책, 기본 무드는 잔잔한으로 둘 수 있습니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>권한 정책</strong>
+                <p>초기 강제 요청보다 "현재 위치로 추천받기" 액션 이후 요청합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>이벤트</strong>
+                <p><code>travel_state_selected</code>, <code>mood_selected</code>, <code>location_permission_requested</code></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-03">
+          <div class="screen-head">
+            <div>
+              <h2>P-03. 홈 / 지금 장소</h2>
+              <p>현재 장소, 상태, 무드, 추천 사운드트랙, 기록 CTA가 한 화면에서 이어집니다.</p>
+            </div>
+            <span class="tag">Home</span>
+          </div>
+
+          <div class="phone" aria-label="P-03 홈 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <div class="app-brand">
+                <img class="brand-mark" src="../../assets/soundlog-logo.png" alt="" />
+                <strong>Soundlog</strong>
+              </div>
+              <p class="wire-section-label">현재 위치</p>
+              <div class="wire-row">
+                <div>
+                  <span class="wire-row-title">성수동 카페거리</span>
+                  <span class="wire-row-caption">수동 장소 변경 가능</span>
+                </div>
+                <span class="wire-chip">변경</span>
+              </div>
+              <div class="wire-actions">
+                <span class="wire-chip active">카페</span>
+                <span class="wire-chip active">잔잔한</span>
+              </div>
+              <p class="wire-section-label">오늘의 사운드트랙</p>
+              <div class="wire-card">
+                <div class="wire-placeholder" style="min-height: 118px">cover image / place mood</div>
+                <p class="wire-row-title" style="margin-top: 12px">성수동 카페 사운드</p>
+                <span class="wire-row-caption">12곡 · 조용한 오후에 맞는 인디/재즈</span>
+              </div>
+              <div class="wire-actions" style="margin-top: 12px">
+                <div class="wire-button primary">곡 보기</div>
+                <div class="wire-button">기록</div>
+              </div>
+              <div class="bottom-nav">
+                <span>홈</span><span>Recap</span><span class="camera-tab">기록</span><span>보관함</span><span>마이</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>핵심 CTA</strong>
+                <p>곡 보기로 추천 상세에 들어가고, 기록으로 순간 저장 플로우에 진입합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>상태</strong>
+                <p>위치 조회 중, 권한 거부, 수동 장소, 추천 로딩, 추천 실패, 추천 없음.</p>
+              </div>
+              <div class="spec-block">
+                <strong>오프라인</strong>
+                <p>마지막 추천을 유지하고 "최근 추천" 상태를 표시합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>피드백</strong>
+                <p>상태/무드 변경은 즉시 추천 재요청으로 시작합니다.</p>
+              </div>
+            </div>
+            <div class="code-line">GET /v1/recommendations/playlists?x=&amp;y=&amp;state=&amp;mood=</div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-04">
+          <div class="screen-head">
+            <div>
+              <h2>P-04. 추천 사운드트랙 상세</h2>
+              <p>추천을 신뢰하게 만들고, 곡을 선택/저장/외부 링크로 이어주는 화면입니다.</p>
+            </div>
+            <span class="tag">Recommendation</span>
+          </div>
+
+          <div class="phone" aria-label="P-04 추천 상세 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <h3 class="wire-title">성수동 카페 사운드</h3>
+              <p class="wire-subtitle">조용한 오후, 잔잔한 인디와 재즈가 어울려요.</p>
+              <div class="wire-actions">
+                <span class="wire-chip active">더 잔잔하게</span>
+                <span class="wire-chip">더 신나게</span>
+                <span class="wire-chip">더 감성적으로</span>
+              </div>
+              <p class="wire-section-label">추천 곡</p>
+              <div class="wire-row">
+                <div><span class="wire-row-title">01. 곡명 A</span><span class="wire-row-caption">아티스트 · 카페 · 잔잔함</span></div>
+                <span class="wire-chip">열기</span>
+              </div>
+              <div class="wire-row">
+                <div><span class="wire-row-title">02. 곡명 B</span><span class="wire-row-caption">아티스트 · 인디 · 오후</span></div>
+                <span class="wire-chip">저장</span>
+              </div>
+              <div class="wire-row">
+                <div><span class="wire-row-title">03. 곡명 C</span><span class="wire-row-caption">아티스트 · 재즈 · 산책</span></div>
+                <span class="wire-chip">좋아요</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>사용자 목표</strong>
+                <p>추천 이유를 이해하고 마음에 드는 곡을 고릅니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>앱 내부 역할</strong>
+                <p>곡을 재생하지 않고 현재 여행 맥락에 연결할 곡을 고릅니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>실패 대응</strong>
+                <p>링크가 없으면 곡명/아티스트 기반 검색 URL을 생성합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>이벤트</strong>
+                <p><code>track_selected</code>, <code>track_liked</code>, <code>track_saved</code>, <code>mood_adjusted</code></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-05">
+          <div class="screen-head">
+            <div>
+              <h2>P-05. 외부 음악 링크 패널</h2>
+              <p>선택한 곡을 외부 음악 앱에서 열거나, 이 곡을 여행 기록에 붙입니다.</p>
+            </div>
+            <span class="tag">External Links</span>
+          </div>
+
+          <div class="phone" aria-label="P-05 외부 음악 링크 패널 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <p class="wire-section-label">선택한 곡</p>
+              <div class="wire-card">
+                <div class="wire-placeholder" style="min-height: 96px">album image</div>
+                <p class="wire-row-title" style="margin-top: 12px">곡명 A</p>
+                <span class="wire-row-caption">아티스트 · 성수동 카페거리</span>
+              </div>
+              <p class="wire-section-label">어디에서 들을까요?</p>
+              <div class="wire-actions">
+                <div class="wire-button full">Spotify에서 열기</div>
+                <div class="wire-button full">YouTube Music</div>
+                <div class="wire-button full">YouTube 검색</div>
+              </div>
+              <div class="wire-button primary full" style="margin-top: 16px">이 곡으로 기록</div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>중요 원칙</strong>
+                <p>외부 앱이 없어도 Soundlog 기록은 가능해야 합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>딥링크 우선순위</strong>
+                <p>앱 딥링크를 먼저 시도하고 실패하면 웹 검색으로 fallback합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>API</strong>
+                <p>재생 상태를 추적하지 않고 링크 열기 이벤트만 서버에 보냅니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>이벤트</strong>
+                <p><code>external_music_opened</code>, <code>external_music_open_failed</code>, <code>track_attached_to_moment</code></p>
+              </div>
+            </div>
+            <div class="note-strip">재생 제어가 아니라 "감상 연결 + 기록 연결" 패널입니다.</div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-06">
+          <div class="screen-head">
+            <div>
+              <h2>P-06. 순간 기록</h2>
+              <p>사진, 장소, 곡, 무드를 하나의 MomentLog로 저장합니다.</p>
+            </div>
+            <span class="tag">MomentLog</span>
+          </div>
+
+          <div class="phone" aria-label="P-06 순간 기록 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <div class="wire-placeholder" style="min-height: 210px">camera preview</div>
+              <div class="wire-button full" style="margin-top: 12px">촬영</div>
+              <p class="wire-section-label">저장 확인</p>
+              <div class="wire-card">
+                <span class="wire-row-title">이 순간 저장하기</span>
+                <span class="wire-row-caption">성수동 카페거리 · 곡명 A · 잔잔한</span>
+                <div class="wire-input" style="margin-top: 10px">메모 추가</div>
+              </div>
+              <div class="wire-button primary full" style="margin-top: 12px">저장</div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>권한</strong>
+                <p>카메라 권한은 이 화면 진입 시점에 요청합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>저장 정책</strong>
+                <p>사진, 위치, 곡 중 일부가 없어도 저장 가능해야 합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>로컬</strong>
+                <p>네트워크 실패 시 로컬 큐에 저장하고 재시도합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>이벤트</strong>
+                <p><code>moment_capture_started</code>, <code>moment_log_saved</code>, <code>moment_log_sync_failed</code></p>
+              </div>
+            </div>
+            <div class="code-line">POST /v1/moment-logs</div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-07">
+          <div class="screen-head">
+            <div>
+              <h2>P-07. 여행 사운드트랙 로그</h2>
+              <p>여행 중 저장한 순간과 곡을 시간순으로 확인하고 Recap 생성으로 넘어갑니다.</p>
+            </div>
+            <span class="tag">Travel Log</span>
+          </div>
+
+          <div class="phone" aria-label="P-07 여행 사운드트랙 로그 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <h3 class="wire-title">이번 여행 로그</h3>
+              <div class="mini-metric">
+                <div><strong>7</strong><span>순간</span></div>
+                <div><strong>12</strong><span>곡</span></div>
+                <div><strong>3</strong><span>장소</span></div>
+              </div>
+              <div class="wire-row">
+                <div><span class="wire-row-title">14:20 성수동</span><span class="wire-row-caption">사진 · 곡명 A · 잔잔한</span></div>
+                <span class="wire-chip">수정</span>
+              </div>
+              <div class="wire-row">
+                <div><span class="wire-row-title">16:05 서울숲</span><span class="wire-row-caption">사진 없음 · 곡명 B · 산책</span></div>
+                <span class="wire-chip">동기화</span>
+              </div>
+              <div class="wire-button primary full" style="margin-top: 12px">Recap 만들기</div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>핵심 CTA</strong>
+                <p>Recap 만들기, 로그 수정, 로그 삭제를 제공합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>데이터</strong>
+                <p>MomentLog 목록, 여행 세션 상태, 동기화 상태를 보여줍니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>빈 상태</strong>
+                <p>저장한 순간이 없으면 홈으로 돌아가 곡을 고르게 연결합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>오프라인</strong>
+                <p>로컬 로그를 우선 표시하고 동기화 대기 배지를 보여줍니다.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-08">
+          <div class="screen-head">
+            <div>
+              <h2>P-08. Recap 생성 / 리스트</h2>
+              <p>여행별 사운드트랙 앨범 생성 상태를 확인합니다.</p>
+            </div>
+            <span class="tag">Recap List</span>
+          </div>
+
+          <div class="phone" aria-label="P-08 Recap 리스트 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <h3 class="wire-title">Recap</h3>
+              <div class="wire-card">
+                <span class="wire-row-title">이번 여행</span>
+                <span class="wire-row-caption">생성 중... 사진 7장 · 곡 12개</span>
+              </div>
+              <div class="wire-card">
+                <span class="wire-row-title">6월 강릉 여행</span>
+                <span class="wire-row-caption">대표 사진 · 대표 곡 준비 완료</span>
+              </div>
+              <div class="wire-card">
+                <span class="wire-row-title">5월 서울 산책</span>
+                <span class="wire-row-caption">생성 실패 · 다시 시도 가능</span>
+              </div>
+              <div class="wire-button primary full" style="margin-top: 12px">새 Recap 생성</div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>상태</strong>
+                <p>생성 전, 생성 중, 완료, 실패, 재시도 가능 상태를 분리합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>최소 조건</strong>
+                <p>로그 1개 이상이면 이미지형 Recap을 생성할 수 있습니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>실패</strong>
+                <p>실패한 Recap을 숨기지 않고 재시도 버튼을 제공합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>이벤트</strong>
+                <p><code>recap_requested</code>, <code>recap_generation_failed</code>, <code>recap_opened</code></p>
+              </div>
+            </div>
+            <div class="code-line">POST /v1/recaps · GET /v1/recaps</div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-09">
+          <div class="screen-head">
+            <div>
+              <h2>P-09. Recap 상세 / 공유</h2>
+              <p>사운드트랙 앨범 결과물을 감상하고 저장 또는 공유합니다.</p>
+            </div>
+            <span class="tag">Share</span>
+          </div>
+
+          <div class="phone" aria-label="P-09 Recap 상세 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <h3 class="wire-title">강릉 바다 사운드</h3>
+              <div class="album-art" style="min-height: 210px"></div>
+              <div class="wire-tabs" style="margin-top: 12px">
+                <span class="wire-chip active">앨범</span>
+                <span class="wire-chip">LP</span>
+                <span class="wire-chip">필름</span>
+                <span class="wire-chip">지도</span>
+              </div>
+              <p class="wire-section-label">대표 정보</p>
+              <div class="wire-row">
+                <div><span class="wire-row-title">주문진 · 곡명 A</span><span class="wire-row-caption">사진 7장 · 곡 12개 · 잔잔한</span></div>
+              </div>
+              <div class="wire-actions">
+                <div class="wire-button primary">이미지 저장</div>
+                <div class="wire-button">공유하기</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>MVP 우선순위</strong>
+                <p>앨범 커버형, LP 슬리브형, 필름형, 지도 엽서형 이미지 Recap을 우선합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>비율</strong>
+                <p>앨범 커버 1:1, 스토리 공유 9:16, 필름형 세로 스크롤.</p>
+              </div>
+              <div class="spec-block">
+                <strong>권한</strong>
+                <p>사진 저장 권한은 저장 시점에 요청하고 공유는 OS share sheet를 우선합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>실패</strong>
+                <p>캡처 실패, 저장 실패, 공유 실패를 각각 분리해 안내합니다.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-10">
+          <div class="screen-head">
+            <div>
+              <h2>P-10. 보관함 / 마이</h2>
+              <p>좋아요/저장한 곡과 권한, 취향, 데이터 설정을 관리합니다.</p>
+            </div>
+            <span class="tag">Library</span>
+          </div>
+
+          <div class="phone" aria-label="P-10 보관함 마이 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <h3 class="wire-title">보관함</h3>
+              <div class="wire-tabs">
+                <span class="wire-chip active">좋아요</span>
+                <span class="wire-chip">저장곡</span>
+                <span class="wire-chip">플레이리스트</span>
+              </div>
+              <div class="wire-row" style="margin-top: 12px">
+                <div><span class="wire-row-title">곡명 A</span><span class="wire-row-caption">성수동 카페거리에서 저장</span></div>
+                <span class="wire-chip">열기</span>
+              </div>
+              <div class="wire-row">
+                <div><span class="wire-row-title">곡명 B</span><span class="wire-row-caption">서울숲 산책에서 저장</span></div>
+                <span class="wire-chip">삭제</span>
+              </div>
+              <p class="wire-section-label">마이</p>
+              <div class="wire-row"><span class="wire-row-title">취향 수정</span><span class="wire-row-caption">장르 · 무드 · 여행 스타일</span></div>
+              <div class="wire-row"><span class="wire-row-title">권한 설정</span><span class="wire-row-caption">위치 · 카메라 · 사진</span></div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>보관함</strong>
+                <p>좋아요한 곡, 저장한 곡, 저장한 추천 목록을 분리합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>마이</strong>
+                <p>계정, 권한, 취향, 데이터 삭제, 로그아웃을 제공합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>오프라인</strong>
+                <p>최근 저장 목록은 로컬 캐시로 표시합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>이벤트</strong>
+                <p><code>library_viewed</code>, <code>preference_updated</code>, <code>permission_settings_opened</code></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-11">
+          <div class="screen-head">
+            <div>
+              <h2>P-11. 공동 Recap 만들기</h2>
+              <p>같이 여행 간 사람끼리 각자의 사진과 곡을 모아 하나의 Recap을 함께 만듭니다.</p>
+            </div>
+            <span class="tag">Community</span>
+          </div>
+
+          <div class="phone" aria-label="P-11 공동 Recap 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <h3 class="wire-title">강릉 여행방</h3>
+              <p class="wire-subtitle">4명이 함께 만드는 사운드트랙 앨범</p>
+              <div class="avatar-stack"><span>나</span><span>수</span><span>재</span><span>채</span></div>
+              <div class="mini-metric">
+                <div><strong>18</strong><span>순간</span></div>
+                <div><strong>24</strong><span>곡</span></div>
+                <div><strong>4</strong><span>참여자</span></div>
+              </div>
+              <p class="wire-section-label">Recap 후보</p>
+              <div class="wire-row">
+                <div><span class="wire-row-title">주문진 바다 컷</span><span class="wire-row-caption">수경 추가 · 곡명 A</span></div>
+                <span class="wire-chip">채택</span>
+              </div>
+              <div class="wire-row">
+                <div><span class="wire-row-title">카페 거리 컷</span><span class="wire-row-caption">재걸 추가 · 곡명 B</span></div>
+                <span class="wire-chip">댓글</span>
+              </div>
+              <div class="wire-button primary full" style="margin-top: 12px">공동 Recap 생성</div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>사용자 목표</strong>
+                <p>동행자들이 각자 남긴 순간을 모아 하나의 여행 앨범으로 완성합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>초대/권한</strong>
+                <p>초대 코드 또는 링크로 참여하고, 방장만 최종 Recap 생성/공개 범위를 확정합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>기여 방식</strong>
+                <p>사진, 장소, 곡, 메모를 후보로 올리고 채택/댓글로 최종 구성에 반영합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>이벤트</strong>
+                <p><code>trip_room_joined</code>, <code>shared_moment_added</code>, <code>collab_recap_created</code></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-12">
+          <div class="screen-head">
+            <div>
+              <h2>P-12. Live Sound Map</h2>
+              <p>여행 모드를 켠 사람의 현재 위치와 지금 선택한 음악을 지도 위에 표시하고, 주변 익명 공개로 확장합니다.</p>
+            </div>
+            <span class="tag">Map</span>
+          </div>
+
+          <div class="phone" aria-label="P-12 Live Sound Map 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <h3 class="wire-title">Live Sound Map</h3>
+              <p class="wire-subtitle">여행 모드 ON · 주변 익명 공개</p>
+              <div class="map-wire">
+                <div class="sound-pin me">나 · 곡명 A<br />성수동</div>
+                <div class="sound-pin friend">수경 · 곡명 B<br />서울숲</div>
+                <div class="sound-pin nearby">82% · 곡명 C<br />근처 여행자</div>
+              </div>
+              <p class="wire-section-label">내 현재 음악</p>
+              <div class="wire-row">
+                <div><span class="wire-row-title">곡명 A - 아티스트</span><span class="wire-row-caption">Spotify 링크로 열었던 곡</span></div>
+                <span class="wire-chip active">표시중</span>
+              </div>
+              <div class="wire-row">
+                <div><span class="wire-row-title">주변 취향 매칭</span><span class="wire-row-caption">반경 1km · 익명 6명</span></div>
+                <span class="wire-chip">보기</span>
+              </div>
+              <div class="wire-actions">
+                <div class="wire-button">동행자만</div>
+                <div class="wire-button primary">주변 익명</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>사용자 목표</strong>
+                <p>여행 중 내가 어디서 어떤 음악을 듣고 있는지 동행자와 느슨하게 공유합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>현재 음악 기준</strong>
+                <p>외부 앱 재생 상태가 아니라 Soundlog에서 선택했거나 외부 링크로 연 곡을 현재 음악으로 표시합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>개인정보</strong>
+                <p>여행 모드 ON일 때만 표시하며, 낯선 사람에게는 대략 위치, 닉네임, 취향 태그만 공개합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>이벤트</strong>
+                <p><code>travel_mode_enabled</code>, <code>live_track_shared</code>, <code>sound_map_viewed</code>, <code>nearby_sound_opened</code></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-13">
+          <div class="screen-head">
+            <div>
+              <h2>P-13. Nearby Sound Match</h2>
+              <p>잘 모르는 주변 여행자와 음악 취향을 먼저 공유하고, 취향이 맞는 사람을 발견합니다.</p>
+            </div>
+            <span class="tag">Discover</span>
+          </div>
+
+          <div class="phone" aria-label="P-13 주변 취향 매칭 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <h3 class="wire-title">주변 사운드 취향</h3>
+              <p class="wire-subtitle">대략 위치만 공개 · 2시간 후 자동 숨김</p>
+              <div class="wire-tabs">
+                <span class="wire-chip active">산책</span>
+                <span class="wire-chip">카페</span>
+                <span class="wire-chip">야경</span>
+              </div>
+              <p class="wire-section-label">취향이 맞는 여행자</p>
+              <div class="profile-card">
+                <div class="profile-card-head">
+                  <div>
+                    <span class="wire-row-title">비 오는 골목 닉네임</span>
+                    <span class="wire-row-caption">잔잔한 · 인디 · 혼자 여행</span>
+                  </div>
+                  <span class="match-score">82%</span>
+                </div>
+                <div class="wire-row" style="margin-top: 12px">
+                  <div><span class="wire-row-title">지금 공개한 곡</span><span class="wire-row-caption">곡명 C - 아티스트 · 성수 근처</span></div>
+                </div>
+              </div>
+              <div class="profile-card">
+                <div class="profile-card-head">
+                  <div>
+                    <span class="wire-row-title">야경 수집가</span>
+                    <span class="wire-row-caption">설레는 · 시티팝 · 사진 산책</span>
+                  </div>
+                  <span class="match-score">76%</span>
+                </div>
+              </div>
+              <div class="wire-button primary full" style="margin-top: 12px">동행 매칭 후보 보기</div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>사용자 목표</strong>
+                <p>낯선 사람의 프로필보다 음악 취향과 여행 맥락을 먼저 보고 연결 가능성을 판단합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>매칭 기준</strong>
+                <p>공개 곡, 좋아요/저장 태그, 현재 무드, 여행 상태, 대략 거리로 취향 일치율을 계산합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>개인정보</strong>
+                <p>실명, 정확한 좌표, 연락처는 노출하지 않고 공개 핀은 짧은 TTL 후 자동 숨김 처리합니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>이벤트</strong>
+                <p><code>nearby_sound_opened</code>, <code>music_match_viewed</code>, <code>music_match_profile_opened</code></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="screen-card" id="p-14">
+          <div class="screen-head">
+            <div>
+              <h2>P-14. Travel Mate Match</h2>
+              <p>음악 취향이 맞는 사람에게 여행 동행을 제안하되, 서로 수락한 뒤에만 대화를 엽니다.</p>
+            </div>
+            <span class="tag">Match</span>
+          </div>
+
+          <div class="phone" aria-label="P-14 여행 동행 매칭 와이어프레임">
+            <div class="phone-screen">
+              <div class="status-bar"><span>9:41</span><span>LTE 100%</span></div>
+              <h3 class="wire-title">동행 매칭 요청</h3>
+              <p class="wire-subtitle">취향 82% 일치 · 성수 근처 · 정확한 위치 비공개</p>
+              <div class="profile-card">
+                <div class="profile-card-head">
+                  <div>
+                    <span class="wire-row-title">비 오는 골목 닉네임</span>
+                    <span class="wire-row-caption">잔잔한 인디, 카페 산책, 사진 기록 선호</span>
+                  </div>
+                  <span class="match-score">82%</span>
+                </div>
+                <p class="wire-section-label">공개 사운드</p>
+                <div class="wire-row">
+                  <div><span class="wire-row-title">곡명 C - 아티스트</span><span class="wire-row-caption">"조용한 골목 걸을 때 좋아요"</span></div>
+                </div>
+              </div>
+              <div class="safety-list">
+                <span>정확한 위치는 서로 수락 후에도 선택 공개</span>
+                <span>매칭 전 자유 채팅 없음, 첫 메시지는 템플릿 사용</span>
+                <span>언제든 차단/신고 가능</span>
+              </div>
+              <div class="wire-actions" style="margin-top: 12px">
+                <div class="wire-button primary">취향으로 인사</div>
+                <div class="wire-button warning">차단/신고</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3>기능 설명</h3>
+            <div class="spec-grid">
+              <div class="spec-block">
+                <strong>사용자 목표</strong>
+                <p>음악 취향과 여행 목적이 맞는 사람에게 부담 낮은 동행 요청을 보냅니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>상호 동의</strong>
+                <p>요청 발송과 수락이 모두 있어야 대화가 열리고, 만남 제안은 앱 내 안전 안내를 거칩니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>안전장치</strong>
+                <p>정확 위치 숨김, 템플릿 첫 메시지, 신고/차단, 반복 요청 제한, 만남 전 주의 안내를 둡니다.</p>
+              </div>
+              <div class="spec-block">
+                <strong>이벤트</strong>
+                <p><code>travel_mate_requested</code>, <code>travel_mate_accepted</code>, <code>community_user_blocked</code></p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="review-panel" id="review">
+          <h2 class="section-title">검수 체크</h2>
+          <p>HTML 와이어프레임이 원 기획 목표를 화면 기준으로 충족하는지 확인하는 표입니다.</p>
+          <table class="review-table">
+            <thead>
+              <tr>
+                <th>기준</th>
+                <th>화면 반영</th>
+                <th>확인 포인트</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>재생 외부화</td>
+                <td>P-04, P-05</td>
+                <td>앱 내부 재생 버튼이 아니라 외부 링크와 기록 CTA가 중심입니다.</td>
+              </tr>
+              <tr>
+                <td>기록 중심</td>
+                <td>P-06, P-07</td>
+                <td>곡 선택이 MomentLog 저장으로 이어집니다.</td>
+              </tr>
+              <tr>
+                <td>Recap 주연화</td>
+                <td>P-08, P-09</td>
+                <td>Recap은 앨범 커버, LP, 필름, 지도 엽서형 결과물로 공유 욕구를 만듭니다.</td>
+              </tr>
+              <tr>
+                <td>공동 제작</td>
+                <td>P-11</td>
+                <td>같이 여행 간 사람끼리 사진과 곡을 모아 하나의 Recap을 함께 만듭니다.</td>
+              </tr>
+              <tr>
+                <td>지도 커뮤니티</td>
+                <td>P-12</td>
+                <td>여행 모드 사용자는 현재 위치와 Soundlog에서 선택한 음악을 지도 위에 표시합니다.</td>
+              </tr>
+              <tr>
+                <td>낯선 사람 음악 공유</td>
+                <td>P-12, P-13</td>
+                <td>주변 여행자는 실명보다 공개 곡, 무드, 여행 상태를 먼저 보고 취향 연결을 시작합니다.</td>
+              </tr>
+              <tr>
+                <td>여행 동행 매칭</td>
+                <td>P-14</td>
+                <td>취향 일치율이 높은 사람에게만 상호 동의 기반의 동행 요청을 보낼 수 있습니다.</td>
+              </tr>
+              <tr>
+                <td>안전장치</td>
+                <td>P-13, P-14</td>
+                <td>정확 위치/연락처는 숨기고, TTL, 첫 메시지 제한, 차단/신고를 기본 플로우에 포함합니다.</td>
+              </tr>
+              <tr>
+                <td>약점 보완</td>
+                <td>P-01, P-05, P-09, P-12, P-13</td>
+                <td>앱 안에서 음악이 나오지 않는 점은 명확한 카피, 예쁜 Recap, 지도 위 음악 공유와 취향 매칭으로 보완합니다.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

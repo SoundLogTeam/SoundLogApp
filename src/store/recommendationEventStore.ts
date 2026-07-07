@@ -5,14 +5,18 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { MusicRecommendationMode, TravelMode } from '@/types/domain';
 
 export type RecommendationEventType =
+  | 'track_external_open'
   | 'track_like'
   | 'track_unlike'
   | 'track_save'
   | 'track_unsave'
   | 'playlist_open'
   | 'mood_filter_change'
+  | 'live_track_shared'
+  | 'nearby_sound_opened'
   | 'recommendation_mode_change'
-  | 'top_filter_change';
+  | 'top_filter_change'
+  | 'recap_representative_track_select';
 
 export type RecommendationEventContext = {
   moodFilter?: string;

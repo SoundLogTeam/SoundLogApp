@@ -5,6 +5,12 @@ Soundlog 문서는 목적별로 관리합니다. 공모전 기획, RN 프론트 
 ## Product
 
 - [서비스 기획서](product/SOUNDLOG_APP_PLANNING.md): 서비스 배경, 핵심 가치, 주요 기능, 데이터 활용 방향
+- [여행 사운드트랙 로그 기획 명세](product/SOUNDLOG_TRAVEL_SOUNDTRACK_LOG_SPEC.md): 외부 음악 링크, MomentLog, Recap 중심 MVP 피벗과 화면별 와이어프레임/명세
+- [여행 사운드트랙 HTML 와이어프레임](product/SOUNDLOG_TRAVEL_SOUNDTRACK_WIREFRAMES.html): 브라우저에서 보는 화면 와이어프레임과 기능 설명
+
+## Design System
+
+- [Soundlog RN 디자인 시스템](design-system/SOUNDLOG_RN_DESIGN_SYSTEM.md): 현재 구현된 React Native 앱 스타일의 색상, 타이포, radius, 공통 컴포넌트, 화면 조립 레시피
 
 ## Frontend
 
