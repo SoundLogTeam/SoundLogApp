@@ -20,6 +20,7 @@ module.exports = {
           gold: '#B1913A',
           lime: '#B7E628',
           player: '#45343D',
+          warning: '#FF8A3D',
           inverse: '#090515',
         },
       },

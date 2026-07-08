@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { momentLogApi } from '@/api/momentLogApi';
 import { recapApi } from '@/api/recapApi';
 import { recapQueryKeys } from '@/api/recapQueries';
+import { travelSessionApi } from '@/api/travelSessionApi';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { RecapListCard } from '@/components/recap/RecapListCard';
 import { Screen } from '@/components/Screen';
@@ -17,7 +18,9 @@ import { usePlayerStore } from '@/store/playerStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import type { TravelMode } from '@/types/domain';
 
+import { CommunityRecapCard } from './CommunityRecapCard';
 import { EndTravelConfirmModal } from './EndTravelConfirmModal';
+import { LiveSoundMapSection } from './live-sound-map';
 import { MomentCard } from './MomentCard';
 import { TravelModeBottomSheet } from './TravelModeBottomSheet';
 import { TravelStatusCard } from './TravelStatusCard';
@@ -33,10 +36,12 @@ export function TravelScreen() {
   const queryClient = useQueryClient();
   const [isModeSheetVisible, setIsModeSheetVisible] = useState(false);
   const [isEndConfirmVisible, setIsEndConfirmVisible] = useState(false);
+  const [isStartingTravel, setIsStartingTravel] = useState(false);
   const [isCreatingRecap, setIsCreatingRecap] = useState(false);
   const [recapMessage, setRecapMessage] = useState<string>();
   const [, setClockTick] = useState(0);
   const {
+    currentLocation,
     currentPlace,
     selectedMode,
     session,
@@ -95,13 +100,36 @@ export function TravelScreen() {
   const handleSelectMode = (mode: TravelMode) => {
     setMode(mode);
   };
-  const handleStartTravel = () => {
-    if (!selectedMode) {
-      setMode('cafe');
+  const handleStartTravel = async () => {
+    if (isStartingTravel) {
+      return;
     }
 
-    startSession();
-    setIsModeSheetVisible(false);
+    const nextMode = selectedMode ?? 'cafe';
+
+    if (!selectedMode) {
+      setMode(nextMode);
+    }
+
+    setIsStartingTravel(true);
+
+    try {
+      const serverSession = await travelSessionApi.createTravelSession({
+        location: currentLocation ?? currentPlace?.location,
+        travelMode: nextMode,
+      });
+
+      startSession({
+        id: serverSession?.id,
+        startedAt: serverSession?.startedAt,
+      });
+    } catch {
+      startSession();
+      setRecapMessage('서버 여행 세션 연결에 실패해서 로컬 세션으로 먼저 시작했어요.');
+    } finally {
+      setIsStartingTravel(false);
+      setIsModeSheetVisible(false);
+    }
   };
   const retryMomentLog = async (log: MomentLog) => {
     if (log.syncStatus === 'pending') {
@@ -144,10 +172,20 @@ export function TravelScreen() {
     const endedSessionId = session.id;
     const logsForSession = sessionLogs;
     const localRecapId = createSessionRecapId(endedSessionId);
+    const endedAt = new Date().toISOString();
 
     setRecapMessage(undefined);
     endSession();
     setIsEndConfirmVisible(false);
+
+    try {
+      await travelSessionApi.endTravelSession(endedSessionId, {
+        endedAt,
+        location: currentLocation ?? currentPlace?.location,
+      });
+    } catch {
+      setRecapMessage('서버 여행 세션 종료 동기화에 실패했지만 로컬 Recap은 계속 만들 수 있어요.');
+    }
 
     if (logsForSession.length === 0) {
       setSessionRecapId(undefined);
@@ -194,6 +232,11 @@ export function TravelScreen() {
 
     router.push(`/recap-share/${recapId}`);
   };
+  const handleCommunityRecapCreated = async (recap: { id: string }) => {
+    setSessionRecapId(recap.id);
+    await queryClient.invalidateQueries({ queryKey: recapQueryKeys.list });
+    router.push(`/recap-share/${recap.id}`);
+  };
 
   return (
     <Screen>
@@ -236,6 +279,24 @@ export function TravelScreen() {
             <AppText className="text-sm leading-5 text-white/68">{recapMessage}</AppText>
           </View>
         ) : null}
+
+        <LiveSoundMapSection
+          currentLocation={currentLocation}
+          currentPlace={currentPlace}
+          currentTrack={currentTrack}
+          selectedMode={selectedMode}
+          sessionId={session.id}
+          sessionStatus={session.status}
+        />
+
+        <CommunityRecapCard
+          currentPlace={currentPlace}
+          currentTrack={currentTrack}
+          momentCount={momentCount}
+          onRecapCreated={(recap) => void handleCommunityRecapCreated(recap)}
+          sessionId={session.id}
+          sessionStatus={session.status}
+        />
 
         <View className="mt-8">
           <View className="flex-row items-center justify-between">
@@ -304,7 +365,7 @@ export function TravelScreen() {
       <TravelModeBottomSheet
         onClose={() => setIsModeSheetVisible(false)}
         onSelectMode={handleSelectMode}
-        onStart={handleStartTravel}
+        onStart={() => void handleStartTravel()}
         selectedMode={selectedMode}
         visible={isModeSheetVisible}
       />

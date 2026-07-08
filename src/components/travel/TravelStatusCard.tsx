@@ -109,7 +109,7 @@ export function TravelStatusCard({
         <View className="mt-3 flex-row gap-2">
           <Pressable
             accessibilityRole="button"
-            className="h-11 flex-1 items-center justify-center rounded-full bg-[#FF8A3D]"
+            className="h-11 flex-1 items-center justify-center rounded-full bg-soundlog-warning"
             onPress={onEndTravel}
           >
             <AppText className="text-sm font-semibold text-black">여행 종료</AppText>
