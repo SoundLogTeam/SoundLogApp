@@ -229,7 +229,7 @@ Recap은 Soundlog의 최종 보상이므로 기능적으로만 맞는 화면이 
 
 | 와이어프레임 | 기능 및 화면 명세 |
 | --- | --- |
-| <pre>┌────────────────────┐<br>│ 현재 위치          │<br>│ 성수동 카페거리    │<br>│ [장소 바꾸기]      │<br>│                    │<br>│ 상태  [카페 v]     │<br>│ 무드  [잔잔한 v]   │<br>│                    │<br>│ 오늘의 사운드트랙  │<br>│ ┌────────────────┐ │<br>│ │ 커버 / 추천 이유│ │<br>│ │ 12곡 · 카페 무드│ │<br>│ └────────────────┘ │<br>│                    │<br>│ [곡 보기] [기록]   │<br>└────────────────────┘</pre> | **사용자 목표:** 지금 장소에 어울리는 사운드트랙을 바로 확인한다.<br><br>**핵심 CTA:** 곡 보기, 순간 기록.<br><br>**API:** `GET /v1/recommendations/playlists?x=&y=&state=&mood=` 또는 수동 장소 기반 요청.<br><br>**상태:** 위치 조회 중, 권한 거부, 수동 장소, 추천 로딩, 추천 실패, 추천 없음.<br><br>**오프라인:** 마지막 추천을 표시하고 "최근 추천" 배지를 붙인다.<br><br>**피드백:** 상태/무드 변경은 즉시 추천 재요청 또는 적용 버튼 방식 중 하나로 통일한다. MVP는 적용 버튼보다 즉시 재요청이 더 간단하다. |
+| <pre>┌────────────────────┐<br>│ 현재 위치          │<br>│ 성수동 카페거리    │<br>│ [장소 바꾸기]      │<br>│                    │<br>│ 상태  [카페 v]     │<br>│ 무드  [잔잔한 v]   │<br>│                    │<br>│ 오늘의 사운드트랙  │<br>│ ┌────────────────┐ │<br>│ │ 커버 / 추천 이유│ │<br>│ │ 12곡 · 카페 무드│ │<br>│ └────────────────┘ │<br>│                    │<br>│ [곡 보기] [기록]   │<br>└────────────────────┘</pre> | **사용자 목표:** 지금 장소에 어울리는 사운드트랙을 바로 확인한다.<br><br>**핵심 CTA:** 곡 보기, 순간 기록.<br><br>**API:** `POST /v1/playlists/contextual`에 `location`, `travelMode`, `moodTags` 또는 수동 장소 정보를 보낸다.<br><br>**상태:** 위치 조회 중, 권한 거부, 수동 장소, 추천 로딩, 추천 실패, 추천 없음.<br><br>**오프라인:** 마지막 추천을 표시하고 "최근 추천" 배지를 붙인다.<br><br>**피드백:** 상태/무드 변경은 즉시 추천 재요청 또는 적용 버튼 방식 중 하나로 통일한다. MVP는 적용 버튼보다 즉시 재요청이 더 간단하다. |
 
 ### P-04. 추천 사운드트랙 상세
 
@@ -303,16 +303,45 @@ Recap은 Soundlog의 최종 보상이므로 기능적으로만 맞는 화면이 
 
 ### 9.1 추천 요청
 
-```txt
-GET /v1/recommendations/playlists?x=126.9963&y=37.5104&state=산책&mood=잔잔한
+```http
+POST /v1/playlists/contextual
+Content-Type: application/json
+
+{
+  "location": {
+    "lat": 37.5104,
+    "lng": 126.9963
+  },
+  "travelMode": "walk",
+  "moodTags": ["calm"],
+  "preferredGenres": ["indie", "jazz"],
+  "excludeTrackIds": []
+}
 ```
 
 | 필드 | 설명 |
 | --- | --- |
-| `x` | 경도 |
-| `y` | 위도 |
-| `state` | 여행 상태: 바다, 드라이브, 산책, 카페, 야경 |
-| `mood` | 무드: 잔잔한, 신나는, 시원한, 설레는, 감성적인 |
+| `location.lat` | 위도 |
+| `location.lng` | 경도 |
+| `travelMode` | 여행 상태 API 값: `ocean`, `drive`, `walk`, `cafe`, `night` |
+| `moodTags` | 무드 API 값: `calm`, `active`, `fresh`, `emotional`, `local` |
+| `preferredGenres` | 사용자가 선호하는 장르 힌트 |
+| `excludeTrackIds` | 다음 추천에서 제외할 곡 ID 목록 |
+
+UI 라벨과 API 값은 다음처럼 매핑한다.
+
+| UI 라벨 | API 값 |
+| --- | --- |
+| 바다 | `ocean` |
+| 드라이브 | `drive` |
+| 산책 | `walk` |
+| 카페 | `cafe` |
+| 야경 | `night` |
+| 잔잔한 | `calm` |
+| 신나는 | `active` |
+| 시원한 | `fresh` |
+| 설레는 | `local` |
+| 감성적인 | `emotional` |
 
 ### 9.2 추천 응답
 
@@ -324,8 +353,8 @@ type PlaylistRecommendation = {
   place: {
     name: string;
     address?: string;
-    x?: number;
-    y?: number;
+    lat?: number;
+    lng?: number;
     imageUrl?: string;
   };
   state: '바다' | '드라이브' | '산책' | '카페' | '야경';
@@ -339,11 +368,10 @@ type TrackRecommendation = {
   artist: string;
   albumImageUrl?: string;
   reasonTags: string[];
-  externalLinks: {
-    spotify?: string;
+  externalUrl?: string;
+  platformUrls?: {
+    melon?: string;
     youtubeMusic?: string;
-    youtube?: string;
-    search?: string;
   };
 };
 ```
@@ -380,14 +408,19 @@ type RecapCreateRequest = {
 ### 9.5 공동 여행 / 지도
 
 ```txt
+POST /v1/travel-sessions
+PATCH /v1/travel-sessions/:sessionId
 POST /v1/travel-rooms
+GET /v1/travel-rooms/:roomId
 POST /v1/travel-rooms/:roomId/join
 POST /v1/travel-rooms/:roomId/moments
+PATCH /v1/travel-rooms/:roomId/moments/:momentId
+POST /v1/travel-rooms/:roomId/moments/:momentId/comments
 POST /v1/travel-rooms/:roomId/recaps
-GET /v1/sound-map?x=&y=&radius=&visibility=
+GET /v1/sound-map?lat=&lng=&radiusMeters=&visibility=
 POST /v1/sound-map/current-track
-GET /v1/sound-map/nearby?x=&y=&radius=&state=&mood=
-GET /v1/music-matches?x=&y=&radius=&state=&mood=
+GET /v1/sound-map/nearby?lat=&lng=&radiusMeters=&state=&mood=
+GET /v1/music-matches?lat=&lng=&radiusMeters=&state=&mood=
 POST /v1/travel-mate-requests
 PATCH /v1/travel-mate-requests/:requestId
 POST /v1/community/blocks
@@ -396,17 +429,34 @@ POST /v1/community/reports
 
 | API | 목적 |
 | --- | --- |
+| `POST /v1/travel-sessions` | 서버 기준 여행 모드를 시작한다. Live Sound Map 공개의 전제 조건이다. |
+| `PATCH /v1/travel-sessions/:sessionId` | 여행 모드를 종료하거나 상태를 변경한다. |
 | `POST /v1/travel-rooms` | 같이 여행 간 사람끼리 쓸 여행방을 만든다. |
+| `GET /v1/travel-rooms/:roomId` | 공동 여행방의 멤버, 후보 순간, 댓글, Recap 상태를 조회한다. |
+| `POST /v1/travel-rooms/:roomId/join` | 초대 코드로 공동 여행방에 참여한다. 이미 참여한 사용자는 방 정보를 다시 받는다. |
 | `POST /v1/travel-rooms/:roomId/moments` | 동행자가 공동 Recap 후보 순간을 추가한다. |
-| `POST /v1/travel-rooms/:roomId/recaps` | 방장이 공동 Recap을 생성한다. |
+| `PATCH /v1/travel-rooms/:roomId/moments/:momentId` | 방장이 후보 순간을 `candidate`, `accepted`, `rejected` 상태로 변경한다. |
+| `POST /v1/travel-rooms/:roomId/moments/:momentId/comments` | 방장/참여자가 후보 순간에 댓글을 남긴다. |
+| `POST /v1/travel-rooms/:roomId/recaps` | 방장이 공동 Recap을 생성한다. 승인된 후보가 있으면 승인된 순간을 우선 사용한다. |
 | `GET /v1/sound-map` | 여행 모드 ON 사용자의 현재 위치와 선택 곡 핀을 조회한다. |
-| `POST /v1/sound-map/current-track` | 내 현재 위치와 Soundlog 현재 선택 곡을 지도에 표시한다. |
+| `POST /v1/sound-map/current-track` | active 여행 세션이 있는 사용자의 현재 위치와 Soundlog 현재 선택 곡을 지도에 표시한다. |
 | `GET /v1/sound-map/nearby` | 주변 익명 공개 음악 핀을 조회한다. 정확 좌표 대신 대략 위치만 응답한다. |
 | `GET /v1/music-matches` | 주변 여행자와의 음악 취향 일치율과 공개 프로필 카드를 조회한다. |
 | `POST /v1/travel-mate-requests` | 취향이 맞는 사용자에게 동행 매칭 요청을 보낸다. |
 | `PATCH /v1/travel-mate-requests/:requestId` | 매칭 요청을 수락, 거절, 만료, 취소 상태로 변경한다. |
 | `POST /v1/community/blocks` | 사용자 차단을 기록하고 이후 지도/매칭에서 숨긴다. |
 | `POST /v1/community/reports` | 부적절한 공개 핀, 프로필, 매칭 요청을 신고한다. |
+
+공동 여행/지도 API의 서버 정책은 다음과 같다.
+
+| 정책 | 서버 동작 |
+| --- | --- |
+| 방 접근 권한 | 공동 여행방 조회, 후보 추가, 댓글 작성은 방장 또는 참여자만 가능하다. |
+| 초대 코드 | 신규 참여자는 `POST /v1/travel-rooms/:roomId/join` 요청에 유효한 초대 코드를 보내야 한다. |
+| 공동 Recap 권한 | 후보 상태 변경과 공동 Recap 생성은 방장만 가능하다. |
+| Live Sound Map 공개 | `POST /v1/sound-map/current-track`은 서버에 active 여행 세션이 있는 사용자만 성공한다. |
+| 위치 없는 조회 | `GET /v1/sound-map/nearby`, `GET /v1/music-matches`는 좌표가 없으면 낯선 사용자 데이터를 노출하지 않고 빈 목록을 반환한다. |
+| 동행 요청 상태 | `accept` 액션은 `accepted`, `decline` 액션은 `declined`, `cancel` 액션은 `cancelled`, `expire` 액션은 `expired`로 변경한다. |
 
 ---
 
