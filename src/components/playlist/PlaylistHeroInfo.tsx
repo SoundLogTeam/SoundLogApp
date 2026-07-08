@@ -7,14 +7,18 @@ import { PlaylistCuration } from '@/types/domain';
 
 type PlaylistHeroInfoProps = {
   disabled?: boolean;
+  onAdjustMood: (filter: string) => void;
   onOpenFirstTrack: () => void;
   playlist: PlaylistCuration;
+  selectedMoodFilter: string;
 };
 
 export function PlaylistHeroInfo({
   disabled = false,
+  onAdjustMood,
   onOpenFirstTrack,
   playlist,
+  selectedMoodFilter,
 }: PlaylistHeroInfoProps) {
   return (
     <View className="px-5 pb-5">
@@ -54,7 +58,10 @@ export function PlaylistHeroInfo({
       </View>
 
       <View className="mt-5">
-        <PlaylistMusicFilter />
+        <PlaylistMusicFilter
+          onSelectMoodFilter={onAdjustMood}
+          selectedMoodFilter={selectedMoodFilter}
+        />
       </View>
     </View>
   );

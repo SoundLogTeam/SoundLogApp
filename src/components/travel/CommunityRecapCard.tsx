@@ -1,11 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import { useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { communityApi } from '@/api/communityApi';
 import { AppText } from '@/components/AppText';
 import { SoundlogButton, SoundlogMetric, SoundlogSurface } from '@/design-system';
-import type { PlaceContext, RecapItem, Track, TravelRoom } from '@/types/domain';
+import type { PlaceContext, RecapItem, Track, TravelRoom, TravelRoomMoment } from '@/types/domain';
 
 type CommunityRecapCardProps = {
   currentPlace?: PlaceContext;
@@ -14,7 +14,104 @@ type CommunityRecapCardProps = {
   onRecapCreated: (recap: RecapItem) => void;
   sessionId: string;
   sessionStatus: 'active' | 'ended' | 'idle';
+  trackCount: number;
 };
+
+const previewMembers = ['나', '수', '재', '채'];
+const previewContributors = ['수경', '재걸', '채린'];
+
+function createPreviewCandidateMoments(placeName: string, currentTrack?: Track): TravelRoomMoment[] {
+  const fallbackTrack: Track = currentTrack ?? {
+    artist: 'Soundlog',
+    fallbackColor: '#2B176C',
+    id: 'preview-community-track',
+    title: '곡명 A',
+  };
+
+  return [
+    {
+      commentCount: 1,
+      createdAt: new Date().toISOString(),
+      id: 'preview-candidate-ocean',
+      placeName: placeName === '이번 여행' ? '주문진 바다 컷' : `${placeName} 컷`,
+      status: 'candidate',
+      track: fallbackTrack,
+      userId: '수경',
+    },
+    {
+      commentCount: 2,
+      createdAt: new Date().toISOString(),
+      id: 'preview-candidate-cafe',
+      note: '카페 거리 컷',
+      placeName: '카페 거리 컷',
+      status: 'candidate',
+      track: currentTrack
+        ? {
+            ...currentTrack,
+            id: `${currentTrack.id}-community-alt`,
+            title: currentTrack.title,
+          }
+        : {
+            artist: 'Soundlog',
+            fallbackColor: '#B7E628',
+            id: 'preview-community-track-b',
+            title: '곡명 B',
+          },
+      userId: '재걸',
+    },
+  ];
+}
+
+function getUniqueTrackCount(moments: TravelRoomMoment[]) {
+  return new Set(moments.map((moment) => moment.track?.id).filter(Boolean)).size;
+}
+
+function CandidateMomentRow({
+  index,
+  moment,
+}: {
+  index: number;
+  moment: TravelRoomMoment;
+}) {
+  const contributor = moment.userId || previewContributors[index] || '동행자';
+  const actionLabel = index === 0 ? '채택' : '댓글';
+  const trackLabel = moment.track
+    ? `${contributor} 추가 · ${moment.track.title}`
+    : `${contributor} 추가 · ${moment.note ?? '곡 없이 남긴 후보'}`;
+
+  return (
+    <View className="rounded-[16px] border border-white/10 bg-black/20 px-4 py-3">
+      <View className="flex-row items-start justify-between gap-3">
+        <View className="min-w-0 flex-1">
+          <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
+            {moment.placeName ?? '장소 미정'}
+          </AppText>
+          <AppText className="mt-1 text-xs leading-5 text-white/55" numberOfLines={2}>
+            {trackLabel}
+          </AppText>
+        </View>
+        <View className="rounded-full bg-soundlog-lime px-2.5 py-1">
+          <AppText className="text-[10px] font-semibold text-soundlog-inverse">
+            {actionLabel}
+          </AppText>
+        </View>
+      </View>
+
+      <View className="mt-3 flex-row gap-2">
+        <View className="rounded-full bg-white/10 px-3 py-1.5">
+          <AppText className="text-[11px] font-semibold text-white/65">
+            {moment.status === 'accepted' ? '채택됨' : '채택 후보'}
+          </AppText>
+        </View>
+        <View className="rounded-full bg-white/10 px-3 py-1.5">
+          <AppText className="text-[11px] font-semibold text-white/65">
+            댓글 {moment.commentCount ?? moment.comments?.length ?? 0}
+          </AppText>
+        </View>
+      </View>
+    </View>
+  );
+}
 
 export function CommunityRecapCard({
   currentPlace,
@@ -23,6 +120,7 @@ export function CommunityRecapCard({
   onRecapCreated,
   sessionId,
   sessionStatus,
+  trackCount,
 }: CommunityRecapCardProps) {
   const [room, setRoom] = useState<TravelRoom>();
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
@@ -32,6 +130,14 @@ export function CommunityRecapCard({
 
   const placeName = currentPlace?.title ?? '이번 여행';
   const canUseRoom = sessionStatus !== 'idle';
+  const previewCandidateMoments = createPreviewCandidateMoments(placeName, currentTrack);
+  const candidateMoments = room?.moments.slice(0, 2) ?? previewCandidateMoments;
+  const displayMemberCount = room?.memberCount ?? 4;
+  const displayMomentCount = room?.momentCount ?? Math.max(momentCount, candidateMoments.length);
+  const displayTrackCount = room
+    ? Math.max(getUniqueTrackCount(room.moments), 1)
+    : Math.max(trackCount, currentTrack ? 1 : candidateMoments.length);
+  const displayRoomTitle = room?.title ?? `${placeName} 여행방`;
 
   const handleCreateRoom = async () => {
     if (!canUseRoom || isCreatingRoom) {
@@ -135,36 +241,91 @@ export function CommunityRecapCard({
             Collaborative Recap
           </AppText>
           <AppText className="mt-2 text-[22px] font-semibold leading-7 text-white">
-            같이 간 사람과 사운드트랙을 모아요
+            {displayRoomTitle}
           </AppText>
-          <AppText className="mt-2 text-sm leading-6 text-white/58">
-            한 명이 만든 플레이리스트가 아니라, 각자 고른 곡과 순간을 하나의 Recap 후보로
-            합칠 수 있어요.
+          <AppText className="mt-2 text-sm leading-6 text-white/60">
+            {displayMemberCount}명이 함께 만드는 사운드트랙 앨범
           </AppText>
         </View>
       </View>
 
+      <View className="mt-4 flex-row items-center gap-2">
+        {previewMembers.slice(0, displayMemberCount).map((member, index) => (
+          <View
+            className={`h-9 w-9 items-center justify-center rounded-full border border-white/15 ${
+              index === 0 ? 'bg-soundlog-lime' : 'bg-white/10'
+            }`}
+            key={`${member}-${index}`}
+          >
+            <AppText
+              className={`text-xs font-semibold ${
+                index === 0 ? 'text-soundlog-inverse' : 'text-white'
+              }`}
+            >
+              {member}
+            </AppText>
+          </View>
+        ))}
+        <AppText className="ml-1 text-xs text-white/45">
+          초대 코드로 함께 참여
+        </AppText>
+      </View>
+
       <View className="mt-4 flex-row flex-wrap gap-3">
-        <SoundlogMetric compact label="초대 코드" value={room?.inviteCode ?? '방 생성 전'} />
-        <SoundlogMetric compact label="동행자" value={`${room?.memberCount ?? 1}명`} />
-        <SoundlogMetric compact label="내 Moment" value={`${momentCount}개`} />
-        <SoundlogMetric compact label="공동 후보" value={`${room?.momentCount ?? 0}개`} />
+        <SoundlogMetric compact label="순간" value={`${displayMomentCount}개`} />
+        <SoundlogMetric compact label="곡" value={`${displayTrackCount}개`} />
+        <SoundlogMetric compact label="참여자" value={`${displayMemberCount}명`} />
       </View>
 
       {message ? (
         <View className="mt-4 rounded-[16px] bg-black/20 px-4 py-3">
-          <AppText className="text-xs leading-5 text-white/62">{message}</AppText>
+          <AppText className="text-xs leading-5 text-white/60">{message}</AppText>
+        </View>
+      ) : null}
+
+      <View className="mt-4 gap-2">
+        <View className="flex-row items-center justify-between">
+          <AppText className="text-sm font-semibold text-white">Recap 후보</AppText>
+          <AppText className="text-[11px] font-semibold text-white/40">
+            {room?.inviteCode ? `초대 코드 ${room.inviteCode}` : '초대 코드 기반 참여'}
+          </AppText>
+        </View>
+
+        {candidateMoments.length === 0 ? (
+          <View className="rounded-[16px] border border-white/10 bg-black/20 px-4 py-3">
+            <AppText className="text-xs leading-5 text-white/55">
+              아직 후보가 없어요. 현재 곡을 먼저 올리거나 초대 코드로 동행자를 초대해보세요.
+            </AppText>
+          </View>
+        ) : (
+          candidateMoments.map((moment, index) => (
+            <CandidateMomentRow index={index} key={moment.id} moment={moment} />
+          ))
+        )}
+      </View>
+
+      {!room ? (
+        <View className="mt-4 rounded-[16px] border border-white/10 bg-black/20 px-4 py-3">
+          <AppText className="text-xs leading-5 text-white/55">
+            서버 여행방을 만들면 이 미리보기 후보 대신 동행자가 올린 사진, 곡, 메모가 실시간으로 쌓여요.
+          </AppText>
         </View>
       ) : null}
 
       <View className="mt-4 gap-2">
         {!room ? (
-          <SoundlogButton
+          <Pressable
+            accessibilityRole="button"
+            className="min-h-[52px] flex-row items-center justify-center gap-2 rounded-full bg-soundlog-lime px-4"
             disabled={!canUseRoom || isCreatingRoom}
-            iconName="plus"
-            label={isCreatingRoom ? '여행방 생성 중' : '공동 여행방 만들기'}
             onPress={() => void handleCreateRoom()}
-          />
+            style={{ opacity: !canUseRoom || isCreatingRoom ? 0.55 : 1 }}
+          >
+            <Feather color="#050916" name="plus" size={16} />
+            <AppText className="text-sm font-semibold text-soundlog-inverse">
+              {isCreatingRoom ? '여행방 생성 중' : '공동 Recap 생성'}
+            </AppText>
+          </Pressable>
         ) : (
           <View className="gap-2">
             <SoundlogButton
@@ -177,7 +338,7 @@ export function CommunityRecapCard({
             <SoundlogButton
               disabled={isCreatingRecap || room.momentCount === 0}
               iconName="image"
-              label={isCreatingRecap ? 'Recap 생성 중' : '공동 Recap 만들기'}
+              label={isCreatingRecap ? 'Recap 생성 중' : '공동 Recap 생성'}
               onPress={() => void handleCreateRecap()}
             />
           </View>

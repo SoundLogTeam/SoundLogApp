@@ -26,14 +26,16 @@ export function MomentCard({ item, onPress, onRetry }: MomentCardProps) {
         : undefined;
 
   return (
-    <Pressable
-      accessibilityLabel={`${item.placeName ?? '저장한 순간'} Music Log 열기`}
-      accessibilityRole={onPress ? 'button' : undefined}
+    <View
       className="min-h-[132px] flex-row overflow-hidden rounded-[22px] border border-white/10 bg-white/10"
-      disabled={!onPress}
-      onPress={onPress}
     >
-      <View className="h-full w-[108px] bg-white/10">
+      <Pressable
+        accessibilityLabel={`${item.placeName ?? '저장한 순간'} 사진으로 Music Log 열기`}
+        accessibilityRole={onPress ? 'button' : undefined}
+        className="h-full w-[108px] bg-white/10"
+        disabled={!onPress}
+        onPress={onPress}
+      >
         {item.photoUri ? (
           <Image contentFit="cover" source={{ uri: item.photoUri }} style={{ flex: 1 }} />
         ) : (
@@ -41,16 +43,21 @@ export function MomentCard({ item, onPress, onRetry }: MomentCardProps) {
             <Feather color="rgba(255,255,255,0.55)" name="camera" size={22} />
           </View>
         )}
-      </View>
+      </Pressable>
 
       <View className="min-w-0 flex-1 justify-between p-4">
-        <View>
+        <Pressable
+          accessibilityLabel={`${item.placeName ?? '저장한 순간'} Music Log 열기`}
+          accessibilityRole={onPress ? 'button' : undefined}
+          disabled={!onPress}
+          onPress={onPress}
+        >
           <View className="flex-row items-center gap-2">
             <View className="rounded-full bg-white/10 px-2.5 py-1">
               <AppText className="text-[10px] font-semibold text-white/70">Moment</AppText>
             </View>
             {syncLabel ? (
-              <View className="rounded-full bg-amber-300/12 px-2.5 py-1">
+              <View className="rounded-full bg-amber-300/10 px-2.5 py-1">
                 <AppText className="text-[10px] font-semibold text-amber-100">
                   {syncLabel}
                 </AppText>
@@ -74,7 +81,16 @@ export function MomentCard({ item, onPress, onRetry }: MomentCardProps) {
               {item.track ? `${item.track.title} - ${item.track.artist}` : '음악 없음'}
             </AppText>
           </View>
-        </View>
+
+          {item.note ? (
+            <View className="mt-2 flex-row items-center gap-2">
+              <Feather color="rgba(255,255,255,0.6)" name="edit-3" size={13} />
+              <AppText className="min-w-0 flex-1 text-xs text-white/55" numberOfLines={1}>
+                {item.note}
+              </AppText>
+            </View>
+          ) : null}
+        </Pressable>
 
         <View className="flex-row items-center justify-between gap-3">
           <AppText className="min-w-0 flex-1 text-[11px] text-white/45">
@@ -97,6 +113,6 @@ export function MomentCard({ item, onPress, onRetry }: MomentCardProps) {
           ) : null}
         </View>
       </View>
-    </Pressable>
+    </View>
   );
 }

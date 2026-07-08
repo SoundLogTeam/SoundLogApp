@@ -1,15 +1,21 @@
+import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ScrollView, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, View } from 'react-native';
 
-import { useRecapListQuery } from '@/api/recapQueries';
+import { recapApi } from '@/api/recapApi';
+import { recapQueryKeys, useRecapListQuery } from '@/api/recapQueries';
 import { AppText } from '@/components/AppText';
 import { RecapEmptyState } from '@/components/recap/RecapEmptyState';
 import { RecapListCard } from '@/components/recap/RecapListCard';
 import { Screen } from '@/components/Screen';
 import { useMomentLogStore } from '@/store/momentLogStore';
+import { useTravelSessionStore } from '@/store/travelSessionStore';
+import type { MomentLog } from '@/types/domain';
 import {
   createMomentLogGroups,
+  createSessionRecapId,
   momentLogGroupToRecapItem,
 } from '@/utils/recapMappers';
 
@@ -19,13 +25,143 @@ type RecapListEntry = {
   shareId: string;
 };
 
+type CurrentTripRecapCardProps = {
+  isCreating: boolean;
+  message?: string;
+  momentCount: number;
+  onPress: () => void;
+  representativeLog?: MomentLog;
+  status: 'empty' | 'failed' | 'ready' | 'synced';
+  trackCount: number;
+};
+
+function getUniqueTrackCount(logs: MomentLog[]) {
+  return new Set(logs.map((log) => log.track?.id).filter(Boolean)).size;
+}
+
+function getNewestMomentLog(logs: MomentLog[]) {
+  return [...logs].sort(
+    (first, second) =>
+      new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime(),
+  )[0];
+}
+
+function CurrentTripRecapCard({
+  isCreating,
+  message,
+  momentCount,
+  onPress,
+  representativeLog,
+  status,
+  trackCount,
+}: CurrentTripRecapCardProps) {
+  const statusLabel = isCreating
+    ? '생성 중...'
+    : status === 'failed'
+      ? '실패 · 재시도 가능'
+      : status === 'synced'
+        ? '완료'
+        : status === 'ready'
+          ? '생성 가능'
+          : '생성 전';
+  const buttonLabel = isCreating
+    ? '생성 중...'
+    : status === 'failed'
+      ? '다시 시도'
+    : status === 'synced'
+      ? 'Recap 열기'
+      : status === 'empty'
+        ? '첫 Moment 저장'
+        : 'Recap 만들기';
+  const representativeTrackLabel = representativeLog?.track
+    ? `${representativeLog.track.title} - ${representativeLog.track.artist}`
+    : '대표 곡 없음';
+
+  return (
+    <View className="overflow-hidden rounded-[24px] border border-white/10 bg-white/10 p-5">
+      <View className="flex-row items-start justify-between gap-3">
+        <View className="min-w-0 flex-1">
+          <AppText className="text-[11px] font-semibold uppercase text-white/45">
+            이번 여행
+          </AppText>
+          <AppText className="mt-2 text-[26px] font-semibold leading-8 text-white">
+            {statusLabel}
+          </AppText>
+          <AppText className="mt-2 text-sm leading-6 text-white/55">
+            {momentCount}개 Moment · {trackCount}곡
+          </AppText>
+        </View>
+        <View className="rounded-full bg-soundlog-lime px-3 py-1.5">
+          <AppText className="text-xs font-semibold text-soundlog-inverse">Recap</AppText>
+        </View>
+      </View>
+
+      <View className="mt-4 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3">
+        <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
+          {representativeLog?.placeName ?? '아직 대표 장소가 없어요'}
+        </AppText>
+        <AppText className="mt-1 text-xs leading-5 text-white/55" numberOfLines={2}>
+          {representativeTrackLabel}
+        </AppText>
+      </View>
+
+      {message ? (
+        <View className="mt-3 rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
+          <AppText className="text-xs leading-5 text-amber-100">{message}</AppText>
+        </View>
+      ) : null}
+
+      <Pressable
+        accessibilityRole="button"
+        className="mt-4 min-h-[52px] items-center justify-center rounded-full bg-soundlog-lime"
+        disabled={isCreating}
+        onPress={onPress}
+        style={{ opacity: isCreating ? 0.62 : 1 }}
+      >
+        <AppText className="text-sm font-semibold text-soundlog-inverse">
+          {buttonLabel}
+        </AppText>
+      </Pressable>
+    </View>
+  );
+}
+
 export function RecapListScreen() {
+  const queryClient = useQueryClient();
   const momentLogs = useMomentLogStore((state) => state.logs);
+  const { session, setSessionRecapId } = useTravelSessionStore();
+  const [currentRecapStatus, setCurrentRecapStatus] =
+    useState<'empty' | 'failed' | 'ready' | 'synced'>('empty');
+  const [currentRecapMessage, setCurrentRecapMessage] = useState<string>();
+  const [isCreatingCurrentRecap, setIsCreatingCurrentRecap] = useState(false);
   const {
     data: serverRecapItems = [],
     isError,
     isLoading,
   } = useRecapListQuery();
+  const currentTripLogs = useMemo(
+    () =>
+      session.status === 'idle'
+        ? []
+        : momentLogs.filter((log) => log.sessionId === session.id),
+    [momentLogs, session.id, session.status],
+  );
+  const currentTripRepresentativeLog = useMemo(
+    () => getNewestMomentLog(currentTripLogs),
+    [currentTripLogs],
+  );
+  const currentTripTrackCount = useMemo(
+    () => getUniqueTrackCount(currentTripLogs),
+    [currentTripLogs],
+  );
+  const currentTripStatus =
+    isCreatingCurrentRecap || currentRecapStatus === 'failed'
+      ? currentRecapStatus
+      : session.recapId
+        ? 'synced'
+        : currentTripLogs.length > 0
+          ? 'ready'
+          : 'empty';
   const serverRecaps: RecapListEntry[] = serverRecapItems.map((item) => ({
     imageUrl: item.representativeTrack.albumImageUrl,
     item,
@@ -45,6 +181,71 @@ export function RecapListScreen() {
     (sum, { item }) => sum + (item.momentCount ?? 1),
     0,
   );
+  const handleCreateRecap = () => {
+    const latestLocalRecap = localRecaps[0];
+
+    if (latestLocalRecap) {
+      router.push(`/recap-share/${latestLocalRecap.shareId}`);
+      return;
+    }
+
+    router.push('/camera');
+  };
+  const handleCurrentTripRecap = async () => {
+    if (isCreatingCurrentRecap) {
+      return;
+    }
+
+    if (currentTripLogs.length === 0) {
+      router.push('/camera');
+      return;
+    }
+
+    const localRecapId = session.recapId ?? createSessionRecapId(session.id);
+
+    if (session.recapId && currentRecapStatus !== 'failed') {
+      router.push(`/recap-share/${session.recapId}`);
+      return;
+    }
+
+    const syncedLogs = currentTripLogs.filter((log) => log.syncStatus === 'synced');
+    const hasOnlySyncedLogs = syncedLogs.length === currentTripLogs.length;
+    const representativeTrackId = currentTripLogs.find((log) => log.track?.id)?.track?.id;
+
+    if (!hasOnlySyncedLogs) {
+      setSessionRecapId(localRecapId);
+      setCurrentRecapStatus('failed');
+      setCurrentRecapMessage('아직 동기화되지 않은 Moment가 있어 로컬 Recap으로 먼저 보여드릴게요.');
+      router.push(`/recap-share/${localRecapId}`);
+      return;
+    }
+
+    setIsCreatingCurrentRecap(true);
+    setCurrentRecapMessage(undefined);
+
+    try {
+      const serverRecap = await recapApi.createRecap({
+        momentLogIds: syncedLogs.map((log) => log.id),
+        representativeTrackId,
+        sessionId: session.id,
+        templateId: 'lp',
+        title: `${currentTripRepresentativeLog?.placeName ?? '이번 여행'} Recap`,
+      });
+      const recapId = serverRecap?.id ?? localRecapId;
+
+      setSessionRecapId(recapId);
+      setCurrentRecapStatus('synced');
+      await queryClient.invalidateQueries({ queryKey: recapQueryKeys.list });
+      router.push(`/recap-share/${recapId}`);
+    } catch {
+      setSessionRecapId(localRecapId);
+      setCurrentRecapStatus('failed');
+      setCurrentRecapMessage('서버 Recap 생성에 실패해서 로컬 Recap으로 먼저 보여드릴게요.');
+      router.push(`/recap-share/${localRecapId}`);
+    } finally {
+      setIsCreatingCurrentRecap(false);
+    }
+  };
 
   return (
     <Screen>
@@ -74,10 +275,10 @@ export function RecapListScreen() {
               </AppText>
             </View>
             <AppText className="mt-5 text-[32px] font-semibold leading-9 text-white">
-              여행이 끝난 뒤에도{'\n'}음악은 남아요.
+              Recap
             </AppText>
-            <AppText className="mt-3 text-sm leading-6 text-white/62">
-              저장한 장소, 사진, 음악을 하나의 앨범처럼 다시 꺼내보세요.
+            <AppText className="mt-3 text-sm leading-6 text-white/60">
+              여행별 사운드트랙 앨범 생성 상태를 확인하고 다시 꺼내보세요.
             </AppText>
 
             <View className="mt-6 flex-row gap-3">
@@ -98,8 +299,28 @@ export function RecapListScreen() {
                 </AppText>
               </View>
             </View>
+
+            <Pressable
+              accessibilityRole="button"
+              className="mt-5 min-h-[52px] items-center justify-center rounded-full bg-soundlog-lime"
+              onPress={handleCreateRecap}
+            >
+              <AppText className="text-sm font-semibold text-soundlog-inverse">
+                {hasRecaps ? '새 Recap 생성' : '첫 Moment로 Recap 만들기'}
+              </AppText>
+            </Pressable>
           </LinearGradient>
         </View>
+
+        <CurrentTripRecapCard
+          isCreating={isCreatingCurrentRecap}
+          message={currentRecapMessage}
+          momentCount={currentTripLogs.length}
+          onPress={handleCurrentTripRecap}
+          representativeLog={currentTripRepresentativeLog}
+          status={currentTripStatus}
+          trackCount={currentTripTrackCount}
+        />
 
         {isLoading ? (
           <AppText className="text-sm text-white/55">

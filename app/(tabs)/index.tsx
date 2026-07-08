@@ -16,6 +16,7 @@ import { AppText } from '@/components/AppText';
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
+import { CurrentSoundtrackCard } from '@/components/home/CurrentSoundtrackCard';
 import {
   HomeHeader,
   HomeNavigationBar,
@@ -65,6 +66,21 @@ const travelModeToMlState: Partial<Record<TravelMode, PlaylistMlState>> = {
   walk: '산책',
 };
 
+const travelModeDisplayLabel: Record<TravelMode, string> = {
+  cafe: '카페',
+  drive: '드라이브',
+  festival: '축제',
+  night: '야경',
+  ocean: '바다',
+  walk: '산책',
+};
+
+const travelStyleDisplayLabel: Record<string, string> = {
+  '바다 보기': '바다',
+  '야경 감상': '야경',
+  '카페 투어': '카페',
+};
+
 function resolvePlaylistMood(filter: string, preferredMoods: string[]): PlaylistMlMood {
   if (filter !== '전체' && moodFilterToMlMood[filter]) {
     return moodFilterToMlMood[filter];
@@ -75,6 +91,24 @@ function resolvePlaylistMood(filter: string, preferredMoods: string[]): Playlist
 
 function resolvePlaylistState(mode?: TravelMode): PlaylistMlState {
   return (mode ? travelModeToMlState[mode] : undefined) ?? '산책';
+}
+
+function resolveCurrentTravelLabel(mode: TravelMode | undefined, travelStyles: string[]) {
+  if (mode) {
+    return travelModeDisplayLabel[mode];
+  }
+
+  const firstTravelStyle = travelStyles[0];
+
+  return firstTravelStyle ? travelStyleDisplayLabel[firstTravelStyle] ?? firstTravelStyle : '산책';
+}
+
+function resolveCurrentMoodLabel(filter: string, preferredMoods: string[]) {
+  if (filter !== '전체') {
+    return filter;
+  }
+
+  return preferredMoods[0] ?? '잔잔한';
 }
 
 function HomeContent() {
@@ -390,6 +424,18 @@ function HomeContent() {
           placeInfoMessage={placeInfoMessage}
           status={locationStatus}
           updatedAt={locationUpdatedAt}
+        />
+
+        <CurrentSoundtrackCard
+          currentPlace={currentPlace}
+          isError={featuredPlaylistsQuery.isError}
+          isLoading={featuredPlaylistsQuery.isLoading}
+          moodLabel={resolveCurrentMoodLabel(selectedMoodFilter, profile.preferredMoods)}
+          onCaptureMoment={() => router.push('/camera' as never)}
+          onOpenPlaylist={handleSelectFeaturedPlaylist}
+          onRetry={() => void featuredPlaylistsQuery.refetch()}
+          playlist={featuredPlaylistsQuery.data?.[0]}
+          travelLabel={resolveCurrentTravelLabel(selectedMode, profile.travelStyles)}
         />
 
         {recommendationMode === 'travel' ? (

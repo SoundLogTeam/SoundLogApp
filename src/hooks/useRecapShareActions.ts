@@ -72,7 +72,7 @@ export function useRecapShareActions({ capture, recapId }: UseRecapShareActionsP
 
       try {
         const uri = await captureRecap();
-        const MediaLibrary = await import('expo-media-library');
+        const MediaLibrary = await import('expo-media-library/legacy');
         const permission = await MediaLibrary.requestPermissionsAsync(true);
 
         if (!canWriteToLibrary(permission)) {
@@ -83,7 +83,7 @@ export function useRecapShareActions({ capture, recapId }: UseRecapShareActionsP
           return;
         }
 
-        await MediaLibrary.createAssetAsync(uri);
+        await MediaLibrary.saveToLibraryAsync(uri);
         syncShareEvent('save_image');
         setMessage({
           text: '리캡 이미지가 사진 보관함에 저장됐어요.',

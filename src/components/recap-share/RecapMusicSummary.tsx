@@ -34,6 +34,10 @@ function createTrackKey(moment: RecapShareMoment) {
   return `${moment.trackTitle.trim()}::${moment.artistName.trim()}`;
 }
 
+function createPhotoCount(moments: RecapShareMoment[]) {
+  return moments.filter((moment) => Boolean(moment.imageUrl)).length;
+}
+
 function createPlaceFlow(moments: RecapShareMoment[], fallbackPlaceName: string) {
   const firstPlace = moments[0]?.placeName?.trim() || fallbackPlaceName;
   const lastPlace = moments[moments.length - 1]?.placeName?.trim() || fallbackPlaceName;
@@ -50,41 +54,26 @@ function createRecordedRange(moments: RecapShareMoment[], fallbackRecordedAt: st
   return firstLabel === lastLabel ? firstLabel : `${firstLabel} -> ${lastLabel}`;
 }
 
-function SummaryRow({ icon, label, value }: SummaryRowProps) {
-  return (
-    <View className="flex-row items-center gap-3">
-      <View className="h-9 w-9 items-center justify-center rounded-full bg-white/10">
-        <Feather color="rgba(255,255,255,0.78)" name={icon} size={16} />
-      </View>
-      <View className="min-w-0 flex-1">
-        <AppText className="text-[11px] font-semibold text-white/42">{label}</AppText>
-        <AppText className="mt-1 text-sm font-medium text-white/82" numberOfLines={1}>
-          {value}
-        </AppText>
-      </View>
-    </View>
-  );
-}
-
 export function RecapMusicSummary({ recap }: { recap: RecapShare }) {
   const moments = getMoments(recap);
+  const photoCount = createPhotoCount(moments);
   const placeCount = createUniqueCount(moments.map((moment) => moment.placeName));
   const trackCount = createUniqueCount(moments.map(createTrackKey));
   const placeFlow = createPlaceFlow(moments, recap.placeName);
   const recordedRange = createRecordedRange(moments, recap.recordedAt);
 
   return (
-    <View className="mt-6 w-full rounded-[20px] border border-white/10 bg-white/[0.06] p-5">
+    <View className="w-full rounded-[20px] border border-white/10 bg-white/[0.06] p-4">
       <View className="flex-row items-start justify-between gap-4">
         <View className="min-w-0 flex-1">
-          <AppText className="text-[11px] font-semibold tracking-[1.8px] text-white/45">
-            MUSIC RECAP
+          <AppText className="text-[11px] font-semibold text-white/45">
+            대표 정보
           </AppText>
           <AppText className="mt-2 text-lg font-semibold text-white" numberOfLines={1}>
-            {recap.trackTitle}
+            {recap.placeName} · {recap.trackTitle}
           </AppText>
           <AppText className="mt-1 text-sm text-white/58" numberOfLines={1}>
-            {recap.artistName}
+            사진 {photoCount}장 · 곡 {trackCount || 1}개 · {recap.artistName}
           </AppText>
         </View>
         <View className="h-11 w-11 items-center justify-center rounded-full bg-white/10">
@@ -92,12 +81,9 @@ export function RecapMusicSummary({ recap }: { recap: RecapShare }) {
         </View>
       </View>
 
-      <View className="mt-5 gap-4">
-        <SummaryRow icon="camera" label="저장된 순간" value={`${moments.length}개 Moment`} />
-        <SummaryRow icon="map-pin" label="장소 흐름" value={`${placeCount || 1}곳 · ${placeFlow}`} />
-        <SummaryRow icon="disc" label="수록곡" value={`${trackCount || 1}곡`} />
-        <SummaryRow icon="clock" label="기록 시간" value={recordedRange} />
-      </View>
+      <AppText className="mt-3 text-xs leading-5 text-white/45" numberOfLines={2}>
+        {moments.length}개 Moment · {placeCount || 1}곳 · {placeFlow} · {recordedRange}
+      </AppText>
     </View>
   );
 }

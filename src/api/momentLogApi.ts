@@ -11,7 +11,8 @@ type CreateMomentLogInput = {
   idempotencyKey?: string;
   location?: GeoPoint;
   moodTags: MoodTag[];
-  photoUri: string;
+  note?: string;
+  photoUri?: string;
   placeCategory?: string;
   placeId?: string;
   placeName?: string;
@@ -35,17 +36,20 @@ function getPhotoName(photoUri: string) {
 function toFormData(input: CreateMomentLogInput) {
   const formData = new FormData();
 
-  formData.append('photo', {
-    name: getPhotoName(input.photoUri),
-    type: 'image/jpeg',
-    uri: input.photoUri,
-  } as unknown as Blob);
+  if (input.photoUri) {
+    formData.append('photo', {
+      name: getPhotoName(input.photoUri),
+      type: 'image/jpeg',
+      uri: input.photoUri,
+    } as unknown as Blob);
+  }
   formData.append('createdAt', input.createdAt);
   formData.append('moodTags', input.moodTags.join(','));
 
   appendIfDefined(formData, 'artistName', input.track?.artist);
   appendIfDefined(formData, 'lat', input.location?.lat);
   appendIfDefined(formData, 'lng', input.location?.lng);
+  appendIfDefined(formData, 'note', input.note);
   appendIfDefined(formData, 'placeCategory', input.placeCategory);
   appendIfDefined(formData, 'placeId', input.placeId);
   appendIfDefined(formData, 'placeName', input.placeName);

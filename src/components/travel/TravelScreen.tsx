@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { momentLogApi } from '@/api/momentLogApi';
@@ -24,12 +24,214 @@ import { LiveSoundMapSection } from './live-sound-map';
 import { MomentCard } from './MomentCard';
 import { TravelModeBottomSheet } from './TravelModeBottomSheet';
 import { TravelStatusCard } from './TravelStatusCard';
+import { formatKoreanDateTime } from './travelFormat';
+import { moodLabelByValue } from './travelData';
 import {
   createMomentLogGroups,
   createSessionRecapId,
   momentLogGroupToRecapItem,
 } from '@/utils/recapMappers';
 import type { MomentLog } from '@/types/domain';
+
+function getUniqueTrackCount(logs: MomentLog[]) {
+  return new Set(logs.map((log) => log.track?.id).filter(Boolean)).size;
+}
+
+type TravelLogSummaryCardProps = {
+  logs: MomentLog[];
+  momentCount: number;
+  onCreateRecap: () => void;
+  onDeleteMoment: (moment: MomentLog) => void;
+  onEditMomentNote: (moment: MomentLog, note?: string) => void;
+  onOpenMoment: (moment: MomentLog) => void;
+  sessionStatus: 'active' | 'ended' | 'idle';
+  trackCount: number;
+};
+
+function formatMomentTime(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '시간 없음';
+  }
+
+  return new Intl.DateTimeFormat('ko-KR', {
+    hour: '2-digit',
+    hour12: false,
+    minute: '2-digit',
+  }).format(date);
+}
+
+function getMomentMoodLabel(log: MomentLog) {
+  return (
+    log.moodTags
+      .map((tag) => moodLabelByValue[tag])
+      .filter(Boolean)
+      .join(', ') || '무드 없음'
+  );
+}
+
+function TravelLogSummaryCard({
+  logs,
+  momentCount,
+  onCreateRecap,
+  onDeleteMoment,
+  onEditMomentNote,
+  onOpenMoment,
+  sessionStatus,
+  trackCount,
+}: TravelLogSummaryCardProps) {
+  const [editingMomentId, setEditingMomentId] = useState<string>();
+  const [editNoteDraft, setEditNoteDraft] = useState('');
+  const title = sessionStatus === 'idle' ? '최근 여행 로그' : '이번 여행 로그';
+  const buttonLabel =
+    momentCount === 0
+      ? '첫 Moment 남기기'
+      : sessionStatus === 'active'
+        ? 'Recap 만들기'
+        : 'Recap 보기';
+
+  return (
+    <View className="mt-6 overflow-hidden rounded-[24px] border border-white/10 bg-white/10 p-5">
+      <View className="flex-row items-start justify-between gap-4">
+        <View className="min-w-0 flex-1">
+          <AppText className="text-[24px] font-semibold leading-8 text-white">
+            {title}
+          </AppText>
+          <AppText className="mt-2 text-sm leading-6 text-white/55">
+            {momentCount}개 순간 · {trackCount}곡
+          </AppText>
+        </View>
+        <View className="rounded-full bg-soundlog-lime px-3 py-1.5">
+          <AppText className="text-xs font-semibold text-soundlog-inverse">
+            Soundtrack
+          </AppText>
+        </View>
+      </View>
+
+      <View className="mt-4 gap-2">
+        {logs.length === 0 ? (
+          <View className="rounded-[18px] border border-white/10 bg-black/20 px-4 py-3">
+            <AppText className="text-sm leading-6 text-white/60">
+              아직 저장한 순간이 없어요. 지금 장소의 곡을 하나 고르고 사진이나 메모로 남겨보세요.
+            </AppText>
+          </View>
+        ) : (
+          logs.slice(0, 3).map((log) => {
+            const isEditing = editingMomentId === log.id;
+            const trackLabel = log.track
+              ? `${log.track.title} - ${log.track.artist}`
+              : '음악 없음';
+            const metaLabel = `${log.photoUri ? '사진' : '사진 없음'} / ${trackLabel} / ${getMomentMoodLabel(log)}`;
+            const actionLabelPrefix = log.placeName ?? '저장한 순간';
+
+            return (
+              <View
+                className="rounded-[18px] border border-white/10 bg-black/20 px-4 py-3"
+                key={log.id}
+              >
+                <Pressable
+                  accessibilityRole="button"
+                  className="flex-row items-start justify-between gap-3"
+                  onPress={() => onOpenMoment(log)}
+                >
+                  <View className="min-w-0 flex-1">
+                    <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
+                      {formatMomentTime(log.createdAt)} {log.placeName ?? '위치 없음'}
+                    </AppText>
+                    <AppText className="mt-1 text-xs leading-5 text-white/55" numberOfLines={2}>
+                      {metaLabel}
+                      {log.note ? ` · ${log.note}` : ''}
+                    </AppText>
+                  </View>
+                  <View className="rounded-full bg-white/10 px-2.5 py-1">
+                    <AppText className="text-[10px] font-semibold text-white/60">
+                      {log.syncStatus === 'failed'
+                        ? '동기화 필요'
+                        : log.syncStatus === 'pending'
+                          ? '동기화 중'
+                          : '저장됨'}
+                    </AppText>
+                  </View>
+                </Pressable>
+
+                {isEditing ? (
+                  <View className="mt-3 gap-2">
+                    <TextInput
+                      className="min-h-[48px] rounded-[14px] border border-white/10 bg-white/10 px-3 py-2 text-sm text-white"
+                      multiline
+                      onChangeText={setEditNoteDraft}
+                      placeholder="메모 수정"
+                      placeholderTextColor="rgba(255,255,255,0.35)"
+                      value={editNoteDraft}
+                    />
+                    <View className="flex-row gap-2">
+                      <Pressable
+                        accessibilityLabel={`${actionLabelPrefix} Moment 메모 저장`}
+                        accessibilityRole="button"
+                        className="h-9 flex-1 items-center justify-center rounded-full bg-soundlog-lime"
+                        onPress={() => {
+                          onEditMomentNote(log, editNoteDraft.trim() || undefined);
+                          setEditingMomentId(undefined);
+                          setEditNoteDraft('');
+                        }}
+                      >
+                        <AppText className="text-xs font-semibold text-soundlog-inverse">저장</AppText>
+                      </Pressable>
+                      <Pressable
+                        accessibilityLabel={`${actionLabelPrefix} Moment 메모 수정 취소`}
+                        accessibilityRole="button"
+                        className="h-9 flex-1 items-center justify-center rounded-full border border-white/15"
+                        onPress={() => {
+                          setEditingMomentId(undefined);
+                          setEditNoteDraft('');
+                        }}
+                      >
+                        <AppText className="text-xs font-semibold text-white/75">취소</AppText>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <View className="mt-3 flex-row gap-2">
+                    <Pressable
+                      accessibilityLabel={`${actionLabelPrefix} Moment 수정`}
+                      accessibilityRole="button"
+                      className="h-8 flex-1 items-center justify-center rounded-full border border-white/10 bg-white/10"
+                      onPress={() => {
+                        setEditingMomentId(log.id);
+                        setEditNoteDraft(log.note ?? '');
+                      }}
+                    >
+                      <AppText className="text-xs font-semibold text-white/75">수정</AppText>
+                    </Pressable>
+                    <Pressable
+                      accessibilityLabel={`${actionLabelPrefix} Moment 삭제`}
+                      accessibilityRole="button"
+                      className="h-8 flex-1 items-center justify-center rounded-full border border-red-300/20 bg-red-300/10"
+                      onPress={() => onDeleteMoment(log)}
+                    >
+                      <AppText className="text-xs font-semibold text-red-100">삭제</AppText>
+                    </Pressable>
+                  </View>
+                )}
+              </View>
+            );
+          })
+        )}
+      </View>
+
+      <Pressable
+        accessibilityRole="button"
+        className="mt-4 min-h-[52px] items-center justify-center rounded-full bg-soundlog-lime"
+        onPress={onCreateRecap}
+      >
+        <AppText className="text-sm font-semibold text-soundlog-inverse">
+          {buttonLabel}
+        </AppText>
+      </Pressable>
+    </View>
+  );
+}
 
 export function TravelScreen() {
   const insets = useSafeAreaInsets();
@@ -63,8 +265,18 @@ export function TravelScreen() {
   );
   const momentCount = session.status === 'idle' ? 0 : sessionLogs.length;
   const trackCount = useMemo(
-    () => new Set(sessionLogs.map((log) => log.track?.id).filter(Boolean)).size,
+    () => getUniqueTrackCount(sessionLogs),
     [sessionLogs],
+  );
+  const travelLogMoments = useMemo(
+    () => (session.status === 'idle' ? momentLogs : sessionLogs),
+    [momentLogs, session.status, sessionLogs],
+  );
+  const travelLogMomentCount =
+    session.status === 'idle' ? momentLogs.length : sessionLogs.length;
+  const travelLogTrackCount = useMemo(
+    () => getUniqueTrackCount(travelLogMoments),
+    [travelLogMoments],
   );
   const localRecaps = useMemo(
     () =>
@@ -149,6 +361,7 @@ export function TravelScreen() {
         placeId: log.placeId,
         placeName: log.placeName,
         sessionId: log.sessionId,
+        note: log.note,
         track: log.track,
         travelMode: log.travelMode,
       });
@@ -232,6 +445,36 @@ export function TravelScreen() {
 
     router.push(`/recap-share/${recapId}`);
   };
+  const handleCreateTravelLogRecap = () => {
+    if (travelLogMomentCount === 0) {
+      router.push('/camera');
+      return;
+    }
+
+    if (session.status === 'active') {
+      setIsEndConfirmVisible(true);
+      return;
+    }
+
+    if (session.status === 'ended') {
+      openCurrentRecap();
+      return;
+    }
+
+    const latestRecap = localRecaps[0];
+
+    if (latestRecap) {
+      router.push(`/recap-share/${latestRecap.shareId}`);
+    }
+  };
+  const handleDeleteMoment = (moment: MomentLog) => {
+    removeLog(moment.id);
+    setRecapMessage('Moment를 여행 로그에서 삭제했어요.');
+  };
+  const handleEditMomentNote = (moment: MomentLog, note?: string) => {
+    updateLog(moment.id, { note });
+    setRecapMessage(note ? 'Moment 메모를 수정했어요.' : 'Moment 메모를 비웠어요.');
+  };
   const handleCommunityRecapCreated = async (recap: { id: string }) => {
     setSessionRecapId(recap.id);
     await queryClient.invalidateQueries({ queryKey: recapQueryKeys.list });
@@ -276,9 +519,20 @@ export function TravelScreen() {
 
         {recapMessage ? (
           <View className="mt-4 rounded-[16px] border border-white/10 bg-white/10 px-4 py-3">
-            <AppText className="text-sm leading-5 text-white/68">{recapMessage}</AppText>
+            <AppText className="text-sm leading-5 text-white/65">{recapMessage}</AppText>
           </View>
         ) : null}
+
+        <TravelLogSummaryCard
+          logs={travelLogMoments}
+          momentCount={travelLogMomentCount}
+          onCreateRecap={handleCreateTravelLogRecap}
+          onDeleteMoment={handleDeleteMoment}
+          onEditMomentNote={handleEditMomentNote}
+          onOpenMoment={(moment) => router.push(`/recap-share/${moment.id}`)}
+          sessionStatus={session.status}
+          trackCount={travelLogTrackCount}
+        />
 
         <LiveSoundMapSection
           currentLocation={currentLocation}
@@ -296,6 +550,7 @@ export function TravelScreen() {
           onRecapCreated={(recap) => void handleCommunityRecapCreated(recap)}
           sessionId={session.id}
           sessionStatus={session.status}
+          trackCount={trackCount}
         />
 
         <View className="mt-8">
@@ -312,7 +567,7 @@ export function TravelScreen() {
           <View className="mt-4 gap-3">
             {moments.length === 0 ? (
               <View className="rounded-[18px] border border-white/10 bg-white/10 p-4">
-                <AppText className="text-sm leading-6 text-white/58">
+                <AppText className="text-sm leading-6 text-white/60">
                   아직 저장한 Moment가 없어요. 여행 중 카메라 버튼으로 첫 순간을 남겨보세요.
                 </AppText>
               </View>
@@ -342,7 +597,7 @@ export function TravelScreen() {
           <View className="mt-4 gap-3">
             {localRecaps.length === 0 ? (
               <View className="rounded-[18px] border border-white/10 bg-white/10 p-4">
-                <AppText className="text-sm leading-6 text-white/58">
+                <AppText className="text-sm leading-6 text-white/60">
                   여행이 끝나면 저장한 Moment가 Recap으로 묶여요.
                 </AppText>
               </View>

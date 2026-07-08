@@ -11,6 +11,7 @@ export type RecommendationEventType =
   | 'track_save'
   | 'track_unsave'
   | 'playlist_open'
+  | 'mood_adjusted'
   | 'mood_filter_change'
   | 'live_track_shared'
   | 'nearby_sound_opened'

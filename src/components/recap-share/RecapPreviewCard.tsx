@@ -260,6 +260,109 @@ function RecapFilmTemplate({ recap }: { recap: RecapShare }) {
   );
 }
 
+function RecapMapTemplate({ recap }: { recap: RecapShare }) {
+  const moments = (
+    recap.moments?.length ? recap.moments : [createFallbackMoment(recap)]
+  ).slice(0, 4);
+  const pinPositions = [
+    { left: 54, top: 126 },
+    { left: 190, top: 92 },
+    { left: 226, top: 220 },
+    { left: 104, top: 270 },
+  ];
+
+  return (
+    <>
+      <LinearGradient
+        colors={['#07131F', '#0E2532', '#1D1D36']}
+        end={{ x: 1, y: 1 }}
+        start={{ x: 0, y: 0 }}
+        style={StyleSheet.absoluteFill}
+      />
+      <View className="absolute inset-5 overflow-hidden rounded-[18px] border border-white/10 bg-white/5">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <View
+            className="absolute left-0 right-0 h-px"
+            key={`h-${index}`}
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.08)',
+              top: `${18 + index * 16}%`,
+            }}
+          />
+        ))}
+        {Array.from({ length: 4 }).map((_, index) => (
+          <View
+            className="absolute bottom-0 top-0 w-px"
+            key={`v-${index}`}
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.08)',
+              left: `${20 + index * 20}%`,
+            }}
+          />
+        ))}
+        <View
+          className="absolute h-20 w-[150%] rounded-full border"
+          style={{
+            borderColor: 'rgba(183,230,40,0.3)',
+            left: '-20%',
+            top: '42%',
+            transform: [{ rotate: '-24deg' }],
+          }}
+        />
+        <View
+          className="absolute h-16 w-[130%] rounded-full border"
+          style={{
+            borderColor: 'rgba(158,168,255,0.24)',
+            left: '-12%',
+            top: '18%',
+            transform: [{ rotate: '28deg' }],
+          }}
+        />
+      </View>
+
+      <View className="absolute left-7 right-7 top-7">
+        <AppText className="text-[11px] font-semibold tracking-[2px] text-[#B7E628]">
+          SOUNDLOG MAP
+        </AppText>
+        <AppText className="mt-2 text-[25px] font-semibold leading-8 text-white" numberOfLines={2}>
+          {recap.placeName}
+        </AppText>
+      </View>
+
+      {moments.map((moment, index) => (
+        <View
+          className="absolute items-center"
+          key={moment.id}
+          style={pinPositions[index]}
+        >
+          <View className="h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-[#B7E628]">
+            <AppText className="text-[11px] font-semibold text-[#050916]">
+              {index + 1}
+            </AppText>
+          </View>
+          <View className="mt-1 rounded-full bg-black/60 px-2 py-1">
+            <AppText className="text-[9px] font-semibold text-white" numberOfLines={1}>
+              {moment.placeName}
+            </AppText>
+          </View>
+        </View>
+      ))}
+
+      <View className="absolute bottom-6 left-6 right-6 rounded-[18px] border border-white/10 bg-black/60 p-4">
+        <AppText className="text-[10px] font-semibold text-white/55">
+          대표 사운드
+        </AppText>
+        <AppText className="mt-2 text-[22px] font-semibold text-white" numberOfLines={1}>
+          {recap.trackTitle}
+        </AppText>
+        <AppText className="mt-2 text-xs font-medium text-white/70" numberOfLines={1}>
+          {moments.length}개 장소 · {recap.artistName}
+        </AppText>
+      </View>
+    </>
+  );
+}
+
 export function RecapPreviewCard({
   recap,
   template = 'lp',
@@ -269,6 +372,7 @@ export function RecapPreviewCard({
       {template === 'album' ? <RecapAlbumTemplate recap={recap} /> : null}
       {template === 'lp' ? <RecapLpTemplate recap={recap} /> : null}
       {template === 'film' ? <RecapFilmTemplate recap={recap} /> : null}
+      {template === 'map' ? <RecapMapTemplate recap={recap} /> : null}
     </View>
   );
 }

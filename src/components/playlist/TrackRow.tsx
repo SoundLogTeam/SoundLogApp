@@ -11,12 +11,21 @@ type TrackRowProps = {
   isActive: boolean;
   isLiked: boolean;
   isSaved: boolean;
-  onMore: (track: Track) => void;
   onPress: (track: Track) => void;
+  onToggleLike: (track: Track) => void;
+  onToggleSave: (track: Track) => void;
   track: Track;
 };
 
-export function TrackRow({ isActive, isLiked, isSaved, onMore, onPress, track }: TrackRowProps) {
+export function TrackRow({
+  isActive,
+  isLiked,
+  isSaved,
+  onPress,
+  onToggleLike,
+  onToggleSave,
+  track,
+}: TrackRowProps) {
   const keyColor = getTrackKeyColor(track);
   const activeBackground = hexToRgba(keyColor, 0.78);
   const activeGlow = hexToRgba(keyColor, 0.24);
@@ -80,14 +89,42 @@ export function TrackRow({ isActive, isLiked, isSaved, onMore, onPress, track }:
           </View>
         </Pressable>
 
-        <Pressable
-          accessibilityLabel={`${track.title} 더보기`}
-          accessibilityRole="button"
-          className="h-11 w-11 items-center justify-center rounded-full"
-          onPress={() => onMore(track)}
-        >
-          <Feather color="#fff" name="more-horizontal" size={22} />
-        </Pressable>
+        <View className="ml-2 flex-row items-center gap-1.5">
+          <Pressable
+            accessibilityLabel={isLiked ? `${track.title} 좋아요 취소` : `${track.title} 좋아요`}
+            accessibilityRole="button"
+            className="h-9 w-9 items-center justify-center rounded-full bg-white/10"
+            onPress={() => onToggleLike(track)}
+          >
+            <Feather color={isLiked ? '#F5D0FE' : '#fff'} name="heart" size={16} />
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel={isSaved ? `${track.title} 저장 취소` : `${track.title} 저장`}
+            accessibilityRole="button"
+            className="h-9 items-center justify-center rounded-full bg-white/10 px-3"
+            onPress={() => onToggleSave(track)}
+          >
+            <AppText className="text-xs font-semibold text-white">
+              {isSaved ? '저장됨' : '저장'}
+            </AppText>
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel={`${track.title} 외부 링크 패널 열기`}
+            accessibilityRole="button"
+            className={`h-9 items-center justify-center rounded-full px-3 ${
+              isActive ? 'bg-white' : 'bg-white/10'
+            }`}
+            onPress={() => onPress(track)}
+          >
+            <AppText
+              className={`text-xs font-semibold ${isActive ? 'text-[#050916]' : 'text-white'}`}
+            >
+              열기
+            </AppText>
+          </Pressable>
+        </View>
       </View>
     </View>
   );

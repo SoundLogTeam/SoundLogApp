@@ -8,8 +8,9 @@ type TrackListProps = {
   bottomPadding: number;
   currentTrackId?: string;
   likedTrackIds: Set<string>;
-  onOpenMenu: (track: Track) => void;
   onSelectTrack: (track: Track) => void;
+  onToggleLike: (track: Track) => void;
+  onToggleSave: (track: Track) => void;
   savedTrackIds: Set<string>;
   tracks: Track[];
 };
@@ -18,8 +19,9 @@ export function TrackList({
   bottomPadding,
   currentTrackId,
   likedTrackIds,
-  onOpenMenu,
   onSelectTrack,
+  onToggleLike,
+  onToggleSave,
   savedTrackIds,
   tracks,
 }: TrackListProps) {
@@ -38,14 +40,21 @@ export function TrackList({
 
   return (
     <View style={{ paddingBottom: bottomPadding }}>
+      <View className="mx-5 mb-3">
+        <AppText className="text-lg font-semibold text-white">추천 곡</AppText>
+        <AppText className="mt-1 text-xs leading-5 text-white/50">
+          좋아요 · 저장 · 열기로 지금 장소의 사운드트랙을 골라보세요.
+        </AppText>
+      </View>
       {tracks.map((item) => (
         <TrackRow
           key={item.id}
           isActive={currentTrackId === item.id}
           isLiked={likedTrackIds.has(item.id)}
           isSaved={savedTrackIds.has(item.id)}
-          onMore={onOpenMenu}
           onPress={onSelectTrack}
+          onToggleLike={onToggleLike}
+          onToggleSave={onToggleSave}
           track={item}
         />
       ))}

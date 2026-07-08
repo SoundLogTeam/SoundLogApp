@@ -83,13 +83,14 @@ export type MusicLogItem = {
 
 export type MomentLog = {
   id: string;
-  photoUri: string;
+  photoUri?: string;
   createdAt: string;
   sessionId?: string;
   location?: GeoPoint;
   placeCategory?: string;
   placeId?: string;
   placeName?: string;
+  note?: string;
   track?: Track;
   travelMode?: TravelMode;
   moodTags: MoodTag[];
@@ -107,7 +108,7 @@ export type RecapItem = {
   sessionId?: string;
 };
 
-export type RecapTemplateId = 'album' | 'film' | 'lp';
+export type RecapTemplateId = 'album' | 'film' | 'lp' | 'map';
 
 export type RecapShareMoment = {
   id: string;

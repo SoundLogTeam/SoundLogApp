@@ -1,13 +1,21 @@
-import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 
-const musicFilters = ['전체', '드라이브', '산책', '시원한 바람', '신나는'];
+const moodAdjustments = [
+  { filter: '잔잔한', label: '더 잔잔하게' },
+  { filter: '신나는', label: '더 신나게' },
+];
 
-export function PlaylistMusicFilter() {
-  const [selectedFilter, setSelectedFilter] = useState(musicFilters[0]);
+type PlaylistMusicFilterProps = {
+  onSelectMoodFilter: (filter: string) => void;
+  selectedMoodFilter: string;
+};
 
+export function PlaylistMusicFilter({
+  onSelectMoodFilter,
+  selectedMoodFilter,
+}: PlaylistMusicFilterProps) {
   return (
     <ScrollView
       className="-mx-5"
@@ -15,32 +23,36 @@ export function PlaylistMusicFilter() {
       horizontal
       showsHorizontalScrollIndicator={false}
     >
-      {musicFilters.map((filter) => {
-        const isSelected = selectedFilter === filter;
+      {moodAdjustments.map(({ filter, label }) => {
+        const isSelected = selectedMoodFilter === filter;
 
         return (
           <Pressable
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
-            className="h-[26px] justify-center rounded-full border px-3"
+            className="h-9 justify-center rounded-full border px-4"
             key={filter}
-            onPress={() => setSelectedFilter(filter)}
+            onPress={() => onSelectMoodFilter(filter)}
             style={{
-              backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.18)' : 'rgba(255, 255, 255, 0.09)',
-              borderColor: isSelected ? 'rgba(255, 255, 255, 0.42)' : 'rgba(255, 255, 255, 0.22)',
+              backgroundColor: isSelected ? '#B7E628' : 'rgba(255, 255, 255, 0.09)',
+              borderColor: isSelected ? '#B7E628' : 'rgba(255, 255, 255, 0.22)',
             }}
           >
             <View
               className="absolute inset-0 rounded-full"
               style={{
-                backgroundColor: isSelected ? 'rgba(255, 255, 255, 0.08)' : 'rgba(128, 128, 128, 0.05)',
+                backgroundColor: isSelected
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : 'rgba(128, 128, 128, 0.05)',
               }}
             />
             <AppText
-              className={`text-xs font-medium ${isSelected ? 'text-white' : 'text-white/85'}`}
+              className={`text-xs font-semibold ${
+                isSelected ? 'text-[#050916]' : 'text-white/85'
+              }`}
               numberOfLines={1}
             >
-              {filter}
+              {label}
             </AppText>
           </Pressable>
         );

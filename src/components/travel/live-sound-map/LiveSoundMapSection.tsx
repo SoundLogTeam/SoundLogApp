@@ -17,8 +17,13 @@ import type {
 import { formatPlaceLabel } from '@/utils/placeLabel';
 
 import { OpenLayersSoundMap } from './OpenLayersSoundMap';
-import { createSoundMapCenter, createSoundMapPins } from './soundMapData';
+import {
+  createFallbackMusicMatches,
+  createSoundMapCenter,
+  createSoundMapPins,
+} from './soundMapData';
 import type { SoundMapPin, SoundMapVisibility } from './types';
+import { modeLabelByValue } from '../travelData';
 
 type LiveSoundMapSectionProps = {
   currentLocation?: GeoPoint;
@@ -50,6 +55,16 @@ const visibilityCopy: Record<SoundMapVisibility, { description: string; title: s
   },
 };
 
+function createProfileSummary(match: MusicMatch) {
+  return [
+    ...match.pin.profile.preferredMoods.slice(0, 1),
+    ...match.pin.profile.preferredGenres.slice(0, 1),
+    ...match.pin.profile.travelStyles.slice(0, 1),
+  ]
+    .filter(Boolean)
+    .join(' · ') || '취향 공개';
+}
+
 export function LiveSoundMapSection({
   currentLocation,
   currentPlace,
@@ -74,7 +89,24 @@ export function LiveSoundMapSection({
   const isLive = isTravelActive && visibility !== 'private';
   const syncLocation = currentLocation ?? currentPlace?.location;
   const locationLabel = currentPlace?.title ?? formatPlaceLabel(center);
+  const currentTrackLabel = currentTrack
+    ? `${currentTrack.title} - ${currentTrack.artist}`
+    : '곡명 A - 아티스트';
   const visibilityMessage = visibilityCopy[visibility];
+  const fallbackMatches = useMemo(
+    () =>
+      createFallbackMusicMatches({
+        center,
+        currentTrack,
+        place: currentPlace,
+        selectedMode,
+      }),
+    [center, currentPlace, currentTrack, selectedMode],
+  );
+  const activeMatches = visibility === 'nearby' && matches.length === 0 ? fallbackMatches : matches;
+  const visibleMatches = activeMatches.filter((match) => !hiddenMatchIds[match.id]).slice(0, 2);
+  const selectedModeLabel = selectedMode ? modeLabelByValue[selectedMode] : '산책';
+  const matchModeTabs = Array.from(new Set([selectedModeLabel, '카페', '야경'])).slice(0, 3);
   const pins = useMemo(() => {
     const matchScoreByPinId = new Map(matches.map((match) => [match.targetPinId, match.matchScore]));
     const serverVisualPins = serverPins.map((pin) => toVisualPin(pin, matchScoreByPinId.get(pin.id)));
@@ -231,26 +263,19 @@ export function LiveSoundMapSection({
       setPendingMatchId(undefined);
     }
   };
-  const handleReportMatch = async (match: MusicMatch) => {
+  const handleReportAndBlockMatch = async (match: MusicMatch) => {
     try {
       await communityApi.reportTarget({
         reason: 'safety',
         targetPinId: match.targetPinId,
       });
-      setMapMessage('신고를 접수했어요. 이 매칭은 계속 볼 수 있지만 정확한 위치와 연락처는 노출되지 않아요.');
-    } catch {
-      setMapMessage('신고를 접수하지 못했어요. 잠시 후 다시 시도해주세요.');
-    }
-  };
-  const handleBlockMatch = async (match: MusicMatch) => {
-    try {
       await communityApi.blockUser({ targetPinId: match.targetPinId });
       setHiddenMatchIds((state) => ({ ...state, [match.id]: true }));
       setMatches((items) => items.filter((item) => item.id !== match.id));
       setServerPins((items) => items.filter((item) => item.id !== match.targetPinId));
-      setMapMessage('차단했어요. 해당 여행자의 공개 음악은 더 이상 추천에 보이지 않아요.');
+      setMapMessage('차단/신고를 접수했어요. 해당 여행자의 공개 음악은 더 이상 추천에 보이지 않아요.');
     } catch {
-      setMapMessage('차단하지 못했어요. 잠시 후 다시 시도해주세요.');
+      setMapMessage('차단/신고를 접수하지 못했어요. 잠시 후 다시 시도해주세요.');
     }
   };
 
@@ -267,7 +292,7 @@ export function LiveSoundMapSection({
           <AppText className="mt-3 text-[24px] font-semibold leading-8 text-white">
             지금 듣는 음악을 지도에 남겨요
           </AppText>
-          <AppText className="mt-2 text-sm leading-6 text-white/58">
+          <AppText className="mt-2 text-sm leading-6 text-white/60">
             OpenLayers 지도를 Soundlog 다크 테마로 조정하고, 여행 모드 중인 내 음악과
             동행자/주변 익명 핀을 함께 보여줘요.
           </AppText>
@@ -299,7 +324,7 @@ export function LiveSoundMapSection({
 
       {mapMessage ? (
         <View className="mt-4 rounded-[16px] bg-black/20 px-4 py-3">
-          <AppText className="text-xs leading-5 text-white/62">{mapMessage}</AppText>
+          <AppText className="text-xs leading-5 text-white/60">{mapMessage}</AppText>
         </View>
       ) : null}
 
@@ -309,6 +334,9 @@ export function LiveSoundMapSection({
             <Feather color="#B7E628" name={isLive ? 'radio' : 'lock'} size={18} />
           </View>
           <View className="min-w-0 flex-1">
+            <AppText className="mb-2 text-[11px] font-semibold text-white/40">
+              내 현재 음악
+            </AppText>
             <AppText className="text-sm font-semibold text-white">
               {isTravelActive ? visibilityMessage.title : '여행 모드 OFF'}
             </AppText>
@@ -318,9 +346,16 @@ export function LiveSoundMapSection({
                 : '여행을 시작하면 현재 위치와 Soundlog에서 선택한 음악을 지도에 표시할 수 있어요.'}
             </AppText>
             <AppText className="mt-2 text-xs text-white/40" numberOfLines={1}>
-              {locationLabel} · {currentTrack ? `${currentTrack.title} - ${currentTrack.artist}` : '선택한 음악 없음'}
+              {locationLabel} · {currentTrackLabel}
             </AppText>
           </View>
+          {isLive ? (
+            <View className="rounded-full bg-soundlog-lime px-2.5 py-1">
+              <AppText className="text-[10px] font-semibold text-soundlog-inverse">
+                표시중
+              </AppText>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -335,7 +370,7 @@ export function LiveSoundMapSection({
               className={`min-h-[44px] flex-1 basis-[92px] items-center justify-center rounded-full border px-3 ${
                 selected
                   ? 'border-soundlog-lime bg-soundlog-lime'
-                  : 'border-white/12 bg-white/10'
+                  : 'border-white/10 bg-white/10'
               }`}
               key={option.value}
               onPress={() => handleVisibilityPress(option.value)}
@@ -352,65 +387,148 @@ export function LiveSoundMapSection({
         })}
       </View>
 
-      {visibility === 'nearby' && matches.length > 0 ? (
-        <View className="mt-4 gap-2">
-          <AppText className="text-sm font-semibold text-white">주변 음악 취향 매칭</AppText>
-          {matches.filter((match) => !hiddenMatchIds[match.id]).slice(0, 2).map((match) => {
-            const requested = Boolean(requestedMatchIds[match.id]);
-            const disabled = requested || pendingMatchId === match.id;
+      {visibility !== 'nearby' ? (
+        <Pressable
+          accessibilityRole="button"
+          className="mt-4 rounded-[18px] border border-soundlog-lime/30 bg-soundlog-lime/10 p-4"
+          onPress={() => handleVisibilityPress('nearby')}
+        >
+          <View className="flex-row items-center justify-between gap-3">
+            <View className="min-w-0 flex-1">
+              <AppText className="text-sm font-semibold text-white">주변 사운드 취향 보기</AppText>
+              <AppText className="mt-1 text-xs leading-5 text-white/55">
+                대략 위치와 현재 음악만 공개하고 취향이 맞는 여행자를 찾아요.
+              </AppText>
+            </View>
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-soundlog-lime">
+              <Feather color="#050916" name="users" size={17} />
+            </View>
+          </View>
+        </Pressable>
+      ) : (
+        <View className="mt-4 gap-3">
+          <View>
+            <AppText className="text-base font-semibold text-white">주변 사운드 취향</AppText>
+            <AppText className="mt-1 text-xs leading-5 text-white/55">
+              대략 위치만 공개 · 2시간 후 자동 숨김
+            </AppText>
+          </View>
 
-            return (
+          <View className="flex-row gap-2">
+            {matchModeTabs.map((label, index) => (
               <View
-                className="rounded-[18px] border border-white/10 bg-black/20 p-4"
-                key={match.id}
+                className={`rounded-full px-3 py-1.5 ${
+                  index === 0 ? 'bg-soundlog-lime' : 'bg-white/10'
+                }`}
+                key={label}
               >
-                <View className="flex-row items-start justify-between gap-3">
-                  <View className="min-w-0 flex-1">
-                    <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
-                      {match.pin.track?.title ?? '공개한 음악'} · {match.matchScore}%
+                <AppText
+                  className={`text-xs font-semibold ${
+                    index === 0 ? 'text-soundlog-inverse' : 'text-white/65'
+                  }`}
+                >
+                  {label}
+                </AppText>
+              </View>
+            ))}
+          </View>
+
+          {visibleMatches.length > 0 ? (
+            visibleMatches.map((match) => {
+              const requested = Boolean(requestedMatchIds[match.id]);
+              const disabled = requested || pendingMatchId === match.id;
+
+              return (
+                <View
+                  className="rounded-[20px] border border-white/10 bg-black/20 p-4"
+                  key={match.id}
+                >
+                  <View className="mb-4">
+                    <AppText className="text-[20px] font-semibold text-white">
+                      동행 매칭 요청
                     </AppText>
-                    <AppText className="mt-1 text-xs leading-5 text-white/55" numberOfLines={2}>
-                      {match.pin.alias} · {match.pin.placeName ?? '대략 위치'} · 정확한 좌표 숨김
+                    <AppText className="mt-1 text-xs leading-5 text-white/55">
+                      취향 {match.matchScore}% 일치 · {match.pin.placeName ?? '성수 근처'} · 정확한 위치 비공개
                     </AppText>
                   </View>
-                  <Pressable
-                    accessibilityRole="button"
-                    className={`min-h-[44px] shrink-0 justify-center rounded-full px-3 ${
-                      disabled ? 'bg-white/10' : 'bg-soundlog-lime'
-                    }`}
-                    disabled={disabled}
-                    onPress={() => void handleMateRequest(match)}
-                  >
-                    <AppText
-                      className={`text-xs font-semibold ${
-                        disabled ? 'text-white/45' : 'text-soundlog-inverse'
-                      }`}
-                    >
-                      {requested ? '요청됨' : pendingMatchId === match.id ? '전송 중' : '동행 요청'}
+
+                  <View className="flex-row items-start justify-between gap-3">
+                    <View className="min-w-0 flex-1">
+                      <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
+                        {match.pin.alias}
+                      </AppText>
+                      <AppText className="mt-1 text-xs leading-5 text-white/55" numberOfLines={2}>
+                        {createProfileSummary(match)} · {match.pin.placeName ?? '대략 위치'} · 정확한 좌표 숨김
+                      </AppText>
+                    </View>
+                    <View className="rounded-full bg-soundlog-lime px-3 py-1.5">
+                      <AppText className="text-xs font-semibold text-soundlog-inverse">
+                        {match.matchScore}%
+                      </AppText>
+                    </View>
+                  </View>
+
+                  <AppText className="mt-4 text-[11px] font-semibold text-white/40">
+                    공개 사운드
+                  </AppText>
+                  <View className="mt-2 rounded-[16px] border border-white/10 bg-white/5 px-4 py-3">
+                    <AppText className="text-xs font-semibold text-white">
+                      {match.pin.track?.title ?? '공개한 음악'}
                     </AppText>
-                  </Pressable>
+                    <AppText className="mt-1 text-xs leading-5 text-white/55" numberOfLines={2}>
+                      {match.pin.track?.artist ?? match.pin.alias} · 음악 취향으로 먼저 판단해요
+                    </AppText>
+                  </View>
+
+                  <View className="mt-3 gap-1.5">
+                    <AppText className="text-[11px] text-white/40">
+                      정확한 위치는 서로 수락 후에도 선택 공개
+                    </AppText>
+                    <AppText className="text-[11px] text-white/40">
+                      첫 메시지는 템플릿으로만 시작
+                    </AppText>
+                  </View>
+
+                  <View className="mt-3 flex-row gap-2">
+                    <Pressable
+                      accessibilityRole="button"
+                      className={`min-h-[44px] flex-1 items-center justify-center rounded-full px-3 ${
+                        disabled ? 'bg-white/10' : 'bg-soundlog-lime'
+                      }`}
+                      disabled={disabled}
+                      onPress={() => void handleMateRequest(match)}
+                    >
+                      <AppText
+                        className={`text-xs font-semibold ${
+                          disabled ? 'text-white/45' : 'text-soundlog-inverse'
+                        }`}
+                      >
+                        {requested ? '요청됨' : pendingMatchId === match.id ? '전송 중' : '취향으로 인사'}
+                      </AppText>
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      className="min-h-[44px] flex-1 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-3"
+                      onPress={() => void handleReportAndBlockMatch(match)}
+                    >
+                      <AppText className="text-xs font-semibold text-amber-100">차단/신고</AppText>
+                    </Pressable>
+                  </View>
                 </View>
-                <View className="mt-3 flex-row gap-2">
-                  <Pressable
-                    accessibilityRole="button"
-                    className="min-h-[44px] flex-1 items-center justify-center rounded-full bg-white/10 px-3"
-                    onPress={() => void handleReportMatch(match)}
-                  >
-                    <AppText className="text-xs font-semibold text-white/65">신고</AppText>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    className="min-h-[44px] flex-1 items-center justify-center rounded-full bg-white/10 px-3"
-                    onPress={() => void handleBlockMatch(match)}
-                  >
-                    <AppText className="text-xs font-semibold text-white/65">차단</AppText>
-                  </Pressable>
-                </View>
-              </View>
-            );
-          })}
+              );
+            })
+          ) : (
+            <View className="rounded-[18px] border border-white/10 bg-black/20 p-4">
+              <AppText className="text-sm font-semibold text-white">
+                주변 공개 음악을 찾는 중이에요
+              </AppText>
+              <AppText className="mt-2 text-xs leading-5 text-white/55">
+                아직 매칭 후보가 없어도 내 현재 음악 핀은 지도에 남고, 새 공개 핀이 들어오면 이 영역에 표시돼요.
+              </AppText>
+            </View>
+          )}
         </View>
-      ) : null}
+      )}
     </View>
   );
 }

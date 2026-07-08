@@ -1,4 +1,11 @@
-import type { GeoPoint, PlaceContext, Track } from '@/types/domain';
+import type {
+  GeoPoint,
+  MusicMatch,
+  PlaceContext,
+  SoundMapPin as DomainSoundMapPin,
+  Track,
+  TravelMode,
+} from '@/types/domain';
 
 import type { SoundMapPin, SoundMapVisibility } from './types';
 
@@ -8,9 +15,17 @@ const DEFAULT_CENTER: GeoPoint = {
 };
 
 const fallbackTrack: Track = {
-  artist: 'Soundlog',
+  artist: '아티스트',
   id: 'soundlog-fallback-track',
-  title: '선택한 음악 없음',
+  title: '곡명 A',
+};
+
+const travelModeLabelByValue: Partial<Record<TravelMode, string>> = {
+  cafe: '카페',
+  drive: '드라이브',
+  night: '야경',
+  ocean: '바다',
+  walk: '산책',
 };
 
 function offsetLocation(center: GeoPoint, latOffset: number, lngOffset: number): GeoPoint {
@@ -86,4 +101,116 @@ export function createSoundMapPins({
   }
 
   return pins;
+}
+
+function createFallbackSoundMapPin({
+  center,
+  id,
+  index,
+  matchMood,
+  placeName,
+  title,
+  track,
+}: {
+  center: GeoPoint;
+  id: string;
+  index: number;
+  matchMood: string;
+  placeName: string;
+  title: string;
+  track: Track;
+}): DomainSoundMapPin {
+  const offsets = [
+    { lat: -0.0038, lng: -0.0046 },
+    { lat: 0.0022, lng: -0.006 },
+  ];
+  const offset = offsets[index] ?? offsets[0];
+
+  return {
+    alias: title,
+    expiresAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
+    id,
+    isMine: false,
+    location: offsetLocation(center, offset.lat, offset.lng),
+    moodTags: [],
+    placeName,
+    profile: {
+      preferredGenres: index === 0 ? ['인디'] : ['시티팝'],
+      preferredMoods: index === 0 ? ['잔잔한', matchMood] : ['설레는', matchMood],
+      travelStyles: index === 0 ? ['혼자 여행'] : ['사진 산책'],
+    },
+    track,
+    updatedAt: new Date().toISOString(),
+    visibility: 'nearby',
+  };
+}
+
+export function createFallbackMusicMatches({
+  center,
+  currentTrack,
+  place,
+  selectedMode,
+}: {
+  center: GeoPoint;
+  currentTrack?: Track;
+  place?: PlaceContext;
+  selectedMode?: TravelMode;
+}): MusicMatch[] {
+  const matchMood = selectedMode ? travelModeLabelByValue[selectedMode] ?? '산책' : '산책';
+  const firstTrack: Track = currentTrack ?? {
+    artist: '아티스트',
+    fallbackColor: '#2B176C',
+    id: 'fallback-match-track-rainy',
+    title: '곡명 C',
+  };
+  const secondTrack: Track = {
+    artist: 'City Sound',
+    fallbackColor: '#9EA8FF',
+    id: 'fallback-match-track-night',
+    title: 'City Light Walk',
+  };
+  const placeName = place?.title ?? '성수 근처';
+  const firstPin = createFallbackSoundMapPin({
+    center,
+    id: 'nearby-rainy',
+    index: 0,
+    matchMood,
+    placeName,
+    title: '비 오는 골목 닉네임',
+    track: firstTrack,
+  });
+  const secondPin = createFallbackSoundMapPin({
+    center,
+    id: 'nearby-night',
+    index: 1,
+    matchMood,
+    placeName: '대략 위치 공개',
+    title: '야경 수집가',
+    track: secondTrack,
+  });
+
+  return [
+    {
+      id: 'fallback-match-rainy',
+      matchScore: 82,
+      pin: firstPin,
+      safety: {
+        contactHiddenUntilAccepted: true,
+        exactLocationHidden: true,
+        firstMessageTemplates: ['liked_track', 'walk_together'],
+      },
+      targetPinId: firstPin.id,
+    },
+    {
+      id: 'fallback-match-night',
+      matchScore: 76,
+      pin: secondPin,
+      safety: {
+        contactHiddenUntilAccepted: true,
+        exactLocationHidden: true,
+        firstMessageTemplates: ['cafe_together', 'liked_track'],
+      },
+      targetPinId: secondPin.id,
+    },
+  ];
 }

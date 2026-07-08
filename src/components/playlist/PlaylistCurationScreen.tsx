@@ -15,9 +15,9 @@ import {
   PlaylistErrorState,
   PlaylistLoadingState,
 } from '@/components/playlist/PlaylistState';
-import { TrackActionMenu } from '@/components/playlist/TrackActionMenu';
 import { TrackList } from '@/components/playlist/TrackList';
 import { getCurationListBottomPadding, getMiniPlayerBottom } from '@/constants/layout';
+import { useHomeFilterStore } from '@/store/homeFilterStore';
 import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
@@ -32,6 +32,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const { currentTrack, setTrack } = usePlayerStore();
+  const { selectedMoodFilter, setSelectedMoodFilter } = useHomeFilterStore();
   const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
   const {
     isLiked,
@@ -44,7 +45,6 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
   } = useLibraryStore();
   const { data: playlist, isError, isLoading, refetch } = usePlaylistCurationQuery(playlistId);
 
-  const [selectedTrackId, setSelectedTrackId] = useState<string>();
   const [actionMessage, setActionMessage] = useState<string>();
 
   useEffect(() => {
@@ -55,10 +55,6 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     seedFromPlaylist(playlist.id, playlist.tracks);
   }, [playlist, seedFromPlaylist]);
 
-  const selectedTrack = useMemo(
-    () => playlist?.tracks.find((track) => track.id === selectedTrackId),
-    [playlist?.tracks, selectedTrackId],
-  );
   const likedTrackIds = useMemo(
     () =>
       new Set(
@@ -102,67 +98,71 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     selectTrackForSoundlog(firstTrack);
   };
 
-  const toggleLiked = () => {
-    if (!selectedTrack) {
-      return;
-    }
-
-    const nextLiked = !isLiked(selectedTrack.id);
+  const toggleLikedTrack = (track: Track) => {
+    const nextLiked = !isLiked(track.id);
     const context = createRecommendationEventContext();
+
     setActionMessage(undefined);
-    setLikeState(selectedTrack, nextLiked, playlist?.id);
+    setLikeState(track, nextLiked, playlist?.id);
     void libraryApi
-      .updateTrackState(selectedTrack.id, {
+      .updateTrackState(track.id, {
         action: nextLiked ? 'like' : 'unlike',
         context,
         playlistId: playlist?.id,
       })
       .catch(() => {
-        setLikeState(selectedTrack, !nextLiked, playlist?.id);
+        setLikeState(track, !nextLiked, playlist?.id);
         setActionMessage('서버 저장에 실패해서 좋아요 상태를 되돌렸어요.');
       });
     syncRecommendationEvent(
       addRecommendationEvent({
         context,
         playlistId: playlist?.id,
-        trackId: selectedTrack.id,
+        trackId: track.id,
         type: nextLiked ? 'track_like' : 'track_unlike',
       }),
     );
   };
 
-  const toggleSaved = () => {
-    if (!selectedTrack) {
-      return;
-    }
-
-    const nextSaved = !isSaved(selectedTrack.id);
+  const toggleSavedTrack = (track: Track) => {
+    const nextSaved = !isSaved(track.id);
     const context = createRecommendationEventContext();
+
     setActionMessage(undefined);
-    setSaveState(selectedTrack, nextSaved, playlist?.id);
+    setSaveState(track, nextSaved, playlist?.id);
     void libraryApi
-      .updateTrackState(selectedTrack.id, {
+      .updateTrackState(track.id, {
         action: nextSaved ? 'save' : 'unsave',
         context,
         playlistId: playlist?.id,
       })
       .catch(() => {
-        setSaveState(selectedTrack, !nextSaved, playlist?.id);
+        setSaveState(track, !nextSaved, playlist?.id);
         setActionMessage('서버 저장에 실패해서 저장 상태를 되돌렸어요.');
       });
     syncRecommendationEvent(
       addRecommendationEvent({
         context,
         playlistId: playlist?.id,
-        trackId: selectedTrack.id,
+        trackId: track.id,
         type: nextSaved ? 'track_save' : 'track_unsave',
       }),
     );
   };
 
-  const closeMenu = () => {
-    setSelectedTrackId(undefined);
-    setActionMessage(undefined);
+  const handleAdjustMood = (filter: string) => {
+    const context = createRecommendationEventContext({ moodFilter: filter });
+
+    setSelectedMoodFilter(filter);
+    setActionMessage(`${filter} 무드로 다음 추천 방향을 조정했어요.`);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context,
+        playlistId: playlist?.id,
+        type: 'mood_adjusted',
+        value: filter,
+      }),
+    );
   };
   const playlistContent = isLoading ? (
     <PlaylistLoadingState />
@@ -175,8 +175,9 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       bottomPadding={listBottomPadding}
       currentTrackId={currentTrack?.id}
       likedTrackIds={likedTrackIds}
-      onOpenMenu={(track) => setSelectedTrackId(track.id)}
       onSelectTrack={selectTrackForSoundlog}
+      onToggleLike={toggleLikedTrack}
+      onToggleSave={toggleSavedTrack}
       savedTrackIds={savedTrackIds}
       tracks={playlist.tracks}
     />
@@ -196,8 +197,10 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
           {playlist ? (
             <PlaylistHeroInfo
               disabled={playlist.tracks.length === 0}
+              onAdjustMood={handleAdjustMood}
               onOpenFirstTrack={selectFirstTrack}
               playlist={playlist}
+              selectedMoodFilter={selectedMoodFilter}
             />
           ) : null}
           {playlistContent}
@@ -208,8 +211,10 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
             playlist ? (
               <PlaylistHeroInfo
                 disabled={playlist.tracks.length === 0}
+                onAdjustMood={handleAdjustMood}
                 onOpenFirstTrack={selectFirstTrack}
                 playlist={playlist}
+                selectedMoodFilter={selectedMoodFilter}
               />
             ) : undefined
           }
@@ -217,17 +222,6 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
           {playlistContent}
         </PlaylistBottomSheet>
       )}
-
-      <TrackActionMenu
-        actionMessage={actionMessage}
-        isLiked={isLiked(selectedTrack?.id)}
-        isSaved={isSaved(selectedTrack?.id)}
-        onClose={closeMenu}
-        onToggleLike={toggleLiked}
-        onToggleSave={toggleSaved}
-        track={selectedTrack}
-        visible={Boolean(selectedTrack)}
-      />
 
       {actionMessage ? (
         <View
