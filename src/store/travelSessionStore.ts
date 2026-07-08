@@ -36,7 +36,7 @@ type TravelSessionState = {
   setMode: (mode: TravelMode) => void;
   setRecommendationMode: (mode: MusicRecommendationMode) => void;
   setSessionRecapId: (recapId?: string) => void;
-  startSession: () => void;
+  startSession: (session?: Partial<Pick<TravelSession, 'id' | 'startedAt'>>) => void;
 };
 
 const idleSession: TravelSession = {
@@ -93,11 +93,11 @@ export const useTravelSessionStore = create<TravelSessionState>()(
             recapId,
           },
         })),
-      startSession: () =>
+      startSession: (session) =>
         set({
           session: {
-            id: `session-${Date.now()}`,
-            startedAt: new Date().toISOString(),
+            id: session?.id ?? `session-${Date.now()}`,
+            startedAt: session?.startedAt ?? new Date().toISOString(),
             status: 'active',
           },
         }),

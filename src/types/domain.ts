@@ -146,8 +146,15 @@ export type TravelRoomMoment = {
   momentLogId?: string;
   note?: string;
   placeName?: string;
-  status: 'accepted' | 'candidate';
+  status: 'accepted' | 'candidate' | 'rejected';
   track?: Track;
+  commentCount?: number;
+  comments?: Array<{
+    id: string;
+    userId: string;
+    body: string;
+    createdAt: string;
+  }>;
   createdAt: string;
 };
 

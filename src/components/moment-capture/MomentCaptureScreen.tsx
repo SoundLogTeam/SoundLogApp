@@ -190,7 +190,7 @@ export function MomentCaptureScreen() {
           <Pressable
             accessibilityRole="button"
             className="mt-7 rounded-full bg-white px-5 py-3"
-            onPress={startSession}
+            onPress={() => startSession()}
           >
             <AppText className="text-center font-semibold text-[#050916]">
               여행 시작하고 촬영하기
