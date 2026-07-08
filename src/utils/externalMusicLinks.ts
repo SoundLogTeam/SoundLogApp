@@ -3,7 +3,7 @@ import { Linking, Platform } from 'react-native';
 import type { Track } from '@/types/domain';
 
 export type ExternalMusicLink = {
-  id: 'melon' | 'spotify' | 'web' | 'youtube' | 'youtubeMusic';
+  id: 'provided' | 'search';
   label: string;
   url: string;
 };
@@ -22,38 +22,18 @@ function appendUniqueLink(links: ExternalMusicLink[], link: ExternalMusicLink) {
 
 export function getExternalMusicLinks(track: Track): ExternalMusicLink[] {
   const searchQuery = createTrackSearchQuery(track);
-  const links: ExternalMusicLink[] = [
-    {
-      id: 'spotify',
-      label: 'Spotify에서 열기',
-      url: `https://open.spotify.com/search/${searchQuery}`,
-    },
-  ];
+  const links: ExternalMusicLink[] = [];
 
   appendUniqueLink(links, {
-    id: 'youtubeMusic',
-    label: 'YouTube Music',
-    url: track.platformUrls?.youtubeMusic ?? `https://music.youtube.com/search?q=${searchQuery}`,
+    id: 'search',
+    label: '웹에서 곡 검색',
+    url: `https://www.google.com/search?q=${searchQuery}`,
   });
-
-  appendUniqueLink(links, {
-    id: 'youtube',
-    label: 'YouTube 검색',
-    url: `https://www.youtube.com/results?search_query=${searchQuery}`,
-  });
-
-  if (track.platformUrls?.melon) {
-    appendUniqueLink(links, {
-      id: 'melon',
-      label: 'Melon에서 열기',
-      url: track.platformUrls.melon,
-    });
-  }
 
   if (track.externalUrl) {
     appendUniqueLink(links, {
-      id: 'web',
-      label: '음악 링크 열기',
+      id: 'provided',
+      label: '제공 링크 열기',
       url: track.externalUrl,
     });
   }

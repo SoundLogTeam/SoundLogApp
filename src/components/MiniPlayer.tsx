@@ -138,7 +138,7 @@ export function MiniPlayer() {
       await openExternalMusicLink(link);
       setActionMessage(`${link.label} 링크를 열었어요. 돌아오면 이 곡을 기록할 수 있어요.`);
     } catch {
-      setActionMessage('외부 음악 링크를 열지 못했어요. YouTube 검색을 다시 시도해보세요.');
+      setActionMessage('외부 음악 링크를 열지 못했어요. 웹 검색을 다시 시도해보세요.');
     }
   };
   const renderCover = (sizeClassName: string, radiusClassName: string) => (
