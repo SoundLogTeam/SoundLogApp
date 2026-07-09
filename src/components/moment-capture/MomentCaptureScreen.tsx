@@ -8,7 +8,10 @@ import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
 import { CameraCaptureView } from '@/components/moment-capture/CameraCaptureView';
 import { CameraPermissionState } from '@/components/moment-capture/CameraPermissionState';
-import { MomentReviewPanel } from '@/components/moment-capture/MomentReviewPanel';
+import {
+  MomentReviewPanel,
+  type MomentReviewPanelHandle,
+} from '@/components/moment-capture/MomentReviewPanel';
 import { Screen } from '@/components/Screen';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
 import {
@@ -29,11 +32,15 @@ type LocationStatus = 'denied' | 'granted' | 'idle' | 'loading' | 'unavailable';
 
 export function MomentCaptureScreen() {
   const cameraRef = useRef<CameraView>(null);
+  const reviewPanelRef = useRef<MomentReviewPanelHandle>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
+  const [capturedAt, setCapturedAt] = useState<string>();
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string>();
   const [errorMessage, setErrorMessage] = useState<string>();
   const [isReviewing, setIsReviewing] = useState(false);
-  const [reviewMoodTags, setReviewMoodTags] = useState<MomentLog['moodTags']>([]);
+  const [reviewMoodTags, setReviewMoodTags] = useState<MomentLog['moodTags']>(
+    [],
+  );
   const [reviewNote, setReviewNote] = useState('');
   const [reviewPlaceName, setReviewPlaceName] = useState('');
   const [shouldSaveMusic, setShouldSaveMusic] = useState(true);
@@ -45,17 +52,31 @@ export function MomentCaptureScreen() {
   const queueCreate = useMomentLogStore((state) => state.queueCreate);
   const resolveLocalLog = useMomentLogStore((state) => state.resolveLocalLog);
   const updateLog = useMomentLogStore((state) => state.updateLog);
-  const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
+  const addRecommendationEvent = useRecommendationEventStore(
+    (state) => state.addEvent,
+  );
   const { selectedMoodFilter } = useHomeFilterStore();
   const { currentTrack, playlistId } = usePlayerStore();
-  const { currentLocation, currentPlace, selectedMode, session, setLocation, startSession } =
-    useTravelSessionStore();
+  const {
+    currentLocation,
+    currentPlace,
+    selectedMode,
+    session,
+    setLocation,
+    startSession,
+  } = useTravelSessionStore();
 
-  const moodTags = useMemo(() => getMoodTagsFromFilter(selectedMoodFilter), [selectedMoodFilter]);
+  const moodTags = useMemo(
+    () => getMoodTagsFromFilter(selectedMoodFilter),
+    [selectedMoodFilter],
+  );
 
   const prepareReview = (photoUri?: string) => {
+    setCapturedAt(new Date().toISOString());
     setCapturedPhotoUri(photoUri);
-    setReviewPlaceName(currentPlace?.title ?? formatPlaceLabel(currentLocation));
+    setReviewPlaceName(
+      currentPlace?.title ?? formatPlaceLabel(currentLocation),
+    );
     setReviewMoodTags(moodTags);
     setReviewNote('');
     setShouldSaveMusic(Boolean(currentTrack));
@@ -84,12 +105,14 @@ export function MomentCaptureScreen() {
           setLocation(location);
           setLocationStatus('granted');
         } else {
-          const fallbackLocation = useTravelSessionStore.getState().currentLocation;
+          const fallbackLocation =
+            useTravelSessionStore.getState().currentLocation;
           setLocationStatus(fallbackLocation ? 'granted' : 'unavailable');
         }
       } catch {
         if (isMounted) {
-          const fallbackLocation = useTravelSessionStore.getState().currentLocation;
+          const fallbackLocation =
+            useTravelSessionStore.getState().currentLocation;
           setLocationStatus(fallbackLocation ? 'granted' : 'unavailable');
         }
       }
@@ -139,11 +162,23 @@ export function MomentCaptureScreen() {
     try {
       const id = `moment-${Date.now()}`;
       const locationSnapshot: GeoPoint | undefined = currentLocation;
-      const photoUri = capturedPhotoUri
-        ? await persistMomentPhoto(capturedPhotoUri, id)
+      let photoSourceUri = capturedPhotoUri;
+
+      if (capturedPhotoUri) {
+        const capturePromise = reviewPanelRef.current?.capturePhoto();
+        const capturedCanvasUri = capturePromise
+          ? await capturePromise.catch(() => undefined)
+          : undefined;
+
+        photoSourceUri = capturedCanvasUri ?? capturedPhotoUri;
+      }
+
+      const photoUri = photoSourceUri
+        ? await persistMomentPhoto(photoSourceUri, id)
         : undefined;
-      const createdAt = new Date().toISOString();
-      const placeName = reviewPlaceName.trim() || formatPlaceLabel(locationSnapshot);
+      const createdAt = capturedAt ?? new Date().toISOString();
+      const placeName =
+        reviewPlaceName.trim() || formatPlaceLabel(locationSnapshot);
       const note = reviewNote.trim() || undefined;
       const trackSnapshot = shouldSaveMusic ? currentTrack : undefined;
       const recommendationContext = createRecommendationEventContext({
@@ -236,7 +271,8 @@ export function MomentCaptureScreen() {
             여행을 먼저 시작해요
           </AppText>
           <AppText className="mt-3 text-center text-sm leading-6 text-white/60">
-            순간 저장은 현재 여행에 연결돼요. 여행을 시작하면 사진, 음악, 장소가 하나의 기록으로 묶입니다.
+            순간 저장은 현재 여행에 연결돼요. 여행을 시작하면 사진, 음악, 장소가
+            하나의 기록으로 묶입니다.
           </AppText>
           <Pressable
             accessibilityRole="button"
@@ -252,7 +288,9 @@ export function MomentCaptureScreen() {
             className="mt-3 rounded-full border border-white/15 px-5 py-3"
             onPress={() => router.back()}
           >
-            <AppText className="text-center font-semibold text-white/80">돌아가기</AppText>
+            <AppText className="text-center font-semibold text-white/80">
+              돌아가기
+            </AppText>
           </Pressable>
         </View>
       </Screen>
@@ -262,6 +300,8 @@ export function MomentCaptureScreen() {
   if (isReviewing) {
     return (
       <MomentReviewPanel
+        ref={reviewPanelRef}
+        capturedAt={capturedAt}
         errorMessage={errorMessage}
         includeMusic={shouldSaveMusic}
         isSaving={isSaving}
@@ -272,6 +312,7 @@ export function MomentCaptureScreen() {
         onChangeNote={setReviewNote}
         onChangePlaceName={setReviewPlaceName}
         onRetake={() => {
+          setCapturedAt(undefined);
           setCapturedPhotoUri(undefined);
           setIsReviewing(false);
           setErrorMessage(undefined);
@@ -294,7 +335,8 @@ export function MomentCaptureScreen() {
             앱에서 사용할 수 있어요
           </AppText>
           <AppText className="mt-3 text-center text-sm leading-6 text-white/60">
-            카메라 촬영은 모바일 앱에서 사용할 수 있어요. 대신 사진 없이 음악과 장소만 먼저 기록할 수 있습니다.
+            카메라 촬영은 모바일 앱에서 사용할 수 있어요. 대신 사진 없이 음악과
+            장소만 먼저 기록할 수 있습니다.
           </AppText>
           <Pressable
             accessibilityRole="button"
@@ -310,7 +352,9 @@ export function MomentCaptureScreen() {
             className="mt-3 rounded-full border border-white/15 px-5 py-3"
             onPress={() => router.back()}
           >
-            <AppText className="text-center font-semibold text-white/80">돌아가기</AppText>
+            <AppText className="text-center font-semibold text-white/80">
+              돌아가기
+            </AppText>
           </Pressable>
         </View>
       </Screen>

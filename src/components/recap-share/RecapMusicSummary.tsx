@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { RecapShare, RecapShareMoment } from '@/types/domain';
@@ -38,6 +38,10 @@ function createPhotoCount(moments: RecapShareMoment[]) {
   return moments.filter((moment) => Boolean(moment.imageUrl)).length;
 }
 
+function createLocationMoments(moments: RecapShareMoment[]) {
+  return moments.filter((moment) => Boolean(moment.location));
+}
+
 function createPlaceFlow(moments: RecapShareMoment[], fallbackPlaceName: string) {
   const firstPlace = moments[0]?.placeName?.trim() || fallbackPlaceName;
   const lastPlace = moments[moments.length - 1]?.placeName?.trim() || fallbackPlaceName;
@@ -54,13 +58,39 @@ function createRecordedRange(moments: RecapShareMoment[], fallbackRecordedAt: st
   return firstLabel === lastLabel ? firstLabel : `${firstLabel} -> ${lastLabel}`;
 }
 
-export function RecapMusicSummary({ recap }: { recap: RecapShare }) {
+function createLocationFlow(moments: RecapShareMoment[], fallbackPlaceName: string) {
+  const locationMoments = createLocationMoments(moments);
+
+  if (!locationMoments.length) {
+    return '촬영 위치 없음';
+  }
+
+  const firstPlace = locationMoments[0]?.placeName?.trim() || fallbackPlaceName;
+  const lastPlace =
+    locationMoments[locationMoments.length - 1]?.placeName?.trim() ||
+    fallbackPlaceName;
+
+  return firstPlace === lastPlace
+    ? firstPlace
+    : `${firstPlace} -> ${lastPlace}`;
+}
+
+export function RecapMusicSummary({
+  onOpenMap,
+  recap,
+}: {
+  onOpenMap?: () => void;
+  recap: RecapShare;
+}) {
   const moments = getMoments(recap);
   const photoCount = createPhotoCount(moments);
+  const locationMoments = createLocationMoments(moments);
   const placeCount = createUniqueCount(moments.map((moment) => moment.placeName));
   const trackCount = createUniqueCount(moments.map(createTrackKey));
+  const locationFlow = createLocationFlow(moments, recap.placeName);
   const placeFlow = createPlaceFlow(moments, recap.placeName);
   const recordedRange = createRecordedRange(moments, recap.recordedAt);
+  const hasLocations = locationMoments.length > 0;
 
   return (
     <View className="w-full rounded-[20px] border border-white/10 bg-white/[0.06] p-4">
@@ -84,6 +114,34 @@ export function RecapMusicSummary({ recap }: { recap: RecapShare }) {
       <AppText className="mt-3 text-xs leading-5 text-white/45" numberOfLines={2}>
         {moments.length}개 Moment · {placeCount || 1}곳 · {placeFlow} · {recordedRange}
       </AppText>
+
+      <View className="mt-4 flex-row items-center gap-3 rounded-[16px] border border-white/10 bg-black/20 px-4 py-3">
+        <View className="h-9 w-9 items-center justify-center rounded-full bg-white/10">
+          <Feather color={hasLocations ? '#B7E628' : 'rgba(255,255,255,0.5)'} name="map-pin" size={16} />
+        </View>
+        <View className="min-w-0 flex-1">
+          <AppText className="text-[11px] font-semibold text-white/45">
+            촬영 위치
+          </AppText>
+          <AppText className="mt-1 text-sm font-semibold text-white" numberOfLines={1}>
+            {hasLocations
+              ? `${locationMoments.length}개 위치 · ${locationFlow}`
+              : '위치가 저장된 Moment가 없어요'}
+          </AppText>
+        </View>
+        {hasLocations && onOpenMap ? (
+          <Pressable
+            accessibilityLabel="지도 리캡 보기"
+            accessibilityRole="button"
+            className="rounded-full bg-soundlog-lime px-3 py-2"
+            onPress={onOpenMap}
+          >
+            <AppText className="text-[11px] font-semibold text-soundlog-inverse">
+              지도
+            </AppText>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 }

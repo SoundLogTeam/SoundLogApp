@@ -142,6 +142,7 @@ export type RecapTemplateId = 'album' | 'film' | 'lp' | 'map';
 export type RecapShareMoment = {
   id: string;
   imageUrl?: string;
+  location?: GeoPoint;
   placeName: string;
   trackTitle: string;
   artistName: string;
