@@ -28,6 +28,7 @@ function momentLogToRecapShareMoment(log: MomentLog): RecapShareMoment {
     artistName: log.track?.artist ?? FALLBACK_ARTIST,
     id: log.id,
     imageUrl: log.photoUri,
+    location: log.location,
     placeName: log.placeName ?? FALLBACK_PLACE,
     recordedAt: log.createdAt,
     trackTitle: log.track?.title ?? FALLBACK_TITLE,

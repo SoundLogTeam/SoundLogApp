@@ -132,7 +132,10 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
               </AppText>
 
               <View className="mt-5 w-full">
-                <RecapMusicSummary recap={recap} />
+                <RecapMusicSummary
+                  recap={recap}
+                  onOpenMap={() => setSelectedTemplate('map')}
+                />
               </View>
 
               <View className="mt-5 w-full">

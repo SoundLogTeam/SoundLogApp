@@ -4,7 +4,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { RecordDisc } from '@/components/recap-share/RecordDisc';
-import { RecapShare, RecapShareMoment, RecapTemplateId } from '@/types/domain';
+import {
+  GeoPoint,
+  RecapShare,
+  RecapShareMoment,
+  RecapTemplateId,
+} from '@/types/domain';
 
 type RecapPreviewCardProps = {
   recap: RecapShare;
@@ -171,6 +176,52 @@ function createFallbackMoment(recap: RecapShare): RecapShareMoment {
   };
 }
 
+type LocatedRecapMoment = RecapShareMoment & {
+  location: GeoPoint;
+};
+
+const fallbackMapPinPositions = [
+  { left: 54, top: 126 },
+  { left: 190, top: 92 },
+  { left: 226, top: 220 },
+  { left: 104, top: 270 },
+];
+
+function hasLocation(moment: RecapShareMoment): moment is LocatedRecapMoment {
+  return Boolean(moment.location);
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function createLocationPinPositions(moments: LocatedRecapMoment[]) {
+  const latValues = moments.map((moment) => moment.location.lat);
+  const lngValues = moments.map((moment) => moment.location.lng);
+  const minLat = Math.min(...latValues);
+  const maxLat = Math.max(...latValues);
+  const minLng = Math.min(...lngValues);
+  const maxLng = Math.max(...lngValues);
+  const latRange = maxLat - minLat;
+  const lngRange = maxLng - minLng;
+
+  return moments.map((moment, index) => {
+    if (latRange < 0.0001 && lngRange < 0.0001) {
+      return fallbackMapPinPositions[index % fallbackMapPinPositions.length];
+    }
+
+    const normalizedLat =
+      latRange < 0.0001 ? 0.5 : (moment.location.lat - minLat) / latRange;
+    const normalizedLng =
+      lngRange < 0.0001 ? 0.5 : (moment.location.lng - minLng) / lngRange;
+
+    return {
+      left: clamp(52 + normalizedLng * 178, 42, 232),
+      top: clamp(272 - normalizedLat * 178, 86, 276),
+    };
+  });
+}
+
 function RecapFilmTemplate({ recap }: { recap: RecapShare }) {
   const moments = (
     recap.moments?.length ? recap.moments : [createFallbackMoment(recap)]
@@ -261,15 +312,18 @@ function RecapFilmTemplate({ recap }: { recap: RecapShare }) {
 }
 
 function RecapMapTemplate({ recap }: { recap: RecapShare }) {
-  const moments = (
-    recap.moments?.length ? recap.moments : [createFallbackMoment(recap)]
-  ).slice(0, 4);
-  const pinPositions = [
-    { left: 54, top: 126 },
-    { left: 190, top: 92 },
-    { left: 226, top: 220 },
-    { left: 104, top: 270 },
-  ];
+  const recapMoments = recap.moments?.length
+    ? recap.moments
+    : [createFallbackMoment(recap)];
+  const locatedMoments = recapMoments.filter(hasLocation);
+  const hasRecordedLocations = locatedMoments.length > 0;
+  const moments = (hasRecordedLocations ? locatedMoments : recapMoments).slice(
+    0,
+    4,
+  );
+  const pinPositions = hasRecordedLocations
+    ? createLocationPinPositions(moments as LocatedRecapMoment[])
+    : fallbackMapPinPositions;
 
   return (
     <>
@@ -322,18 +376,25 @@ function RecapMapTemplate({ recap }: { recap: RecapShare }) {
 
       <View className="absolute left-7 right-7 top-7">
         <AppText className="text-[11px] font-semibold tracking-[2px] text-[#B7E628]">
-          SOUNDLOG MAP
+          {hasRecordedLocations ? 'MOMENT MAP' : 'SOUNDLOG MAP'}
         </AppText>
         <AppText className="mt-2 text-[25px] font-semibold leading-8 text-white" numberOfLines={2}>
           {recap.placeName}
         </AppText>
+        <View className="mt-3 self-start rounded-full border border-white/12 bg-black/35 px-3 py-1.5">
+          <AppText className="text-[10px] font-semibold text-white/66">
+            {hasRecordedLocations
+              ? `${locatedMoments.length}개 촬영 위치 저장됨`
+              : '장소 흐름 미리보기'}
+          </AppText>
+        </View>
       </View>
 
       {moments.map((moment, index) => (
         <View
           className="absolute items-center"
           key={moment.id}
-          style={pinPositions[index]}
+          style={pinPositions[index % pinPositions.length]}
         >
           <View className="h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-[#B7E628]">
             <AppText className="text-[11px] font-semibold text-[#050916]">
@@ -350,7 +411,7 @@ function RecapMapTemplate({ recap }: { recap: RecapShare }) {
 
       <View className="absolute bottom-6 left-6 right-6 rounded-[18px] border border-white/10 bg-black/60 p-4">
         <AppText className="text-[10px] font-semibold text-white/55">
-          대표 사운드
+          {hasRecordedLocations ? '촬영 위치와 대표 사운드' : '대표 사운드'}
         </AppText>
         <AppText className="mt-2 text-[22px] font-semibold text-white" numberOfLines={1}>
           {recap.trackTitle}

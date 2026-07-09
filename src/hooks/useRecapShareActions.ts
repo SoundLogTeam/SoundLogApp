@@ -140,11 +140,11 @@ export function useRecapShareActions({ capture, recapId }: UseRecapShareActionsP
         return;
       }
 
-      let MediaLibrary: typeof import('expo-media-library');
+      let MediaLibrary: typeof import('expo-media-library/legacy');
       let permission: MediaPermissionResponse;
 
       try {
-        MediaLibrary = await import('expo-media-library');
+        MediaLibrary = await import('expo-media-library/legacy');
         permission = await MediaLibrary.requestPermissionsAsync(true);
       } catch {
         throw new RecapShareActionError('media_save_failed');
