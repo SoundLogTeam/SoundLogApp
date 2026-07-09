@@ -1,4 +1,11 @@
-import { Pressable, ScrollView, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  View,
+} from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { CarouselProgress } from '@/components/home/CarouselProgress';
@@ -37,12 +44,38 @@ export function FeaturedPlaylistSection({
   onSelectPlaylist,
   onRetry,
 }: FeaturedPlaylistSectionProps) {
+  const scrollRef = useRef<ScrollView | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [scrollViewportWidth, setScrollViewportWidth] = useState(0);
+  const [scrollContentWidth, setScrollContentWidth] = useState(0);
   const cacheLabel = cachedAt
     ? `최근 추천 · ${new Date(cachedAt).toLocaleTimeString('ko-KR', {
         hour: '2-digit',
         minute: '2-digit',
       })}`
     : '최근 추천';
+  const contentVisibleRatio =
+    scrollContentWidth > 0 && scrollViewportWidth > 0
+      ? Math.min(scrollViewportWidth / scrollContentWidth, 1)
+      : 1;
+
+  useEffect(() => {
+    setScrollProgress(0);
+    scrollRef.current?.scrollTo({ animated: false, x: 0, y: 0 });
+  }, [data.length]);
+
+  const handlePlaylistScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const {
+      contentOffset,
+      contentSize,
+      layoutMeasurement,
+    } = event.nativeEvent;
+    const maxScrollableX = Math.max(contentSize.width - layoutMeasurement.width, 0);
+
+    setScrollViewportWidth(layoutMeasurement.width);
+    setScrollContentWidth(contentSize.width);
+    setScrollProgress(maxScrollableX > 0 ? contentOffset.x / maxScrollableX : 0);
+  };
 
   return (
     <View className="gap-4">
@@ -72,7 +105,15 @@ export function FeaturedPlaylistSection({
           </AppText>
         </View>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView
+          horizontal
+          onContentSizeChange={(width) => setScrollContentWidth(width)}
+          onLayout={(event) => setScrollViewportWidth(event.nativeEvent.layout.width)}
+          onScroll={handlePlaylistScroll}
+          ref={scrollRef}
+          scrollEventThrottle={16}
+          showsHorizontalScrollIndicator={false}
+        >
           <View className="flex-row pr-5">
             {data.map((playlist) => (
               <FeaturedPlaylistCard
@@ -85,7 +126,9 @@ export function FeaturedPlaylistSection({
         </ScrollView>
       )}
 
-      <CarouselProgress />
+      {data.length > 0 ? (
+        <CarouselProgress contentVisibleRatio={contentVisibleRatio} progress={scrollProgress} />
+      ) : null}
     </View>
   );
 }
