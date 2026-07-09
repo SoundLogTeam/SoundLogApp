@@ -79,6 +79,7 @@ const baseConfig = {
     ],
     'expo-secure-store',
     'expo-image',
+    ['expo-build-properties', {}],
   ],
   experiments: {
     typedRoutes: true,

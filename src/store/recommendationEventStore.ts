@@ -6,10 +6,14 @@ import { MusicRecommendationMode, TravelMode } from '@/types/domain';
 
 export type RecommendationEventType =
   | 'track_external_open'
+  | 'external_music_open_failed'
+  | 'track_selected'
   | 'track_like'
   | 'track_unlike'
   | 'track_save'
   | 'track_unsave'
+  | 'moment_log_saved'
+  | 'moment_log_sync_failed'
   | 'playlist_open'
   | 'mood_adjusted'
   | 'mood_filter_change'
@@ -25,6 +29,7 @@ export type RecommendationEventContext = {
   placeCategory?: string;
   placeId?: string;
   placeName?: string;
+  source?: string;
   topFilter?: string;
   travelMode?: TravelMode;
 };

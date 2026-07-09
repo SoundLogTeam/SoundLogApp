@@ -22,6 +22,7 @@ import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { Track } from '@/types/domain';
+import { toLibraryPlaylistSummary } from '@/utils/libraryPlaylistSummary';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type PlaylistCurationScreenProps = {
@@ -46,14 +47,18 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
   const { data: playlist, isError, isLoading, refetch } = usePlaylistCurationQuery(playlistId);
 
   const [actionMessage, setActionMessage] = useState<string>();
+  const playlistSummary = useMemo(
+    () => (playlist ? toLibraryPlaylistSummary(playlist) : undefined),
+    [playlist],
+  );
 
   useEffect(() => {
-    if (!playlist) {
+    if (!playlist || !playlistSummary) {
       return;
     }
 
-    seedFromPlaylist(playlist.id, playlist.tracks);
-  }, [playlist, seedFromPlaylist]);
+    seedFromPlaylist(playlist.id, playlist.tracks, playlistSummary);
+  }, [playlist, playlistSummary, seedFromPlaylist]);
 
   const likedTrackIds = useMemo(
     () =>
@@ -83,8 +88,19 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
       return;
     }
 
+    const context = createRecommendationEventContext();
+
     setActionMessage(undefined);
-    setTrack(track, playlist.id, playlist.tracks);
+    setTrack(track, playlist.id, playlist.tracks, playlistSummary);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context,
+        playlistId: playlist.id,
+        trackId: track.id,
+        type: 'track_selected',
+        value: 'playlist_detail',
+      }),
+    );
     setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
   };
 
@@ -103,7 +119,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     const context = createRecommendationEventContext();
 
     setActionMessage(undefined);
-    setLikeState(track, nextLiked, playlist?.id);
+    setLikeState(track, nextLiked, playlist?.id, playlistSummary);
     void libraryApi
       .updateTrackState(track.id, {
         action: nextLiked ? 'like' : 'unlike',
@@ -111,7 +127,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
         playlistId: playlist?.id,
       })
       .catch(() => {
-        setLikeState(track, !nextLiked, playlist?.id);
+        setLikeState(track, !nextLiked, playlist?.id, playlistSummary);
         setActionMessage('서버 저장에 실패해서 좋아요 상태를 되돌렸어요.');
       });
     syncRecommendationEvent(
@@ -129,7 +145,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     const context = createRecommendationEventContext();
 
     setActionMessage(undefined);
-    setSaveState(track, nextSaved, playlist?.id);
+    setSaveState(track, nextSaved, playlist?.id, playlistSummary);
     void libraryApi
       .updateTrackState(track.id, {
         action: nextSaved ? 'save' : 'unsave',
@@ -137,7 +153,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
         playlistId: playlist?.id,
       })
       .catch(() => {
-        setSaveState(track, !nextSaved, playlist?.id);
+        setSaveState(track, !nextSaved, playlist?.id, playlistSummary);
         setActionMessage('서버 저장에 실패해서 저장 상태를 되돌렸어요.');
       });
     syncRecommendationEvent(

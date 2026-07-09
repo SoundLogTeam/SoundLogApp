@@ -8,7 +8,7 @@ Test Soundlog from a fresh user state and fix P3 or higher issues found during t
 
 1. Fresh browser storage.
 2. Login screen.
-3. Continue as guest.
+3. Login or signup.
 4. Four-step onboarding.
 5. Home recommendations.
 6. Playlist/playback path.

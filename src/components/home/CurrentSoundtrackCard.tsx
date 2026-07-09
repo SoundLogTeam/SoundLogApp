@@ -5,7 +5,9 @@ import { AppText } from '@/components/AppText';
 import type { FeaturedPlaylist, PlaceContext } from '@/types/domain';
 
 type CurrentSoundtrackCardProps = {
+  cachedAt?: string;
   currentPlace?: PlaceContext;
+  isCached?: boolean;
   isError?: boolean;
   isLoading?: boolean;
   moodLabel: string;
@@ -17,7 +19,9 @@ type CurrentSoundtrackCardProps = {
 };
 
 export function CurrentSoundtrackCard({
+  cachedAt,
   currentPlace,
+  isCached = false,
   isError = false,
   isLoading = false,
   moodLabel,
@@ -38,6 +42,12 @@ export function CurrentSoundtrackCard({
     : isLoading
       ? '추천 준비 중'
       : '샘플 추천 사용 가능';
+  const cacheCaption = cachedAt
+    ? `최근 추천 · ${new Date(cachedAt).toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`
+    : '최근 추천';
 
   const handleOpenPlaylist = () => {
     if (playlist) {
@@ -67,6 +77,13 @@ export function CurrentSoundtrackCard({
                 <AppText className="text-[10px] font-semibold text-white/40">무드</AppText>
                 <AppText className="text-[11px] font-semibold text-white/80">{moodLabel}</AppText>
               </View>
+              {isCached ? (
+                <View className="flex-row items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5">
+                  <AppText className="text-[10px] font-semibold text-amber-100">
+                    {cacheCaption}
+                  </AppText>
+                </View>
+              ) : null}
             </View>
             <AppText className="mt-4 text-[26px] font-semibold leading-8 text-white">
               오늘의 사운드트랙

@@ -12,11 +12,23 @@ const pinPositions: Record<string, { left: `${number}%`; top: `${number}%` }> = 
   'nearby-rainy': { left: '52%', top: '66%' },
 };
 
+const fallbackPinPositions: Array<{ left: `${number}%`; top: `${number}%` }> = [
+  { left: '36%', top: '43%' },
+  { left: '62%', top: '28%' },
+  { left: '52%', top: '66%' },
+  { left: '22%', top: '31%' },
+  { left: '70%', top: '58%' },
+];
+
 const kindClassName = {
   companion: 'border-soundlog-blue bg-[#132244]',
   me: 'border-soundlog-lime bg-[#1E2B16]',
   nearby: 'border-soundlog-warning bg-[#2A1A15]',
 } as const;
+
+function getPinPosition(pinId: string, index: number) {
+  return pinPositions[pinId] ?? fallbackPinPositions[index % fallbackPinPositions.length];
+}
 
 export function OpenLayersSoundMap({ pins, sessionStatus, visibility }: SoundMapViewport) {
   const isLive = sessionStatus === 'active' && visibility !== 'private';
@@ -35,8 +47,8 @@ export function OpenLayersSoundMap({ pins, sessionStatus, visibility }: SoundMap
         </AppText>
       </View>
 
-      {pins.map((pin) => {
-        const position = pinPositions[pin.id] ?? pinPositions.me;
+      {pins.map((pin, index) => {
+        const position = getPinPosition(pin.id, index);
 
         return (
           <View

@@ -18,7 +18,7 @@
 - `.env.example`, README/API 테스트 업데이트.
 
 ## 클라이언트 변경
-- `src/api/playlistApi.ts`: `createContextualPlaylist` 추가. 서버 source + API URL + 로그인 세션이 있을 때 `POST /v1/playlists/contextual` 호출, 실패 시 기존 fallback 상세 조회.
+- `src/api/playlistApi.ts`: `createContextualPlaylist` 추가. 서버 source + API URL + 로그인 세션이 있을 때 `POST /v1/playlists/contextual` 호출, ML 장애 시 인증된 contextual fallback으로 전환.
 - `src/api/playlistQueries.ts`: contextual mutation 또는 helper hook 추가.
 - `app/(tabs)/index.tsx`: featured playlist 카드 선택 시 현재 위치/여행 상태/무드를 body로 서버 API 호출 후 상세 화면으로 이동.
 - `src/components/home/FeaturedPlaylistSection.tsx`/`FeaturedPlaylistCard.tsx`: 카드 press handler를 주입할 수 있게 변경.
@@ -32,5 +32,5 @@
 
 ## 리스크와 처리
 - ML 서버가 트랙 title/artist만 반환하므로 실제 스트리밍 id는 없다. 클라이언트의 기존 Spotify search fallback을 활용하도록 platform search URL을 생성한다.
-- 게스트/미로그인 사용자는 기존 GET `/v1/playlists/:id` fallback으로 이동한다.
+- 미로그인 사용자는 앱 기능에 진입하지 못하며, 인증 오류는 fallback으로 숨기지 않는다.
 - 기존 앱 travelMode `festival`은 ML 서버 상태에 없으므로 `야경` 또는 기본 `산책`으로 fallback한다.

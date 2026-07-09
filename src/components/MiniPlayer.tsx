@@ -34,6 +34,7 @@ export function MiniPlayer() {
     currentTrack,
     playNext,
     playPrevious,
+    playlist,
     playlistId,
     queue,
   } = usePlayerStore();
@@ -58,7 +59,7 @@ export function MiniPlayer() {
     const context = createRecommendationEventContext();
 
     setActionMessage(undefined);
-    setLikeState(currentTrack, !liked, playlistId);
+    setLikeState(currentTrack, !liked, playlistId, playlist);
     void libraryApi
       .updateTrackState(currentTrack.id, {
         action: liked ? 'unlike' : 'like',
@@ -66,7 +67,7 @@ export function MiniPlayer() {
         playlistId,
       })
       .catch(() => {
-        setLikeState(currentTrack, liked, playlistId);
+        setLikeState(currentTrack, liked, playlistId, playlist);
         setActionMessage('서버 저장에 실패해서 좋아요 상태를 되돌렸어요.');
       });
     syncRecommendationEvent(
@@ -82,7 +83,7 @@ export function MiniPlayer() {
     const context = createRecommendationEventContext();
 
     setActionMessage(undefined);
-    setSaveState(currentTrack, !saved, playlistId);
+    setSaveState(currentTrack, !saved, playlistId, playlist);
     void libraryApi
       .updateTrackState(currentTrack.id, {
         action: saved ? 'unsave' : 'save',
@@ -90,7 +91,7 @@ export function MiniPlayer() {
         playlistId,
       })
       .catch(() => {
-        setSaveState(currentTrack, saved, playlistId);
+        setSaveState(currentTrack, saved, playlistId, playlist);
         setActionMessage('서버 저장에 실패해서 저장 상태를 되돌렸어요.');
       });
     syncRecommendationEvent(
@@ -120,6 +121,10 @@ export function MiniPlayer() {
     setIsFullPlayerVisible(false);
     router.push('/camera');
   };
+  const handleOpenLiveSoundMap = () => {
+    setIsFullPlayerVisible(false);
+    router.push('/travel');
+  };
   const handleOpenExternalLink = async (link: ExternalMusicLink) => {
     const context = createRecommendationEventContext();
 
@@ -138,6 +143,15 @@ export function MiniPlayer() {
       await openExternalMusicLink(link);
       setActionMessage(`${link.label} 링크를 열었어요. 돌아오면 이 곡을 기록할 수 있어요.`);
     } catch {
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context,
+          playlistId,
+          trackId: currentTrack.id,
+          type: 'external_music_open_failed',
+          value: link.id,
+        }),
+      );
       setActionMessage('외부 음악 링크를 열지 못했어요. 웹 검색을 다시 시도해보세요.');
     }
   };
@@ -446,9 +460,19 @@ export function MiniPlayer() {
                   이 곡으로 기록
                 </AppText>
               </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                className="mt-3 h-12 flex-row items-center justify-center gap-2 rounded-full border border-soundlog-lime/40 bg-soundlog-lime/10"
+                onPress={handleOpenLiveSoundMap}
+              >
+                <Feather color="#B7E628" name="map-pin" size={17} />
+                <AppText className="text-sm font-semibold text-soundlog-lime">
+                  Live Sound Map 열기
+                </AppText>
+              </Pressable>
               <View className="mt-3 rounded-[14px] border border-white/10 bg-white/5 px-4 py-3">
                 <AppText className="text-center text-xs leading-5 text-white/55">
-                  음원을 재생하지 않고 곡 정보와 여행 순간을 SoundLog 안에 기록해요.
+                  음원을 재생하지 않고 곡 정보와 여행 순간을 SoundLog 안에 기록하거나, 여행 모드에서 지도에 공개해요.
                 </AppText>
               </View>
             </View>

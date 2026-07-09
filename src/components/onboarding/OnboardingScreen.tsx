@@ -73,7 +73,7 @@ export function OnboardingScreen() {
   const mode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
   const isEditMode = mode === 'edit';
   const { completeOnboarding, profile, updateProfile } = useUserProfileStore();
-  const { continueAsGuest, status } = useAuthStore();
+  const { status } = useAuthStore();
   const { setSelectedMoodFilter, setSelectedTopFilter } = useHomeFilterStore();
   const [currentStep, setCurrentStep] = useState<IntroStep>(isEditMode ? 'setup' : 'intro');
   const [selectedTravelLabel, setSelectedTravelLabel] = useState(() =>
@@ -118,6 +118,12 @@ export function OnboardingScreen() {
   };
 
   const enterHome = async (input: UserProfileInput) => {
+    if (status !== 'authenticated') {
+      setSaveErrorMessage('Soundlog를 시작하려면 먼저 로그인해주세요.');
+      router.push('/auth/login' as never);
+      return;
+    }
+
     const didSave = await saveProfile(input);
 
     if (!didSave) {
@@ -131,28 +137,9 @@ export function OnboardingScreen() {
       return;
     }
 
-    if (status === 'unauthenticated') {
-      continueAsGuest();
-    }
-
     completeOnboarding(input);
     applyHomeFilters(input);
     router.replace('/');
-  };
-
-  const handleBrowse = () => {
-    if (isSaving) {
-      return;
-    }
-
-    const browseProfile = buildProfileInput({
-      baseProfile: profile,
-      locationRecommendationEnabled: false,
-      selectedMood: defaultMood,
-      selectedTravelLabel: defaultTravelLabel,
-    });
-
-    void enterHome(browseProfile);
   };
 
   const handlePrimarySetup = (enabledLocation: boolean) => {
@@ -252,20 +239,29 @@ export function OnboardingScreen() {
           accessibilityRole="button"
           className="h-14 items-center justify-center rounded-full bg-[#B7E628]"
           disabled={isSaving}
-          onPress={() => setCurrentStep('setup')}
+          onPress={() => {
+            if (status !== 'authenticated') {
+              router.push('/auth/login' as never);
+              return;
+            }
+
+            setCurrentStep('setup');
+          }}
           style={{ opacity: isSaving ? 0.55 : 1 }}
         >
-          <AppText className="text-base font-semibold text-[#050916]">시작하기</AppText>
+          <AppText className="text-base font-semibold text-[#050916]">
+            {status === 'authenticated' ? '시작하기' : '로그인하고 시작하기'}
+          </AppText>
         </Pressable>
         <Pressable
           accessibilityRole="button"
           className="h-14 items-center justify-center rounded-full border border-white/10 bg-white/10"
           disabled={isSaving}
-          onPress={handleBrowse}
+          onPress={() => router.push('/auth/login' as never)}
           style={{ opacity: isSaving ? 0.55 : 1 }}
         >
           <AppText className="text-base font-semibold text-white">
-            {isSaving ? '준비 중...' : '둘러보기'}
+            계정 만들기 또는 로그인
           </AppText>
         </Pressable>
       </View>

@@ -42,26 +42,30 @@ export function createSoundMapCenter(location?: GeoPoint, place?: PlaceContext):
 export function createSoundMapPins({
   center,
   currentTrack,
+  includePreviewPeers = true,
   visibility,
 }: {
   center: GeoPoint;
   currentTrack?: Track;
+  includePreviewPeers?: boolean;
   visibility: SoundMapVisibility;
 }): SoundMapPin[] {
-  const selectedTrack = currentTrack ?? fallbackTrack;
-  const pins: SoundMapPin[] = [
-    {
-      artistName: selectedTrack.artist,
-      id: 'me',
-      kind: 'me',
-      label: '나',
-      location: center,
-      subtitle: 'Soundlog에서 선택한 현재 곡',
-      trackTitle: selectedTrack.title,
-    },
-  ];
+  const selectedTrack = currentTrack ?? (includePreviewPeers ? fallbackTrack : undefined);
+  const pins: SoundMapPin[] = selectedTrack
+    ? [
+        {
+          artistName: selectedTrack.artist,
+          id: 'me',
+          kind: 'me',
+          label: '나',
+          location: center,
+          subtitle: 'Soundlog에서 선택한 현재 곡',
+          trackTitle: selectedTrack.title,
+        },
+      ]
+    : [];
 
-  if (visibility === 'private') {
+  if (!includePreviewPeers || visibility === 'private') {
     return pins;
   }
 

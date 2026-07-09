@@ -1,5 +1,5 @@
 import { Redirect, router } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -39,7 +39,13 @@ import {
 } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+import {
+  createFeaturedPlaylistsCacheKey,
+  createMoodRecommendationsCacheKey,
+  useRecommendationCacheStore,
+} from '@/store/recommendationCacheStore';
 import { queryClient } from '@/providers/queryClient';
+import { useAuthStore } from '@/store/authStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { FeaturedPlaylist, MoodRecommendation, MusicLogItem, TravelMode } from '@/types/domain';
@@ -113,6 +119,7 @@ function resolveCurrentMoodLabel(filter: string, preferredMoods: string[]) {
 
 function HomeContent() {
   const insets = useSafeAreaInsets();
+  const authStatus = useAuthStore((state) => state.status);
   const [actionMessage, setActionMessage] = useState<string>();
   const [creatingPlaylistId, setCreatingPlaylistId] = useState<string>();
   const {
@@ -141,28 +148,66 @@ function HomeContent() {
     setPlace,
     setRecommendationMode,
   } = useTravelSessionStore();
+  const featuredPlaylistParams = useMemo(
+    () => ({
+      location: currentLocation,
+      locationRecommendationEnabled: profile.locationRecommendationEnabled,
+      place: currentPlace,
+      recommendationMode,
+    }),
+    [
+      currentLocation,
+      currentPlace,
+      profile.locationRecommendationEnabled,
+      recommendationMode,
+    ],
+  );
+  const moodRecommendationParams = useMemo(
+    () => ({
+      currentPlace,
+      moodFilter: selectedMoodFilter,
+      preferredGenres: profile.preferredGenres,
+      preferredMoods: profile.preferredMoods,
+      recommendationMode,
+      topFilter: selectedTopFilter,
+      travelStyles: profile.travelStyles,
+    }),
+    [
+      currentPlace,
+      profile.preferredGenres,
+      profile.preferredMoods,
+      profile.travelStyles,
+      recommendationMode,
+      selectedMoodFilter,
+      selectedTopFilter,
+    ],
+  );
+  const featuredCacheKey = useMemo(
+    () => createFeaturedPlaylistsCacheKey(featuredPlaylistParams),
+    [featuredPlaylistParams],
+  );
+  const moodCacheKey = useMemo(
+    () => createMoodRecommendationsCacheKey(moodRecommendationParams),
+    [moodRecommendationParams],
+  );
+  const featuredFallback = useRecommendationCacheStore((state) => state.featuredFallback);
+  const moodFallback = useRecommendationCacheStore((state) => state.moodFallback);
+  const isUsingCachedFeaturedPlaylists = featuredFallback?.key === featuredCacheKey;
+  const isUsingCachedMoodRecommendations = moodFallback?.key === moodCacheKey;
+  const isAuthenticated = authStatus === 'authenticated';
 
   const nearbyPlacesQuery = useNearbyPlacesQuery({
-    enabled: profile.locationRecommendationEnabled,
+    enabled: isAuthenticated && profile.locationRecommendationEnabled,
     location: currentLocation,
     radiusMeters: 2000,
   });
-  const featuredPlaylistsQuery = useFeaturedPlaylistsQuery({
-    location: currentLocation,
-    locationRecommendationEnabled: profile.locationRecommendationEnabled,
-    place: currentPlace,
-    recommendationMode,
+  const featuredPlaylistsQuery = useFeaturedPlaylistsQuery(featuredPlaylistParams, {
+    enabled: isAuthenticated,
   });
-  const moodRecommendationsQuery = useMoodRecommendationsQuery({
-    currentPlace,
-    moodFilter: selectedMoodFilter,
-    preferredGenres: profile.preferredGenres,
-    preferredMoods: profile.preferredMoods,
-    recommendationMode,
-    topFilter: selectedTopFilter,
-    travelStyles: profile.travelStyles,
+  const moodRecommendationsQuery = useMoodRecommendationsQuery(moodRecommendationParams, {
+    enabled: isAuthenticated,
   });
-  const recentMusicLogsQuery = useRecentMusicLogsQuery();
+  const recentMusicLogsQuery = useRecentMusicLogsQuery({ enabled: isAuthenticated });
   const musicLogs = [
     ...momentLogs.slice(0, 6).map(momentLogToMusicLogItem),
     ...(recentMusicLogsQuery.data ?? []),
@@ -218,6 +263,15 @@ function HomeContent() {
     }
 
     setTrack(item.track);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context: createRecommendationEventContext(),
+        playlistId: item.playlistId,
+        trackId: item.track.id,
+        type: 'track_selected',
+        value: 'home_mood_recommendation',
+      }),
+    );
     setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
   };
   const handleSelectFeaturedPlaylist = useCallback(
@@ -230,19 +284,16 @@ function HomeContent() {
       setCreatingPlaylistId(playlist.id);
 
       try {
-        const contextualPlaylist = await playlistApi.createContextualPlaylist(
-          {
-            location: currentLocation ?? currentPlace?.location,
-            mood: resolvePlaylistMood(selectedMoodFilter, profile.preferredMoods),
-            moodTags: getMoodTagsFromFilter(selectedMoodFilter),
-            placeId: currentPlace?.id,
-            preferredGenres: profile.preferredGenres,
-            preferredMoods: profile.preferredMoods,
-            state: resolvePlaylistState(selectedMode),
-            travelMode: selectedMode,
-          },
-          playlist.id,
-        );
+        const contextualPlaylist = await playlistApi.getRecommendedPlaylist({
+          location: currentLocation ?? currentPlace?.location,
+          mood: resolvePlaylistMood(selectedMoodFilter, profile.preferredMoods),
+          moodTags: getMoodTagsFromFilter(selectedMoodFilter),
+          placeId: currentPlace?.id,
+          preferredGenres: profile.preferredGenres,
+          preferredMoods: profile.preferredMoods,
+          state: resolvePlaylistState(selectedMode),
+          travelMode: selectedMode,
+        });
         const nextPlaylistId = contextualPlaylist?.id ?? playlist.id;
 
         if (contextualPlaylist) {
@@ -256,6 +307,7 @@ function HomeContent() {
           addRecommendationEvent({
             context: createRecommendationEventContext({
               moodFilter: selectedMoodFilter,
+              source: contextualPlaylist.context?.source,
             }),
             playlistId: nextPlaylistId,
             type: 'playlist_open',
@@ -427,7 +479,9 @@ function HomeContent() {
         />
 
         <CurrentSoundtrackCard
+          cachedAt={isUsingCachedFeaturedPlaylists ? featuredFallback?.cachedAt : undefined}
           currentPlace={currentPlace}
+          isCached={isUsingCachedFeaturedPlaylists}
           isError={featuredPlaylistsQuery.isError}
           isLoading={featuredPlaylistsQuery.isLoading}
           moodLabel={resolveCurrentMoodLabel(selectedMoodFilter, profile.preferredMoods)}
@@ -461,7 +515,9 @@ function HomeContent() {
         </View>
 
         <FeaturedPlaylistSection
+          cachedAt={isUsingCachedFeaturedPlaylists ? featuredFallback?.cachedAt : undefined}
           data={featuredPlaylistsQuery.data}
+          isCached={isUsingCachedFeaturedPlaylists}
           isError={featuredPlaylistsQuery.isError}
           isLoading={featuredPlaylistsQuery.isLoading}
           onSelectPlaylist={handleSelectFeaturedPlaylist}
@@ -470,7 +526,9 @@ function HomeContent() {
 
         <View className="mt-2">
           <MoodRecommendationSection
+            cachedAt={isUsingCachedMoodRecommendations ? moodFallback?.cachedAt : undefined}
             data={moodRecommendationsQuery.data}
+            isCached={isUsingCachedMoodRecommendations}
             isError={moodRecommendationsQuery.isError}
             isLoading={moodRecommendationsQuery.isLoading}
             onSelectMoodFilter={handleSelectMoodFilter}
@@ -500,6 +558,7 @@ function HomeContent() {
 }
 
 export default function HomeScreen() {
+  const { isHydrated: authHydrated, status } = useAuthStore();
   const { isHydrated, profile } = useUserProfileStore();
 
   useEffect(() => {
@@ -507,6 +566,14 @@ export default function HomeScreen() {
       router.replace('/onboarding' as never);
     }
   }, [isHydrated, profile.completedOnboarding]);
+
+  if (!authHydrated || status === 'checking') {
+    return <Screen />;
+  }
+
+  if (status !== 'authenticated') {
+    return <Redirect href={profile.completedOnboarding ? '/auth/login' : '/onboarding'} />;
+  }
 
   if (!isHydrated || !profile.completedOnboarding) {
     return isHydrated ? <Redirect href="/onboarding" /> : <Screen />;

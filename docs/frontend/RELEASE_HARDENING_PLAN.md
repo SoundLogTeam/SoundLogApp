@@ -42,4 +42,4 @@ Move the current EC2-connected demo from "mock-auth integration works" toward a 
 - Real provider client IDs and redirect URIs.
 - HTTPS API URL and upload public base URL.
 - EAS production profile secrets.
-- Decision on whether guest/local data migration is automatic or user-confirmed.
+- Decision on whether login-before-signup local data migration is automatic or user-confirmed.

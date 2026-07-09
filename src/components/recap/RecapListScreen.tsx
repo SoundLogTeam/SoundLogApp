@@ -16,6 +16,7 @@ import type { MomentLog } from '@/types/domain';
 import {
   createMomentLogGroups,
   createSessionRecapId,
+  extractSessionIdFromRecapId,
   momentLogGroupToRecapItem,
 } from '@/utils/recapMappers';
 
@@ -31,8 +32,9 @@ type CurrentTripRecapCardProps = {
   momentCount: number;
   onPress: () => void;
   representativeLog?: MomentLog;
-  status: 'empty' | 'failed' | 'ready' | 'synced';
+  status: 'empty' | 'failed' | 'local' | 'ready' | 'synced';
   trackCount: number;
+  unsyncedMomentCount: number;
 };
 
 function getUniqueTrackCount(logs: MomentLog[]) {
@@ -54,6 +56,7 @@ function CurrentTripRecapCard({
   representativeLog,
   status,
   trackCount,
+  unsyncedMomentCount,
 }: CurrentTripRecapCardProps) {
   const statusLabel = isCreating
     ? '생성 중...'
@@ -61,6 +64,8 @@ function CurrentTripRecapCard({
       ? '실패 · 재시도 가능'
       : status === 'synced'
         ? '완료'
+        : status === 'local'
+          ? '로컬 미리보기'
         : status === 'ready'
           ? '생성 가능'
           : '생성 전';
@@ -68,11 +73,15 @@ function CurrentTripRecapCard({
     ? '생성 중...'
     : status === 'failed'
       ? '다시 시도'
-    : status === 'synced'
-      ? 'Recap 열기'
-      : status === 'empty'
-        ? '첫 Moment 저장'
-        : 'Recap 만들기';
+      : status === 'synced'
+        ? 'Recap 열기'
+        : status === 'local'
+          ? unsyncedMomentCount > 0
+            ? '로컬 Recap 열기'
+            : '서버 Recap으로 저장'
+          : status === 'empty'
+            ? '첫 Moment 저장'
+            : 'Recap 만들기';
   const representativeTrackLabel = representativeLog?.track
     ? `${representativeLog.track.title} - ${representativeLog.track.artist}`
     : '대표 곡 없음';
@@ -90,6 +99,13 @@ function CurrentTripRecapCard({
           <AppText className="mt-2 text-sm leading-6 text-white/55">
             {momentCount}개 Moment · {trackCount}곡
           </AppText>
+          {status === 'local' && !message ? (
+            <AppText className="mt-2 text-xs leading-5 text-amber-100/80">
+              {unsyncedMomentCount > 0
+                ? `서버에 올라가지 않은 Moment ${unsyncedMomentCount}개가 있어 로컬 결과물로 먼저 볼 수 있어요.`
+                : '모든 Moment가 동기화됐어요. 서버 Recap으로 저장할 수 있어요.'}
+            </AppText>
+          ) : null}
         </View>
         <View className="rounded-full bg-soundlog-lime px-3 py-1.5">
           <AppText className="text-xs font-semibold text-soundlog-inverse">Recap</AppText>
@@ -131,7 +147,7 @@ export function RecapListScreen() {
   const momentLogs = useMomentLogStore((state) => state.logs);
   const { session, setSessionRecapId } = useTravelSessionStore();
   const [currentRecapStatus, setCurrentRecapStatus] =
-    useState<'empty' | 'failed' | 'ready' | 'synced'>('empty');
+    useState<'empty' | 'failed' | 'local' | 'ready' | 'synced'>('empty');
   const [currentRecapMessage, setCurrentRecapMessage] = useState<string>();
   const [isCreatingCurrentRecap, setIsCreatingCurrentRecap] = useState(false);
   const {
@@ -154,11 +170,23 @@ export function RecapListScreen() {
     () => getUniqueTrackCount(currentTripLogs),
     [currentTripLogs],
   );
+  const currentTripSyncedLogs = useMemo(
+    () => currentTripLogs.filter((log) => log.syncStatus === 'synced'),
+    [currentTripLogs],
+  );
+  const currentTripUnsyncedMomentCount =
+    currentTripLogs.length - currentTripSyncedLogs.length;
+  const isLocalSessionRecap = Boolean(extractSessionIdFromRecapId(session.recapId));
+  const serverSessionRecapId = session.recapId && !isLocalSessionRecap
+    ? session.recapId
+    : undefined;
   const currentTripStatus =
     isCreatingCurrentRecap || currentRecapStatus === 'failed'
       ? currentRecapStatus
-      : session.recapId
+      : serverSessionRecapId
         ? 'synced'
+        : isLocalSessionRecap
+          ? 'local'
         : currentTripLogs.length > 0
           ? 'ready'
           : 'empty';
@@ -201,21 +229,22 @@ export function RecapListScreen() {
       return;
     }
 
-    const localRecapId = session.recapId ?? createSessionRecapId(session.id);
+    const localRecapId = createSessionRecapId(session.id);
 
-    if (session.recapId && currentRecapStatus !== 'failed') {
-      router.push(`/recap-share/${session.recapId}`);
+    if (serverSessionRecapId && currentRecapStatus !== 'failed') {
+      router.push(`/recap-share/${serverSessionRecapId}`);
       return;
     }
 
-    const syncedLogs = currentTripLogs.filter((log) => log.syncStatus === 'synced');
-    const hasOnlySyncedLogs = syncedLogs.length === currentTripLogs.length;
+    const hasOnlySyncedLogs = currentTripUnsyncedMomentCount === 0;
     const representativeTrackId = currentTripLogs.find((log) => log.track?.id)?.track?.id;
 
     if (!hasOnlySyncedLogs) {
       setSessionRecapId(localRecapId);
-      setCurrentRecapStatus('failed');
-      setCurrentRecapMessage('아직 동기화되지 않은 Moment가 있어 로컬 Recap으로 먼저 보여드릴게요.');
+      setCurrentRecapStatus('local');
+      setCurrentRecapMessage(
+        `아직 동기화되지 않은 Moment ${currentTripUnsyncedMomentCount}개가 있어 로컬 Recap으로 먼저 보여드릴게요.`,
+      );
       router.push(`/recap-share/${localRecapId}`);
       return;
     }
@@ -225,7 +254,7 @@ export function RecapListScreen() {
 
     try {
       const serverRecap = await recapApi.createRecap({
-        momentLogIds: syncedLogs.map((log) => log.id),
+        momentLogIds: currentTripSyncedLogs.map((log) => log.id),
         representativeTrackId,
         sessionId: session.id,
         templateId: 'lp',
@@ -320,6 +349,7 @@ export function RecapListScreen() {
           representativeLog={currentTripRepresentativeLog}
           status={currentTripStatus}
           trackCount={currentTripTrackCount}
+          unsyncedMomentCount={currentTripUnsyncedMomentCount}
         />
 
         {isLoading ? (

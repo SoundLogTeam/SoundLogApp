@@ -1,12 +1,27 @@
 import { MoodRecommendation, PlaylistCuration, RecapItem, Track } from '@/types/domain';
 
+function sanitizeUrl(value?: string) {
+  const trimmed = value?.trim();
+
+  return trimmed || undefined;
+}
+
+function sanitizePlatformUrls(platformUrls?: Track['platformUrls']) {
+  if (!platformUrls) {
+    return undefined;
+  }
+
+  return Object.fromEntries(
+    Object.entries(platformUrls).filter(([, url]) => Boolean(sanitizeUrl(url))),
+  ) as Track['platformUrls'];
+}
+
 export function sanitizeTrack(track: Track): Track {
-  const nextTrack = { ...track };
-
-  delete nextTrack.externalUrl;
-  delete nextTrack.platformUrls;
-
-  return nextTrack;
+  return {
+    ...track,
+    externalUrl: sanitizeUrl(track.externalUrl),
+    platformUrls: sanitizePlatformUrls(track.platformUrls),
+  };
 }
 
 export function sanitizeMoodRecommendation(item: MoodRecommendation): MoodRecommendation {

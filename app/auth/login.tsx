@@ -10,6 +10,7 @@ import { BrandLogo } from '@/components/BrandLogo';
 import { Screen } from '@/components/Screen';
 import { useAuthStore } from '@/store/authStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
+import { migrateLocalDataToAccount } from '@/utils/localDataMigration';
 
 type AuthMode = 'login' | 'register';
 
@@ -35,13 +36,12 @@ export default function LoginScreen() {
   const isPending = loginMutation.isPending || registerMutation.isPending;
   const {
     clearAuthError,
-    continueAsGuest,
     errorMessage,
     finishLogin,
     setAuthError,
     setStatus,
   } = useAuthStore();
-  const { profile } = useUserProfileStore();
+  const { profile, updateProfile } = useUserProfileStore();
 
   const handleModePress = (nextMode: AuthMode) => {
     setMode(nextMode);
@@ -82,18 +82,20 @@ export default function LoginScreen() {
               password,
             });
 
+      const didCompleteOnboarding =
+        profile.completedOnboarding || Boolean(session.profile?.completedOnboarding);
+
+      if (!profile.completedOnboarding && session.profile?.completedOnboarding) {
+        updateProfile(session.profile);
+      }
+
       finishLogin(session);
-      router.replace(getNextRoute(profile.completedOnboarding));
+      void migrateLocalDataToAccount();
+      router.replace(getNextRoute(didCompleteOnboarding));
     } catch (error) {
       setStatus('unauthenticated');
       setAuthError(getErrorMessage(error));
     }
-  };
-
-  const handleGuestPress = () => {
-    clearAuthError();
-    continueAsGuest();
-    router.replace(getNextRoute(profile.completedOnboarding));
   };
 
   return (
@@ -124,7 +126,7 @@ export default function LoginScreen() {
           </AppText>
           <AppText className="mt-4 text-sm leading-6 text-white/58">
             이메일 계정으로 취향, 좋아요, 순간 기록, Recap을 서버에 동기화할 수
-            있어요. 바로 둘러보기도 계속 지원합니다.
+            있어요. Soundlog 이용은 로그인 후 시작할 수 있습니다.
           </AppText>
 
           <LinearGradient
@@ -249,17 +251,6 @@ export default function LoginScreen() {
                 : mode === 'login'
                   ? '로그인'
                   : '계정 만들기'}
-            </AppText>
-          </Pressable>
-
-          <Pressable
-            accessibilityRole="button"
-            className="mt-2 min-h-[54px] items-center justify-center rounded-[18px] border border-white/10 bg-transparent px-5"
-            disabled={isPending}
-            onPress={handleGuestPress}
-          >
-            <AppText className="text-sm font-semibold text-white/72">
-              로그인 없이 둘러보기
             </AppText>
           </Pressable>
 

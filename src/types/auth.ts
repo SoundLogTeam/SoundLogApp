@@ -5,7 +5,6 @@ export type AuthProvider = 'email';
 export type AuthStatus =
   | 'authenticated'
   | 'checking'
-  | 'guest'
   | 'unauthenticated';
 
 export type AuthUser = {

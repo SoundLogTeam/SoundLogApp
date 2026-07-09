@@ -73,6 +73,10 @@ npm run check:server-web-export
 npm run check:deployed-web -- https://sound-log-app.vercel.app
 ```
 
+로그인 필수 API를 함께 확인하므로 `SOUNDLOG_CHECK_EMAIL`,
+`SOUNDLOG_CHECK_PASSWORD`를 주면 고정 smoke 계정으로 로그인합니다. 지정하지 않으면
+검증용 `@soundlog.test` 임시 계정을 생성합니다.
+
 Vercel preview가 Deployment Protection으로 보호되어 있으면 `/api/soundlog/v1/...` 요청이 JSON이 아니라 Vercel SSO로 리다이렉트됩니다. 이 경우 Vercel 프로젝트의 Protection Bypass for Automation secret을 받아 아래처럼 실행합니다.
 
 ```bash

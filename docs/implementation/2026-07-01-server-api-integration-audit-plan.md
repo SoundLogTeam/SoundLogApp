@@ -58,7 +58,7 @@ Make the Soundlog frontend clearly use the deployed server when configured for s
 
 - If EC2 is reconfigured back to `USE_MOCK_DB=true`, the frontend cannot fix that alone; the deployed server environment must stay in real DB mode.
 - HTTP IP API is acceptable for dev/preview testing, but production builds require HTTPS by existing app config.
-- If users need guest mode to show sample content while server is down, that should be a deliberate product fallback, not an accidental catch-all mock fallback in server mode.
+- If users need sample content while server is down, that should be a deliberate authenticated fallback, not an accidental catch-all mock fallback in server mode.
 
 ## 2026-07-01 execution notes
 

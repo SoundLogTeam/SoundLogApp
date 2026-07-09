@@ -22,9 +22,25 @@ export type MusicRecommendationMode = 'everyday' | 'travel';
 
 export type MoodTag = 'calm' | 'fresh' | 'emotional' | 'active' | 'local';
 
-export type MusicPlatformId = 'none' | 'youtubeMusic';
+export type MusicPlatformId = 'none' | 'spotify' | 'youtubeMusic' | 'youtube';
 
-export type ExternalMusicPlatformId = 'melon' | 'youtubeMusic';
+export type ExternalMusicPlatformId = 'melon' | 'spotify' | 'youtube' | 'youtubeMusic';
+
+export type PlaylistRecommendationSource =
+  | 'ml-recommendation'
+  | 'seed-fallback'
+  | 'server-contextual';
+
+export type PlaylistRecommendationContext = {
+  mood?: string;
+  moodTags?: MoodTag[];
+  placeId?: string;
+  source?: PlaylistRecommendationSource | string;
+  state?: string;
+  travelMode?: TravelMode;
+  x?: number;
+  y?: number;
+};
 
 export type Track = {
   id: string;
@@ -64,11 +80,24 @@ export type PlaylistCuration = {
   placeName?: string;
   reason: string;
   accentColor?: string;
+  context?: PlaylistRecommendationContext;
   coverImageUrl?: string;
   backgroundImageUrl?: string;
   trackCount: number;
   durationText: string;
   tracks: Track[];
+};
+
+export type LibraryPlaylistSummary = {
+  id: string;
+  regionName: string;
+  placeName?: string;
+  description?: string;
+  reason?: string;
+  coverImageUrl?: string;
+  backgroundImageUrl?: string;
+  trackCount: number;
+  durationText: string;
 };
 
 export type MusicLogItem = {

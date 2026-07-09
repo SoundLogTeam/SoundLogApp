@@ -19,7 +19,6 @@ type AuthState = {
   updatedAt?: string;
   user?: AuthUser;
   clearAuthError: () => void;
-  continueAsGuest: () => void;
   finishLogin: (session: AuthSession) => void;
   logoutLocal: () => void;
   setAuthError: (message?: string) => void;
@@ -37,18 +36,37 @@ const unauthenticatedState = {
   user: undefined,
 };
 
+function normalizePersistedAuthState(persistedState: unknown) {
+  if (!persistedState || typeof persistedState !== 'object') {
+    return unauthenticatedState;
+  }
+
+  const state = persistedState as Partial<AuthState> & { status?: string };
+
+  if (state.status !== 'authenticated' || !state.accessToken || !state.refreshToken || !state.user) {
+    return {
+      ...unauthenticatedState,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  return {
+    accessToken: state.accessToken,
+    errorMessage: undefined,
+    lastLoginProvider: state.lastLoginProvider,
+    refreshToken: state.refreshToken,
+    status: 'authenticated' as const,
+    updatedAt: state.updatedAt,
+    user: state.user,
+  };
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       ...unauthenticatedState,
       isHydrated: false,
       clearAuthError: () => set({ errorMessage: undefined }),
-      continueAsGuest: () =>
-        set({
-          ...unauthenticatedState,
-          status: 'guest',
-          updatedAt: new Date().toISOString(),
-        }),
       finishLogin: (session) =>
         set({
           accessToken: session.accessToken,
@@ -69,6 +87,7 @@ export const useAuthStore = create<AuthState>()(
       setStatus: (status) => set({ status }),
     }),
     {
+      migrate: (persistedState) => normalizePersistedAuthState(persistedState),
       name: 'soundlog-auth',
       onRehydrateStorage: () => (state) => {
         state?.setHydrated(true);
@@ -82,6 +101,7 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
       }),
       storage: createJSONStorage(createAuthStorage),
+      version: 1,
     },
   ),
 );

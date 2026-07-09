@@ -4,20 +4,26 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
 import { momentLogApi } from '@/api/momentLogApi';
+import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
 import { CameraCaptureView } from '@/components/moment-capture/CameraCaptureView';
 import { CameraPermissionState } from '@/components/moment-capture/CameraPermissionState';
 import { MomentReviewPanel } from '@/components/moment-capture/MomentReviewPanel';
 import { Screen } from '@/components/Screen';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
-import { useMomentLogStore } from '@/store/momentLogStore';
+import {
+  useMomentLogStore,
+  type MomentLogCreateQueuePayload,
+} from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
+import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { GeoPoint, MomentLog } from '@/types/domain';
 import { getForegroundLocationWithTimeout } from '@/utils/location';
 import { getMoodTagsFromFilter } from '@/utils/moodTags';
 import { persistMomentPhoto } from '@/utils/momentFiles';
 import { formatPlaceLabel } from '@/utils/placeLabel';
+import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type LocationStatus = 'denied' | 'granted' | 'idle' | 'loading' | 'unavailable';
 
@@ -36,9 +42,12 @@ export function MomentCaptureScreen() {
   const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
 
   const addLog = useMomentLogStore((state) => state.addLog);
-  const removeLog = useMomentLogStore((state) => state.removeLog);
+  const queueCreate = useMomentLogStore((state) => state.queueCreate);
+  const resolveLocalLog = useMomentLogStore((state) => state.resolveLocalLog);
+  const updateLog = useMomentLogStore((state) => state.updateLog);
+  const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
   const { selectedMoodFilter } = useHomeFilterStore();
-  const { currentTrack } = usePlayerStore();
+  const { currentTrack, playlistId } = usePlayerStore();
   const { currentLocation, currentPlace, selectedMode, session, setLocation, startSession } =
     useTravelSessionStore();
 
@@ -137,6 +146,12 @@ export function MomentCaptureScreen() {
       const placeName = reviewPlaceName.trim() || formatPlaceLabel(locationSnapshot);
       const note = reviewNote.trim() || undefined;
       const trackSnapshot = shouldSaveMusic ? currentTrack : undefined;
+      const recommendationContext = createRecommendationEventContext({
+        placeCategory: currentPlace?.category,
+        placeId: currentPlace?.id,
+        placeName,
+        travelMode: selectedMode,
+      });
       const localLog: MomentLog = {
         createdAt,
         id,
@@ -153,35 +168,56 @@ export function MomentCaptureScreen() {
         track: trackSnapshot,
         travelMode: selectedMode,
       };
+      const createPayload: MomentLogCreateQueuePayload = {
+        createdAt,
+        location: locationSnapshot,
+        moodTags: reviewMoodTags,
+        note,
+        photoUri,
+        placeCategory: currentPlace?.category,
+        placeId: currentPlace?.id,
+        placeName,
+        sessionId: session.id,
+        track: trackSnapshot,
+        travelMode: selectedMode,
+      };
 
       addLog(localLog);
+      queueCreate(id, createPayload);
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: recommendationContext,
+          playlistId,
+          trackId: trackSnapshot?.id,
+          type: 'moment_log_saved',
+          value: localLog.syncStatus,
+        }),
+      );
 
       void momentLogApi
         .createMomentLog({
-          createdAt,
+          ...createPayload,
           idempotencyKey: id,
-          location: locationSnapshot,
-          moodTags: reviewMoodTags,
-          note,
-          photoUri,
-          placeCategory: currentPlace?.category,
-          placeId: currentPlace?.id,
-          placeName,
-          sessionId: session.id,
-          track: trackSnapshot,
-          travelMode: selectedMode,
         })
         .then((serverLog) => {
           if (!serverLog) {
-            addLog({ ...localLog, syncStatus: 'local' });
+            updateLog(id, { syncStatus: 'local' });
             return;
           }
 
-          removeLog(id);
-          addLog(serverLog);
+          resolveLocalLog(id, serverLog);
         })
         .catch(() => {
-          addLog({ ...localLog, syncStatus: 'failed' });
+          updateLog(id, { syncStatus: 'failed' });
+          syncRecommendationEvent(
+            addRecommendationEvent({
+              context: recommendationContext,
+              playlistId,
+              trackId: trackSnapshot?.id,
+              type: 'moment_log_sync_failed',
+              value: 'network_error',
+            }),
+          );
         });
 
       router.replace('/');

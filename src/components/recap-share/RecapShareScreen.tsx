@@ -63,6 +63,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
     : localMomentLog
       ? momentLogToRecapShare(localMomentLog)
       : undefined;
+  const isLocalRecap = Boolean(localRecap);
   const {
     data: remoteRecap,
     isError,
@@ -73,7 +74,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
   const captureRef = useRef<RecapCaptureFrameHandle>(null);
   const { activeAction, message, save, share } = useRecapShareActions({
     capture: () => captureRef.current?.capture() ?? Promise.resolve(undefined),
-    recapId,
+    recapId: isLocalRecap ? undefined : recapId,
   });
 
   return (
@@ -110,6 +111,14 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
                   <RecapPreviewCard recap={recap} template={selectedTemplate} />
                 </RecapCaptureFrame>
               </View>
+
+              {isLocalRecap ? (
+                <View className="mt-5 w-full rounded-[16px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
+                  <AppText className="text-center text-xs leading-5 text-amber-100">
+                    서버 동기화 전 로컬 Recap이에요. 이미지 저장과 공유는 가능하고, Moment 동기화 후 서버 Recap으로 저장할 수 있어요.
+                  </AppText>
+                </View>
+              ) : null}
 
               <View className="mt-5 w-full items-center">
                 <RecapTemplateSelector

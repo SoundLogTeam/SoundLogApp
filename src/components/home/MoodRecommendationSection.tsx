@@ -19,7 +19,9 @@ export function isMoodRecommendationFilter(filter: string) {
 }
 
 type MoodRecommendationSectionProps = {
+  cachedAt?: string;
   data?: MoodRecommendation[];
+  isCached?: boolean;
   isError?: boolean;
   isLoading?: boolean;
   onSelectMoodFilter: (filter: string) => void;
@@ -41,18 +43,36 @@ function MoodRecommendationSkeleton() {
 }
 
 export function MoodRecommendationSection({
+  cachedAt,
   data = [],
+  isCached = false,
   isError = false,
   isLoading = false,
   onSelectMoodFilter,
   onSelectRecommendation,
   selectedMoodFilter,
 }: MoodRecommendationSectionProps) {
+  const cacheLabel = cachedAt
+    ? `최근 추천 · ${new Date(cachedAt).toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`
+    : '최근 추천';
+
   return (
     <View className="gap-4">
-      <AppText className="text-[22px] font-semibold text-white">
-        나의 무드에 맞는 음악 추천
-      </AppText>
+      <View className="flex-row items-center justify-between gap-3">
+        <AppText className="min-w-0 flex-1 text-[22px] font-semibold text-white">
+          나의 무드에 맞는 음악 추천
+        </AppText>
+        {isCached ? (
+          <View className="rounded-full bg-amber-300/15 px-3 py-1.5">
+            <AppText className="text-[10px] font-semibold text-amber-100">
+              {cacheLabel}
+            </AppText>
+          </View>
+        ) : null}
+      </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View className="flex-row gap-2 pr-5">
