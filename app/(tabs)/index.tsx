@@ -8,15 +8,20 @@ import {
   useMoodRecommendationsQuery,
   useRecentMusicLogsQuery,
 } from '@/api/homeQueries';
+import { libraryApi } from '@/api/libraryApi';
 import { meApi } from '@/api/meApi';
-import { playlistApi, PlaylistMlMood, PlaylistMlState } from '@/api/playlistApi';
-import { playlistQueryKeys } from '@/api/playlistQueries';
+import { PlaylistMlMood, PlaylistMlState } from '@/api/playlistApi';
+import {
+  playlistQueryKeys,
+  useRecommendedPlaylistQuery,
+} from '@/api/playlistQueries';
 import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
 import { CurrentSoundtrackCard } from '@/components/home/CurrentSoundtrackCard';
+import { HomeSoundtrackBottomSheet } from '@/components/home/HomeSoundtrackBottomSheet';
 import {
   HomeHeader,
   HomeNavigationBar,
@@ -37,6 +42,7 @@ import {
   momentLogToMusicLogItem,
   useMomentLogStore,
 } from '@/store/momentLogStore';
+import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import {
@@ -48,7 +54,15 @@ import { queryClient } from '@/providers/queryClient';
 import { useAuthStore } from '@/store/authStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
-import { FeaturedPlaylist, MoodRecommendation, MusicLogItem, TravelMode } from '@/types/domain';
+import {
+  FeaturedPlaylist,
+  MoodRecommendation,
+  MusicLogItem,
+  PlaylistCuration,
+  Track,
+  TravelMode,
+} from '@/types/domain';
+import { toLibraryPlaylistSummary } from '@/utils/libraryPlaylistSummary';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
 import { getMoodTagsFromFilter } from '@/utils/moodTags';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
@@ -117,11 +131,21 @@ function resolveCurrentMoodLabel(filter: string, preferredMoods: string[]) {
   return preferredMoods[0] ?? '잔잔한';
 }
 
+function toFeaturedPlaylist(playlist: PlaylistCuration): FeaturedPlaylist {
+  return {
+    id: playlist.id,
+    regionName: playlist.regionName,
+    description: playlist.reason,
+    durationText: playlist.durationText,
+    trackCount: playlist.trackCount,
+  };
+}
+
 function HomeContent() {
   const insets = useSafeAreaInsets();
   const authStatus = useAuthStore((state) => state.status);
   const [actionMessage, setActionMessage] = useState<string>();
-  const [creatingPlaylistId, setCreatingPlaylistId] = useState<string>();
+  const [isSoundtrackSheetVisible, setIsSoundtrackSheetVisible] = useState(false);
   const {
     selectedMoodFilter,
     selectedTopFilter,
@@ -129,6 +153,15 @@ function HomeContent() {
     setSelectedTopFilter,
   } = useHomeFilterStore();
   const { currentTrack, setTrack } = usePlayerStore();
+  const {
+    isLiked,
+    isSaved,
+    likedTracks,
+    savedTracks,
+    seedFromPlaylist,
+    setLikeState,
+    setSaveState,
+  } = useLibraryStore();
   const addRecommendationEvent = useRecommendationEventStore(
     (state) => state.addEvent,
   );
@@ -182,6 +215,27 @@ function HomeContent() {
       selectedTopFilter,
     ],
   );
+  const recommendedPlaylistInput = useMemo(
+    () => ({
+      location: currentLocation ?? currentPlace?.location,
+      mood: resolvePlaylistMood(selectedMoodFilter, profile.preferredMoods),
+      moodTags: getMoodTagsFromFilter(selectedMoodFilter),
+      placeId: currentPlace?.id,
+      preferredGenres: profile.preferredGenres,
+      preferredMoods: profile.preferredMoods,
+      state: resolvePlaylistState(selectedMode),
+      travelMode: selectedMode,
+    }),
+    [
+      currentLocation,
+      currentPlace?.id,
+      currentPlace?.location,
+      profile.preferredGenres,
+      profile.preferredMoods,
+      selectedMode,
+      selectedMoodFilter,
+    ],
+  );
   const featuredCacheKey = useMemo(
     () => createFeaturedPlaylistsCacheKey(featuredPlaylistParams),
     [featuredPlaylistParams],
@@ -204,10 +258,58 @@ function HomeContent() {
   const featuredPlaylistsQuery = useFeaturedPlaylistsQuery(featuredPlaylistParams, {
     enabled: isAuthenticated,
   });
+  const recommendedPlaylistQuery = useRecommendedPlaylistQuery(recommendedPlaylistInput, {
+    enabled: isAuthenticated && Boolean(recommendedPlaylistInput.location),
+  });
+  const {
+    data: recommendedPlaylist,
+    isError: isRecommendedPlaylistError,
+    isFetching: isRecommendedPlaylistFetching,
+    isLoading: isRecommendedPlaylistLoading,
+    refetch: refetchRecommendedPlaylist,
+  } = recommendedPlaylistQuery;
   const moodRecommendationsQuery = useMoodRecommendationsQuery(moodRecommendationParams, {
     enabled: isAuthenticated,
   });
   const recentMusicLogsQuery = useRecentMusicLogsQuery({ enabled: isAuthenticated });
+  const currentSoundtrackPlaylist = useMemo(
+    () => (recommendedPlaylist ? toFeaturedPlaylist(recommendedPlaylist) : undefined),
+    [recommendedPlaylist],
+  );
+  const displayedFeaturedPlaylists = useMemo(() => {
+    if (!currentSoundtrackPlaylist) {
+      return featuredPlaylistsQuery.data;
+    }
+
+    return [
+      currentSoundtrackPlaylist,
+      ...(featuredPlaylistsQuery.data ?? []).filter(
+        (playlist) => playlist.id !== currentSoundtrackPlaylist.id,
+      ),
+    ];
+  }, [currentSoundtrackPlaylist, featuredPlaylistsQuery.data]);
+  const currentSoundtrackSummary = useMemo(
+    () => (recommendedPlaylist ? toLibraryPlaylistSummary(recommendedPlaylist) : undefined),
+    [recommendedPlaylist],
+  );
+  const currentSoundtrackLikedTrackIds = useMemo(
+    () =>
+      new Set(
+        recommendedPlaylist?.tracks
+          .filter((track) => likedTracks.some((record) => record.track.id === track.id))
+          .map((track) => track.id) ?? [],
+      ),
+    [likedTracks, recommendedPlaylist?.tracks],
+  );
+  const currentSoundtrackSavedTrackIds = useMemo(
+    () =>
+      new Set(
+        recommendedPlaylist?.tracks
+          .filter((track) => savedTracks.some((record) => record.track.id === track.id))
+          .map((track) => track.id) ?? [],
+      ),
+    [recommendedPlaylist?.tracks, savedTracks],
+  );
   const musicLogs = [
     ...momentLogs.slice(0, 6).map(momentLogToMusicLogItem),
     ...(recentMusicLogsQuery.data ?? []),
@@ -246,6 +348,29 @@ function HomeContent() {
     }
   }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
 
+  useEffect(() => {
+    if (!recommendedPlaylist) {
+      return;
+    }
+
+    queryClient.setQueryData(
+      playlistQueryKeys.detail(recommendedPlaylist.id),
+      recommendedPlaylist,
+    );
+  }, [recommendedPlaylist]);
+
+  useEffect(() => {
+    if (!recommendedPlaylist || !currentSoundtrackSummary) {
+      return;
+    }
+
+    seedFromPlaylist(
+      recommendedPlaylist.id,
+      recommendedPlaylist.tracks,
+      currentSoundtrackSummary,
+    );
+  }, [currentSoundtrackSummary, recommendedPlaylist, seedFromPlaylist]);
+
   const handleSelectRecommendation = async (item: MoodRecommendation) => {
     setActionMessage(undefined);
 
@@ -275,62 +400,33 @@ function HomeContent() {
     setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
   };
   const handleSelectFeaturedPlaylist = useCallback(
-    async (playlist: FeaturedPlaylist) => {
-      if (creatingPlaylistId) {
-        return;
-      }
+    (playlist: FeaturedPlaylist) => {
+      const isCurrentRecommendation = playlist.id === recommendedPlaylist?.id;
 
       setActionMessage(undefined);
-      setCreatingPlaylistId(playlist.id);
 
-      try {
-        const contextualPlaylist = await playlistApi.getRecommendedPlaylist({
-          location: currentLocation ?? currentPlace?.location,
-          mood: resolvePlaylistMood(selectedMoodFilter, profile.preferredMoods),
-          moodTags: getMoodTagsFromFilter(selectedMoodFilter),
-          placeId: currentPlace?.id,
-          preferredGenres: profile.preferredGenres,
-          preferredMoods: profile.preferredMoods,
-          state: resolvePlaylistState(selectedMode),
-          travelMode: selectedMode,
-        });
-        const nextPlaylistId = contextualPlaylist?.id ?? playlist.id;
-
-        if (contextualPlaylist) {
-          queryClient.setQueryData(
-            playlistQueryKeys.detail(nextPlaylistId),
-            contextualPlaylist,
-          );
-        }
-
-        syncRecommendationEvent(
-          addRecommendationEvent({
-            context: createRecommendationEventContext({
-              moodFilter: selectedMoodFilter,
-              source: contextualPlaylist.context?.source,
-            }),
-            playlistId: nextPlaylistId,
-            type: 'playlist_open',
-            value: nextPlaylistId,
-          }),
+      if (isCurrentRecommendation && recommendedPlaylist) {
+        queryClient.setQueryData(
+          playlistQueryKeys.detail(recommendedPlaylist.id),
+          recommendedPlaylist,
         );
-        router.push(`/playlist/${nextPlaylistId}`);
-      } catch {
-        setActionMessage('맞춤 플레이리스트를 만들지 못했어요. 잠시 후 다시 시도해주세요.');
-      } finally {
-        setCreatingPlaylistId(undefined);
       }
+
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context: createRecommendationEventContext({
+            source: isCurrentRecommendation
+              ? recommendedPlaylist?.context?.source
+              : 'featured-playlist',
+          }),
+          playlistId: playlist.id,
+          type: 'playlist_open',
+          value: playlist.id,
+        }),
+      );
+      router.push(`/playlist/${playlist.id}`);
     },
-    [
-      addRecommendationEvent,
-      creatingPlaylistId,
-      currentLocation,
-      currentPlace,
-      profile.preferredGenres,
-      profile.preferredMoods,
-      selectedMode,
-      selectedMoodFilter,
-    ],
+    [addRecommendationEvent, recommendedPlaylist],
   );
   const handleSelectMusicLog = useCallback((item: MusicLogItem) => {
     router.push(`/recap-share/${item.recapShareId ?? item.id}`);
@@ -442,6 +538,175 @@ function HomeContent() {
     profile.locationRecommendationEnabled,
   ]);
 
+  const handleRefreshCurrentSoundtrack = useCallback(() => {
+    setActionMessage(undefined);
+
+    if (!recommendedPlaylistInput.location) {
+      void handleSetCurrentLocation();
+      return;
+    }
+
+    void refetchRecommendedPlaylist();
+  }, [
+    handleSetCurrentLocation,
+    recommendedPlaylistInput.location,
+    refetchRecommendedPlaylist,
+  ]);
+  const handleOpenCurrentSoundtrack = useCallback(() => {
+    setActionMessage(undefined);
+
+    if (!recommendedPlaylistInput.location) {
+      handleRefreshCurrentSoundtrack();
+      return;
+    }
+
+    setIsSoundtrackSheetVisible(true);
+
+    if (!recommendedPlaylist) {
+      void refetchRecommendedPlaylist();
+      return;
+    }
+
+    queryClient.setQueryData(
+      playlistQueryKeys.detail(recommendedPlaylist.id),
+      recommendedPlaylist,
+    );
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context: createRecommendationEventContext({
+          moodFilter: selectedMoodFilter,
+          source: recommendedPlaylist.context?.source,
+        }),
+        playlistId: recommendedPlaylist.id,
+        type: 'playlist_open',
+        value: recommendedPlaylist.id,
+      }),
+    );
+  }, [
+    addRecommendationEvent,
+    handleRefreshCurrentSoundtrack,
+    recommendedPlaylist,
+    recommendedPlaylistInput.location,
+    refetchRecommendedPlaylist,
+    selectedMoodFilter,
+  ]);
+  const handleCloseCurrentSoundtrack = useCallback(() => {
+    setIsSoundtrackSheetVisible(false);
+  }, []);
+  const handleSelectCurrentSoundtrackTrack = useCallback(
+    (track: Track) => {
+      if (!recommendedPlaylist) {
+        return;
+      }
+
+      const context = createRecommendationEventContext({
+        moodFilter: selectedMoodFilter,
+        source: recommendedPlaylist.context?.source,
+      });
+
+      setActionMessage(undefined);
+      setTrack(
+        track,
+        recommendedPlaylist.id,
+        recommendedPlaylist.tracks,
+        currentSoundtrackSummary,
+      );
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context,
+          playlistId: recommendedPlaylist.id,
+          trackId: track.id,
+          type: 'track_selected',
+          value: 'home_current_soundtrack',
+        }),
+      );
+      setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
+    },
+    [
+      addRecommendationEvent,
+      currentSoundtrackSummary,
+      recommendedPlaylist,
+      selectedMoodFilter,
+      setTrack,
+    ],
+  );
+  const handleToggleCurrentSoundtrackLike = useCallback(
+    (track: Track) => {
+      const nextLiked = !isLiked(track.id);
+      const context = createRecommendationEventContext({
+        moodFilter: selectedMoodFilter,
+        source: recommendedPlaylist?.context?.source,
+      });
+
+      setActionMessage(undefined);
+      setLikeState(track, nextLiked, recommendedPlaylist?.id, currentSoundtrackSummary);
+      void libraryApi
+        .updateTrackState(track.id, {
+          action: nextLiked ? 'like' : 'unlike',
+          context,
+          playlistId: recommendedPlaylist?.id,
+        })
+        .catch(() => {
+          setLikeState(track, !nextLiked, recommendedPlaylist?.id, currentSoundtrackSummary);
+          setActionMessage('서버 저장에 실패해서 좋아요 상태를 되돌렸어요.');
+        });
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context,
+          playlistId: recommendedPlaylist?.id,
+          trackId: track.id,
+          type: nextLiked ? 'track_like' : 'track_unlike',
+        }),
+      );
+    },
+    [
+      addRecommendationEvent,
+      currentSoundtrackSummary,
+      isLiked,
+      recommendedPlaylist,
+      selectedMoodFilter,
+      setLikeState,
+    ],
+  );
+  const handleToggleCurrentSoundtrackSave = useCallback(
+    (track: Track) => {
+      const nextSaved = !isSaved(track.id);
+      const context = createRecommendationEventContext({
+        moodFilter: selectedMoodFilter,
+        source: recommendedPlaylist?.context?.source,
+      });
+
+      setActionMessage(undefined);
+      setSaveState(track, nextSaved, recommendedPlaylist?.id, currentSoundtrackSummary);
+      void libraryApi
+        .updateTrackState(track.id, {
+          action: nextSaved ? 'save' : 'unsave',
+          context,
+          playlistId: recommendedPlaylist?.id,
+        })
+        .catch(() => {
+          setSaveState(track, !nextSaved, recommendedPlaylist?.id, currentSoundtrackSummary);
+          setActionMessage('서버 저장에 실패해서 저장 상태를 되돌렸어요.');
+        });
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context,
+          playlistId: recommendedPlaylist?.id,
+          trackId: track.id,
+          type: nextSaved ? 'track_save' : 'track_unsave',
+        }),
+      );
+    },
+    [
+      addRecommendationEvent,
+      currentSoundtrackSummary,
+      isSaved,
+      recommendedPlaylist,
+      selectedMoodFilter,
+      setSaveState,
+    ],
+  );
+
   return (
     <Screen>
       <ScrollView
@@ -479,16 +744,24 @@ function HomeContent() {
         />
 
         <CurrentSoundtrackCard
-          cachedAt={isUsingCachedFeaturedPlaylists ? featuredFallback?.cachedAt : undefined}
           currentPlace={currentPlace}
-          isCached={isUsingCachedFeaturedPlaylists}
-          isError={featuredPlaylistsQuery.isError}
-          isLoading={featuredPlaylistsQuery.isLoading}
+          isError={isRecommendedPlaylistError}
+          isLoading={
+            locationStatus === 'loading' ||
+            isRecommendedPlaylistLoading ||
+            isRecommendedPlaylistFetching
+          }
+          isOpeningPlaylist={
+            isSoundtrackSheetVisible &&
+            (isRecommendedPlaylistLoading || isRecommendedPlaylistFetching)
+          }
           moodLabel={resolveCurrentMoodLabel(selectedMoodFilter, profile.preferredMoods)}
+          needsLocation={!recommendedPlaylistInput.location}
           onCaptureMoment={() => router.push('/camera' as never)}
-          onOpenPlaylist={handleSelectFeaturedPlaylist}
-          onRetry={() => void featuredPlaylistsQuery.refetch()}
-          playlist={featuredPlaylistsQuery.data?.[0]}
+          onOpenPlaylist={handleOpenCurrentSoundtrack}
+          onRetry={handleRefreshCurrentSoundtrack}
+          playlist={currentSoundtrackPlaylist}
+          recommendationSource={recommendedPlaylist?.context?.source}
           travelLabel={resolveCurrentTravelLabel(selectedMode, profile.travelStyles)}
         />
 
@@ -516,7 +789,7 @@ function HomeContent() {
 
         <FeaturedPlaylistSection
           cachedAt={isUsingCachedFeaturedPlaylists ? featuredFallback?.cachedAt : undefined}
-          data={featuredPlaylistsQuery.data}
+          data={displayedFeaturedPlaylists}
           isCached={isUsingCachedFeaturedPlaylists}
           isError={featuredPlaylistsQuery.isError}
           isLoading={featuredPlaylistsQuery.isLoading}
@@ -552,6 +825,22 @@ function HomeContent() {
           />
         </View>
       </ScrollView>
+      <HomeSoundtrackBottomSheet
+        actionMessage={isSoundtrackSheetVisible ? actionMessage : undefined}
+        currentTrackId={currentTrack?.id}
+        isLoading={
+          (isRecommendedPlaylistLoading || isRecommendedPlaylistFetching) &&
+          !recommendedPlaylist
+        }
+        likedTrackIds={currentSoundtrackLikedTrackIds}
+        onClose={handleCloseCurrentSoundtrack}
+        onSelectTrack={handleSelectCurrentSoundtrackTrack}
+        onToggleLike={handleToggleCurrentSoundtrackLike}
+        onToggleSave={handleToggleCurrentSoundtrackSave}
+        playlist={recommendedPlaylist}
+        savedTrackIds={currentSoundtrackSavedTrackIds}
+        visible={isSoundtrackSheetVisible}
+      />
       {currentTrack ? <MiniPlayer /> : null}
     </Screen>
   );

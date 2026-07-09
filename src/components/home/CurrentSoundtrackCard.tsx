@@ -10,13 +10,36 @@ type CurrentSoundtrackCardProps = {
   isCached?: boolean;
   isError?: boolean;
   isLoading?: boolean;
+  isOpeningPlaylist?: boolean;
   moodLabel: string;
+  needsLocation?: boolean;
   onCaptureMoment: () => void;
   onOpenPlaylist: (playlist: FeaturedPlaylist) => void;
   onRetry?: () => void;
   playlist?: FeaturedPlaylist;
+  recommendationSource?: string;
   travelLabel: string;
 };
+
+function getRecommendationSourceBadge(source?: string) {
+  if (source === 'ml-recommendation') {
+    return {
+      className: 'bg-[#B7E628]/15',
+      label: 'ML 추천',
+      textClassName: 'text-[#B7E628]',
+    };
+  }
+
+  if (source === 'seed-fallback') {
+    return {
+      className: 'bg-amber-300/15',
+      label: '기본 추천',
+      textClassName: 'text-amber-100',
+    };
+  }
+
+  return undefined;
+}
 
 export function CurrentSoundtrackCard({
   cachedAt,
@@ -24,11 +47,14 @@ export function CurrentSoundtrackCard({
   isCached = false,
   isError = false,
   isLoading = false,
+  isOpeningPlaylist = false,
   moodLabel,
+  needsLocation = false,
   onCaptureMoment,
   onOpenPlaylist,
   onRetry,
   playlist,
+  recommendationSource,
   travelLabel,
 }: CurrentSoundtrackCardProps) {
   const placeTitle = currentPlace?.title ?? '지금 위치 주변';
@@ -36,18 +62,24 @@ export function CurrentSoundtrackCard({
   const playlistTitle = playlist?.regionName ?? `${travelLabel} 사운드트랙`;
   const playlistDescription =
     playlist?.description ??
-    '현재 장소와 무드를 기준으로 오늘 들을 곡 목록을 준비하고 있어요.';
+    (needsLocation
+      ? '위치를 확인하면 지금 상황에 맞춘 곡 목록을 준비할게요.'
+      : '현재 장소와 무드를 기준으로 오늘 들을 곡 목록을 준비하고 있어요.');
   const trackMeta = playlist
     ? `${playlist.trackCount}곡 · ${playlist.durationText}`
     : isLoading
       ? '추천 준비 중'
-      : '샘플 추천 사용 가능';
+      : needsLocation
+        ? '위치 확인 필요'
+        : '추천을 다시 시도해보세요';
   const cacheCaption = cachedAt
     ? `최근 추천 · ${new Date(cachedAt).toLocaleTimeString('ko-KR', {
         hour: '2-digit',
         minute: '2-digit',
       })}`
     : '최근 추천';
+  const isPlaylistButtonDisabled = isLoading || isOpeningPlaylist;
+  const sourceBadge = getRecommendationSourceBadge(recommendationSource);
 
   const handleOpenPlaylist = () => {
     if (playlist) {
@@ -81,6 +113,13 @@ export function CurrentSoundtrackCard({
                 <View className="flex-row items-center gap-2 rounded-full bg-amber-300/15 px-3 py-1.5">
                   <AppText className="text-[10px] font-semibold text-amber-100">
                     {cacheCaption}
+                  </AppText>
+                </View>
+              ) : null}
+              {sourceBadge ? (
+                <View className={`rounded-full px-3 py-1.5 ${sourceBadge.className}`}>
+                  <AppText className={`text-[10px] font-semibold ${sourceBadge.textClassName}`}>
+                    {sourceBadge.label}
                   </AppText>
                 </View>
               ) : null}
@@ -124,18 +163,22 @@ export function CurrentSoundtrackCard({
             <Pressable
               accessibilityRole="button"
               className={`h-11 flex-row items-center justify-center gap-2 rounded-full px-4 ${
-                isLoading ? 'bg-white/10' : 'bg-[#B7E628]'
+                isPlaylistButtonDisabled ? 'bg-white/10' : 'bg-[#B7E628]'
               }`}
-              disabled={isLoading}
+              disabled={isPlaylistButtonDisabled}
               onPress={handleOpenPlaylist}
             >
-              <Feather color={isLoading ? 'rgba(255,255,255,0.42)' : '#050916'} name="music" size={16} />
+              <Feather
+                color={isPlaylistButtonDisabled ? 'rgba(255,255,255,0.42)' : '#050916'}
+                name="music"
+                size={16}
+              />
               <AppText
                 className={`text-xs font-semibold ${
-                  isLoading ? 'text-white/40' : 'text-[#050916]'
+                  isPlaylistButtonDisabled ? 'text-white/40' : 'text-[#050916]'
                 }`}
               >
-                곡 보기
+                {isOpeningPlaylist ? '여는 중' : needsLocation && !playlist ? '위치로 추천' : '곡 보기'}
               </AppText>
             </Pressable>
           </View>
