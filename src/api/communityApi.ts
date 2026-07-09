@@ -24,6 +24,18 @@ type CreateTravelRoomInput = {
   visibility?: 'companions' | 'invite_only';
 };
 
+type JoinTravelRoomByInviteCodeInput = {
+  displayName?: string;
+  inviteCode: string;
+};
+
+type TravelRoomListQuery = {
+  limit?: number;
+  sessionId?: string;
+};
+
+type TravelRoomMomentComment = NonNullable<TravelRoomMoment['comments']>[number];
+
 type AddTravelRoomMomentInput = {
   artistName?: string;
   momentLogId?: string;
@@ -54,6 +66,12 @@ type SoundMapQuery = {
   radiusMeters?: number;
   state?: string;
   visibility?: Exclude<CommunityVisibility, 'private'>;
+};
+
+type TravelMateRequestQuery = {
+  box?: 'all' | 'inbox' | 'sent';
+  limit?: number;
+  status?: TravelMateRequest['status'];
 };
 
 function sanitizeSoundMapPin(pin: SoundMapPin): SoundMapPin {
@@ -96,6 +114,15 @@ function trackMomentInput(track?: Track, placeName?: string): AddTravelRoomMomen
 }
 
 export const communityApi = {
+  getTravelRooms: async (query: TravelRoomListQuery = {}) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return [];
+    }
+
+    const rooms = await requestApi<TravelRoom[]>('/v1/travel-rooms', { query });
+
+    return rooms.map(sanitizeTravelRoom);
+  },
   createTravelRoom: async (input: CreateTravelRoomInput) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return undefined;
@@ -105,6 +132,29 @@ export const communityApi = {
       body: input,
       method: 'POST',
     });
+
+    return sanitizeTravelRoom(room);
+  },
+  joinTravelRoomByInviteCode: async (input: JoinTravelRoomByInviteCodeInput) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return undefined;
+    }
+
+    const room = await requestApi<TravelRoom>('/v1/travel-rooms/join', {
+      body: input,
+      method: 'POST',
+    });
+
+    return sanitizeTravelRoom(room);
+  },
+  getTravelRoom: async (roomId: string) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return undefined;
+    }
+
+    const room = await requestApi<TravelRoom>(
+      `/v1/travel-rooms/${encodeURIComponent(roomId)}`,
+    );
 
     return sanitizeTravelRoom(room);
   },
@@ -122,6 +172,38 @@ export const communityApi = {
     );
 
     return sanitizeRoomMoment(moment);
+  },
+  updateTravelRoomMomentStatus: async (
+    roomId: string,
+    momentId: string,
+    status: TravelRoomMoment['status'],
+  ) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return undefined;
+    }
+
+    const moment = await requestApi<TravelRoomMoment>(
+      `/v1/travel-rooms/${encodeURIComponent(roomId)}/moments/${encodeURIComponent(momentId)}`,
+      {
+        body: { status },
+        method: 'PATCH',
+      },
+    );
+
+    return sanitizeRoomMoment(moment);
+  },
+  addTravelRoomMomentComment: async (roomId: string, momentId: string, body: string) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return undefined;
+    }
+
+    return requestApi<TravelRoomMomentComment>(
+      `/v1/travel-rooms/${encodeURIComponent(roomId)}/moments/${encodeURIComponent(momentId)}/comments`,
+      {
+        body: { body },
+        method: 'POST',
+      },
+    );
   },
   createTravelRoomRecap: async (
     roomId: string,
@@ -196,6 +278,29 @@ export const communityApi = {
       },
       method: 'POST',
     });
+  },
+  getTravelMateRequests: async (query: TravelMateRequestQuery = {}) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return [];
+    }
+
+    return requestApi<TravelMateRequest[]>('/v1/travel-mate-requests', { query });
+  },
+  updateTravelMateRequest: async (
+    requestId: string,
+    action: 'accept' | 'cancel' | 'decline' | 'expire',
+  ) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return undefined;
+    }
+
+    return requestApi<TravelMateRequest>(
+      `/v1/travel-mate-requests/${encodeURIComponent(requestId)}`,
+      {
+        body: { action },
+        method: 'PATCH',
+      },
+    );
   },
   blockUser: async (input: { targetPinId?: string; targetUserId?: string }) => {
     if (!shouldAttemptAuthenticatedApi()) {

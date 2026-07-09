@@ -16,6 +16,7 @@ type CameraCaptureViewProps = {
   locationStatus: LocationStatus;
   onCapture: () => void;
   onClose: () => void;
+  onSkipPhoto: () => void;
 };
 
 export function CameraCaptureView({
@@ -25,6 +26,7 @@ export function CameraCaptureView({
   locationStatus,
   onCapture,
   onClose,
+  onSkipPhoto,
 }: CameraCaptureViewProps) {
   return (
     <View className="flex-1 overflow-hidden bg-black">
@@ -62,6 +64,16 @@ export function CameraCaptureView({
           ) : (
             <View className="h-[58px] w-[58px] rounded-full bg-white" />
           )}
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          className="mt-5 min-h-11 rounded-full border border-white/20 bg-black/35 px-5 py-3"
+          disabled={isCapturing}
+          onPress={onSkipPhoto}
+        >
+          <AppText className="text-sm font-semibold text-white/80">
+            사진 없이 기록하기
+          </AppText>
         </Pressable>
       </View>
     </View>

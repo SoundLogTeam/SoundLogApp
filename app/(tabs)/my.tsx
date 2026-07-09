@@ -118,7 +118,7 @@ export default function MyScreen() {
     {
       description: selectedSummary || '아직 저장된 취향 정보가 없어요.',
       icon: 'sliders',
-      label: '취향 정보 수정',
+      label: '취향 수정',
       onPress: () =>
         router.push({
           pathname: '/onboarding',
@@ -126,11 +126,9 @@ export default function MyScreen() {
         } as never),
     },
     {
-      description: profile.locationRecommendationEnabled
-        ? '위치 기반 추천 사용 중'
-        : '위치 추천 꺼짐',
+      description: '위치 · 카메라 · 사진',
       icon: 'map-pin',
-      label: '위치/카메라 권한',
+      label: '권한 설정',
     },
     {
       description: '데이터 수집과 보관, 삭제 요청 방법을 확인합니다.',
@@ -161,7 +159,7 @@ export default function MyScreen() {
         contentContainerStyle={{ paddingBottom: 132, paddingHorizontal: 20, paddingTop: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <AppText className="text-[26px] font-semibold text-white">My</AppText>
+        <AppText className="text-[26px] font-semibold text-white">마이</AppText>
 
         <AuthAccountCard />
 

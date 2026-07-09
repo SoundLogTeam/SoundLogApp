@@ -133,6 +133,13 @@ export function BottomNavigation() {
         }}
       />
       <Tabs.Screen
+        name="travel-room/[roomId]"
+        options={{
+          href: null,
+          title: '여행방',
+        }}
+      />
+      <Tabs.Screen
         name="playlist/[id]"
         options={{
           href: null,

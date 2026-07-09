@@ -15,10 +15,10 @@ export function AppEntryGate() {
   const isAuthRoute = pathname.startsWith('/auth');
   const isLegalRoute = pathname.startsWith('/legal');
   const isOnboardingRoute = pathname.startsWith('/onboarding');
-  const hasAppSession = status === 'authenticated' || status === 'guest';
+  const hasAppSession = status === 'authenticated';
 
-  if (!hasAppSession && !isAuthRoute && !isLegalRoute) {
-    return <Redirect href="/auth/login" />;
+  if (!hasAppSession && !isAuthRoute && !isLegalRoute && !isOnboardingRoute) {
+    return <Redirect href={profile.completedOnboarding ? '/auth/login' : '/onboarding'} />;
   }
 
   if (isAuthRoute && status === 'authenticated') {

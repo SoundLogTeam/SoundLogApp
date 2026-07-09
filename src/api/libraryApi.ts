@@ -4,7 +4,7 @@ import {
   shouldAttemptAuthenticatedApi,
 } from '@/api/client';
 import { RecommendationEventContext } from '@/store/recommendationEventStore';
-import { Track } from '@/types/domain';
+import { LibraryPlaylistSummary, Track } from '@/types/domain';
 import { sanitizeTrack } from '@/utils/trackSanitizer';
 
 type LibraryTrackAction = 'like' | 'save' | 'unlike' | 'unsave';
@@ -20,6 +20,7 @@ export type RemoteLibraryTrackRecord = {
   createdAt: string;
   id: string;
   kind: 'liked' | 'saved';
+  playlist?: LibraryPlaylistSummary;
   playlistId?: string;
   track: Track;
 };

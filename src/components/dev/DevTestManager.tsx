@@ -220,8 +220,7 @@ function DevTestManagerContent() {
   const setPlace = useTravelSessionStore((state) => state.setPlace);
   const startSession = useTravelSessionStore((state) => state.startSession);
   const { completeOnboarding, resetOnboarding } = useUserProfileStore();
-  const { continueAsGuest, finishLogin, logoutLocal, status: authStatus, user: authUser } =
-    useAuthStore();
+  const { finishLogin, logoutLocal, status: authStatus, user: authUser } = useAuthStore();
   const { logs, addLog, removeLog } = useMomentLogStore();
   const { likedTracks, savedTracks, removeLikedTrack, removeSavedTrack, toggleLike, toggleSave } =
     useLibraryStore();
@@ -247,11 +246,6 @@ function DevTestManagerContent() {
     };
 
     finishLogin(session);
-    setIsOpen(false);
-    router.replace('/' as never);
-  };
-  const applyGuestSession = () => {
-    continueAsGuest();
     setIsOpen(false);
     router.replace('/' as never);
   };
@@ -444,7 +438,7 @@ function DevTestManagerContent() {
                 <ManagerButton label="카메라" onPress={() => navigate('/camera')} />
               </ManagerSection>
 
-              <ManagerSection subtitle="로그인 gate, 게스트 모드, 로그아웃 분기를 강제로 테스트합니다." title="인증">
+              <ManagerSection subtitle="로그인 gate와 로그아웃 분기를 강제로 테스트합니다." title="인증">
                 {authProviderOptions.map((provider) => (
                   <ManagerButton
                     key={provider}
@@ -453,11 +447,6 @@ function DevTestManagerContent() {
                     onPress={() => applyMockLogin(provider)}
                   />
                 ))}
-                <ManagerButton
-                  active={authStatus === 'guest'}
-                  label="게스트"
-                  onPress={applyGuestSession}
-                />
                 <ManagerButton destructive label="로그아웃" onPress={applyLogout} />
               </ManagerSection>
 

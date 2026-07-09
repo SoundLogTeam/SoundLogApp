@@ -418,11 +418,23 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
                   className="flex-1 overflow-hidden rounded-[22px]"
                   style={{ height: 154 }}
                 >
-                  <Image
-                    className="h-full w-full"
-                    resizeMode="cover"
-                    source={{ uri: moment.photoUri }}
-                  />
+                  {moment.photoUri ? (
+                    <Image
+                      className="h-full w-full"
+                      resizeMode="cover"
+                      source={{ uri: moment.photoUri }}
+                    />
+                  ) : (
+                    <View
+                      className="h-full w-full items-center justify-center"
+                      style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+                    >
+                      <Feather color="rgba(255,255,255,0.82)" name="music" size={26} />
+                      <AppText className="mt-2 text-center text-xs font-semibold text-white/80">
+                        음악 기록
+                      </AppText>
+                    </View>
+                  )}
                 </View>
               ))}
             </View>

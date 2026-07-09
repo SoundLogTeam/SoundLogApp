@@ -37,12 +37,14 @@ type MomentReviewPanelProps = {
   isSaving: boolean;
   location?: GeoPoint;
   moodTags: MoodTag[];
+  note: string;
   onChangeMoodTags: (moodTags: MoodTag[]) => void;
+  onChangeNote: (note: string) => void;
   onChangePlaceName: (placeName: string) => void;
   onRetake: () => void;
   onSave: () => void;
   onToggleMusic: () => void;
-  photoUri: string;
+  photoUri?: string;
   placeName: string;
   track?: Track;
   travelMode?: TravelMode;
@@ -56,7 +58,9 @@ export function MomentReviewPanel({
   isSaving,
   location,
   moodTags,
+  note,
   onChangeMoodTags,
+  onChangeNote,
   onChangePlaceName,
   onRetake,
   onSave,
@@ -93,16 +97,33 @@ export function MomentReviewPanel({
           >
             <Feather color="#fff" name="arrow-left" size={21} />
           </Pressable>
-          <AppText className="text-lg font-semibold text-white">순간 저장</AppText>
+          <AppText className="text-lg font-semibold text-white">저장 확인</AppText>
           <View className="h-11 w-11" />
         </View>
 
-        <Image
-          className="mt-8 w-full rounded-[24px] bg-white/10"
-          contentFit="cover"
-          source={{ uri: photoUri }}
-          style={{ aspectRatio: 4 / 5 }}
-        />
+        {photoUri ? (
+          <Image
+            className="mt-8 w-full rounded-[24px] bg-white/10"
+            contentFit="cover"
+            source={{ uri: photoUri }}
+            style={{ aspectRatio: 4 / 5 }}
+          />
+        ) : (
+          <View
+            className="mt-8 w-full items-center justify-center rounded-[24px] border border-white/10 bg-white/10 px-6"
+            style={{ aspectRatio: 4 / 5 }}
+          >
+            <View className="h-16 w-16 items-center justify-center rounded-full bg-white/10">
+              <Feather color="rgba(255,255,255,0.75)" name="music" size={28} />
+            </View>
+            <AppText className="mt-5 text-center text-[22px] font-semibold text-white">
+              사진 없이 음악만 남겨요
+            </AppText>
+            <AppText className="mt-3 text-center text-sm leading-6 text-white/60">
+              장소, 곡, 무드, 메모만으로도 여행 사운드트랙 로그를 만들 수 있어요.
+            </AppText>
+          </View>
+        )}
 
         <View className="mt-5 gap-4 rounded-[22px] border border-white/10 bg-white/10 p-4">
           <View>
@@ -187,6 +208,22 @@ export function MomentReviewPanel({
               })}
             </View>
           </View>
+
+          <View>
+            <View className="mb-2 flex-row items-center gap-2">
+              <Feather color="rgba(255,255,255,0.6)" name="edit-3" size={14} />
+              <AppText className="text-[11px] text-white/45">메모</AppText>
+            </View>
+            <TextInput
+              className="min-h-[72px] rounded-[15px] border border-white/10 bg-black/20 px-4 py-3 text-sm font-medium leading-5 text-white"
+              editable={!isSaving}
+              multiline
+              onChangeText={onChangeNote}
+              placeholder="메모 추가"
+              placeholderTextColor="rgba(255,255,255,0.32)"
+              value={note}
+            />
+          </View>
         </View>
 
         <MomentSaveState message={errorMessage} type="error" />
@@ -209,7 +246,9 @@ export function MomentReviewPanel({
             disabled={isSaving}
             onPress={onRetake}
           >
-            <AppText className="font-semibold text-white/80">다시 찍기</AppText>
+            <AppText className="font-semibold text-white/80">
+              {photoUri ? '다시 촬영하기' : '사진 촬영하기'}
+            </AppText>
           </Pressable>
         </View>
       </ScrollView>

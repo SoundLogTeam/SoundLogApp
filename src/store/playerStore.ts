@@ -1,15 +1,21 @@
 import { create } from 'zustand';
 
-import { Track } from '@/types/domain';
+import { LibraryPlaylistSummary, Track } from '@/types/domain';
 
 type PlayerState = {
   currentTrack?: Track;
+  playlist?: LibraryPlaylistSummary;
   playlistId?: string;
   queue: Track[];
   playNext: () => void;
   playPrevious: () => void;
   clearTrack: () => void;
-  setTrack: (track: Track, playlistId?: string, queue?: Track[]) => void;
+  setTrack: (
+    track: Track,
+    playlistId?: string,
+    queue?: Track[],
+    playlist?: LibraryPlaylistSummary,
+  ) => void;
 };
 
 export const usePlayerStore = create<PlayerState>((set) => ({
@@ -44,12 +50,14 @@ export const usePlayerStore = create<PlayerState>((set) => ({
   clearTrack: () =>
     set({
       currentTrack: undefined,
+      playlist: undefined,
       playlistId: undefined,
       queue: [],
     }),
-  setTrack: (track, playlistId, queue) =>
+  setTrack: (track, playlistId, queue, playlist) =>
     set({
       currentTrack: track,
+      playlist,
       playlistId,
       queue: queue?.length ? queue : [track],
     }),

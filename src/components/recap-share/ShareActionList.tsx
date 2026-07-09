@@ -1,15 +1,34 @@
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 
 import { ShareActionButton, ShareActionId } from '@/components/recap-share/ShareActionButton';
 
 const actions: Array<{
-  color: string;
+  backgroundColor: string;
   icon: 'download' | 'share-2';
+  iconColor: string;
   id: ShareActionId;
   label: string;
+  loadingLabel: string;
+  textColor: string;
 }> = [
-  { color: '#2B2B2F', icon: 'download', id: 'save', label: 'Save' },
-  { color: '#20146F', icon: 'share-2', id: 'share', label: 'Share' },
+  {
+    backgroundColor: '#B7E628',
+    icon: 'download',
+    iconColor: '#050916',
+    id: 'save',
+    label: '이미지 저장',
+    loadingLabel: '저장 중',
+    textColor: '#050916',
+  },
+  {
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    icon: 'share-2',
+    iconColor: '#FFFFFF',
+    id: 'share',
+    label: '공유하기',
+    loadingLabel: '공유 중',
+    textColor: '#FFFFFF',
+  },
 ];
 
 type ShareActionListProps = {
@@ -20,20 +39,21 @@ type ShareActionListProps = {
 
 export function ShareActionList({ activeAction, isBusy = false, onAction }: ShareActionListProps) {
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-      <View className="flex-row justify-center gap-5 px-5">
-        {actions.map((action) => (
-          <ShareActionButton
-            key={action.id}
-            color={action.color}
-            disabled={isBusy}
-            icon={action.icon}
-            isActive={activeAction === action.id}
-            label={action.label}
-            onPress={() => onAction(action.id)}
-          />
-        ))}
-      </View>
-    </ScrollView>
+    <View className="w-full flex-row gap-3">
+      {actions.map((action) => (
+        <ShareActionButton
+          key={action.id}
+          backgroundColor={action.backgroundColor}
+          disabled={isBusy}
+          icon={action.icon}
+          iconColor={action.iconColor}
+          isActive={activeAction === action.id}
+          label={action.label}
+          loadingLabel={action.loadingLabel}
+          onPress={() => onAction(action.id)}
+          textColor={action.textColor}
+        />
+      ))}
+    </View>
   );
 }

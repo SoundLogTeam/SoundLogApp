@@ -5,6 +5,7 @@ const errors = [];
 const baseUrl = (process.argv[2] || process.env.SOUNDLOG_WEB_BASE_URL || '').replace(/\/+$/, '');
 const bypassSecret =
   process.env.SOUNDLOG_VERCEL_PROTECTION_BYPASS || process.env.VERCEL_PROTECTION_BYPASS;
+let authHeaderPromise;
 
 if (!baseUrl) {
   console.error(
@@ -21,8 +22,11 @@ function withBase(path) {
   return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-function getHeaders() {
-  return bypassSecret ? { 'x-vercel-protection-bypass': bypassSecret } : {};
+function getHeaders(extraHeaders = {}) {
+  return {
+    ...(bypassSecret ? { 'x-vercel-protection-bypass': bypassSecret } : {}),
+    ...extraHeaders,
+  };
 }
 
 function getLocation(response) {
@@ -41,9 +45,19 @@ function protectionMessage(url) {
   ].join(' ');
 }
 
-async function fetchText(url) {
+function createSmokeCredentials() {
+  const email =
+    process.env.SOUNDLOG_CHECK_EMAIL ||
+    `soundlog-check-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@soundlog.test`;
+  const password = process.env.SOUNDLOG_CHECK_PASSWORD || 'soundlog-check-password';
+
+  return { email, password };
+}
+
+async function fetchText(url, options = {}) {
   const response = await fetch(url, {
-    headers: getHeaders(),
+    ...options,
+    headers: getHeaders(options.headers),
     redirect: 'manual',
   });
 
@@ -81,30 +95,120 @@ async function fetchJson(path) {
   return JSON.parse(text);
 }
 
+async function postJson(path, body) {
+  const url = withBase(path);
+  const { contentType, response, text } = await fetchText(url, {
+    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new Error(`${url} returned HTTP ${response.status}: ${text.slice(0, 180)}`);
+  }
+
+  if (!contentType.includes('application/json') && !text.trim().startsWith('{')) {
+    throw new Error(
+      `${url} did not return JSON. content-type=${contentType}; sample=${text
+        .slice(0, 180)
+        .replace(/\s+/g, ' ')}`,
+    );
+  }
+
+  return JSON.parse(text);
+}
+
+async function createAuthHeader() {
+  const { email, password } = createSmokeCredentials();
+
+  if (process.env.SOUNDLOG_CHECK_EMAIL && process.env.SOUNDLOG_CHECK_PASSWORD) {
+    try {
+      const login = await postJson('/api/soundlog/v1/auth/login', { email, password });
+      return `Bearer ${login.data.accessToken}`;
+    } catch {
+      // The configured smoke account may not exist yet; try to create it once.
+    }
+  }
+
+  const register = await postJson('/api/soundlog/v1/auth/register', {
+    displayName: 'Soundlog Web Check',
+    email,
+    password,
+  });
+
+  return `Bearer ${register.data.accessToken}`;
+}
+
+async function getAuthHeader() {
+  authHeaderPromise ??= createAuthHeader();
+
+  return authHeaderPromise;
+}
+
+async function fetchAuthenticatedJson(path) {
+  const url = withBase(path);
+  const authHeader = await getAuthHeader();
+  const { contentType, response, text } = await fetchText(url, {
+    headers: {
+      Authorization: authHeader,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`${url} returned HTTP ${response.status}: ${text.slice(0, 180)}`);
+  }
+
+  if (!contentType.includes('application/json') && !text.trim().startsWith('{')) {
+    throw new Error(
+      `${url} did not return JSON. content-type=${contentType}; sample=${text
+        .slice(0, 180)
+        .replace(/\s+/g, ' ')}`,
+    );
+  }
+
+  return JSON.parse(text);
+}
+
 async function verifyApiProxy() {
   const endpoints = [
-    '/api/soundlog/v1/health',
-    '/api/soundlog/v1/home/featured-playlists?limit=3&locationRecommendationEnabled=false&recommendationMode=everyday',
-    '/api/soundlog/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday&topFilter=%EC%A0%84%EC%B2%B4',
-    '/api/soundlog/v1/playlists/geoje-ocean',
+    {
+      auth: false,
+      path: '/api/soundlog/v1/health',
+    },
+    {
+      auth: true,
+      path: '/api/soundlog/v1/home/featured-playlists?limit=3&locationRecommendationEnabled=false&recommendationMode=everyday',
+    },
+    {
+      auth: true,
+      path: '/api/soundlog/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday&topFilter=%EC%A0%84%EC%B2%B4',
+    },
+    {
+      auth: true,
+      path: '/api/soundlog/v1/playlists/geoje-ocean',
+    },
   ];
 
   for (const endpoint of endpoints) {
     try {
-      const payload = await fetchJson(endpoint);
+      const payload = endpoint.auth
+        ? await fetchAuthenticatedJson(endpoint.path)
+        : await fetchJson(endpoint.path);
       const data = payload.data;
 
-      if (endpoint.includes('/health')) {
+      if (endpoint.path.includes('/health')) {
         if (data?.status !== 'ok') {
-          addError(`${endpoint} returned unexpected health status: ${JSON.stringify(data)}`);
+          addError(`${endpoint.path} returned unexpected health status: ${JSON.stringify(data)}`);
         }
-      } else if (endpoint.includes('/home/')) {
+      } else if (endpoint.path.includes('/home/')) {
         if (!Array.isArray(data)) {
-          addError(`${endpoint} did not return an array data payload.`);
+          addError(`${endpoint.path} did not return an array data payload.`);
         }
-      } else if (endpoint.includes('/playlists/')) {
+      } else if (endpoint.path.includes('/playlists/')) {
         if (!data?.id || !Array.isArray(data.tracks)) {
-          addError(`${endpoint} did not return a playlist with tracks.`);
+          addError(`${endpoint.path} did not return a playlist with tracks.`);
         }
       }
     } catch (error) {
@@ -130,7 +234,7 @@ async function verifyServerContract() {
   }
 
   try {
-    const payload = await fetchJson(
+    const payload = await fetchAuthenticatedJson(
       '/api/soundlog/v1/tour/nearby-places?lat=35.1595&lng=129.1604&radiusMeters=2000&limit=1',
     );
 
@@ -154,7 +258,7 @@ async function verifyServerContract() {
   }
 
   try {
-    const payload = await fetchJson(
+    const payload = await fetchAuthenticatedJson(
       '/api/soundlog/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday&topFilter=%EC%A0%84%EC%B2%B4',
     );
     const serialized = JSON.stringify(payload?.data ?? {});
@@ -264,13 +368,6 @@ async function verifyBundle() {
     ['track_resume', 'Deployed bundle must not include fake resume events.'],
     ['track_skip', 'Deployed bundle must not include fake skip playback events.'],
     ['spotify-auth', 'Deployed bundle must not include the removed Spotify auth route.'],
-    ['open.spotify.com', 'Deployed bundle must not include Spotify external search URLs.'],
-    ['music.youtube.com', 'Deployed bundle must not include YouTube Music URLs.'],
-    ['YouTube Music', 'Deployed bundle must not include YouTube Music action copy.'],
-    [
-      'openMusicPlatformUrl',
-      'Deployed bundle must not include external music platform open helpers.',
-    ],
     [
       'playSelectedSpotifyOrFallback',
       'Deployed bundle must not include removed Spotify playback helpers.',

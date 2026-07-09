@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
-import { Modal, Platform, Pressable, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { libraryApi } from '@/api/libraryApi';
@@ -14,6 +14,11 @@ import { getMiniPlayerBottom } from '@/constants/layout';
 import { useLibraryStore } from '@/store/libraryStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+import {
+  getExternalMusicLinks,
+  openExternalMusicLink,
+  type ExternalMusicLink,
+} from '@/utils/externalMusicLinks';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 import { getTrackKeyColor, hexToRgba } from '@/utils/trackVisuals';
 
@@ -29,6 +34,7 @@ export function MiniPlayer() {
     currentTrack,
     playNext,
     playPrevious,
+    playlist,
     playlistId,
     queue,
   } = usePlayerStore();
@@ -48,11 +54,12 @@ export function MiniPlayer() {
   const playerGlow = hexToRgba(keyColor, 0.72);
   const playerSoftGlow = hexToRgba(keyColor, 0.24);
   const canSkip = queue.length > 1;
+  const externalLinks = getExternalMusicLinks(currentTrack);
   const handleToggleLike = () => {
     const context = createRecommendationEventContext();
 
     setActionMessage(undefined);
-    setLikeState(currentTrack, !liked, playlistId);
+    setLikeState(currentTrack, !liked, playlistId, playlist);
     void libraryApi
       .updateTrackState(currentTrack.id, {
         action: liked ? 'unlike' : 'like',
@@ -60,7 +67,7 @@ export function MiniPlayer() {
         playlistId,
       })
       .catch(() => {
-        setLikeState(currentTrack, liked, playlistId);
+        setLikeState(currentTrack, liked, playlistId, playlist);
         setActionMessage('서버 저장에 실패해서 좋아요 상태를 되돌렸어요.');
       });
     syncRecommendationEvent(
@@ -76,7 +83,7 @@ export function MiniPlayer() {
     const context = createRecommendationEventContext();
 
     setActionMessage(undefined);
-    setSaveState(currentTrack, !saved, playlistId);
+    setSaveState(currentTrack, !saved, playlistId, playlist);
     void libraryApi
       .updateTrackState(currentTrack.id, {
         action: saved ? 'unsave' : 'save',
@@ -84,7 +91,7 @@ export function MiniPlayer() {
         playlistId,
       })
       .catch(() => {
-        setSaveState(currentTrack, saved, playlistId);
+        setSaveState(currentTrack, saved, playlistId, playlist);
         setActionMessage('서버 저장에 실패해서 저장 상태를 되돌렸어요.');
       });
     syncRecommendationEvent(
@@ -113,6 +120,40 @@ export function MiniPlayer() {
   const handleCaptureMoment = () => {
     setIsFullPlayerVisible(false);
     router.push('/camera');
+  };
+  const handleOpenLiveSoundMap = () => {
+    setIsFullPlayerVisible(false);
+    router.push('/travel');
+  };
+  const handleOpenExternalLink = async (link: ExternalMusicLink) => {
+    const context = createRecommendationEventContext();
+
+    setActionMessage(undefined);
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context,
+        playlistId,
+        trackId: currentTrack.id,
+        type: 'track_external_open',
+        value: link.id,
+      }),
+    );
+
+    try {
+      await openExternalMusicLink(link);
+      setActionMessage(`${link.label} 링크를 열었어요. 돌아오면 이 곡을 기록할 수 있어요.`);
+    } catch {
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context,
+          playlistId,
+          trackId: currentTrack.id,
+          type: 'external_music_open_failed',
+          value: link.id,
+        }),
+      );
+      setActionMessage('외부 음악 링크를 열지 못했어요. 웹 검색을 다시 시도해보세요.');
+    }
   };
   const renderCover = (sizeClassName: string, radiusClassName: string) => (
     <View
@@ -225,7 +266,7 @@ export function MiniPlayer() {
             <AppText className="mt-1 text-xs font-medium text-white/60" numberOfLines={1}>
               {currentTrack.artist}
             </AppText>
-            <AppText className="mt-2 text-[11px] font-semibold text-white/42" numberOfLines={1}>
+            <AppText className="mt-2 text-[11px] font-semibold text-white/40" numberOfLines={1}>
               SoundLog 음악으로 선택됨
             </AppText>
           </View>
@@ -289,7 +330,16 @@ export function MiniPlayer() {
             }}
           />
 
-          <View className="flex-1 px-7 pb-8 pt-14">
+          <ScrollView
+            className="flex-1"
+            contentContainerStyle={{
+              flexGrow: 1,
+              paddingBottom: 32,
+              paddingHorizontal: 28,
+              paddingTop: 56,
+            }}
+            showsVerticalScrollIndicator={false}
+          >
             <View className="flex-row items-center justify-between">
               <Pressable
                 accessibilityLabel="전체 플레이어 닫기"
@@ -327,6 +377,9 @@ export function MiniPlayer() {
             </View>
 
             <View className="mt-8">
+              <AppText className="mb-3 text-xs font-semibold uppercase text-white/40">
+                선택한 곡
+              </AppText>
               <AppText className="text-center text-[28px] font-semibold text-white" numberOfLines={2}>
                 {currentTrack.title}
               </AppText>
@@ -338,7 +391,31 @@ export function MiniPlayer() {
               </AppText>
             </View>
 
-            <View className="mt-auto flex-row items-center justify-center gap-5">
+            <View className="mt-6 rounded-[22px] border border-white/10 bg-white/10 p-4">
+              <AppText className="text-xs font-semibold uppercase text-white/40">
+                어디에서 들을까요?
+              </AppText>
+              <View className="mt-3 gap-2">
+                {externalLinks.slice(0, 3).map((link) => (
+                  <Pressable
+                    accessibilityRole="button"
+                    className="min-h-12 flex-row items-center justify-between rounded-full border border-white/10 bg-white/10 px-4"
+                    key={link.id}
+                    onPress={() => void handleOpenExternalLink(link)}
+                  >
+                    <View className="min-w-0 flex-1 flex-row items-center gap-2">
+                      <Feather color="#fff" name="external-link" size={16} />
+                      <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
+                        {link.label}
+                      </AppText>
+                    </View>
+                    <Feather color="rgba(255,255,255,0.45)" name="chevron-right" size={17} />
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View className="mt-6 flex-row items-center justify-center gap-5">
               <Pressable
                 accessibilityLabel="이전 추천 곡 선택"
                 accessibilityRole="button"
@@ -380,12 +457,22 @@ export function MiniPlayer() {
               >
                 <Feather color="#050916" name="camera" size={17} />
                 <AppText className="text-sm font-semibold text-[#050916]">
-                  이 곡으로 순간 기록
+                  이 곡으로 기록
+                </AppText>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                className="mt-3 h-12 flex-row items-center justify-center gap-2 rounded-full border border-soundlog-lime/40 bg-soundlog-lime/10"
+                onPress={handleOpenLiveSoundMap}
+              >
+                <Feather color="#B7E628" name="map-pin" size={17} />
+                <AppText className="text-sm font-semibold text-soundlog-lime">
+                  Live Sound Map 열기
                 </AppText>
               </Pressable>
               <View className="mt-3 rounded-[14px] border border-white/10 bg-white/5 px-4 py-3">
                 <AppText className="text-center text-xs leading-5 text-white/55">
-                  음원을 재생하지 않고 곡 정보와 여행 순간을 SoundLog 안에 기록해요.
+                  음원을 재생하지 않고 곡 정보와 여행 순간을 SoundLog 안에 기록하거나, 여행 모드에서 지도에 공개해요.
                 </AppText>
               </View>
             </View>
@@ -416,7 +503,7 @@ export function MiniPlayer() {
                 </AppText>
               </View>
             ) : null}
-          </View>
+          </ScrollView>
         </View>
       </Modal>
 

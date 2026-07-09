@@ -2,7 +2,7 @@
 
 ## Goal
 
-Remove Apple/Kakao login from Soundlog and make the app use a first-party email/password account flow only, while preserving guest browsing and the existing Soundlog access/refresh token session model.
+Remove Apple/Kakao login from Soundlog and make the app use a first-party email/password account flow only, while preserving the existing Soundlog access/refresh token session model.
 
 ## Contract
 
@@ -20,7 +20,7 @@ Remove Apple/Kakao login from Soundlog and make the app use a first-party email/
   - The form shows pending state while submitting.
   - Validation errors stay local when possible.
   - Server/auth failures render in the existing login error area.
-  - Guest browsing remains available.
+  - App browsing requires an authenticated session.
 
 ## Implementation
 
@@ -44,7 +44,7 @@ Remove Apple/Kakao login from Soundlog and make the app use a first-party email/
 1. Replace Apple/Kakao buttons in `app/auth/login.tsx` with an email/password form.
 2. Add a segmented login/signup mode.
 3. Update `src/types/auth.ts`, `src/api/authApi.ts`, `src/api/authQueries.ts`, and `src/mock-server/authHandlers.ts` for first-party login/register requests.
-4. Keep `continue as guest`.
+4. Remove unauthenticated browsing from the login entry point.
 5. Update account provider labels to show a Soundlog account rather than Apple/Kakao.
 6. Remove native social login config/dependencies from the primary app config path.
 

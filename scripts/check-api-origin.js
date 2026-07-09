@@ -2,6 +2,7 @@
 
 const errors = [];
 const apiOrigin = (process.argv[2] || process.env.SOUNDLOG_API_ORIGIN || '').replace(/\/+$/, '');
+let authHeaderPromise;
 
 if (!apiOrigin) {
   console.error('Usage: npm run check:api-origin -- http://<EC2_HOST>:4000');
@@ -16,22 +17,78 @@ function withOrigin(path) {
   return `${apiOrigin}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
-async function fetchText(path) {
+function createSmokeCredentials() {
+  const email =
+    process.env.SOUNDLOG_CHECK_EMAIL ||
+    `soundlog-check-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@soundlog.test`;
+  const password = process.env.SOUNDLOG_CHECK_PASSWORD || 'soundlog-check-password';
+
+  return { email, password };
+}
+
+async function fetchText(path, options = {}) {
   const url = withOrigin(path);
-  const response = await fetch(url, { redirect: 'manual' });
+  const response = await fetch(url, { ...options, redirect: 'manual' });
   const text = await response.text();
 
   return { response, text, url };
 }
 
-async function fetchJson(path) {
-  const { response, text, url } = await fetchText(path);
+async function fetchJson(path, options) {
+  const { response, text, url } = await fetchText(path, options);
 
   if (!response.ok) {
     throw new Error(`${url} returned HTTP ${response.status}: ${text.slice(0, 180)}`);
   }
 
   return JSON.parse(text);
+}
+
+async function postJson(path, body) {
+  return fetchJson(path, {
+    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    method: 'POST',
+  });
+}
+
+async function createAuthHeader() {
+  const { email, password } = createSmokeCredentials();
+
+  if (process.env.SOUNDLOG_CHECK_EMAIL && process.env.SOUNDLOG_CHECK_PASSWORD) {
+    try {
+      const login = await postJson('/v1/auth/login', { email, password });
+      return `Bearer ${login.data.accessToken}`;
+    } catch {
+      // The configured smoke account may not exist yet; try to create it once.
+    }
+  }
+
+  const register = await postJson('/v1/auth/register', {
+    displayName: 'Soundlog API Check',
+    email,
+    password,
+  });
+
+  return `Bearer ${register.data.accessToken}`;
+}
+
+async function getAuthHeader() {
+  authHeaderPromise ??= createAuthHeader();
+
+  return authHeaderPromise;
+}
+
+async function fetchAuthenticatedJson(path) {
+  const authHeader = await getAuthHeader();
+
+  return fetchJson(path, {
+    headers: {
+      Authorization: authHeader,
+    },
+  });
 }
 
 async function verifyHealth() {
@@ -64,7 +121,7 @@ async function verifyOpenApi() {
 
 async function verifyNearbyPlaces() {
   try {
-    const payload = await fetchJson(
+    const payload = await fetchAuthenticatedJson(
       '/v1/tour/nearby-places?lat=35.1595&lng=129.1604&radiusMeters=2000&limit=1',
     );
     const place = payload?.data?.[0];
@@ -88,7 +145,7 @@ async function verifyNearbyPlaces() {
 
 async function verifyMusicMetadata() {
   try {
-    const payload = await fetchJson(
+    const payload = await fetchAuthenticatedJson(
       '/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday&topFilter=%EC%A0%84%EC%B2%B4',
     );
     const serialized = JSON.stringify(payload?.data ?? {});

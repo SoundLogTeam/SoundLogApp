@@ -64,6 +64,10 @@ API origin이 최신 서버인지 확인하려면 아래처럼 실행합니다.
 SOUNDLOG_API_ORIGIN=http://<EC2_HOST>:4000 npm run check:api-origin
 ```
 
+이 검사는 로그인 필수 API도 함께 확인하므로 `SOUNDLOG_CHECK_EMAIL`,
+`SOUNDLOG_CHECK_PASSWORD`를 지정하면 해당 smoke 계정으로 로그인합니다. 값을
+지정하지 않으면 `@soundlog.test` 임시 계정을 생성해 검증합니다.
+
 Android 지인 테스트용 내부 배포 빌드는 아래 명령으로 생성합니다.
 
 ```bash

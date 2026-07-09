@@ -6,12 +6,14 @@ import { AppText } from '@/components/AppText';
 type CameraPermissionStateProps = {
   canAskAgain?: boolean;
   onRequest: () => void;
+  onSkipPhoto: () => void;
   status?: string;
 };
 
 export function CameraPermissionState({
   canAskAgain = true,
   onRequest,
+  onSkipPhoto,
   status,
 }: CameraPermissionStateProps) {
   const isDenied = status === 'denied';
@@ -35,6 +37,14 @@ export function CameraPermissionState({
         <AppText className="font-semibold text-[#050916]">
           {isDenied && !canAskAgain ? '설정 열기' : '카메라 권한 허용'}
         </AppText>
+      </Pressable>
+
+      <Pressable
+        accessibilityRole="button"
+        className="mt-3 rounded-full border border-white/15 px-5 py-3"
+        onPress={onSkipPhoto}
+      >
+        <AppText className="font-semibold text-white/80">사진 없이 기록하기</AppText>
       </Pressable>
     </View>
   );

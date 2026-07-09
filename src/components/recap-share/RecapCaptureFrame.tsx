@@ -5,10 +5,12 @@ export type RecapCaptureFrameHandle = {
   capture: () => Promise<string | undefined>;
 };
 
-type RecapCaptureFrameProps = PropsWithChildren;
+type RecapCaptureFrameProps = PropsWithChildren<{
+  aspectRatio?: number;
+}>;
 
 export const RecapCaptureFrame = forwardRef<RecapCaptureFrameHandle, RecapCaptureFrameProps>(
-  function RecapCaptureFrame({ children }, ref) {
+  function RecapCaptureFrame({ aspectRatio = 3 / 4, children }, ref) {
     const viewShotRef = useRef<ComponentRef<typeof ViewShot>>(null);
 
     useImperativeHandle(ref, () => ({
@@ -19,7 +21,7 @@ export const RecapCaptureFrame = forwardRef<RecapCaptureFrameHandle, RecapCaptur
       <ViewShot
         ref={viewShotRef}
         options={{ format: 'png', quality: 1, result: 'tmpfile' }}
-        style={{ alignSelf: 'center', aspectRatio: 3 / 4, maxWidth: 320, width: '88%' }}
+        style={{ alignSelf: 'center', aspectRatio, maxWidth: 300, width: '82%' }}
       >
         {children}
       </ViewShot>

@@ -11,7 +11,6 @@ const DEFAULT_RADIUS_METERS = 2000;
 export const tourApi = {
   async getNearbyPlaces(params: NearbyPlacesParams): Promise<PlaceContext[]> {
     return requestApi<PlaceContext[]>('/v1/tour/nearby-places', {
-      auth: false,
       query: {
         lat: params.location.lat,
         limit: 10,

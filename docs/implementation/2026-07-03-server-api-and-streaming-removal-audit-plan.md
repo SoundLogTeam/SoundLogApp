@@ -17,7 +17,7 @@ Make the app behavior honest and testable:
   - `/api/soundlog/v1/home/mood-recommendations`
   - `/api/soundlog/v1/playlists/{id}`
 - The app no longer imports `mockServer` from API facades; the web export check fails if mock handlers are bundled again.
-- Main server-backed read APIs use server mode, but authenticated APIs intentionally return empty/no-op values when the user is a guest or has no token.
+- Main server-backed read APIs use server mode and require a valid Soundlog access token.
 - Current playback UI is misleading: `playerStore.setTrack()` sets `isPlaying: true` even when no preview or stream exists.
 - Spotify auth/playback code remains in the app even though streaming will be removed.
 

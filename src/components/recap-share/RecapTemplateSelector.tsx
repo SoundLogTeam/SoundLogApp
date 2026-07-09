@@ -10,6 +10,7 @@ const templateOptions: Array<{
   { id: 'album', label: '앨범' },
   { id: 'lp', label: 'LP' },
   { id: 'film', label: '필름' },
+  { id: 'map', label: '지도' },
 ];
 
 type RecapTemplateSelectorProps = {

@@ -21,7 +21,7 @@ import { Screen } from '@/components/Screen';
 import { getTabBarHeight } from '@/constants/layout';
 import { useRecapShareActions } from '@/hooks/useRecapShareActions';
 import { useMomentLogStore } from '@/store/momentLogStore';
-import { RecapTemplateId } from '@/types/domain';
+import { RecapShare, RecapTemplateId } from '@/types/domain';
 import { formatRecapRecordedAt } from '@/utils/dateFormat';
 import {
   createMomentLogGroups,
@@ -34,9 +34,18 @@ type RecapShareScreenProps = {
   recapId?: string;
 };
 
+function createRecapTitle(recap?: RecapShare | null) {
+  if (!recap) {
+    return 'Recap';
+  }
+
+  return `${recap.placeName} 사운드`;
+}
+
 export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
   const insets = useSafeAreaInsets();
-  const [selectedTemplate, setSelectedTemplate] = useState<RecapTemplateId>('lp');
+  const [selectedTemplate, setSelectedTemplate] = useState<RecapTemplateId>('album');
+  const captureAspectRatio = selectedTemplate === 'album' ? 1 : 3 / 4;
   const momentLogs = useMomentLogStore((state) => state.logs);
   const sessionId = extractSessionIdFromRecapId(recapId);
   const localMomentGroup = useMemo(
@@ -54,6 +63,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
     : localMomentLog
       ? momentLogToRecapShare(localMomentLog)
       : undefined;
+  const isLocalRecap = Boolean(localRecap);
   const {
     data: remoteRecap,
     isError,
@@ -64,7 +74,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
   const captureRef = useRef<RecapCaptureFrameHandle>(null);
   const { activeAction, message, save, share } = useRecapShareActions({
     capture: () => captureRef.current?.capture() ?? Promise.resolve(undefined),
-    recapId,
+    recapId: isLocalRecap ? undefined : recapId,
   });
 
   return (
@@ -74,12 +84,17 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
           alignItems: 'center',
           paddingBottom: getTabBarHeight(insets.bottom) + 28,
           paddingHorizontal: 20,
-          paddingTop: 72,
+          paddingTop: 32,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <AppText className="text-center text-[24px] font-semibold text-white">
-          Share Your Music
+        <AppText className="text-center text-[30px] font-semibold leading-9 text-white">
+          {createRecapTitle(recap)}
+        </AppText>
+        <AppText className="mt-3 max-w-[300px] text-center text-sm leading-6 text-white/58">
+          {recap
+            ? '사운드트랙 앨범 결과물을 저장하거나 공유해요.'
+            : '여행의 사운드트랙 앨범을 불러오고 있어요.'}
         </AppText>
 
         <View className="mt-7 w-full items-center">
@@ -91,21 +106,36 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
             <RecapShareEmptyState />
           ) : (
             <>
-              <RecapTemplateSelector
-                selectedTemplate={selectedTemplate}
-                onSelect={setSelectedTemplate}
-              />
-              <View className="mt-5 w-full items-center">
-                <RecapCaptureFrame ref={captureRef}>
+              <View className="w-full items-center">
+                <RecapCaptureFrame ref={captureRef} aspectRatio={captureAspectRatio}>
                   <RecapPreviewCard recap={recap} template={selectedTemplate} />
                 </RecapCaptureFrame>
               </View>
-              <AppText className="mt-5 text-sm text-white/70">
+
+              {isLocalRecap ? (
+                <View className="mt-5 w-full rounded-[16px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
+                  <AppText className="text-center text-xs leading-5 text-amber-100">
+                    서버 동기화 전 로컬 Recap이에요. 이미지 저장과 공유는 가능하고, Moment 동기화 후 서버 Recap으로 저장할 수 있어요.
+                  </AppText>
+                </View>
+              ) : null}
+
+              <View className="mt-5 w-full items-center">
+                <RecapTemplateSelector
+                  selectedTemplate={selectedTemplate}
+                  onSelect={setSelectedTemplate}
+                />
+              </View>
+
+              <AppText className="mt-4 text-sm text-white/70">
                 {formatRecapRecordedAt(recap.recordedAt)}
               </AppText>
-              <RecapMusicSummary recap={recap} />
 
-              <View className="mt-10 w-full items-center">
+              <View className="mt-5 w-full">
+                <RecapMusicSummary recap={recap} />
+              </View>
+
+              <View className="mt-5 w-full">
                 <ShareActionList
                   activeAction={activeAction}
                   isBusy={Boolean(activeAction)}

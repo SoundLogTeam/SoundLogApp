@@ -72,46 +72,43 @@ export function LocationContextCard({
         title: '위치 추천이 꺼져 있어요',
       };
   const buttonLabel = enabled ? (location ? '위치 새로고침' : '위치 설정') : '위치 추천 켜기';
+  const placeTitle = location ? (place?.title ?? formatPlaceLabel(location)) : copy.title;
+  const placeMeta = place
+    ? [place.category ?? place.contentType, place.distanceMeters ? `${Math.round(place.distanceMeters)}m` : undefined]
+        .filter(Boolean)
+        .join(' · ')
+    : undefined;
+  const statusText = isPlaceLoading
+    ? '주변 관광지를 확인 중이에요'
+    : placeCount > 0
+      ? `주변 장소 ${placeCount}곳 반영`
+      : location
+        ? updatedAt
+          ? `${formatRecapRecordedAt(updatedAt)} 갱신`
+          : '현재 위치 기반 추천 중'
+        : copy.description;
 
   return (
-    <View className="rounded-[22px] border border-white/10 bg-white/10 p-5">
-      <View className="flex-row items-start gap-3">
+    <View className="rounded-[22px] border border-white/10 bg-white/10 px-4 py-4">
+      <View className="flex-row items-center gap-3">
         <View className="h-11 w-11 items-center justify-center rounded-full bg-white/10">
-          <Feather color="#fff" name={copy.icon} size={19} />
+          <Feather color="#fff" name={copy.icon} size={18} />
         </View>
 
         <View className="min-w-0 flex-1">
-          <AppText className="text-base font-semibold text-white">{copy.title}</AppText>
-          <AppText className="mt-2 text-sm leading-6 text-white/55">{copy.description}</AppText>
-
-          {enabled && location ? (
-            <View className="mt-4 rounded-[16px] bg-black/20 px-4 py-3">
-              <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
-                {place?.title ?? formatPlaceLabel(location)}
-              </AppText>
-              {place ? (
-                <AppText className="mt-1 text-xs text-white/45" numberOfLines={1}>
-                  {[place.category ?? place.contentType, place.distanceMeters ? `${Math.round(place.distanceMeters)}m` : undefined]
-                    .filter(Boolean)
-                    .join(' · ') || '장소 컨텍스트 확인됨'}
-                </AppText>
-              ) : null}
-              {updatedAt ? (
-                <AppText className="mt-1 text-xs text-white/40">
-                  {formatRecapRecordedAt(updatedAt)} 갱신
-                </AppText>
-              ) : null}
-              {isPlaceLoading ? (
-                <AppText className="mt-2 text-xs text-[#9EA8FF]">주변 관광지를 확인 중이에요</AppText>
-              ) : placeCount > 0 ? (
-                <AppText className="mt-2 text-xs text-[#9EA8FF]">
-                  주변 장소 {placeCount}곳을 추천 맥락으로 반영해요
-                </AppText>
-              ) : null}
-              {placeInfoMessage ? (
-                <AppText className="mt-2 text-xs text-white/40">{placeInfoMessage}</AppText>
-              ) : null}
-            </View>
+          <AppText className="text-[11px] font-semibold uppercase text-white/45">
+            현재 위치
+          </AppText>
+          <AppText className="mt-1 text-xl font-semibold text-white" numberOfLines={1}>
+            {placeTitle}
+          </AppText>
+          <AppText className="mt-1 text-xs leading-5 text-white/50" numberOfLines={2}>
+            {placeMeta ? `${placeMeta} · ${statusText}` : statusText}
+          </AppText>
+          {placeInfoMessage ? (
+            <AppText className="mt-1 text-xs text-white/40" numberOfLines={1}>
+              {placeInfoMessage}
+            </AppText>
           ) : null}
         </View>
 
@@ -129,7 +126,7 @@ export function LocationContextCard({
 
       <Pressable
         accessibilityRole="button"
-        className="mt-5 h-11 items-center justify-center rounded-full border border-[#9EA8FF]/70 bg-[#243A75]/70"
+        className="mt-4 h-10 items-center justify-center rounded-full border border-[#9EA8FF]/70 bg-[#243A75]/70"
         disabled={isLoading}
         onPress={enabled ? onRefresh : onEnable}
         style={{ opacity: isLoading ? 0.55 : 1 }}

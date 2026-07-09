@@ -6,7 +6,9 @@ import { FeaturedPlaylistCard } from '@/components/home/FeaturedPlaylistCard';
 import { FeaturedPlaylist } from '@/types/domain';
 
 type FeaturedPlaylistSectionProps = {
+  cachedAt?: string;
   data?: FeaturedPlaylist[];
+  isCached?: boolean;
   isError?: boolean;
   isLoading?: boolean;
   onSelectPlaylist?: (playlist: FeaturedPlaylist) => void;
@@ -27,15 +29,33 @@ function FeaturedPlaylistSkeleton() {
 }
 
 export function FeaturedPlaylistSection({
+  cachedAt,
   data = [],
+  isCached = false,
   isError = false,
   isLoading = false,
   onSelectPlaylist,
   onRetry,
 }: FeaturedPlaylistSectionProps) {
+  const cacheLabel = cachedAt
+    ? `최근 추천 · ${new Date(cachedAt).toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`
+    : '최근 추천';
+
   return (
     <View className="gap-4">
-      <AppText className="text-[24px] font-semibold text-white">Music Playlist</AppText>
+      <View className="flex-row items-center justify-between gap-3">
+        <AppText className="text-[24px] font-semibold text-white">Music Playlist</AppText>
+        {isCached ? (
+          <View className="rounded-full bg-amber-300/15 px-3 py-1.5">
+            <AppText className="text-[10px] font-semibold text-amber-100">
+              {cacheLabel}
+            </AppText>
+          </View>
+        ) : null}
+      </View>
 
       {isLoading ? (
         <FeaturedPlaylistSkeleton />

@@ -1,45 +1,40 @@
 import { useQuery } from '@tanstack/react-query';
 
-import { homeApi } from '@/api/homeApi';
-import type {
-  GeoPoint,
-  MusicRecommendationMode,
-  PlaceContext,
-} from '@/types/domain';
+import {
+  homeApi,
+  type FeaturedPlaylistParams,
+  type MoodRecommendationParams,
+} from '@/api/homeApi';
 
-type FeaturedPlaylistParams = {
-  location?: GeoPoint;
-  locationRecommendationEnabled: boolean;
-  recommendationMode: MusicRecommendationMode;
-  place?: PlaceContext;
+type HomeQueryOptions = {
+  enabled?: boolean;
 };
 
-type MoodRecommendationParams = {
-  currentPlace?: PlaceContext;
-  moodFilter: string;
-  recommendationMode: MusicRecommendationMode;
-  preferredGenres?: string[];
-  preferredMoods?: string[];
-  topFilter: string;
-  travelStyles?: string[];
-};
-
-export function useFeaturedPlaylistsQuery(params: FeaturedPlaylistParams) {
+export function useFeaturedPlaylistsQuery(
+  params: FeaturedPlaylistParams,
+  options: HomeQueryOptions = {},
+) {
   return useQuery({
+    enabled: options.enabled ?? true,
     queryFn: () => homeApi.getFeaturedPlaylists(params),
     queryKey: ['home', 'featured-playlists', params],
   });
 }
 
-export function useMoodRecommendationsQuery(params: MoodRecommendationParams) {
+export function useMoodRecommendationsQuery(
+  params: MoodRecommendationParams,
+  options: HomeQueryOptions = {},
+) {
   return useQuery({
+    enabled: options.enabled ?? true,
     queryFn: () => homeApi.getMoodRecommendations(params),
     queryKey: ['home', 'mood-recommendations', params],
   });
 }
 
-export function useRecentMusicLogsQuery() {
+export function useRecentMusicLogsQuery(options: HomeQueryOptions = {}) {
   return useQuery({
+    enabled: options.enabled ?? true,
     queryFn: homeApi.getRecentMusicLogs,
     queryKey: ['home', 'recent-music-logs'],
   });

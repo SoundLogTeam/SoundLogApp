@@ -65,6 +65,11 @@ curl https://soundlog.shop/api/soundlog/v1/health
 npm run check:deployed-web -- https://soundlog.shop
 ```
 
+`check:deployed-web`는 로그인 필수 API도 검증합니다. 반복 실행 시 DB에 smoke
+계정이 계속 생기는 것을 피하려면 `SOUNDLOG_CHECK_EMAIL`,
+`SOUNDLOG_CHECK_PASSWORD`를 지정해 고정 검증 계정으로 실행합니다. 값을 지정하지
+않으면 스크립트가 `@soundlog.test` 임시 계정을 생성합니다.
+
 EC2 origin을 직접 검증하려면 아래 명령을 실행합니다. 이 검사는 `/openapi.yaml`, fallback 장소 source, Spotify 메타데이터 제거 여부까지 확인하므로 예전 백엔드로 잘못 붙은 경우 실패합니다.
 
 ```bash

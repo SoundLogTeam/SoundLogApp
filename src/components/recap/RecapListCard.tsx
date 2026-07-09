@@ -83,7 +83,7 @@ export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
                 <Feather color="#fff" name="music" size={13} />
               </View>
               <AppText
-                className="max-w-[108px] text-right text-[11px] text-white/58"
+                className="max-w-[108px] text-right text-[11px] text-white/60"
                 numberOfLines={1}
               >
                 {item.representativeTrack.artist}

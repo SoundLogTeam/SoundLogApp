@@ -60,7 +60,7 @@ export const recapApi = {
   },
   getRecapShare: async (id?: string) => {
     if (!id || !shouldAttemptAuthenticatedApi()) {
-      return Promise.resolve<RecapShare | undefined>(undefined);
+      return Promise.resolve<RecapShare | null>(null);
     }
 
     return requestApi<RecapShare>(`/v1/recaps/${encodeURIComponent(id)}/share`);
