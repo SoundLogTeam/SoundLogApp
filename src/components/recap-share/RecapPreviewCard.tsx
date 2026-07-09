@@ -49,16 +49,25 @@ function RecapBackground({
 function RecapLpTemplate({ recap }: { recap: RecapShare }) {
   return (
     <>
-      <RecapBackground
-        imageUrl={recap.backgroundImageUrl}
-        overlayClassName="bg-black/28"
+      <LinearGradient
+        colors={['#050916', '#070A12', '#17101B']}
+        end={{ x: 1, y: 1 }}
+        start={{ x: 0, y: 0 }}
+        style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={['rgba(0,0,0,0.02)', 'rgba(0,0,0,0.28)', 'rgba(0,0,0,0.78)']}
+        colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0.4)']}
         end={{ x: 0.5, y: 1 }}
         start={{ x: 0.5, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
+      <LinearGradient
+        colors={['rgba(183,230,40,0.12)', 'rgba(183,230,40,0)', 'rgba(0,0,0,0)']}
+        end={{ x: 0.5, y: 1 }}
+        start={{ x: 0.5, y: 0 }}
+        style={styles.lpAccentWash}
+      />
+      <View className="absolute inset-4 rounded-[18px] border border-white/10" />
 
       <View className="absolute left-5 right-5 top-5 flex-row items-center justify-between">
         <View>
@@ -80,10 +89,13 @@ function RecapLpTemplate({ recap }: { recap: RecapShare }) {
       </View>
 
       <View className="absolute inset-x-0 top-[82px] items-center">
-        <RecordDisc imageUrl={recap.discImageUrl ?? recap.backgroundImageUrl} />
+        <RecordDisc />
       </View>
 
-      <View className="absolute bottom-5 left-5 right-5 rounded-[18px] border border-white/16 bg-black/34 p-4">
+      <View
+        className="absolute bottom-5 left-5 right-5 rounded-[18px] border border-white/16 p-4"
+        style={styles.lpTrackPanel}
+      >
         <View className="mb-3 h-px w-14 bg-white/45" />
         <AppText
           className="text-[24px] font-semibold leading-8 text-white"
@@ -437,3 +449,16 @@ export function RecapPreviewCard({
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  lpAccentWash: {
+    height: 180,
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+  },
+  lpTrackPanel: {
+    backgroundColor: 'rgba(5,9,22,0.88)',
+  },
+});
