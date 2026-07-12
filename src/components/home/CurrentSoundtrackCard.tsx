@@ -17,8 +17,8 @@ type CurrentSoundtrackCardProps = {
   onOpenPlaylist: (playlist: FeaturedPlaylist) => void;
   onRetry?: () => void;
   playlist?: FeaturedPlaylist;
+  placeLabel: string;
   recommendationSource?: string;
-  travelLabel: string;
 };
 
 function getRecommendationSourceBadge(source?: string) {
@@ -54,17 +54,17 @@ export function CurrentSoundtrackCard({
   onOpenPlaylist,
   onRetry,
   playlist,
+  placeLabel,
   recommendationSource,
-  travelLabel,
 }: CurrentSoundtrackCardProps) {
   const placeTitle = currentPlace?.title ?? '지금 위치 주변';
   const placeCaption = currentPlace?.address ?? currentPlace?.category ?? '장소를 확인하며 추천을 준비 중';
-  const playlistTitle = playlist?.regionName ?? `${travelLabel} 사운드트랙`;
+  const playlistTitle = playlist?.regionName ?? `${placeLabel} 사운드트랙`;
   const playlistDescription =
     playlist?.description ??
     (needsLocation
       ? '위치를 확인하면 지금 상황에 맞춘 곡 목록을 준비할게요.'
-      : '현재 장소와 무드를 기준으로 오늘 들을 곡 목록을 준비하고 있어요.');
+      : '현재 장소 맥락으로 오늘 들을 곡 목록을 준비하고 있어요.');
   const trackMeta = playlist
     ? `${playlist.trackCount}곡 · ${playlist.durationText}`
     : isLoading
@@ -101,9 +101,14 @@ export function CurrentSoundtrackCard({
                   className="text-[10px] font-semibold"
                   style={{ color: 'rgba(5,9,22,0.62)' }}
                 >
-                  상태
+                  장소
                 </AppText>
-                <AppText className="text-[11px] font-semibold text-[#050916]">{travelLabel}</AppText>
+                <AppText
+                  className="max-w-[160px] text-[11px] font-semibold text-[#050916]"
+                  numberOfLines={1}
+                >
+                  {placeLabel}
+                </AppText>
               </View>
               <View className="flex-row items-center gap-2 rounded-full bg-white/10 px-3 py-1.5">
                 <AppText className="text-[10px] font-semibold text-white/40">무드</AppText>

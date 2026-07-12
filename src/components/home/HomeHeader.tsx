@@ -1,9 +1,8 @@
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { BrandLogo } from '@/components/BrandLogo';
 import { Chip } from '@/components/Chip';
-import { colors } from '@/constants/colors';
 import type { MusicRecommendationMode } from '@/types/domain';
 
 const topFilters = ['전체', '근처', '지역 트렌드', '내 취향', '저장 많은'];
@@ -13,31 +12,14 @@ export function isHomeTopFilter(filter: string) {
 }
 
 type HomeHeaderProps = {
-  recommendationMode: MusicRecommendationMode;
-  onSelectRecommendationMode: (mode: MusicRecommendationMode) => void;
+  recommendationMode?: MusicRecommendationMode;
+  onSelectRecommendationMode?: (mode: MusicRecommendationMode) => void;
 };
 
 type HomeTopFilterBarProps = {
   selectedTopFilter: string;
   onSelectTopFilter: (filter: string) => void;
 };
-
-const musicModeOptions: Array<{
-  accent: string;
-  label: string;
-  value: MusicRecommendationMode;
-}> = [
-  {
-    accent: colors.accent.blue,
-    label: '일상 모드',
-    value: 'everyday',
-  },
-  {
-    accent: colors.accent.lime,
-    label: '여행 모드',
-    value: 'travel',
-  },
-];
 
 export function HomeNavigationBar() {
   return (
@@ -50,42 +32,20 @@ export function HomeNavigationBar() {
   );
 }
 
-export function HomeHeader({
-  onSelectRecommendationMode,
-  recommendationMode,
-}: HomeHeaderProps) {
+export function HomeHeader(_props: HomeHeaderProps) {
   return (
-    <View className="rounded-[20px] bg-soundlog-elevated/80 p-2">
-      <View className="rounded-full bg-black/25 p-1">
-        <View className="flex-row gap-1">
-          {musicModeOptions.map((mode) => {
-            const selected = recommendationMode === mode.value;
-
-            return (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                className="h-10 flex-1 items-center justify-center rounded-full"
-                key={mode.value}
-                onPress={() => onSelectRecommendationMode(mode.value)}
-                style={{
-                  backgroundColor: selected ? mode.accent : 'transparent',
-                  transform: [{ scale: selected ? 1 : 0.98 }],
-                }}
-              >
-                <AppText
-                  className="text-[15px] font-semibold"
-                  style={{
-                    color: selected ? colors.text.inverse : 'rgba(255,255,255,0.72)',
-                  }}
-                >
-                  {mode.label}
-                </AppText>
-              </Pressable>
-            );
-          })}
-        </View>
+    <View className="rounded-[20px] border border-white/10 bg-soundlog-elevated/80 px-5 py-4">
+      <View className="self-start rounded-full bg-white/10 px-3 py-1">
+        <AppText className="text-[11px] font-semibold text-white/55">
+          장소 기반
+        </AppText>
       </View>
+      <AppText className="mt-3 text-[26px] font-semibold leading-8 text-white">
+        장소 기반 음악추천
+      </AppText>
+      <AppText className="mt-2 text-sm leading-6 text-white/58">
+        현재 위치와 주변 장소 맥락으로 오늘의 사운드트랙을 추천해요.
+      </AppText>
     </View>
   );
 }

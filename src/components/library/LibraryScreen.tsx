@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
@@ -125,7 +124,7 @@ export function LibraryScreen() {
   const playRecord = (record: LibraryTrackRecord) => {
     setActionMessage(undefined);
     setTrack(record.track, record.playlistId, undefined, record.playlist);
-    setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
+    setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 리캡에 담을 수 있어요.');
   };
   const removeRecord = (record: LibraryTrackRecord) => {
     const context = createRecommendationEventContext();
@@ -309,46 +308,6 @@ export function LibraryScreen() {
           </View>
         )}
 
-        <View className="gap-3">
-          <AppText className="text-[18px] font-semibold text-white">마이</AppText>
-          <Pressable
-            accessibilityRole="button"
-            className="flex-row items-center rounded-[16px] bg-white/10 px-5 py-4"
-            onPress={() =>
-              router.push({
-                pathname: '/onboarding',
-                params: { mode: 'edit' },
-              } as never)
-            }
-          >
-            <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
-              <Feather color="#fff" name="sliders" size={18} />
-            </View>
-            <View className="ml-3 min-w-0 flex-1">
-              <AppText className="text-base font-medium text-white">취향 수정</AppText>
-              <AppText className="mt-1 text-xs leading-5 text-white/45">
-                장르 · 무드 · 여행 스타일
-              </AppText>
-            </View>
-            <Feather color="rgba(255,255,255,0.5)" name="chevron-right" size={18} />
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            className="flex-row items-center rounded-[16px] bg-white/10 px-5 py-4"
-            onPress={() => router.push('/my' as never)}
-          >
-            <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
-              <Feather color="#fff" name="map-pin" size={18} />
-            </View>
-            <View className="ml-3 min-w-0 flex-1">
-              <AppText className="text-base font-medium text-white">권한 설정</AppText>
-              <AppText className="mt-1 text-xs leading-5 text-white/45">
-                위치 · 카메라 · 사진
-              </AppText>
-            </View>
-            <Feather color="rgba(255,255,255,0.5)" name="chevron-right" size={18} />
-          </Pressable>
-        </View>
       </ScrollView>
     </Screen>
   );

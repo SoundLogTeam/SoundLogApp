@@ -12,6 +12,7 @@ export const recapItems: RecapItem[] = [
       title: 'Seoul City',
     },
     title: '서울의 밤',
+    visibility: 'public',
   },
 ];
 
@@ -52,6 +53,7 @@ export const recapShare: RecapShare = {
   placeName: 'Seoul',
   recordedAt: '2024-04-24T18:20:00.000+09:00',
   trackTitle: 'Seoul City',
+  visibility: 'public',
 };
 
 export const recapShareById: Record<string, RecapShare> = {
@@ -74,6 +76,7 @@ export const recapShareById: Record<string, RecapShare> = {
     placeName: '광안리',
     recordedAt: '2026-05-25T00:00:00.000Z',
     trackTitle: 'Seoul City',
+    visibility: 'public',
   },
   'log-2': {
     artistName: '아이유',
@@ -94,6 +97,7 @@ export const recapShareById: Record<string, RecapShare> = {
     placeName: '한강',
     recordedAt: '2026-05-25T00:10:00.000Z',
     trackTitle: '밤편지',
+    visibility: 'public',
   },
   'log-3': {
     artistName: '10cm',
@@ -114,6 +118,7 @@ export const recapShareById: Record<string, RecapShare> = {
     placeName: '부산',
     recordedAt: '2026-05-25T00:20:00.000Z',
     trackTitle: '서울의 밤',
+    visibility: 'public',
   },
   'seoul-night': recapShare,
 };

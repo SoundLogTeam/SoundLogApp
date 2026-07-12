@@ -18,7 +18,7 @@ type FeaturedPlaylistSectionProps = {
   isCached?: boolean;
   isError?: boolean;
   isLoading?: boolean;
-  onSelectPlaylist?: (playlist: FeaturedPlaylist) => void;
+  onSelectPlaylist: (playlist: FeaturedPlaylist) => void;
   onRetry?: () => void;
 };
 

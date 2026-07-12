@@ -24,10 +24,10 @@ export const recapMockHandlers = {
         artist: 'Soundlog',
         fallbackColor: '#B7E628',
         id: input.representativeTrackId ?? 'seoul-city',
-        title: '저장된 순간',
+        title: '저장된 리캡',
       },
       sessionId: input.sessionId,
-      title: input.title ?? '여행 Recap',
+      title: input.title ?? '여행 로그',
     };
 
     createdRecapItems.unshift(recap);

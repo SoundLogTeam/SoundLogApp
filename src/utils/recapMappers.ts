@@ -1,8 +1,15 @@
-import { MomentLog, RecapItem, RecapShare, RecapShareMoment } from '@/types/domain';
+import {
+  MomentLog,
+  RecapItem,
+  RecapShare,
+  RecapShareMoment,
+  RoutePoint,
+} from '@/types/domain';
+import { createRecapTravelSummary } from '@/utils/recapTravelSummary';
 
 const FALLBACK_ARTIST = 'Soundlog';
 const FALLBACK_PLACE = '위치 없음';
-const FALLBACK_TITLE = '저장된 순간';
+const FALLBACK_TITLE = '저장된 리캡';
 export const SESSION_RECAP_ID_PREFIX = 'session-recap__';
 
 export type MomentLogGroup = {
@@ -100,7 +107,8 @@ export function momentLogGroupToRecapItem(group: MomentLogGroup): RecapItem {
         title: FALLBACK_TITLE,
       },
       sessionId: group.sessionId,
-      title: '여행 Recap',
+      title: '여행 로그',
+      visibility: 'private',
     };
   }
 
@@ -113,21 +121,35 @@ export function momentLogGroupToRecapItem(group: MomentLogGroup): RecapItem {
     id: group.id,
     momentCount,
     sessionId: group.sessionId,
-    title: momentCount > 1 ? `${placeName} 여행 기록` : baseItem.title,
+    title: momentCount > 1 ? `${placeName} 여행 로그` : baseItem.title,
+    visibility: 'private',
   };
 }
 
-export function momentLogGroupToRecapShare(group: MomentLogGroup): RecapShare | undefined {
+export function momentLogGroupToRecapShare(
+  group: MomentLogGroup,
+  timing: { endedAt?: string; routePoints?: RoutePoint[]; startedAt?: string } = {},
+): RecapShare | undefined {
   const representativeLog = getNewestLog(group.logs);
 
   if (!representativeLog) {
     return undefined;
   }
 
+  const moments = getOldestFirstLogs(group.logs).map(momentLogToRecapShareMoment);
+
   return {
     ...momentLogToRecapShare(representativeLog),
     id: group.id,
-    moments: getOldestFirstLogs(group.logs).map(momentLogToRecapShareMoment),
+    moments,
+    routePoints: timing.routePoints,
+    travelSummary: createRecapTravelSummary({
+      endedAt: timing.endedAt,
+      fallbackPlaceName: representativeLog.placeName ?? FALLBACK_PLACE,
+      moments,
+      routePoints: timing.routePoints,
+      startedAt: timing.startedAt,
+    }),
   };
 }
 
@@ -143,18 +165,26 @@ export function momentLogToRecapItem(log: MomentLog): RecapItem {
       title: FALLBACK_TITLE,
     },
     title: log.track?.title ?? FALLBACK_TITLE,
+    visibility: 'private',
   };
 }
 
 export function momentLogToRecapShare(log: MomentLog): RecapShare {
+  const moments = [momentLogToRecapShareMoment(log)];
+
   return {
     artistName: log.track?.artist ?? FALLBACK_ARTIST,
     backgroundImageUrl: log.photoUri,
     discImageUrl: log.photoUri,
     id: log.id,
-    moments: [momentLogToRecapShareMoment(log)],
+    moments,
     placeName: log.placeName ?? FALLBACK_PLACE,
     recordedAt: log.createdAt,
     trackTitle: log.track?.title ?? FALLBACK_TITLE,
+    travelSummary: createRecapTravelSummary({
+      fallbackPlaceName: log.placeName ?? FALLBACK_PLACE,
+      moments,
+    }),
+    visibility: 'private',
   };
 }

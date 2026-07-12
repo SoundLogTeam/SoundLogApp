@@ -43,6 +43,7 @@ export { RecapListCard } from '@/components/recap/RecapListCard';
 export { RecapCaptureFrame } from '@/components/recap-share/RecapCaptureFrame';
 export { RecapMusicSummary } from '@/components/recap-share/RecapMusicSummary';
 export { RecapPreviewCard } from '@/components/recap-share/RecapPreviewCard';
-export { RecapTemplateSelector } from '@/components/recap-share/RecapTemplateSelector';
+export { RecapSoundLogList } from '@/components/recap-share/RecapSoundLogList';
+export { RecapTravelSummaryCard } from '@/components/recap-share/RecapTravelSummaryCard';
 export { ShareActionButton } from '@/components/recap-share/ShareActionButton';
 export { ShareActionList } from '@/components/recap-share/ShareActionList';

@@ -6,6 +6,8 @@ import {
 import { GeoPoint, MomentLog, MoodTag, Track, TravelMode } from '@/types/domain';
 import { sanitizeTrack } from '@/utils/trackSanitizer';
 
+const RECAP_CAPTURE_API_PATH = '/v1/recap-captures';
+
 export type CreateMomentLogInput = {
   createdAt: string;
   idempotencyKey?: string;
@@ -154,9 +156,9 @@ export const momentLogApi = {
       return Promise.resolve<MomentLog | undefined>(undefined);
     }
 
-    return requestApi<MomentLog>('/v1/moment-logs', {
+    return requestApi<MomentLog>(RECAP_CAPTURE_API_PATH, {
       body: toFormData(input),
-      idempotencyKey: input.idempotencyKey ?? createIdempotencyKey('moment-log'),
+      idempotencyKey: input.idempotencyKey ?? createIdempotencyKey('recap-capture'),
       method: 'POST',
     }).then(sanitizeMomentLog);
   },
@@ -165,7 +167,7 @@ export const momentLogApi = {
       return Promise.resolve<MomentLog[]>([]);
     }
 
-    const logs = await requestApi<MomentLog[]>('/v1/moment-logs', {
+    const logs = await requestApi<MomentLog[]>(RECAP_CAPTURE_API_PATH, {
       query: params,
     });
 
@@ -176,7 +178,7 @@ export const momentLogApi = {
       return Promise.resolve<boolean | undefined>(undefined);
     }
 
-    return requestApi<{ accepted: boolean }>(`/v1/moment-logs/${momentLogId}`, {
+    return requestApi<{ accepted: boolean }>(`${RECAP_CAPTURE_API_PATH}/${momentLogId}`, {
       method: 'DELETE',
     }).then((response) => response.accepted);
   },
@@ -185,7 +187,7 @@ export const momentLogApi = {
       return Promise.resolve<MomentLog | undefined>(undefined);
     }
 
-    return requestApi<MomentLog>(`/v1/moment-logs/${momentLogId}`, {
+    return requestApi<MomentLog>(`${RECAP_CAPTURE_API_PATH}/${momentLogId}`, {
       body: toUpdateBody(input),
       method: 'PATCH',
     }).then(sanitizeMomentLog);
@@ -195,7 +197,7 @@ export const momentLogApi = {
       return Promise.resolve<MomentLog | undefined>(undefined);
     }
 
-    return requestApi<MomentLog>(`/v1/moment-logs/${momentLogId}/photo`, {
+    return requestApi<MomentLog>(`${RECAP_CAPTURE_API_PATH}/${momentLogId}/photo`, {
       body: toPhotoFormData(photoUri),
       method: 'PUT',
     }).then(sanitizeMomentLog);
@@ -205,7 +207,7 @@ export const momentLogApi = {
       return Promise.resolve<MomentLog | undefined>(undefined);
     }
 
-    return requestApi<MomentLog>(`/v1/moment-logs/${momentLogId}/photo`, {
+    return requestApi<MomentLog>(`${RECAP_CAPTURE_API_PATH}/${momentLogId}/photo`, {
       method: 'DELETE',
     }).then(sanitizeMomentLog);
   },

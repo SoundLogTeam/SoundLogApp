@@ -27,6 +27,7 @@ export function sanitizeTrack(track: Track): Track {
 export function sanitizeMoodRecommendation(item: MoodRecommendation): MoodRecommendation {
   return {
     ...item,
+    imageUrl: sanitizeUrl(item.imageUrl),
     track: sanitizeTrack(item.track),
   };
 }

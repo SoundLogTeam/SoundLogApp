@@ -16,12 +16,12 @@ type RecapListCardProps = {
 export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
   const momentCountLabel =
     item.momentCount && item.momentCount > 1
-      ? `저장된 순간 ${item.momentCount}개`
+      ? `기록 ${item.momentCount}개`
       : undefined;
 
   return (
     <Pressable
-      accessibilityLabel={`${item.title} 리캡 열기`}
+      accessibilityLabel={`${item.title} 열기`}
       accessibilityRole="button"
       className="h-[188px] overflow-hidden rounded-[26px] border border-white/10 bg-white/10"
       onPress={onPress}
@@ -53,7 +53,7 @@ export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
         <View className="flex-row items-start justify-between gap-3">
           <View className="rounded-full border border-white/15 bg-black/28 px-3 py-1">
             <AppText className="text-[10px] font-semibold text-white/70">
-              {momentCountLabel ?? 'Music Recap'}
+              {momentCountLabel ?? '단발 기록'}
             </AppText>
           </View>
           <View className="h-10 w-10 items-center justify-center rounded-full bg-white/90">

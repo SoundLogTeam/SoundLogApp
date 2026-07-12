@@ -19,7 +19,7 @@ import type {
 } from '@/types/domain';
 import { formatPlaceLabel } from '@/utils/placeLabel';
 
-import { OpenLayersSoundMap } from './OpenLayersSoundMap';
+import { SoundMapView } from './SoundMapView';
 import {
   createFallbackMusicMatches,
   createSoundMapCenter,
@@ -529,8 +529,8 @@ export function LiveSoundMapSection({
             지금 듣는 음악을 지도에 남겨요
           </AppText>
           <AppText className="mt-2 text-sm leading-6 text-white/60">
-            OpenLayers 지도를 Soundlog 다크 테마로 조정하고, 여행 모드 중인 내 음악과
-            동행자/주변 익명 핀을 함께 보여줘요.
+            여행 모드 중인 내 음악과 동행자/주변 익명 핀을 실제 지도 위에서 함께
+            확인할 수 있어요.
           </AppText>
         </View>
         <View
@@ -545,7 +545,7 @@ export function LiveSoundMapSection({
       </View>
 
       <View className="mt-5">
-        <OpenLayersSoundMap
+        <SoundMapView
           center={center}
           pins={pins}
           selectedTrack={currentTrack}
