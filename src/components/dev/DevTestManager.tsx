@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { authApi } from '@/api/authApi';
+import { getApiBaseUrl } from '@/api/client';
 import { queryClient } from '@/providers/queryClient';
 import { AppText } from '@/components/AppText';
 import { playlistCurationById } from '@/mocks/playlistMocks';
@@ -169,6 +171,8 @@ function DevTestManagerContent() {
   const insets = useSafeAreaInsets();
   const { height, width } = useWindowDimensions();
   const [isOpen, setIsOpen] = useState(false);
+  const [isServerAuthPending, setIsServerAuthPending] = useState(false);
+  const [serverAuthMessage, setServerAuthMessage] = useState<string>();
   const maxX = Math.max(width - BUTTON_SIZE - 12, 12);
   const maxY = Math.max(height - BUTTON_SIZE - Math.max(insets.bottom, 12) - 12, 80);
   const defaultPosition = useMemo(
@@ -219,7 +223,7 @@ function DevTestManagerContent() {
   const setMode = useTravelSessionStore((state) => state.setMode);
   const setPlace = useTravelSessionStore((state) => state.setPlace);
   const startSession = useTravelSessionStore((state) => state.startSession);
-  const { completeOnboarding, resetOnboarding } = useUserProfileStore();
+  const { completeOnboarding, resetOnboarding, updateProfile } = useUserProfileStore();
   const { finishLogin, logoutLocal, status: authStatus, user: authUser } = useAuthStore();
   const { logs, addLog, removeLog } = useMomentLogStore();
   const { likedTracks, savedTracks, removeLikedTrack, removeSavedTrack, toggleLike, toggleSave } =
@@ -248,6 +252,45 @@ function DevTestManagerContent() {
     finishLogin(session);
     setIsOpen(false);
     router.replace('/' as never);
+  };
+  const applyServerTestLogin = async () => {
+    if (isServerAuthPending) {
+      return;
+    }
+
+    setIsServerAuthPending(true);
+    setServerAuthMessage('서버 로그인 중...');
+
+    try {
+      const credentials = {
+        email: 'local-demo@soundlog.test',
+        password: 'soundlog123',
+      };
+      let session: AuthSession;
+
+      try {
+        session = await authApi.register({
+          ...credentials,
+          displayName: '로컬데모',
+        });
+      } catch {
+        session = await authApi.login(credentials);
+      }
+
+      finishLogin(session);
+
+      if (session.profile?.completedOnboarding) {
+        updateProfile(session.profile);
+      }
+
+      setServerAuthMessage('서버 JWT 로그인 완료');
+      setIsOpen(false);
+      router.replace('/' as never);
+    } catch (error) {
+      setServerAuthMessage(error instanceof Error ? error.message : '서버 로그인 실패');
+    } finally {
+      setIsServerAuthPending(false);
+    }
   };
   const applyLogout = () => {
     logoutLocal();
@@ -417,6 +460,7 @@ function DevTestManagerContent() {
                 <StatusPill label={`장소 ${currentPlace?.title ?? '없음'}`} />
                 <StatusPill label={`곡 ${currentTrack?.title ?? '없음'}`} />
                 <StatusPill label={`Auth ${authUser?.displayName ?? authStatus}`} />
+                <StatusPill label={`API ${getApiBaseUrl() ?? '없음'}`} />
               </ManagerSection>
 
               <ManagerSection title="페이지 이동">
@@ -434,11 +478,15 @@ function DevTestManagerContent() {
                 <ManagerButton label="Recap" onPress={() => navigate('/recap')} />
                 <ManagerButton label="Recap 공유" onPress={() => navigate('/recap-share/log-1')} />
                 <ManagerButton label="보관함" onPress={() => navigate('/library')} />
-                <ManagerButton label="마이" onPress={() => navigate('/my')} />
                 <ManagerButton label="카메라" onPress={() => navigate('/camera')} />
               </ManagerSection>
 
               <ManagerSection subtitle="로그인 gate와 로그아웃 분기를 강제로 테스트합니다." title="인증">
+                <ManagerButton
+                  active={isServerAuthPending}
+                  label={isServerAuthPending ? '서버 로그인 중' : '서버 테스트 로그인'}
+                  onPress={applyServerTestLogin}
+                />
                 {authProviderOptions.map((provider) => (
                   <ManagerButton
                     key={provider}
@@ -448,6 +496,7 @@ function DevTestManagerContent() {
                   />
                 ))}
                 <ManagerButton destructive label="로그아웃" onPress={applyLogout} />
+                {serverAuthMessage ? <StatusPill label={serverAuthMessage} /> : null}
               </ManagerSection>
 
               <ManagerSection subtitle="온보딩 gate와 홈 필터 기본값을 테스트합니다." title="프로필">

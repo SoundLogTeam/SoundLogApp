@@ -16,6 +16,7 @@ type TravelStatusCardProps = {
   isCreatingRecap?: boolean;
   momentCount: number;
   onEndTravel: () => void;
+  onEditTravelState?: () => void;
   onOpenRecap: () => void;
   onSaveMoment: () => void;
   onStartTravel: () => void;
@@ -54,6 +55,7 @@ export function TravelStatusCard({
   isCreatingRecap = false,
   momentCount,
   onEndTravel,
+  onEditTravelState,
   onOpenRecap,
   onSaveMoment,
   onStartTravel,
@@ -77,11 +79,17 @@ export function TravelStatusCard({
             <View className="h-2.5 w-2.5 rounded-full bg-soundlog-lime" />
             <AppText className="text-sm font-semibold text-soundlog-lime">여행 진행 중</AppText>
           </View>
-          <View className="rounded-full bg-white/10 px-3 py-1">
+          <Pressable
+            accessibilityLabel="현재 여행 상태 수정"
+            accessibilityRole="button"
+            className="rounded-full bg-white/10 px-3 py-1"
+            disabled={!onEditTravelState}
+            onPress={onEditTravelState}
+          >
             <AppText className="text-xs font-semibold text-white">
-              {modeIcon} {modeLabel}
+              {modeIcon} {modeLabel} {onEditTravelState ? '수정' : ''}
             </AppText>
-          </View>
+          </Pressable>
         </View>
 
         <AppText className="mt-3 text-[24px] font-semibold leading-8 text-white">
@@ -93,7 +101,7 @@ export function TravelStatusCard({
 
         <View className="mt-3 flex-row flex-wrap gap-2">
           <CompactMetric label="현재 위치" value={placeLabel} />
-          <CompactMetric label="저장한 순간" value={`${momentCount}개`} />
+          <CompactMetric label="저장한 리캡" value={`${momentCount}개`} />
         </View>
 
         <View className="mt-3 flex-row items-center gap-2 rounded-[16px] border border-white/10 bg-black/20 px-3 py-2.5">
@@ -119,7 +127,7 @@ export function TravelStatusCard({
             className="h-11 flex-1 items-center justify-center rounded-full border border-white/15 bg-white/10"
             onPress={onSaveMoment}
           >
-            <AppText className="text-sm font-semibold text-white">순간 저장</AppText>
+            <AppText className="text-sm font-semibold text-white">리캡 저장</AppText>
           </Pressable>
         </View>
       </View>
@@ -131,7 +139,7 @@ export function TravelStatusCard({
       <View className="rounded-[28px] border border-white/10 bg-white/10 p-5">
         <AppText className="text-[28px] font-semibold text-white">여행이 종료됐어요</AppText>
         <AppText className="mt-2 text-sm leading-6 text-[#9CA3AF]">
-          저장한 순간은 Recap에서 다시 확인할 수 있어요.
+          저장한 리캡들은 여행 로그에서 다시 확인할 수 있어요.
         </AppText>
         <AppText className="mt-5 text-sm font-semibold text-soundlog-lime">
           {formatShortEndedAt(endedAt)}
@@ -140,7 +148,7 @@ export function TravelStatusCard({
         <View className="mt-5 flex-row flex-wrap gap-3">
           <Metric label="여행 모드" value={modeLabel} />
           <Metric label="총 여행 시간" value={formatDurationText(startedAt, endedAt)} />
-          <Metric label="저장한 순간" value={`${momentCount}개`} />
+          <Metric label="저장한 리캡" value={`${momentCount}개`} />
           <Metric label="기록된 음악" value={`${trackCount}곡`} />
         </View>
 
@@ -153,7 +161,7 @@ export function TravelStatusCard({
             style={{ opacity: isCreatingRecap || momentCount === 0 ? 0.62 : 1 }}
           >
             <AppText className="text-base font-semibold text-soundlog-inverse">
-              {isCreatingRecap ? 'Recap 생성 중' : 'Recap 보기'}
+              {isCreatingRecap ? '로그 생성 중' : '로그 보기'}
             </AppText>
           </Pressable>
           <Pressable
@@ -177,7 +185,7 @@ export function TravelStatusCard({
         여행을 시작해보세요
       </AppText>
       <AppText className="mt-3 text-base leading-7 text-white">
-        현재 위치에 맞는 음악을 추천받고, 여행 중 남긴 순간을 Recap으로 기록할 수 있어요.
+        현재 위치에 맞는 음악을 추천받고, 여행 중 남긴 리캡들을 하나의 로그로 기록할 수 있어요.
       </AppText>
       <Pressable
         accessibilityRole="button"

@@ -48,7 +48,7 @@ export function RecapCard({ item, onPress }: RecapCardProps) {
             </View>
             <View className="rounded-full bg-white/10 px-2 py-1">
               <AppText className="text-[10px] font-semibold text-white/70">
-                Moment {item.momentCount}
+                리캡 {item.momentCount}
               </AppText>
             </View>
           </View>

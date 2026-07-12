@@ -3,20 +3,66 @@ import {
   requestApi,
   shouldAttemptAuthenticatedApi,
 } from '@/api/client';
-import type { RecapItem, RecapShare, RecapTemplateId } from '@/types/domain';
+import type {
+  RecapItem,
+  RecapMapMarker,
+  RecapMapScope,
+  RecapShare,
+  RecapTemplateId,
+  RecapVisibility,
+  RoutePoint,
+} from '@/types/domain';
 import { sanitizeRecapItem } from '@/utils/trackSanitizer';
 
 type CreateRecapInput = {
   momentLogIds?: string[];
   representativeTrackId?: string;
+  routePoints?: RoutePoint[];
   sessionId?: string;
   templateId: RecapTemplateId | 'video';
   title?: string;
+  visibility?: RecapVisibility;
 };
 
 type RecapShareEventType = 'os_share' | 'save_image';
 
+type RecapMarkerQuery = {
+  lat?: number;
+  lng?: number;
+  radiusMeters?: number;
+  scope?: RecapMapScope;
+};
+
+export type RecapListScope = 'all' | 'mine' | 'others';
+
+type RecapListQuery = {
+  limit?: number;
+  scope?: RecapListScope;
+};
+
 export const recapApi = {
+  getRecapMarkers: async (query: RecapMarkerQuery) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return Promise.resolve<RecapMapMarker[]>([]);
+    }
+
+    return requestApi<RecapMapMarker[]>('/v1/recap-markers', { query });
+  },
+  updateRecapVisibility: async (recapId: string, visibility: RecapVisibility) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return Promise.resolve<RecapItem | undefined>(undefined);
+    }
+
+    const recap = await requestApi<RecapItem>(
+      `/v1/recaps/${encodeURIComponent(recapId)}/visibility`,
+      {
+        body: { visibility },
+        method: 'PATCH',
+      },
+    );
+
+    return sanitizeRecapItem(recap);
+  },
   createShareEvent: async (recapId: string, type: RecapShareEventType) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve({ accepted: false });
@@ -47,13 +93,16 @@ export const recapApi = {
 
     return sanitizeRecapItem(recap);
   },
-  getRecapList: async () => {
+  getRecapList: async (query: RecapListQuery = {}) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapItem[]>([]);
     }
 
     const recaps = await requestApi<RecapItem[]>('/v1/recaps', {
-      query: { limit: 20 },
+      query: {
+        limit: query.limit ?? 20,
+        scope: query.scope ?? 'mine',
+      },
     });
 
     return recaps.map(sanitizeRecapItem);

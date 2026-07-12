@@ -6,6 +6,7 @@ import {
   GeoPoint,
   MusicRecommendationMode,
   PlaceContext,
+  RoutePoint,
   TravelMode,
 } from '@/types/domain';
 
@@ -15,6 +16,7 @@ type TravelSession = {
   endedAt?: string;
   id: string;
   recapId?: string;
+  routePoints: RoutePoint[];
   startedAt?: string;
   status: 'idle' | 'active' | 'ended';
 };
@@ -27,6 +29,7 @@ type TravelSessionState = {
   recommendationMode: MusicRecommendationMode;
   selectedMode?: TravelMode;
   session: TravelSession;
+  appendRoutePoint: (point: RoutePoint) => void;
   clearLocation: () => void;
   endSession: () => void;
   resetSession: () => void;
@@ -36,13 +39,16 @@ type TravelSessionState = {
   setMode: (mode: TravelMode) => void;
   setRecommendationMode: (mode: MusicRecommendationMode) => void;
   setSessionRecapId: (recapId?: string) => void;
-  startSession: (session?: Partial<Pick<TravelSession, 'id' | 'startedAt'>>) => void;
+  startSession: (session?: Partial<Pick<TravelSession, 'id' | 'routePoints' | 'startedAt'>>) => void;
 };
 
 const idleSession: TravelSession = {
   id: 'local-session',
+  routePoints: [],
   status: 'idle',
 };
+
+const MAX_ROUTE_POINTS = 500;
 
 export const useTravelSessionStore = create<TravelSessionState>()(
   persist(
@@ -50,6 +56,31 @@ export const useTravelSessionStore = create<TravelSessionState>()(
       session: idleSession,
       locationStatus: 'idle',
       recommendationMode: 'everyday',
+      appendRoutePoint: (point) =>
+        set((state) => {
+          if (state.session.status !== 'active') {
+            return {};
+          }
+
+          const routePoints = state.session.routePoints ?? [];
+          const lastPoint = routePoints.at(-1);
+
+          if (
+            lastPoint &&
+            lastPoint.lat === point.lat &&
+            lastPoint.lng === point.lng &&
+            lastPoint.recordedAt === point.recordedAt
+          ) {
+            return {};
+          }
+
+          return {
+            session: {
+              ...state.session,
+              routePoints: [...routePoints, point].slice(-MAX_ROUTE_POINTS),
+            },
+          };
+        }),
       clearLocation: () =>
         set({
           currentLocation: undefined,
@@ -97,12 +128,27 @@ export const useTravelSessionStore = create<TravelSessionState>()(
         set({
           session: {
             id: session?.id ?? `session-${Date.now()}`,
+            routePoints: session?.routePoints ?? [],
             startedAt: session?.startedAt ?? new Date().toISOString(),
             status: 'active',
           },
         }),
     }),
     {
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<TravelSessionState> | undefined;
+        const persistedSession = persisted?.session;
+
+        return {
+          ...currentState,
+          ...persisted,
+          session: {
+            ...idleSession,
+            ...persistedSession,
+            routePoints: persistedSession?.routePoints ?? [],
+          },
+        };
+      },
       name: 'soundlog-travel-session',
       partialize: (state) => ({
         currentLocation: state.currentLocation,

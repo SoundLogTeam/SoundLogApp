@@ -1,5 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import { Alert, Linking, Pressable, View } from 'react-native';
 
@@ -23,6 +24,12 @@ function openAccountDeletionEmail(userId?: string, email?: string) {
   );
 
   return Linking.openURL(`mailto:${SOUNDLOG_SUPPORT_EMAIL}?subject=${subject}&body=${body}`);
+}
+
+function getAccountInitial(displayName?: string, email?: string) {
+  const source = displayName?.trim() || email?.trim() || 'S';
+
+  return source.slice(0, 1).toUpperCase();
 }
 
 export function AuthAccountCard() {
@@ -50,8 +57,8 @@ export function AuthAccountCard() {
 
       setMigrationMessage(
         failedCount > 0
-          ? `순간 ${result.momentLogSyncedCount}/${result.summary.momentLogCount}개, 보관함 ${result.librarySyncedCount}/${result.summary.libraryTrackCount}개를 동기화했어요. 실패한 항목은 다시 시도할 수 있어요.`
-          : `순간 ${result.summary.momentLogCount}개, 보관함 ${result.summary.libraryTrackCount}개를 서버 동기화에 반영했어요.`,
+          ? `리캡 ${result.momentLogSyncedCount}/${result.summary.momentLogCount}개, 보관함 ${result.librarySyncedCount}/${result.summary.libraryTrackCount}개를 동기화했어요. 실패한 항목은 다시 시도할 수 있어요.`
+          : `리캡 ${result.summary.momentLogCount}개, 보관함 ${result.summary.libraryTrackCount}개를 서버 동기화에 반영했어요.`,
       );
     } catch {
       setMigrationMessage('동기화 요청에 실패했어요. 네트워크 상태를 확인해주세요.');
@@ -86,63 +93,98 @@ export function AuthAccountCard() {
   };
 
   if (status === 'authenticated' && user) {
+    const accountInitial = getAccountInitial(user.displayName, user.email);
+
     return (
-      <View className="mt-5 rounded-[22px] border border-[#1DB954]/25 bg-[#0D1D15] p-5">
-        <View className="flex-row items-start gap-3">
-          <View className="h-11 w-11 items-center justify-center rounded-full bg-[#1DB954]/20">
-            <Feather color="#7CFF8A" name="user-check" size={19} />
-          </View>
-          <View className="min-w-0 flex-1">
-            <AppText className="text-sm font-semibold text-[#7CFF8A]/80">
-              로그인됨
-            </AppText>
-            <AppText className="mt-2 text-[20px] font-semibold text-white">
-              {user.displayName}
-            </AppText>
-            <AppText className="mt-1 text-xs leading-5 text-white/50">
-              Soundlog 계정{user.email ? ` · ${user.email}` : ''}
-            </AppText>
-          </View>
-        </View>
-
-        <View className="mt-5 flex-row gap-2">
-          <Pressable
-            accessibilityRole="button"
-            className="min-h-11 flex-1 items-center justify-center rounded-full bg-[#1DB954] px-4"
-            disabled={isMigratingLocalData}
-            onPress={handleMigrate}
-          >
-            <AppText className="text-xs font-semibold text-[#05110A]">
-              {isMigratingLocalData ? '동기화 중' : '로컬 기록 동기화'}
-            </AppText>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            className="min-h-11 items-center justify-center rounded-full border border-white/10 px-4"
-            disabled={logoutMutation.isPending}
-            onPress={handleLogout}
-          >
-            <AppText className="text-xs font-semibold text-white/70">
-              {logoutMutation.isPending ? '정리 중' : '로그아웃'}
-            </AppText>
-          </Pressable>
-        </View>
-
-        <Pressable
-          accessibilityRole="button"
-          className="mt-3 min-h-11 items-center justify-center rounded-full border border-[#FF6B6B]/30 px-4"
-          onPress={handleDeleteAccountRequest}
+      <View className="mt-5 overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.06]">
+        <LinearGradient
+          colors={[
+            'rgba(191,255,36,0.14)',
+            'rgba(91,45,255,0.12)',
+            'rgba(255,255,255,0.04)',
+          ]}
+          end={{ x: 1, y: 1 }}
+          start={{ x: 0, y: 0 }}
+          style={{ padding: 20 }}
         >
-          <AppText className="text-xs font-semibold text-[#FFB3B3]">
-            계정 삭제 요청
-          </AppText>
-        </Pressable>
+          <View className="flex-row items-center gap-4">
+            <View className="relative">
+              <LinearGradient
+                colors={['#C7FF2E', '#46D8A6', '#5B2DFF']}
+                end={{ x: 1, y: 1 }}
+                start={{ x: 0, y: 0 }}
+                style={{
+                  alignItems: 'center',
+                  borderRadius: 28,
+                  height: 72,
+                  justifyContent: 'center',
+                  width: 72,
+                }}
+              >
+                <View className="h-[64px] w-[64px] items-center justify-center rounded-[24px] bg-[#07110D]">
+                  <AppText className="text-[28px] font-semibold text-white">
+                    {accountInitial}
+                  </AppText>
+                </View>
+              </LinearGradient>
+              <View className="absolute -bottom-1 -right-1 h-7 w-7 items-center justify-center rounded-full border-2 border-[#10141E] bg-soundlog-lime">
+                <Feather color="#050916" name="check" size={15} />
+              </View>
+            </View>
+            <View className="min-w-0 flex-1">
+              <View className="self-start rounded-full bg-soundlog-lime/20 px-3 py-1">
+                <AppText className="text-[11px] font-semibold text-soundlog-lime">
+                  로그인됨
+                </AppText>
+              </View>
+              <AppText className="mt-3 text-[24px] font-semibold text-white" numberOfLines={1}>
+                {user.displayName}
+              </AppText>
+              <AppText className="mt-1 text-xs leading-5 text-white/50" numberOfLines={1}>
+                Soundlog 계정{user.email ? ` · ${user.email}` : ''}
+              </AppText>
+            </View>
+          </View>
 
-        {migrationMessage ? (
-          <AppText className="mt-3 text-xs leading-5 text-[#7CFF8A]/70">
-            {migrationMessage}
-          </AppText>
-        ) : null}
+          <View className="mt-6 flex-row gap-2">
+            <Pressable
+              accessibilityRole="button"
+              className="min-h-11 flex-1 items-center justify-center rounded-full bg-soundlog-lime px-4"
+              disabled={isMigratingLocalData}
+              onPress={handleMigrate}
+            >
+              <AppText className="text-xs font-semibold text-soundlog-inverse">
+                {isMigratingLocalData ? '동기화 중' : '로컬 기록 동기화'}
+              </AppText>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              className="min-h-11 items-center justify-center rounded-full border border-white/10 bg-white/5 px-4"
+              disabled={logoutMutation.isPending}
+              onPress={handleLogout}
+            >
+              <AppText className="text-xs font-semibold text-white/70">
+                {logoutMutation.isPending ? '정리 중' : '로그아웃'}
+              </AppText>
+            </Pressable>
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            className="mt-3 min-h-11 items-center justify-center rounded-full border border-[#FF6B6B]/30 bg-[#FF6B6B]/5 px-4"
+            onPress={handleDeleteAccountRequest}
+          >
+            <AppText className="text-xs font-semibold text-[#FFB3B3]">
+              계정 삭제 요청
+            </AppText>
+          </Pressable>
+
+          {migrationMessage ? (
+            <AppText className="mt-3 text-xs leading-5 text-soundlog-lime/70">
+              {migrationMessage}
+            </AppText>
+          ) : null}
+        </LinearGradient>
       </View>
     );
   }
@@ -159,7 +201,7 @@ export function AuthAccountCard() {
             로그인이 필요해요
           </AppText>
           <AppText className="mt-2 text-xs leading-5 text-white/50">
-            Soundlog의 추천, 기록, Recap은 계정에 저장된 상태로 사용할 수 있어요.
+            Soundlog의 추천, 리캡, 로그는 계정에 저장된 상태로 사용할 수 있어요.
           </AppText>
         </View>
       </View>

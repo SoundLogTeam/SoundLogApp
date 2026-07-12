@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { forwardRef, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -88,6 +88,7 @@ export const MomentReviewPanel = forwardRef<
   ref,
 ) {
   const photoCanvasRef = useRef<MomentPhotoCanvasHandle>(null);
+  const [isCanvasStickerDragging, setIsCanvasStickerDragging] = useState(false);
   const moodLabel =
     moodTags.map((tag) => moodLabels[tag]).join(', ') || '무드 없음';
   const canToggleMusic = Boolean(track);
@@ -117,6 +118,7 @@ export const MomentReviewPanel = forwardRef<
           paddingHorizontal: 20,
           paddingTop: 16,
         }}
+        scrollEnabled={!isCanvasStickerDragging}
         showsVerticalScrollIndicator={false}
       >
         <View className="flex-row items-center justify-between">
@@ -140,7 +142,9 @@ export const MomentReviewPanel = forwardRef<
             ref={photoCanvasRef}
             capturedAt={capturedAt}
             isSaving={isSaving}
+            onStickerDragChange={setIsCanvasStickerDragging}
             photoUri={photoUri}
+            track={includeMusic ? track : undefined}
           />
         ) : (
           <View
@@ -154,8 +158,7 @@ export const MomentReviewPanel = forwardRef<
               사진 없이 음악만 남겨요
             </AppText>
             <AppText className="mt-3 text-center text-sm leading-6 text-white/60">
-              장소, 곡, 무드, 메모만으로도 여행 사운드트랙 로그를 만들 수
-              있어요.
+              장소, 곡, 무드, 메모만으로도 단발 기록을 만들 수 있어요.
             </AppText>
           </View>
         )}
@@ -299,7 +302,7 @@ export const MomentReviewPanel = forwardRef<
               <ActivityIndicator color="#050916" />
             ) : (
               <AppText className="font-semibold text-[#050916]">
-                이 순간 저장하기
+                이 리캡 저장하기
               </AppText>
             )}
           </Pressable>

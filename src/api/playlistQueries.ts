@@ -15,8 +15,12 @@ export const playlistQueryKeys = {
     ['playlist', 'recommended', input] as const,
 };
 
-export function usePlaylistCurationQuery(id?: string) {
+export function usePlaylistCurationQuery(
+  id?: string,
+  options: PlaylistQueryOptions = {},
+) {
   return useQuery({
+    enabled: options.enabled ?? true,
     queryFn: () => playlistApi.getPlaylist(id),
     queryKey: playlistQueryKeys.detail(id),
     staleTime: 5 * 60 * 1000,

@@ -1,7 +1,6 @@
 import { Feather } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 
@@ -19,24 +18,15 @@ export function RecapEmptyState() {
         style={{ padding: 24 }}
       >
         <View className="h-16 w-16 items-center justify-center rounded-full bg-white/12">
-          <Feather color="#fff" name="camera" size={25} />
+          <Feather color="#fff" name="grid" size={25} />
         </View>
         <AppText className="mt-5 text-[22px] font-semibold leading-7 text-white">
-          아직 저장한 여행 앨범이 없어요
+          아직 볼 수 있는 로그가 없어요
         </AppText>
         <AppText className="mt-2 text-sm leading-6 text-white/62">
-          카메라 버튼으로 장소와 음악을 함께 저장하면, 여행이 끝난 뒤 Recap
-          앨범으로 다시 볼 수 있어요.
+          여행모드에서 남긴 기록과 공개된 사운드로그가 생기면 이곳에서
+          격자로 모아볼 수 있어요.
         </AppText>
-        <Pressable
-          accessibilityRole="button"
-          className="mt-6 self-start rounded-full bg-white px-5 py-3"
-          onPress={() => router.push('/camera')}
-        >
-          <AppText className="text-sm font-semibold text-[#050916]">
-            첫 순간 저장하기
-          </AppText>
-        </Pressable>
       </LinearGradient>
     </View>
   );

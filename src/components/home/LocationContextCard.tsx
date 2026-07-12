@@ -29,7 +29,7 @@ const statusCopy: Record<HomeLocationStatus, { description: string; icon: keyof 
     title: '위치 권한이 꺼져 있어요',
   },
   granted: {
-    description: '현재 장소 컨텍스트를 홈 추천과 순간 저장에 함께 사용할게요.',
+    description: '현재 장소 컨텍스트를 홈 추천과 리캡 저장에 함께 사용할게요.',
     icon: 'navigation',
     title: '현재 위치 기반 추천 중',
   },

@@ -112,7 +112,7 @@ export function RecapMusicSummary({
       </View>
 
       <AppText className="mt-3 text-xs leading-5 text-white/45" numberOfLines={2}>
-        {moments.length}개 Moment · {placeCount || 1}곳 · {placeFlow} · {recordedRange}
+        리캡 {moments.length}개 · {placeCount || 1}곳 · {placeFlow} · {recordedRange}
       </AppText>
 
       <View className="mt-4 flex-row items-center gap-3 rounded-[16px] border border-white/10 bg-black/20 px-4 py-3">
@@ -126,7 +126,7 @@ export function RecapMusicSummary({
           <AppText className="mt-1 text-sm font-semibold text-white" numberOfLines={1}>
             {hasLocations
               ? `${locationMoments.length}개 위치 · ${locationFlow}`
-              : '위치가 저장된 Moment가 없어요'}
+              : '위치가 저장된 리캡이 없어요'}
           </AppText>
         </View>
         {hasLocations && onOpenMap ? (

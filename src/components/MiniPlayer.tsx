@@ -119,11 +119,14 @@ export function MiniPlayer() {
   };
   const handleCaptureMoment = () => {
     setIsFullPlayerVisible(false);
-    router.push('/camera');
+    router.push({
+      params: { returnTo: 'music' },
+      pathname: '/camera',
+    } as never);
   };
   const handleOpenLiveSoundMap = () => {
     setIsFullPlayerVisible(false);
-    router.push('/travel');
+    router.push('/' as never);
   };
   const handleOpenExternalLink = async (link: ExternalMusicLink) => {
     const context = createRecommendationEventContext();
@@ -428,7 +431,7 @@ export function MiniPlayer() {
               </Pressable>
 
               <Pressable
-                accessibilityLabel="이 곡으로 순간 기록"
+                accessibilityLabel="이 곡으로 리캡 기록"
                 accessibilityRole="button"
                 className="h-[86px] w-[86px] items-center justify-center rounded-full border border-white/20"
                 onPress={handleCaptureMoment}
@@ -472,7 +475,7 @@ export function MiniPlayer() {
               </Pressable>
               <View className="mt-3 rounded-[14px] border border-white/10 bg-white/5 px-4 py-3">
                 <AppText className="text-center text-xs leading-5 text-white/55">
-                  음원을 재생하지 않고 곡 정보와 여행 순간을 SoundLog 안에 기록하거나, 여행 모드에서 지도에 공개해요.
+                  음원을 재생하지 않고 곡 정보와 리캡을 SoundLog 안에 기록하거나, 여행 모드에서 지도에 공개해요.
                 </AppText>
               </View>
             </View>

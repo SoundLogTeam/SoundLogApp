@@ -3,6 +3,11 @@ export type GeoPoint = {
   lng: number;
 };
 
+export type RoutePoint = GeoPoint & {
+  accuracyMeters?: number;
+  recordedAt: string;
+};
+
 export type PlaceContext = {
   address?: string;
   category?: string;
@@ -68,6 +73,7 @@ export type MoodRecommendation = {
   subtitle?: string;
   color: string;
   genres?: string[];
+  imageUrl?: string;
   moods?: string[];
   playlistId?: string;
   track: Track;
@@ -135,9 +141,30 @@ export type RecapItem = {
   createdAt: string;
   momentCount?: number;
   sessionId?: string;
+  visibility?: RecapVisibility;
 };
 
 export type RecapTemplateId = 'album' | 'film' | 'lp' | 'map';
+
+export type RecapVisibility = 'private' | 'public';
+
+export type RecapMapScope = 'mine' | 'public';
+
+export type RecapMapMarker = {
+  artistName: string;
+  createdAt: string;
+  distanceMeters?: number;
+  id: string;
+  imageUrl?: string;
+  location: GeoPoint;
+  ownerAlias: string;
+  placeName: string;
+  recapId: string;
+  templateId: RecapTemplateId;
+  title: string;
+  trackTitle: string;
+  visibility: RecapVisibility;
+};
 
 export type RecapShareMoment = {
   id: string;
@@ -149,6 +176,18 @@ export type RecapShareMoment = {
   recordedAt: string;
 };
 
+export type RecapTravelSummary = {
+  distanceMeters: number;
+  durationMinutes: number;
+  endedAt?: string;
+  endPlaceName: string;
+  placeNames: string[];
+  recordedLocationCount: number;
+  routePointCount?: number;
+  startedAt?: string;
+  startPlaceName: string;
+};
+
 export type RecapShare = {
   id: string;
   placeName: string;
@@ -158,7 +197,10 @@ export type RecapShare = {
   discImageUrl?: string;
   moments?: RecapShareMoment[];
   recordedAt: string;
+  routePoints?: RoutePoint[];
   shareImageUrl?: string;
+  travelSummary?: RecapTravelSummary;
+  visibility?: RecapVisibility;
 };
 
 export type CommunityVisibility = 'companions' | 'nearby' | 'private';

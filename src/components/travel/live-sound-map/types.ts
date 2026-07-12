@@ -17,8 +17,16 @@ export type SoundMapPin = {
 
 export type SoundMapViewport = {
   center: GeoPoint;
+  fullBleed?: boolean;
+  height?: number;
+  legendItems?: Array<{
+    color: string;
+    label: string;
+  }>;
   pins: SoundMapPin[];
   selectedTrack?: Track;
+  showChrome?: boolean;
   sessionStatus: 'active' | 'ended' | 'idle';
+  statusLabel?: string;
   visibility: SoundMapVisibility;
 };

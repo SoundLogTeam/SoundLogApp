@@ -26,7 +26,7 @@ export function EndTravelConfirmModal({
 
           <AppText className="mt-5 text-[22px] font-semibold text-white">여행을 종료할까요?</AppText>
           <AppText className="mt-2 text-sm leading-6 text-white/60">
-            지금까지 저장한 Moment {momentCount}개가 Recap 생성을 위한 여행 기록으로 묶여요.
+            지금까지 저장한 리캡 {momentCount}개가 하나의 여행 로그로 묶여요.
           </AppText>
 
           <View className="mt-6 flex-row gap-3">

@@ -1,5 +1,5 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Pressable, View } from 'react-native';
 
@@ -25,12 +25,35 @@ import { GeoPoint, MomentLog } from '@/types/domain';
 import { getForegroundLocationWithTimeout } from '@/utils/location';
 import { getMoodTagsFromFilter } from '@/utils/moodTags';
 import { persistMomentPhoto } from '@/utils/momentFiles';
+import { pickMomentPhotoFromLibrary } from '@/utils/momentPhotoPicker';
 import { formatPlaceLabel } from '@/utils/placeLabel';
 import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
 
 type LocationStatus = 'denied' | 'granted' | 'idle' | 'loading' | 'unavailable';
+type MomentCaptureReturnTo = 'map' | 'music' | 'recap';
+
+const fallbackRecommendedPhotoUrls = [
+  'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
+  'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
+  'https://tong.visitkorea.or.kr/cms/resource_photo/85/2613985_image2_1.jpg',
+];
+
+function resolveReturnPath(returnTo?: string | string[]) {
+  const value = Array.isArray(returnTo) ? returnTo[0] : returnTo;
+
+  if (value === 'recap') {
+    return '/recap';
+  }
+
+  if (value === 'music') {
+    return '/music';
+  }
+
+  return '/';
+}
 
 export function MomentCaptureScreen() {
+  const { returnTo } = useLocalSearchParams<{ returnTo?: MomentCaptureReturnTo }>();
   const cameraRef = useRef<CameraView>(null);
   const reviewPanelRef = useRef<MomentReviewPanelHandle>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
@@ -45,6 +68,7 @@ export function MomentCaptureScreen() {
   const [reviewPlaceName, setReviewPlaceName] = useState('');
   const [shouldSaveMusic, setShouldSaveMusic] = useState(true);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isPickingPhoto, setIsPickingPhoto] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
 
@@ -63,7 +87,6 @@ export function MomentCaptureScreen() {
     selectedMode,
     session,
     setLocation,
-    startSession,
   } = useTravelSessionStore();
 
   const moodTags = useMemo(
@@ -85,7 +108,7 @@ export function MomentCaptureScreen() {
   };
 
   useEffect(() => {
-    if (Platform.OS === 'web' || session.status !== 'active') {
+    if (Platform.OS === 'web') {
       return;
     }
 
@@ -123,7 +146,7 @@ export function MomentCaptureScreen() {
     return () => {
       isMounted = false;
     };
-  }, [session.status, setLocation]);
+  }, [setLocation]);
 
   const handleCapture = async () => {
     if (isCapturing) {
@@ -150,6 +173,44 @@ export function MomentCaptureScreen() {
       setIsCapturing(false);
     }
   };
+  const handlePickGallery = async () => {
+    if (isPickingPhoto || isCapturing) {
+      return;
+    }
+
+    setIsPickingPhoto(true);
+    setErrorMessage(undefined);
+
+    try {
+      const result = await pickMomentPhotoFromLibrary();
+
+      if (result.status === 'selected') {
+        prepareReview(result.uri);
+        return;
+      }
+
+      if (result.status === 'permission-denied') {
+        setErrorMessage('갤러리 사진을 사용하려면 사진 보관함 권한이 필요해요.');
+        return;
+      }
+
+      if (result.status === 'unavailable') {
+        setErrorMessage('갤러리를 열지 못했어요. 다시 시도해주세요.');
+      }
+    } finally {
+      setIsPickingPhoto(false);
+    }
+  };
+  const handleUseRecommendedPhoto = () => {
+    const recommendedPhotoUri =
+      currentPlace?.imageUrl ??
+      fallbackRecommendedPhotoUrls[
+        Math.abs((currentPlace?.id ?? currentPlace?.title ?? 'soundlog').length) %
+          fallbackRecommendedPhotoUrls.length
+      ];
+
+    prepareReview(recommendedPhotoUri);
+  };
 
   const handleSave = async () => {
     if (!isReviewing || isSaving) {
@@ -162,6 +223,7 @@ export function MomentCaptureScreen() {
     try {
       const id = `moment-${Date.now()}`;
       const locationSnapshot: GeoPoint | undefined = currentLocation;
+      const activeSessionId = session.status === 'active' ? session.id : undefined;
       let photoSourceUri = capturedPhotoUri;
 
       if (capturedPhotoUri) {
@@ -197,7 +259,7 @@ export function MomentCaptureScreen() {
         placeId: currentPlace?.id,
         photoUri,
         placeName,
-        sessionId: session.id,
+        sessionId: activeSessionId,
         source: 'camera',
         syncStatus: 'pending',
         track: trackSnapshot,
@@ -212,7 +274,7 @@ export function MomentCaptureScreen() {
         placeCategory: currentPlace?.category,
         placeId: currentPlace?.id,
         placeName,
-        sessionId: session.id,
+        sessionId: activeSessionId,
         track: trackSnapshot,
         travelMode: selectedMode,
       };
@@ -255,47 +317,13 @@ export function MomentCaptureScreen() {
           );
         });
 
-      router.replace('/');
+      router.replace(resolveReturnPath(returnTo) as never);
     } catch {
-      setErrorMessage('이 순간을 저장하지 못했어요. 다시 시도해주세요.');
+      setErrorMessage('이 리캡을 저장하지 못했어요. 다시 시도해주세요.');
     } finally {
       setIsSaving(false);
     }
   };
-
-  if (session.status !== 'active') {
-    return (
-      <Screen contentClassName="items-center justify-center px-8">
-        <View className="rounded-[24px] border border-white/10 bg-white/10 p-6">
-          <AppText className="text-center text-[24px] font-semibold text-white">
-            여행을 먼저 시작해요
-          </AppText>
-          <AppText className="mt-3 text-center text-sm leading-6 text-white/60">
-            순간 저장은 현재 여행에 연결돼요. 여행을 시작하면 사진, 음악, 장소가
-            하나의 기록으로 묶입니다.
-          </AppText>
-          <Pressable
-            accessibilityRole="button"
-            className="mt-7 rounded-full bg-white px-5 py-3"
-            onPress={() => startSession()}
-          >
-            <AppText className="text-center font-semibold text-[#050916]">
-              여행 시작하고 촬영하기
-            </AppText>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            className="mt-3 rounded-full border border-white/15 px-5 py-3"
-            onPress={() => router.back()}
-          >
-            <AppText className="text-center font-semibold text-white/80">
-              돌아가기
-            </AppText>
-          </Pressable>
-        </View>
-      </Screen>
-    );
-  }
 
   if (isReviewing) {
     return (
@@ -336,7 +364,7 @@ export function MomentCaptureScreen() {
           </AppText>
           <AppText className="mt-3 text-center text-sm leading-6 text-white/60">
             카메라 촬영은 모바일 앱에서 사용할 수 있어요. 대신 사진 없이 음악과
-            장소만 먼저 기록할 수 있습니다.
+            장소만 먼저 리캡으로 남길 수 있습니다.
           </AppText>
           <Pressable
             accessibilityRole="button"
@@ -379,10 +407,13 @@ export function MomentCaptureScreen() {
       cameraRef={cameraRef}
       errorMessage={errorMessage}
       isCapturing={isCapturing}
+      isPickingPhoto={isPickingPhoto}
       locationStatus={locationStatus}
       onCapture={handleCapture}
       onClose={() => router.back()}
+      onPickGallery={() => void handlePickGallery()}
       onSkipPhoto={() => prepareReview()}
+      onUseRecommendedPhoto={handleUseRecommendedPhoto}
     />
   );
 }
