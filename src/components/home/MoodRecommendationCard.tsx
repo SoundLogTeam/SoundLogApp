@@ -11,12 +11,13 @@ type MoodRecommendationCardProps = {
 
 export function MoodRecommendationCard({ item, onPress }: MoodRecommendationCardProps) {
   const moodLabel = item.moods?.[0] ?? item.genres?.[0];
+  const actionLabel = item.playlistId ? '추천 플레이리스트 열기' : '추천 음악 선택';
 
   return (
     <Pressable
-      accessibilityLabel={`${item.title.replace(/\n/g, ' ')} 추천 플레이리스트 열기`}
+      accessibilityLabel={`${item.title.replace(/\n/g, ' ')} ${actionLabel}`}
       accessibilityRole="button"
-      className="mr-3 h-[136px] w-[136px] justify-end overflow-hidden rounded-[12px] p-5"
+      className="mr-3 h-[136px] w-[136px] justify-end overflow-hidden rounded-[8px] p-4"
       onPress={() => onPress(item)}
       style={{ backgroundColor: item.color }}
     >

@@ -18,14 +18,14 @@ export const recapItems: RecapItem[] = [
 
 export const recapShare: RecapShare = {
   artistName: 'JENNIE',
-  backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
-  discImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/97/4033397_image2_1.jpg',
+  backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+  discImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
   id: 'seoul-night',
   moments: [
     {
       artistName: 'JENNIE',
       id: 'log-1',
-      imageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
+      imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
       location: { lat: 35.1532, lng: 129.1187 },
       placeName: '광안리',
       recordedAt: '2026-05-25T00:00:00.000Z',
@@ -59,14 +59,14 @@ export const recapShare: RecapShare = {
 export const recapShareById: Record<string, RecapShare> = {
   'log-1': {
     artistName: 'JENNIE',
-    backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
-    discImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/97/4033397_image2_1.jpg',
+    backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+    discImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
     id: 'log-1',
     moments: [
       {
         artistName: 'JENNIE',
         id: 'log-1',
-        imageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
+        imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
         location: { lat: 35.1532, lng: 129.1187 },
         placeName: '광안리',
         recordedAt: '2026-05-25T00:00:00.000Z',

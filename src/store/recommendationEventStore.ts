@@ -20,7 +20,6 @@ export type RecommendationEventType =
   | 'live_track_shared'
   | 'nearby_sound_opened'
   | 'recommendation_mode_change'
-  | 'top_filter_change'
   | 'recap_representative_track_select';
 
 export type RecommendationEventContext = {
@@ -30,7 +29,6 @@ export type RecommendationEventContext = {
   placeId?: string;
   placeName?: string;
   source?: string;
-  topFilter?: string;
   travelMode?: TravelMode;
 };
 

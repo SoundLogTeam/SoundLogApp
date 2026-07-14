@@ -3,6 +3,7 @@ import { PropsWithChildren, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
 import { queryClient } from '@/providers/queryClient';
+import { MomentLogSyncWorker } from '@/providers/MomentLogSyncWorker';
 import { useAuthStore } from '@/store/authStore';
 
 const DevTestManager = __DEV__ && Platform.OS !== 'web'
@@ -38,6 +39,7 @@ export function AppProviders({ children }: PropsWithChildren) {
     <QueryClientProvider client={queryClient}>
       <AuthScopedQueryCache>
         {children}
+        <MomentLogSyncWorker />
         {DevTestManager ? <DevTestManager /> : null}
       </AuthScopedQueryCache>
     </QueryClientProvider>

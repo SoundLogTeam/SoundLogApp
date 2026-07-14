@@ -9,6 +9,12 @@ import {
 } from '@/types/auth';
 
 export const authApi = {
+  deleteAccount: async () => {
+    return requestApi<{ deleted: boolean }>('/v1/me', {
+      method: 'DELETE',
+      retryOnUnauthorized: false,
+    });
+  },
   getMe: async () => {
     return requestApi<AuthMe>('/v1/me');
   },

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { libraryApi } from '@/api/libraryApi';
 import { usePlaylistCurationQuery } from '@/api/playlistQueries';
 import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
+import { IconButton } from '@/components/IconButton';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { PlaylistBackground } from '@/components/playlist/PlaylistBackground';
 import { PlaylistBottomSheet } from '@/components/playlist/PlaylistBottomSheet';
@@ -200,6 +202,10 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
   return (
     <View className="flex-1 bg-soundlog-bg">
       <PlaylistBackground accentColor={playlist?.accentColor} imageUrl={playlist?.backgroundImageUrl} />
+
+      <View className="absolute left-5 z-20" style={{ top: insets.top + 8 }}>
+        <IconButton label="이전 화면으로 돌아가기" name="arrow-left" onPress={() => router.back()} />
+      </View>
 
       <PlaylistBottomSheet
         stickyHeader={

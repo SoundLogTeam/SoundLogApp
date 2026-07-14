@@ -7,13 +7,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiError } from '@/api/client';
 import { momentLogApi } from '@/api/momentLogApi';
-import { momentLogQueryKeys, useMomentLogListQuery } from '@/api/momentLogQueries';
+import {
+  momentLogQueryKeys,
+  useMomentLogListQuery,
+} from '@/api/momentLogQueries';
 import { recapApi } from '@/api/recapApi';
 import { recapQueryKeys } from '@/api/recapQueries';
 import { travelSessionApi } from '@/api/travelSessionApi';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { RecapListCard } from '@/components/recap/RecapListCard';
-import { RecapTemplateSelector } from '@/components/recap-share/RecapTemplateSelector';
 import { Screen } from '@/components/Screen';
 import { AppText } from '@/components/AppText';
 import { getHomeContentBottomPadding } from '@/constants/layout';
@@ -30,7 +32,9 @@ import {
 } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
-import type { MomentLog, MoodTag, RecapTemplateId, Track, TravelMode } from '@/types/domain';
+import { useTravelLogSyncStore } from '@/store/travelLogSyncStore';
+import type { MomentLog, MoodTag, Track, TravelMode } from '@/types/domain';
+import { flushPendingTravelLogFinalizations } from '@/utils/travelLogSync';
 
 import { CommunityRecapCard } from './CommunityRecapCard';
 import { EndTravelConfirmModal } from './EndTravelConfirmModal';
@@ -60,7 +64,9 @@ type MomentLogEditDraft = {
   track?: Track;
 };
 
-const moodOptions = Object.entries(moodLabelByValue) as Array<[MoodTag, string]>;
+const moodOptions = Object.entries(moodLabelByValue) as Array<
+  [MoodTag, string]
+>;
 const LIVE_SOUND_MAP_FOCUS = 'sound-map';
 const LIVE_SOUND_MAP_SCROLL_OFFSET = 16;
 
@@ -71,13 +77,17 @@ function momentLogPatchFromPayload(
   return {
     moodTags: payload.moodTags,
     note: payload.note ?? undefined,
-    photoUri: payload.removePhoto ? undefined : payload.replacePhotoUri ?? moment.photoUri,
+    photoUri: payload.removePhoto
+      ? undefined
+      : (payload.replacePhotoUri ?? moment.photoUri),
     placeName: payload.placeName ?? undefined,
     track: payload.track,
   };
 }
 
-function momentLogCreatePayloadFromLog(log: MomentLog): MomentLogCreateQueuePayload {
+function momentLogCreatePayloadFromLog(
+  log: MomentLog,
+): MomentLogCreateQueuePayload {
   return {
     createdAt: log.createdAt,
     location: log.location,
@@ -87,7 +97,9 @@ function momentLogCreatePayloadFromLog(log: MomentLog): MomentLogCreateQueuePayl
     placeCategory: log.placeCategory,
     placeId: log.placeId,
     placeName: log.placeName,
+    recapVisibility: log.recapVisibility,
     sessionId: log.sessionId,
+    templateId: log.templateId,
     track: log.track,
     travelMode: log.travelMode,
   };
@@ -99,11 +111,12 @@ type TravelLogSummaryCardProps = {
   momentCount: number;
   onCreateRecap: () => void;
   onDeleteMoment: (moment: MomentLog) => Promise<void> | void;
-  onEditMoment: (moment: MomentLog, draft: MomentLogEditDraft) => Promise<void> | void;
+  onEditMoment: (
+    moment: MomentLog,
+    draft: MomentLogEditDraft,
+  ) => Promise<void> | void;
   onOpenMoment: (moment: MomentLog) => void;
-  onSelectRecapTemplate: (template: RecapTemplateId) => void;
   pendingMomentActionId?: string;
-  selectedRecapTemplate: RecapTemplateId;
   sessionStatus: 'active' | 'ended' | 'idle';
   trackCount: number;
 };
@@ -139,9 +152,7 @@ function TravelLogSummaryCard({
   onDeleteMoment,
   onEditMoment,
   onOpenMoment,
-  onSelectRecapTemplate,
   pendingMomentActionId,
-  selectedRecapTemplate,
   sessionStatus,
   trackCount,
 }: TravelLogSummaryCardProps) {
@@ -159,7 +170,6 @@ function TravelLogSummaryCard({
       : sessionStatus === 'active'
         ? '로그 만들기'
         : '로그 보기';
-  const canSelectRecapTemplate = sessionStatus === 'active' && momentCount > 0;
   const resetEditDraft = () => {
     setEditingMomentId(undefined);
     setEditMoodDraft([]);
@@ -181,12 +191,16 @@ function TravelLogSummaryCard({
     }
 
     if (result.status === 'permission-denied') {
-      setEditPhotoMessage('사진을 교체하려면 사진 보관함 접근 권한이 필요해요.');
+      setEditPhotoMessage(
+        '사진을 교체하려면 사진 보관함 접근 권한이 필요해요.',
+      );
       return;
     }
 
     if (result.status === 'unavailable') {
-      setEditPhotoMessage('사진을 불러오지 못했어요. 잠시 후 다시 시도해주세요.');
+      setEditPhotoMessage(
+        '사진을 불러오지 못했어요. 잠시 후 다시 시도해주세요.',
+      );
     }
   };
 
@@ -212,7 +226,8 @@ function TravelLogSummaryCard({
         {logs.length === 0 ? (
           <View className="rounded-[18px] border border-white/10 bg-black/20 px-4 py-3">
             <AppText className="text-sm leading-6 text-white/60">
-              아직 저장한 리캡이 없어요. 지금 장소의 곡을 하나 고르고 사진이나 메모로 남겨보세요.
+              아직 저장한 리캡이 없어요. 지금 장소의 곡을 하나 고르고 사진이나
+              메모로 남겨보세요.
             </AppText>
           </View>
         ) : (
@@ -239,10 +254,17 @@ function TravelLogSummaryCard({
                   onPress={() => onOpenMoment(log)}
                 >
                   <View className="min-w-0 flex-1">
-                    <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
-                      {formatMomentTime(log.createdAt)} {log.placeName ?? '위치 없음'}
+                    <AppText
+                      className="text-sm font-semibold text-white"
+                      numberOfLines={1}
+                    >
+                      {formatMomentTime(log.createdAt)}{' '}
+                      {log.placeName ?? '위치 없음'}
                     </AppText>
-                    <AppText className="mt-1 text-xs leading-5 text-white/55" numberOfLines={2}>
+                    <AppText
+                      className="mt-1 text-xs leading-5 text-white/55"
+                      numberOfLines={2}
+                    >
                       {metaLabel}
                       {log.note ? ` · ${log.note}` : ''}
                     </AppText>
@@ -349,7 +371,9 @@ function TravelLogSummaryCard({
                             disabled={isActionPending}
                             onPress={() => {
                               setEditPhotoUriDraft(undefined);
-                              setEditPhotoMessage('저장하면 리캡 사진이 제거돼요.');
+                              setEditPhotoMessage(
+                                '저장하면 리캡 사진이 제거돼요.',
+                              );
                             }}
                           >
                             <AppText className="text-xs font-semibold text-red-100">
@@ -363,7 +387,10 @@ function TravelLogSummaryCard({
                       <AppText className="text-[11px] font-semibold text-white/45">
                         연결된 곡
                       </AppText>
-                      <AppText className="mt-1 text-sm font-semibold text-white" numberOfLines={1}>
+                      <AppText
+                        className="mt-1 text-sm font-semibold text-white"
+                        numberOfLines={1}
+                      >
                         {draftTrackLabel}
                       </AppText>
                       {currentTrack ? (
@@ -395,9 +422,12 @@ function TravelLogSummaryCard({
                               moodTags: editMoodDraft,
                               note: editNoteDraft.trim() || undefined,
                               placeName: editPlaceDraft.trim() || undefined,
-                              removePhoto: Boolean(log.photoUri && !editPhotoUriDraft),
+                              removePhoto: Boolean(
+                                log.photoUri && !editPhotoUriDraft,
+                              ),
                               replacePhotoUri:
-                                editPhotoUriDraft && editPhotoUriDraft !== log.photoUri
+                                editPhotoUriDraft &&
+                                editPhotoUriDraft !== log.photoUri
                                   ? editPhotoUriDraft
                                   : undefined,
                               track: editTrackDraft,
@@ -418,7 +448,9 @@ function TravelLogSummaryCard({
                         disabled={isActionPending}
                         onPress={resetEditDraft}
                       >
-                        <AppText className="text-xs font-semibold text-white/75">취소</AppText>
+                        <AppText className="text-xs font-semibold text-white/75">
+                          취소
+                        </AppText>
                       </Pressable>
                     </View>
                   </View>
@@ -439,7 +471,9 @@ function TravelLogSummaryCard({
                         setEditTrackDraft(log.track);
                       }}
                     >
-                      <AppText className="text-xs font-semibold text-white/75">수정</AppText>
+                      <AppText className="text-xs font-semibold text-white/75">
+                        수정
+                      </AppText>
                     </Pressable>
                     <Pressable
                       accessibilityLabel={`${actionLabelPrefix} 리캡 삭제`}
@@ -460,18 +494,6 @@ function TravelLogSummaryCard({
         )}
       </View>
 
-      {canSelectRecapTemplate ? (
-        <View className="mt-4">
-          <AppText className="mb-3 text-[11px] font-semibold text-white/45">
-            로그 템플릿
-          </AppText>
-          <RecapTemplateSelector
-            onSelect={onSelectRecapTemplate}
-            selectedTemplate={selectedRecapTemplate}
-          />
-        </View>
-      ) : null}
-
       <Pressable
         accessibilityRole="button"
         className="mt-4 min-h-[52px] items-center justify-center rounded-full bg-soundlog-lime"
@@ -489,9 +511,16 @@ export function TravelScreen() {
   const insets = useSafeAreaInsets();
   useTravelRouteTracking();
   const queryClient = useQueryClient();
-  const params = useLocalSearchParams<{ focus?: string | string[]; focusAt?: string | string[] }>();
-  const focusTarget = Array.isArray(params.focus) ? params.focus[0] : params.focus;
-  const focusAt = Array.isArray(params.focusAt) ? params.focusAt[0] : params.focusAt;
+  const params = useLocalSearchParams<{
+    focus?: string | string[];
+    focusAt?: string | string[];
+  }>();
+  const focusTarget = Array.isArray(params.focus)
+    ? params.focus[0]
+    : params.focus;
+  const focusAt = Array.isArray(params.focusAt)
+    ? params.focusAt[0]
+    : params.focusAt;
   const scrollRef = useRef<ScrollView | null>(null);
   const [isModeSheetVisible, setIsModeSheetVisible] = useState(false);
   const [isEndConfirmVisible, setIsEndConfirmVisible] = useState(false);
@@ -501,8 +530,6 @@ export function TravelScreen() {
   const [isSyncingMomentUploads, setIsSyncingMomentUploads] = useState(false);
   const [isSyncingPendingActions, setIsSyncingPendingActions] = useState(false);
   const [recapMessage, setRecapMessage] = useState<string>();
-  const [selectedRecapTemplate, setSelectedRecapTemplate] =
-    useState<RecapTemplateId>('album');
   const [soundMapSectionY, setSoundMapSectionY] = useState<number>();
   const [clockTick, setClockTick] = useState(0);
   const authStatus = useAuthStore((state) => state.status);
@@ -545,7 +572,10 @@ export function TravelScreen() {
 
     return new Set(
       pendingCreateActions
-        .filter((action) => now - new Date(action.queuedAt).getTime() > staleThresholdMs)
+        .filter(
+          (action) =>
+            now - new Date(action.queuedAt).getTime() > staleThresholdMs,
+        )
         .map((action) => action.momentLogId),
     );
   }, [clockTick, pendingCreateActions]);
@@ -587,14 +617,17 @@ export function TravelScreen() {
         (log) =>
           log.syncStatus === 'failed' ||
           log.syncStatus === 'local' ||
-          (log.syncStatus === 'pending' && stalePendingCreateMomentIds.has(log.id)),
+          (log.syncStatus === 'pending' &&
+            stalePendingCreateMomentIds.has(log.id)),
       ),
     [stalePendingCreateMomentIds, travelLogMoments],
   );
   const pendingMomentUploadCount = useMemo(
     () =>
       travelLogMoments.filter(
-        (log) => log.syncStatus === 'pending' && !stalePendingCreateMomentIds.has(log.id),
+        (log) =>
+          log.syncStatus === 'pending' &&
+          !stalePendingCreateMomentIds.has(log.id),
       ).length,
     [stalePendingCreateMomentIds, travelLogMoments],
   );
@@ -681,7 +714,9 @@ export function TravelScreen() {
           : undefined,
         startedAt,
       });
-      setRecapMessage('서버 여행 세션 연결에 실패해서 로컬 세션으로 먼저 시작했어요.');
+      setRecapMessage(
+        '서버 여행 세션 연결에 실패해서 로컬 세션으로 먼저 시작했어요.',
+      );
     } finally {
       setIsStartingTravel(false);
       setIsModeSheetVisible(false);
@@ -690,21 +725,27 @@ export function TravelScreen() {
   const handleSubmitTravelMode = async () => {
     if (session.status === 'active') {
       setIsModeSheetVisible(false);
-      setRecapMessage('현재 여행 상태를 수정했어요. 다음 추천과 리캡에 반영돼요.');
+      setRecapMessage(
+        '현재 여행 상태를 수정했어요. 다음 추천과 리캡에 반영돼요.',
+      );
       return;
     }
 
     await handleStartTravel();
   };
   const retryMomentLog = async (log: MomentLog) => {
-    if (log.syncStatus === 'pending' && !stalePendingCreateMomentIds.has(log.id)) {
+    if (
+      log.syncStatus === 'pending' &&
+      !stalePendingCreateMomentIds.has(log.id)
+    ) {
       return false;
     }
 
     const queuedCreateAction = pendingCreateActions.find(
       (action) => action.momentLogId === log.id,
     );
-    const createPayload = queuedCreateAction?.payload ?? momentLogCreatePayloadFromLog(log);
+    const createPayload =
+      queuedCreateAction?.payload ?? momentLogCreatePayloadFromLog(log);
 
     queueCreate(log.id, createPayload);
     updateLog(log.id, { syncStatus: 'pending' });
@@ -772,53 +813,41 @@ export function TravelScreen() {
     endSession();
     setIsEndConfirmVisible(false);
 
-    try {
-      await travelSessionApi.endTravelSession(endedSessionId, {
-        endedAt,
-        location: currentLocation ?? currentPlace?.location,
-        routePoints: session.routePoints,
-      });
-    } catch {
-      setRecapMessage('서버 여행 세션 종료 동기화에 실패했지만 로컬 로그는 계속 만들 수 있어요.');
-    }
-
     if (logsForSession.length === 0) {
       setSessionRecapId(undefined);
       setRecapMessage('저장한 리캡이 없어 빈 로그 화면으로 이동할 수 있어요.');
       return;
     }
 
-    const syncedLogs = logsForSession.filter((log) => log.syncStatus === 'synced');
-    const hasOnlySyncedLogs = syncedLogs.length === logsForSession.length;
-    const representativeTrackId = logsForSession.find((log) => log.track?.id)?.track?.id;
-
-    if (!hasOnlySyncedLogs) {
-      setSessionRecapId(localRecapId);
-      setRecapMessage('아직 동기화되지 않은 리캡이 있어 로컬 로그로 먼저 만들었어요.');
-      router.push(`/recap-share/${localRecapId}`);
-      return;
-    }
-
     setIsCreatingRecap(true);
 
     try {
-      const serverRecap = await recapApi.createRecap({
-        momentLogIds: syncedLogs.map((log) => log.id),
-        representativeTrackId,
+      useTravelLogSyncStore.getState().queueFinalization({
+        endedAt,
+        location: currentLocation ?? currentPlace?.location,
         routePoints: session.routePoints,
         sessionId: endedSessionId,
-        templateId: selectedRecapTemplate,
+        templateId: 'album',
         title: `${logsForSession[0]?.placeName ?? '여행'} 로그`,
-        visibility: 'private',
       });
-      const recapId = serverRecap?.id ?? localRecapId;
+      const syncResult = await flushPendingTravelLogFinalizations();
+      const recapId = syncResult.createdRecapIds[endedSessionId] ?? localRecapId;
 
       setSessionRecapId(recapId);
       await queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists });
+
+      if (recapId === localRecapId) {
+        setRecapMessage(
+          '서버 동기화가 끝나면 여행 로그가 자동으로 완성돼요. 지금은 기기 기록을 보여드릴게요.',
+        );
+      }
+
       router.push(`/recap-share/${recapId}`);
     } catch {
       setSessionRecapId(localRecapId);
-      setRecapMessage('서버 로그 생성이 실패해서 로컬 로그로 먼저 보여드릴게요.');
+      setRecapMessage(
+        '서버 로그 생성이 실패해서 로컬 로그로 먼저 보여드릴게요.',
+      );
       router.push(`/recap-share/${localRecapId}`);
     } finally {
       setIsCreatingRecap(false);
@@ -862,10 +891,14 @@ export function TravelScreen() {
       let deletedOnServer = false;
 
       if (moment.syncStatus === 'synced') {
-        deletedOnServer = Boolean(await momentLogApi.deleteMomentLog(moment.id));
+        deletedOnServer = Boolean(
+          await momentLogApi.deleteMomentLog(moment.id),
+        );
 
         if (!deletedOnServer) {
-          throw new Error('Recap capture delete was not accepted by the server.');
+          throw new Error(
+            'Recap capture delete was not accepted by the server.',
+          );
         }
       }
 
@@ -880,7 +913,9 @@ export function TravelScreen() {
     } catch {
       if (moment.syncStatus === 'synced') {
         queueDelete(moment);
-        setRecapMessage('서버 리캡 삭제에 실패해서 동기화 대기열에 저장했어요.');
+        setRecapMessage(
+          '서버 리캡 삭제에 실패해서 동기화 대기열에 저장했어요.',
+        );
       } else {
         setRecapMessage('리캡 삭제에 실패했어요. 잠시 후 다시 시도해주세요.');
       }
@@ -888,7 +923,10 @@ export function TravelScreen() {
       setPendingMomentActionId(undefined);
     }
   };
-  const handleEditMoment = async (moment: MomentLog, draft: MomentLogEditDraft) => {
+  const handleEditMoment = async (
+    moment: MomentLog,
+    draft: MomentLogEditDraft,
+  ) => {
     if (pendingMomentActionId) {
       return;
     }
@@ -910,7 +948,10 @@ export function TravelScreen() {
         if (draft.removePhoto) {
           await momentLogApi.deleteMomentLogPhoto(moment.id);
         } else if (draft.replacePhotoUri) {
-          await momentLogApi.updateMomentLogPhoto(moment.id, draft.replacePhotoUri);
+          await momentLogApi.updateMomentLogPhoto(
+            moment.id,
+            draft.replacePhotoUri,
+          );
         }
 
         const serverLog = await momentLogApi.updateMomentLog(moment.id, {
@@ -927,7 +968,10 @@ export function TravelScreen() {
         }
       } else {
         updateLog(moment.id, nextPatch);
-        queueCreate(moment.id, momentLogCreatePayloadFromLog({ ...moment, ...nextPatch }));
+        queueCreate(
+          moment.id,
+          momentLogCreatePayloadFromLog({ ...moment, ...nextPatch }),
+        );
       }
 
       await queryClient.invalidateQueries({ queryKey: momentLogQueryKeys.all });
@@ -937,7 +981,9 @@ export function TravelScreen() {
       if (moment.syncStatus === 'synced') {
         updateLog(moment.id, nextPatch);
         queueEdit(moment.id, editPayload);
-        setRecapMessage('서버 리캡 수정에 실패해서 동기화 대기열에 저장했어요.');
+        setRecapMessage(
+          '서버 리캡 수정에 실패해서 동기화 대기열에 저장했어요.',
+        );
       } else {
         setRecapMessage('리캡 수정에 실패했어요. 잠시 후 다시 시도해주세요.');
       }
@@ -947,7 +993,9 @@ export function TravelScreen() {
   };
   const syncPendingMomentAction = async (action: MomentLogPendingAction) => {
     if (action.type === 'create') {
-      const localMoment = momentLogs.find((moment) => moment.id === action.momentLogId);
+      const localMoment = momentLogs.find(
+        (moment) => moment.id === action.momentLogId,
+      );
 
       if (!localMoment) {
         removePendingAction(action.id);
@@ -963,7 +1011,9 @@ export function TravelScreen() {
 
       if (!serverLog) {
         updateLog(action.momentLogId, { syncStatus: 'local' });
-        throw new Error('Queued recap capture create was not accepted by the server.');
+        throw new Error(
+          'Queued recap capture create was not accepted by the server.',
+        );
       }
 
       resolveLocalLog(action.momentLogId, serverLog);
@@ -975,7 +1025,9 @@ export function TravelScreen() {
         const accepted = await momentLogApi.deleteMomentLog(action.momentLogId);
 
         if (!accepted) {
-          throw new Error('Queued recap capture delete was not accepted by the server.');
+          throw new Error(
+            'Queued recap capture delete was not accepted by the server.',
+          );
         }
       } catch (error) {
         if (error instanceof ApiError && error.status === 404) {
@@ -990,7 +1042,9 @@ export function TravelScreen() {
       return;
     }
 
-    const localMoment = momentLogs.find((moment) => moment.id === action.momentLogId);
+    const localMoment = momentLogs.find(
+      (moment) => moment.id === action.momentLogId,
+    );
 
     if (!localMoment) {
       removePendingAction(action.id);
@@ -998,10 +1052,14 @@ export function TravelScreen() {
     }
 
     if (action.payload.removePhoto) {
-      const photoDeletedLog = await momentLogApi.deleteMomentLogPhoto(action.momentLogId);
+      const photoDeletedLog = await momentLogApi.deleteMomentLogPhoto(
+        action.momentLogId,
+      );
 
       if (!photoDeletedLog) {
-        throw new Error('Queued recap capture photo delete was not accepted by the server.');
+        throw new Error(
+          'Queued recap capture photo delete was not accepted by the server.',
+        );
       }
     } else if (action.payload.replacePhotoUri) {
       const photoUpdatedLog = await momentLogApi.updateMomentLogPhoto(
@@ -1010,7 +1068,9 @@ export function TravelScreen() {
       );
 
       if (!photoUpdatedLog) {
-        throw new Error('Queued recap capture photo update was not accepted by the server.');
+        throw new Error(
+          'Queued recap capture photo update was not accepted by the server.',
+        );
       }
     }
 
@@ -1022,7 +1082,9 @@ export function TravelScreen() {
     });
 
     if (!serverLog) {
-      throw new Error('Queued recap capture edit was not accepted by the server.');
+      throw new Error(
+        'Queued recap capture edit was not accepted by the server.',
+      );
     }
 
     updateLog(action.momentLogId, serverLog);
@@ -1064,7 +1126,10 @@ export function TravelScreen() {
   };
 
   useEffect(() => {
-    if (focusTarget !== LIVE_SOUND_MAP_FOCUS || soundMapSectionY === undefined) {
+    if (
+      focusTarget !== LIVE_SOUND_MAP_FOCUS ||
+      soundMapSectionY === undefined
+    ) {
       return;
     }
 
@@ -1083,7 +1148,10 @@ export function TravelScreen() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          paddingBottom: getHomeContentBottomPadding(insets.bottom, Boolean(currentTrack)),
+          paddingBottom: getHomeContentBottomPadding(
+            insets.bottom,
+            Boolean(currentTrack),
+          ),
           paddingHorizontal: 20,
           paddingTop: 24,
         }}
@@ -1118,21 +1186,26 @@ export function TravelScreen() {
 
         {recapMessage ? (
           <View className="mt-4 rounded-[16px] border border-white/10 bg-white/10 px-4 py-3">
-            <AppText className="text-sm leading-5 text-white/65">{recapMessage}</AppText>
+            <AppText className="text-sm leading-5 text-white/65">
+              {recapMessage}
+            </AppText>
           </View>
         ) : null}
 
         {authStatus === 'authenticated' && isMomentLogSyncError ? (
           <View className="mt-4 rounded-[16px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
             <AppText className="text-sm leading-5 text-amber-50">
-              서버 여행 로그를 불러오지 못했어요. 로컬에 저장된 리캡을 먼저 보여드릴게요.
+              서버 여행 로그를 불러오지 못했어요. 로컬에 저장된 리캡을 먼저
+              보여드릴게요.
             </AppText>
             <Pressable
               accessibilityRole="button"
               className="mt-3 h-9 items-center justify-center rounded-full bg-white/10"
               onPress={() => void refetchMomentLogs()}
             >
-              <AppText className="text-xs font-semibold text-white/75">다시 동기화</AppText>
+              <AppText className="text-xs font-semibold text-white/75">
+                다시 동기화
+              </AppText>
             </Pressable>
           </View>
         ) : authStatus === 'authenticated' && isMomentLogSyncing ? (
@@ -1174,7 +1247,8 @@ export function TravelScreen() {
         {pendingActionCount > 0 ? (
           <View className="mt-4 rounded-[16px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
             <AppText className="text-sm leading-5 text-amber-50">
-              서버에 아직 반영되지 않은 리캡 변경 {pendingActionCount}개가 있어요.
+              서버에 아직 반영되지 않은 리캡 변경 {pendingActionCount}개가
+              있어요.
             </AppText>
             <Pressable
               accessibilityRole="button"
@@ -1197,14 +1271,14 @@ export function TravelScreen() {
           onDeleteMoment={handleDeleteMoment}
           onEditMoment={handleEditMoment}
           onOpenMoment={(moment) => router.push(`/recap-share/${moment.id}`)}
-          onSelectRecapTemplate={setSelectedRecapTemplate}
           pendingMomentActionId={pendingMomentActionId}
-          selectedRecapTemplate={selectedRecapTemplate}
           sessionStatus={session.status}
           trackCount={travelLogTrackCount}
         />
 
-        <View onLayout={(event) => setSoundMapSectionY(event.nativeEvent.layout.y)}>
+        <View
+          onLayout={(event) => setSoundMapSectionY(event.nativeEvent.layout.y)}
+        >
           <RecapMapSection
             currentLocation={currentLocation}
             currentPlace={currentPlace}
@@ -1228,11 +1302,20 @@ export function TravelScreen() {
         <View className="mt-8">
           <View className="flex-row items-center justify-between">
             <View>
-              <AppText className="text-xl font-semibold text-white">최근 리캡</AppText>
-              <AppText className="mt-1 text-xs text-white/45">여행 중 직접 저장한 리캡</AppText>
+              <AppText className="text-xl font-semibold text-white">
+                최근 리캡
+              </AppText>
+              <AppText className="mt-1 text-xs text-white/45">
+                여행 중 직접 저장한 리캡
+              </AppText>
             </View>
-            <Pressable accessibilityRole="button" onPress={() => router.push('/library')}>
-              <AppText className="text-xs font-semibold text-soundlog-lime">더보기</AppText>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push('/library')}
+            >
+              <AppText className="text-xs font-semibold text-soundlog-lime">
+                더보기
+              </AppText>
             </Pressable>
           </View>
 
@@ -1240,7 +1323,8 @@ export function TravelScreen() {
             {moments.length === 0 ? (
               <View className="rounded-[18px] border border-white/10 bg-white/10 p-4">
                 <AppText className="text-sm leading-6 text-white/60">
-                  아직 저장한 리캡이 없어요. 여행 중 카메라 버튼으로 첫 리캡을 남겨보세요.
+                  아직 저장한 리캡이 없어요. 여행 중 카메라 버튼으로 첫 리캡을
+                  남겨보세요.
                 </AppText>
               </View>
             ) : (
@@ -1259,7 +1343,9 @@ export function TravelScreen() {
         <View className="mt-8">
           <View className="flex-row items-center justify-between">
             <View>
-              <AppText className="text-xl font-semibold text-white">여행 로그</AppText>
+              <AppText className="text-xl font-semibold text-white">
+                여행 로그
+              </AppText>
               <AppText className="mt-1 text-xs text-white/45">
                 여행별 리캡과 음악 요약
               </AppText>
@@ -1294,7 +1380,9 @@ export function TravelScreen() {
         onSelectMode={handleSelectMode}
         onStart={() => void handleSubmitTravelMode()}
         selectedMode={selectedMode}
-        submitLabel={session.status === 'active' ? '여행 상태 저장' : '여행 시작'}
+        submitLabel={
+          session.status === 'active' ? '여행 상태 저장' : '여행 시작'
+        }
         visible={isModeSheetVisible}
       />
       <EndTravelConfirmModal

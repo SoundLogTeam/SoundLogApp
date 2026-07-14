@@ -63,8 +63,10 @@
     "check:deployed-web": "node scripts/check-deployed-web.js",
     "check:server-web-export": "node scripts/check-server-web-export.js",
     "check:store-release": "node scripts/check-store-release.js",
+    "check:recap-clustering": "node scripts/check-recap-map-clustering.js",
+    "check:server-contract": "node scripts/check-server-api-contract.js",
     "check:vercel-config": "node scripts/check-vercel-config.js",
-    "check": "npm run typecheck && npm run doctor",
+    "check": "npm run typecheck && npm run check:recap-clustering && npm run doctor",
     "prepare": "sh scripts/install-git-hooks.sh"
   },
   "private": true,

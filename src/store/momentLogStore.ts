@@ -2,7 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { GeoPoint, MomentLog, MoodTag, MusicLogItem, Track, TravelMode } from '@/types/domain';
+import {
+  GeoPoint,
+  MomentLog,
+  MoodTag,
+  MusicLogItem,
+  RecapTemplateId,
+  RecapVisibility,
+  Track,
+  TravelMode,
+} from '@/types/domain';
 
 export type MomentLogCreateQueuePayload = {
   createdAt: string;
@@ -13,7 +22,9 @@ export type MomentLogCreateQueuePayload = {
   placeCategory?: string;
   placeId?: string;
   placeName?: string;
+  recapVisibility?: RecapVisibility;
   sessionId?: string;
+  templateId?: RecapTemplateId;
   track?: Track;
   travelMode?: TravelMode;
 };
@@ -55,7 +66,10 @@ type MomentLogState = {
   addLog: (log: MomentLog) => void;
   getRecentLogs: (limit?: number) => MomentLog[];
   mergeServerLogs: (logs: MomentLog[]) => void;
-  queueCreate: (momentLogId: string, payload: MomentLogCreateQueuePayload) => void;
+  queueCreate: (
+    momentLogId: string,
+    payload: MomentLogCreateQueuePayload,
+  ) => void;
   queueEdit: (momentLogId: string, payload: MomentLogEditQueuePayload) => void;
   queueDelete: (log: MomentLog) => void;
   removePendingAction: (id: string) => void;
@@ -85,12 +99,17 @@ function sortByNewest(logs: MomentLog[]) {
   });
 }
 
-function getPendingActionId(type: MomentLogPendingAction['type'], momentLogId: string) {
+function getPendingActionId(
+  type: MomentLogPendingAction['type'],
+  momentLogId: string,
+) {
   return `${type}:${momentLogId}`;
 }
 
 function dedupePendingActions(actions: MomentLogPendingAction[]) {
-  return Array.from(new Map(actions.map((action) => [action.id, action])).values());
+  return Array.from(
+    new Map(actions.map((action) => [action.id, action])).values(),
+  );
 }
 
 function remapPendingAction(
@@ -129,7 +148,11 @@ export const useMomentLogStore = create<MomentLogState>()(
           const localLogsById = new Map(state.logs.map((log) => [log.id, log]));
           const visibleServerLogs = serverLogs
             .filter((log) => !pendingDeleteIds.has(log.id))
-            .map((log) => (pendingEditIds.has(log.id) ? localLogsById.get(log.id) ?? log : log));
+            .map((log) =>
+              pendingEditIds.has(log.id)
+                ? (localLogsById.get(log.id) ?? log)
+                : log,
+            );
           const serverLogIds = new Set(visibleServerLogs.map((log) => log.id));
           const localOnlyLogs = state.logs.filter(
             (log) => !serverLogIds.has(log.id) && !pendingDeleteIds.has(log.id),
@@ -143,7 +166,8 @@ export const useMomentLogStore = create<MomentLogState>()(
         set((state) => {
           const createActionId = getPendingActionId('create', momentLogId);
           const hasPendingDelete = state.pendingActions.some(
-            (action) => action.type === 'delete' && action.momentLogId === momentLogId,
+            (action) =>
+              action.type === 'delete' && action.momentLogId === momentLogId,
           );
 
           if (hasPendingDelete) {
@@ -152,7 +176,9 @@ export const useMomentLogStore = create<MomentLogState>()(
 
           return {
             pendingActions: [
-              ...state.pendingActions.filter((action) => action.id !== createActionId),
+              ...state.pendingActions.filter(
+                (action) => action.id !== createActionId,
+              ),
               {
                 id: createActionId,
                 momentLogId,
@@ -167,7 +193,8 @@ export const useMomentLogStore = create<MomentLogState>()(
         set((state) => {
           const editActionId = getPendingActionId('edit', momentLogId);
           const hasPendingDelete = state.pendingActions.some(
-            (action) => action.type === 'delete' && action.momentLogId === momentLogId,
+            (action) =>
+              action.type === 'delete' && action.momentLogId === momentLogId,
           );
 
           if (hasPendingDelete) {
@@ -176,7 +203,9 @@ export const useMomentLogStore = create<MomentLogState>()(
 
           return {
             pendingActions: [
-              ...state.pendingActions.filter((action) => action.id !== editActionId),
+              ...state.pendingActions.filter(
+                (action) => action.id !== editActionId,
+              ),
               {
                 id: editActionId,
                 momentLogId,
@@ -194,7 +223,9 @@ export const useMomentLogStore = create<MomentLogState>()(
           return {
             logs: state.logs.filter((item) => item.id !== log.id),
             pendingActions: [
-              ...state.pendingActions.filter((action) => action.momentLogId !== log.id),
+              ...state.pendingActions.filter(
+                (action) => action.momentLogId !== log.id,
+              ),
               {
                 id: deleteActionId,
                 momentLogId: log.id,
@@ -206,16 +237,22 @@ export const useMomentLogStore = create<MomentLogState>()(
         }),
       removePendingAction: (id) =>
         set((state) => ({
-          pendingActions: state.pendingActions.filter((action) => action.id !== id),
+          pendingActions: state.pendingActions.filter(
+            (action) => action.id !== id,
+          ),
         })),
       removeLog: (id) =>
         set((state) => ({
           logs: state.logs.filter((item) => item.id !== id),
-          pendingActions: state.pendingActions.filter((action) => action.momentLogId !== id),
+          pendingActions: state.pendingActions.filter(
+            (action) => action.momentLogId !== id,
+          ),
         })),
       resolveLocalLog: (localMomentLogId, serverLog) =>
         set((state) => {
-          const hasLocalLog = state.logs.some((item) => item.id === localMomentLogId);
+          const hasLocalLog = state.logs.some(
+            (item) => item.id === localMomentLogId,
+          );
 
           if (!hasLocalLog) {
             return state;
@@ -224,7 +261,10 @@ export const useMomentLogStore = create<MomentLogState>()(
           const remappedActions = state.pendingActions
             .filter(
               (action) =>
-                !(action.type === 'create' && action.momentLogId === localMomentLogId),
+                !(
+                  action.type === 'create' &&
+                  action.momentLogId === localMomentLogId
+                ),
             )
             .map((action) =>
               action.momentLogId === localMomentLogId
@@ -236,7 +276,8 @@ export const useMomentLogStore = create<MomentLogState>()(
             logs: sortByNewest([
               serverLog,
               ...state.logs.filter(
-                (item) => item.id !== localMomentLogId && item.id !== serverLog.id,
+                (item) =>
+                  item.id !== localMomentLogId && item.id !== serverLog.id,
               ),
             ]),
             pendingActions: dedupePendingActions(remappedActions),
@@ -244,7 +285,9 @@ export const useMomentLogStore = create<MomentLogState>()(
         }),
       updateLog: (id, patch) =>
         set((state) => ({
-          logs: state.logs.map((item) => (item.id === id ? { ...item, ...patch } : item)),
+          logs: state.logs.map((item) =>
+            item.id === id ? { ...item, ...patch } : item,
+          ),
         })),
     }),
     {

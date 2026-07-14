@@ -11,12 +11,16 @@ type LibraryEmptyStateProps = {
 
 export function LibraryEmptyState({ description, icon, title }: LibraryEmptyStateProps) {
   return (
-    <View className="rounded-[22px] border border-white/10 bg-white/10 p-6">
-      <View className="h-14 w-14 items-center justify-center rounded-full bg-white/10">
-        <Feather color="#fff" name={icon} size={24} />
+    <View className="items-center px-5 py-12">
+      <View className="h-12 w-12 items-center justify-center rounded-full bg-white/[0.06]">
+        <Feather color="rgba(255,255,255,0.52)" name={icon} size={22} />
       </View>
-      <AppText className="mt-5 text-[20px] font-semibold text-white">{title}</AppText>
-      <AppText className="mt-2 text-sm leading-6 text-white/60">{description}</AppText>
+      <AppText className="mt-4 text-center text-base font-semibold text-white">
+        {title}
+      </AppText>
+      <AppText className="mt-2 text-center text-sm leading-6 text-white/46">
+        {description}
+      </AppText>
     </View>
   );
 }

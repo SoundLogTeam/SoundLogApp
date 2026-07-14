@@ -21,9 +21,15 @@ npm run dev:client
 
 ```bash
 npm run typecheck
+npm run check:recap-clustering
+npm run check:server-contract
 npm run check
 npm run web:clear
 ```
+
+`check:recap-clustering`은 전체 리캡과 내 리캡 지도의 좌표 묶음, 줌별 반경, 확대 시 개별 핀 분리를 검증합니다. `check`에도 포함되어 있습니다.
+
+`check:server-contract`은 형제 경로의 `SoundLogServer/openapi/soundlog-api.yaml`과 프론트 `src/api`의 HTTP 메서드·경로를 비교합니다. 서버 저장소 위치가 다르면 `SOUNDLOG_SERVER_ROOT`를 지정합니다.
 
 레거시 mock API 상태를 확인하던 지연/실패 환경변수는 `src/mock-server` 참고용으로만 남아 있습니다. 현재 앱 API facade는 서버 API만 호출합니다.
 
@@ -79,6 +85,7 @@ iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/Test
 ## 문서
 
 - [문서 인덱스](docs/README.md)
+- [리캡·로그 도메인 기준](docs/product/RECAP_LOG_DOMAIN_MODEL.md)
 - [서비스 기획서](docs/product/SOUNDLOG_APP_PLANNING.md)
 - [React Native 프론트 고려사항](docs/frontend/RN_FRONTEND_PLANNING_POINTS.md)
 - [비개발자용 Codex 개발 가이드](docs/codex/NON_DEVELOPER_CODEX_GUIDE.md)

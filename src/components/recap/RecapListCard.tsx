@@ -1,11 +1,11 @@
-import { Feather } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import { Pressable, StyleSheet, View } from "react-native";
 
-import { AppText } from '@/components/AppText';
-import { RecapItem } from '@/types/domain';
-import { formatRecapRecordedAt } from '@/utils/dateFormat';
+import { AppText } from "@/components/AppText";
+import { RecapItem } from "@/types/domain";
+import { formatRecapRecordedAt } from "@/utils/dateFormat";
 
 type RecapListCardProps = {
   imageUrl?: string;
@@ -35,14 +35,14 @@ export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
         />
       ) : (
         <LinearGradient
-          colors={['#231844', '#1D3357', '#15101F']}
+          colors={["#231844", "#1D3357", "#15101F"]}
           end={{ x: 1, y: 1 }}
           start={{ x: 0, y: 0 }}
           style={StyleSheet.absoluteFill}
         />
       )}
       <LinearGradient
-        colors={['rgba(0,0,0,0.02)', 'rgba(0,0,0,0.32)', 'rgba(0,0,0,0.78)']}
+        colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.32)", "rgba(0,0,0,0.78)"]}
         end={{ x: 0.5, y: 1 }}
         start={{ x: 0.5, y: 0 }}
         style={StyleSheet.absoluteFill}
@@ -53,7 +53,7 @@ export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
         <View className="flex-row items-start justify-between gap-3">
           <View className="rounded-full border border-white/15 bg-black/28 px-3 py-1">
             <AppText className="text-[10px] font-semibold text-white/70">
-              {momentCountLabel ?? '단발 기록'}
+              {momentCountLabel ?? "독립 리캡"}
             </AppText>
           </View>
           <View className="h-10 w-10 items-center justify-center rounded-full bg-white/90">

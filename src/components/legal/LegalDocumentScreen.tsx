@@ -1,9 +1,12 @@
-import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { Linking, Pressable, ScrollView, View } from 'react-native';
+import { Linking, ScrollView, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { IconButton } from '@/components/IconButton';
+import { PageHeader } from '@/components/PageHeader';
 import { Screen } from '@/components/Screen';
+import { SectionTitle } from '@/components/SectionTitle';
+import { SettingsRow } from '@/components/SettingsRow';
 import { SOUNDLOG_SUPPORT_EMAIL } from '@/constants/legal';
 
 type LegalSection = {
@@ -32,39 +35,33 @@ export function LegalDocumentScreen({
   return (
     <Screen>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 48, paddingHorizontal: 20, paddingTop: 18 }}
+        contentContainerStyle={{
+          paddingBottom: 48,
+          paddingHorizontal: 20,
+          paddingTop: 32,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable
-          accessibilityLabel="뒤로가기"
-          accessibilityRole="button"
-          className="h-11 w-11 items-center justify-center rounded-full bg-white/10"
-          onPress={() => router.back()}
-        >
-          <Feather color="#fff" name="chevron-left" size={22} />
-        </Pressable>
+        <PageHeader
+          leftContent={
+            <IconButton label="뒤로가기" name="arrow-left" onPress={() => router.back()} />
+          }
+          title={title}
+        />
 
-        <View className="mt-8">
-          <AppText className="text-sm font-semibold text-[#7CFF8A]">
+        <View className="ml-12 mt-3">
+          <AppText className="text-xs font-semibold text-soundlog-lime">
             {updatedAt}
           </AppText>
-          <AppText className="mt-3 text-[30px] font-semibold leading-[38px] text-white">
-            {title}
-          </AppText>
-          <AppText className="mt-4 text-sm leading-6 text-white/58">
+          <AppText className="mt-2 text-sm leading-6 text-white/48">
             {subtitle}
           </AppText>
         </View>
 
-        <View className="mt-8 gap-4">
+        <View className="mt-8 gap-7">
           {sections.map((section) => (
-            <View
-              key={section.title}
-              className="rounded-[20px] border border-white/10 bg-white/10 p-5"
-            >
-              <AppText className="text-base font-semibold text-white">
-                {section.title}
-              </AppText>
+            <View key={section.title}>
+              <SectionTitle title={section.title} />
               <AppText className="mt-3 text-sm leading-6 text-white/58">
                 {section.body}
               </AppText>
@@ -72,18 +69,16 @@ export function LegalDocumentScreen({
           ))}
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          className="mt-6 min-h-12 flex-row items-center justify-center rounded-full bg-white px-5"
-          onPress={openSupportEmail}
-        >
-          <Feather color="#05070C" name="mail" size={17} />
-          <AppText className="ml-2 text-sm font-semibold text-[#05070C]">
-            문의 메일 보내기
-          </AppText>
-        </Pressable>
+        <View className="mt-7">
+          <SectionTitle title="고객지원" />
+          <SettingsRow
+            description={SOUNDLOG_SUPPORT_EMAIL}
+            icon="mail"
+            label="문의 메일 보내기"
+            onPress={openSupportEmail}
+          />
+        </View>
       </ScrollView>
     </Screen>
   );
 }
-

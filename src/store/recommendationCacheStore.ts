@@ -23,7 +23,6 @@ type MoodRecommendationCacheParams = {
   recommendationMode?: MusicRecommendationMode;
   preferredGenres?: string[];
   preferredMoods?: string[];
-  topFilter?: string;
   travelStyles?: string[];
 };
 
@@ -88,7 +87,6 @@ export function createMoodRecommendationsCacheKey(params?: MoodRecommendationCac
     preferredGenres: normalizeList(params?.preferredGenres),
     preferredMoods: normalizeList(params?.preferredMoods),
     recommendationMode: params?.recommendationMode ?? 'everyday',
-    topFilter: params?.topFilter ?? '전체',
     travelStyles: normalizeList(params?.travelStyles),
   });
 }

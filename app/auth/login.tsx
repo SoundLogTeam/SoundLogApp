@@ -1,21 +1,23 @@
-import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Feather } from "@expo/vector-icons";
+import { router } from "expo-router";
+import { useState } from "react";
+import { Pressable, ScrollView, TextInput, View } from "react-native";
 
-import { useLoginMutation, useRegisterMutation } from '@/api/authQueries';
-import { AppText } from '@/components/AppText';
-import { BrandLogo } from '@/components/BrandLogo';
-import { Screen } from '@/components/Screen';
-import { useAuthStore } from '@/store/authStore';
-import { useUserProfileStore } from '@/store/userProfileStore';
-import { migrateLocalDataToAccount } from '@/utils/localDataMigration';
+import { useLoginMutation, useRegisterMutation } from "@/api/authQueries";
+import { AppText } from "@/components/AppText";
+import { IconButton } from "@/components/IconButton";
+import { PageHeader } from "@/components/PageHeader";
+import { Screen } from "@/components/Screen";
+import { SectionTitle } from "@/components/SectionTitle";
+import { SettingsRow } from "@/components/SettingsRow";
+import { useAuthStore } from "@/store/authStore";
+import { useUserProfileStore } from "@/store/userProfileStore";
+import { migrateLocalDataToAccount } from "@/utils/localDataMigration";
 
-type AuthMode = 'login' | 'register';
+type AuthMode = "login" | "register";
 
 function getNextRoute(completedOnboarding: boolean) {
-  return (completedOnboarding ? '/' : '/onboarding') as never;
+  return (completedOnboarding ? "/" : "/onboarding") as never;
 }
 
 function getErrorMessage(error: unknown) {
@@ -23,24 +25,21 @@ function getErrorMessage(error: unknown) {
     return error.message;
   }
 
-  return '로그인에 실패했어요. 잠시 후 다시 시도해주세요.';
+  return "로그인에 실패했어요. 잠시 후 다시 시도해주세요.";
 }
 
 export default function LoginScreen() {
-  const [mode, setMode] = useState<AuthMode>('login');
-  const [displayName, setDisplayName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [mode, setMode] = useState<AuthMode>("login");
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [hasAcceptedRequiredTerms, setHasAcceptedRequiredTerms] =
+    useState(false);
   const loginMutation = useLoginMutation();
   const registerMutation = useRegisterMutation();
   const isPending = loginMutation.isPending || registerMutation.isPending;
-  const {
-    clearAuthError,
-    errorMessage,
-    finishLogin,
-    setAuthError,
-    setStatus,
-  } = useAuthStore();
+  const { clearAuthError, errorMessage, finishLogin, setAuthError, setStatus } =
+    useAuthStore();
   const { profile, updateProfile } = useUserProfileStore();
 
   const handleModePress = (nextMode: AuthMode) => {
@@ -56,22 +55,29 @@ export default function LoginScreen() {
     const normalizedEmail = email.trim().toLowerCase();
     const trimmedDisplayName = displayName.trim();
 
-    if (!normalizedEmail.includes('@')) {
-      setAuthError('이메일을 확인해주세요.');
+    if (!normalizedEmail.includes("@")) {
+      setAuthError("이메일을 확인해주세요.");
       return;
     }
 
     if (password.length < 8) {
-      setAuthError('비밀번호는 8자 이상이어야 해요.');
+      setAuthError("비밀번호는 8자 이상이어야 해요.");
       return;
     }
 
-    setStatus('checking');
+    if (mode === "register" && !hasAcceptedRequiredTerms) {
+      setAuthError(
+        "계정을 만들려면 이용약관과 개인정보 처리방침에 동의해주세요.",
+      );
+      return;
+    }
+
+    setStatus("checking");
     clearAuthError();
 
     try {
       const session =
-        mode === 'login'
+        mode === "login"
           ? await loginMutation.mutateAsync({
               email: normalizedEmail,
               password,
@@ -83,9 +89,13 @@ export default function LoginScreen() {
             });
 
       const didCompleteOnboarding =
-        profile.completedOnboarding || Boolean(session.profile?.completedOnboarding);
+        profile.completedOnboarding ||
+        Boolean(session.profile?.completedOnboarding);
 
-      if (!profile.completedOnboarding && session.profile?.completedOnboarding) {
+      if (
+        !profile.completedOnboarding &&
+        session.profile?.completedOnboarding
+      ) {
         updateProfile(session.profile);
       }
 
@@ -93,7 +103,7 @@ export default function LoginScreen() {
       void migrateLocalDataToAccount();
       router.replace(getNextRoute(didCompleteOnboarding));
     } catch (error) {
-      setStatus('unauthenticated');
+      setStatus("unauthenticated");
       setAuthError(getErrorMessage(error));
     }
   };
@@ -103,7 +113,7 @@ export default function LoginScreen() {
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: 'space-between',
+          justifyContent: "space-between",
           padding: 24,
           paddingBottom: 42,
           paddingTop: 42,
@@ -112,82 +122,67 @@ export default function LoginScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View>
-          <View className="flex-row items-center justify-between">
-            <BrandLogo className="border border-white/20" size={58} />
-            <View className="rounded-full border border-[#1DB954]/25 bg-[#1DB954]/10 px-4 py-2">
-              <AppText className="text-xs font-semibold text-[#7CFF8A]">
-                Soundlog account
-              </AppText>
-            </View>
-          </View>
+          <PageHeader
+            leftContent={
+              <IconButton
+                label="온보딩으로 돌아가기"
+                name="arrow-left"
+                onPress={() => router.replace("/onboarding" as never)}
+              />
+            }
+            title="Soundlog"
+          />
 
-          <AppText className="mt-10 text-[34px] font-semibold leading-[42px] text-white">
-            여행의 사운드를{'\n'}내 계정에 저장해요
+          <AppText className="mt-9 text-[28px] font-semibold leading-9 text-white">
+            계정으로 계속하기
           </AppText>
           <AppText className="mt-4 text-sm leading-6 text-white/58">
-            이메일 계정으로 취향, 좋아요, 순간 기록, Recap을 서버에 동기화할 수
+            이메일 계정으로 취향, 좋아요, 리캡, 여행 로그를 서버에 동기화할 수
             있어요. Soundlog 이용은 로그인 후 시작할 수 있습니다.
           </AppText>
 
-          <LinearGradient
-            colors={[
-              'rgba(29,185,84,0.28)',
-              'rgba(39,211,255,0.14)',
-              'rgba(255,79,216,0.16)',
-            ]}
-            end={{ x: 1, y: 1 }}
-            start={{ x: 0, y: 0 }}
-            style={{ borderRadius: 28, marginTop: 30, padding: 1 }}
-          >
-            <View className="rounded-[27px] bg-[#070A0F] p-5">
-              <View className="flex-row items-center gap-3">
-                <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                  <Feather color="#fff" name="lock" size={18} />
-                </View>
-                <View className="min-w-0 flex-1">
-                  <AppText className="text-base font-semibold text-white">
-                    Soundlog 자체 계정
-                  </AppText>
-                  <AppText className="mt-1 text-xs leading-5 text-white/48">
-                    외부 계정 연결 없이 이메일과 비밀번호로 기록을 이어둘 수 있어요.
-                  </AppText>
-                </View>
-              </View>
-            </View>
-          </LinearGradient>
+          <View className="mt-8">
+            <SectionTitle title="계정 안내" />
+            <SettingsRow
+              description="외부 계정 연결 없이 이메일과 비밀번호로 기록을 이어둘 수 있어요."
+              icon="lock"
+              label="Soundlog 자체 계정"
+            />
+          </View>
         </View>
 
         <View className="mt-10 gap-3">
-          <View className="flex-row rounded-[18px] border border-white/10 bg-white/10 p-1">
-            {(['login', 'register'] as const).map((item) => {
+          <View className="flex-row rounded-full border border-white/10 bg-white/[0.06] p-1">
+            {(["login", "register"] as const).map((item) => {
               const isActive = mode === item;
 
               return (
                 <Pressable
                   key={item}
                   accessibilityRole="button"
-                  className={`min-h-11 flex-1 items-center justify-center rounded-[14px] ${
-                    isActive ? 'bg-[#1DB954]' : 'bg-transparent'
+                  accessibilityState={{ selected: isActive }}
+                  className={`min-h-11 flex-1 items-center justify-center rounded-full ${
+                    isActive ? "bg-soundlog-lime" : "bg-transparent"
                   }`}
                   disabled={isPending}
                   onPress={() => handleModePress(item)}
                 >
                   <AppText
                     className={`text-sm font-semibold ${
-                      isActive ? 'text-[#05110A]' : 'text-white/62'
+                      isActive ? "text-soundlog-inverse" : "text-white/62"
                     }`}
                   >
-                    {item === 'login' ? '로그인' : '가입'}
+                    {item === "login" ? "로그인" : "가입"}
                   </AppText>
                 </Pressable>
               );
             })}
           </View>
 
-          {mode === 'register' ? (
+          {mode === "register" ? (
             <TextInput
               autoCapitalize="words"
-              className="min-h-[54px] rounded-[18px] border border-white/10 bg-white/10 px-5 text-base text-white"
+              className="min-h-[54px] rounded-xl border border-white/10 bg-white/[0.06] px-4 text-base text-white"
               editable={!isPending}
               onChangeText={setDisplayName}
               placeholder="이름"
@@ -200,7 +195,7 @@ export default function LoginScreen() {
           <TextInput
             autoCapitalize="none"
             autoComplete="email"
-            className="min-h-[54px] rounded-[18px] border border-white/10 bg-white/10 px-5 text-base text-white"
+            className="min-h-[54px] rounded-xl border border-white/10 bg-white/[0.06] px-4 text-base text-white"
             editable={!isPending}
             inputMode="email"
             keyboardType="email-address"
@@ -214,8 +209,10 @@ export default function LoginScreen() {
 
           <TextInput
             autoCapitalize="none"
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            className="min-h-[54px] rounded-[18px] border border-white/10 bg-white/10 px-5 text-base text-white"
+            autoComplete={
+              mode === "login" ? "current-password" : "new-password"
+            }
+            className="min-h-[54px] rounded-xl border border-white/10 bg-white/[0.06] px-4 text-base text-white"
             editable={!isPending}
             onChangeText={setPassword}
             onSubmitEditing={() => {
@@ -225,13 +222,43 @@ export default function LoginScreen() {
             placeholderTextColor="rgba(255,255,255,0.35)"
             returnKeyType="done"
             secureTextEntry
-            textContentType={mode === 'login' ? 'password' : 'newPassword'}
+            textContentType={mode === "login" ? "password" : "newPassword"}
             value={password}
           />
 
+          {mode === "register" ? (
+            <Pressable
+              accessibilityLabel="필수 이용약관과 개인정보 처리방침 동의"
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: hasAcceptedRequiredTerms }}
+              className="min-h-12 flex-row items-center gap-3 py-2"
+              disabled={isPending}
+              onPress={() => {
+                setHasAcceptedRequiredTerms((accepted) => !accepted);
+                clearAuthError();
+              }}
+            >
+              <View
+                className={`h-6 w-6 items-center justify-center rounded-md border ${
+                  hasAcceptedRequiredTerms
+                    ? "border-soundlog-lime bg-soundlog-lime"
+                    : "border-white/25 bg-transparent"
+                }`}
+              >
+                {hasAcceptedRequiredTerms ? (
+                  <Feather color="#050916" name="check" size={15} />
+                ) : null}
+              </View>
+              <AppText className="min-w-0 flex-1 text-xs leading-5 text-white/65">
+                이용약관과 개인정보 처리방침에 동의합니다. (필수)
+              </AppText>
+            </Pressable>
+          ) : null}
+
           {errorMessage ? (
-            <View className="rounded-[16px] border border-[#FF6B6B]/30 bg-[#2A1215] px-4 py-3">
-              <AppText className="text-xs leading-5 text-[#FFB3B3]">
+            <View className="flex-row items-start gap-3 py-2">
+              <Feather color="#FF8F8F" name="alert-circle" size={16} />
+              <AppText className="min-w-0 flex-1 text-xs leading-5 text-[#FFB3B3]">
                 {errorMessage}
               </AppText>
             </View>
@@ -239,29 +266,31 @@ export default function LoginScreen() {
 
           <Pressable
             accessibilityRole="button"
-            className="min-h-[56px] items-center justify-center rounded-[18px] bg-[#1DB954] px-5"
+            className="min-h-[56px] items-center justify-center rounded-xl bg-soundlog-lime px-5"
             disabled={isPending}
             onPress={() => {
               void handleSubmit();
             }}
           >
-            <AppText className="text-sm font-semibold text-[#05110A]">
+            <AppText className="text-sm font-semibold text-soundlog-inverse">
               {isPending
-                ? '처리 중...'
-                : mode === 'login'
-                  ? '로그인'
-                  : '계정 만들기'}
+                ? "처리 중..."
+                : mode === "login"
+                  ? "로그인"
+                  : "계정 만들기"}
             </AppText>
           </Pressable>
 
           <View className="mt-3 items-center">
             <AppText className="text-center text-[11px] leading-5 text-white/35">
-              계속 진행하면 Soundlog 정책에 동의한 것으로 간주됩니다.
+              {mode === "register"
+                ? "필수 약관에 동의한 뒤 계정을 만들 수 있어요."
+                : "로그인하면 기존 계정의 설정과 기록을 불러옵니다."}
             </AppText>
             <View className="mt-2 flex-row items-center justify-center gap-3">
               <Pressable
                 accessibilityRole="link"
-                onPress={() => router.push('/legal/terms' as never)}
+                onPress={() => router.push("/legal/terms" as never)}
               >
                 <AppText className="text-[11px] font-semibold text-white/62">
                   이용약관
@@ -270,7 +299,7 @@ export default function LoginScreen() {
               <AppText className="text-[11px] text-white/20">|</AppText>
               <Pressable
                 accessibilityRole="link"
-                onPress={() => router.push('/legal/privacy' as never)}
+                onPress={() => router.push("/legal/privacy" as never)}
               >
                 <AppText className="text-[11px] font-semibold text-white/62">
                   개인정보 처리방침

@@ -1,119 +1,131 @@
-import { Redirect, router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Redirect, router } from "expo-router";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ScrollView, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import {
   useFeaturedPlaylistsQuery,
   useMoodRecommendationsQuery,
-} from '@/api/homeQueries';
-import { libraryApi } from '@/api/libraryApi';
-import { meApi } from '@/api/meApi';
-import { PlaylistMlMood, PlaylistMlState } from '@/api/playlistApi';
+} from "@/api/homeQueries";
+import { libraryApi } from "@/api/libraryApi";
+import { meApi } from "@/api/meApi";
+import { PlaylistMlMood, PlaylistMlState } from "@/api/playlistApi";
 import {
   playlistQueryKeys,
   usePlaylistCurationQuery,
   useRecommendedPlaylistQuery,
-} from '@/api/playlistQueries';
-import { syncRecommendationEvent } from '@/api/recommendationEventApi';
-import { AppText } from '@/components/AppText';
-import { useNearbyPlacesQuery } from '@/api/tourQueries';
-import { MiniPlayer } from '@/components/MiniPlayer';
-import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
-import { CurrentSoundtrackCard } from '@/components/home/CurrentSoundtrackCard';
-import { HomeSoundtrackBottomSheet } from '@/components/home/HomeSoundtrackBottomSheet';
+} from "@/api/playlistQueries";
+import { syncRecommendationEvent } from "@/api/recommendationEventApi";
+import { AppText } from "@/components/AppText";
 import {
-  HomeHeader,
-  HomeNavigationBar,
-  HomeTopFilterBar,
-  isHomeTopFilter,
-} from '@/components/home/HomeHeader';
-import { LocationContextCard } from '@/components/home/LocationContextCard';
+  useNearbyPlacesQuery,
+  useReverseGeocodedPlaceQuery,
+} from "@/api/tourQueries";
+import { MiniPlayer } from "@/components/MiniPlayer";
+import { FeaturedPlaylistSection } from "@/components/home/FeaturedPlaylistSection";
+import { CurrentSoundtrackCard } from "@/components/home/CurrentSoundtrackCard";
+import { HomeSoundtrackBottomSheet } from "@/components/home/HomeSoundtrackBottomSheet";
+import { HomeHeader } from "@/components/home/HomeHeader";
+import { LocationContextCard } from "@/components/home/LocationContextCard";
+import { ManualPlacePickerModal } from "@/components/home/ManualPlacePickerModal";
 import {
   MoodRecommendationSection,
   isMoodRecommendationFilter,
-} from '@/components/home/MoodRecommendationSection';
-import { Screen } from '@/components/Screen';
-import { getHomeContentBottomPadding } from '@/constants/layout';
-import { useHomeFilterStore } from '@/store/homeFilterStore';
-import { useLibraryStore } from '@/store/libraryStore';
-import { usePlayerStore } from '@/store/playerStore';
-import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+} from "@/components/home/MoodRecommendationSection";
+import { Screen } from "@/components/Screen";
+import { getHomeContentBottomPadding } from "@/constants/layout";
+import { useHomeFilterStore } from "@/store/homeFilterStore";
+import { useLibraryStore } from "@/store/libraryStore";
+import { usePlayerStore } from "@/store/playerStore";
+import { useRecommendationEventStore } from "@/store/recommendationEventStore";
 import {
   createFeaturedPlaylistsCacheKey,
   createMoodRecommendationsCacheKey,
   useRecommendationCacheStore,
-} from '@/store/recommendationCacheStore';
-import { queryClient } from '@/providers/queryClient';
-import { useAuthStore } from '@/store/authStore';
-import { useTravelSessionStore } from '@/store/travelSessionStore';
-import { useUserProfileStore } from '@/store/userProfileStore';
+} from "@/store/recommendationCacheStore";
+import { queryClient } from "@/providers/queryClient";
+import { useAuthStore } from "@/store/authStore";
+import { useTravelSessionStore } from "@/store/travelSessionStore";
+import { useUserProfileStore } from "@/store/userProfileStore";
 import {
   FeaturedPlaylist,
   MoodRecommendation,
   PlaceContext,
   PlaylistCuration,
   Track,
-} from '@/types/domain';
-import { toLibraryPlaylistSummary } from '@/utils/libraryPlaylistSummary';
-import { requestForegroundLocationWithStatus } from '@/utils/location';
-import { getMoodTagsFromFilter } from '@/utils/moodTags';
-import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
+} from "@/types/domain";
+import { toLibraryPlaylistSummary } from "@/utils/libraryPlaylistSummary";
+import { requestForegroundLocationWithStatus } from "@/utils/location";
+import { getMoodTagsFromFilter } from "@/utils/moodTags";
+import { createRecommendationEventContext } from "@/utils/recommendationEventContext";
+import { getPlaceDisplayTitle } from "@/utils/placeLabel";
 
 const moodFilterToMlMood: Record<string, PlaylistMlMood> = {
-  감성적인: '감성적인',
-  로컬한: '설레는',
-  설레는: '설레는',
-  시원한: '시원한',
-  신나는: '신나는',
-  잔잔한: '잔잔한',
-  청량한: '시원한',
-  활기찬: '신나는',
+  감성적인: "감성적인",
+  로컬한: "설레는",
+  설레는: "설레는",
+  시원한: "시원한",
+  신나는: "신나는",
+  잔잔한: "잔잔한",
+  청량한: "시원한",
+  활기찬: "신나는",
 };
 
-const EVERYDAY_RECOMMENDATION_MODE = 'everyday' as const;
-const DEFAULT_PLACE_RECOMMENDATION_STATE: PlaylistMlState = '산책';
+const EVERYDAY_RECOMMENDATION_MODE = "everyday" as const;
+const DEFAULT_PLACE_RECOMMENDATION_STATE: PlaylistMlState = "산책";
 
-function resolvePlaylistMood(filter: string, preferredMoods: string[]): PlaylistMlMood {
-  if (filter !== '전체' && moodFilterToMlMood[filter]) {
+function resolvePlaylistMood(
+  filter: string,
+  preferredMoods: string[],
+): PlaylistMlMood {
+  if (filter !== "전체" && moodFilterToMlMood[filter]) {
     return moodFilterToMlMood[filter];
   }
 
-  return preferredMoods.map((mood) => moodFilterToMlMood[mood]).find(Boolean) ?? '잔잔한';
+  return (
+    preferredMoods.map((mood) => moodFilterToMlMood[mood]).find(Boolean) ??
+    "잔잔한"
+  );
 }
 
 function resolveCurrentMoodLabel(filter: string, preferredMoods: string[]) {
-  if (filter !== '전체') {
+  if (filter !== "전체") {
     return filter;
   }
 
-  return preferredMoods[0] ?? '잔잔한';
+  return preferredMoods[0] ?? "잔잔한";
 }
 
-function resolvePlaceBasedRecommendationState(place?: PlaceContext): PlaylistMlState {
-  const placeText = [place?.title, place?.category, place?.address].filter(Boolean).join(' ');
+function resolvePlaceBasedRecommendationState(
+  place?: PlaceContext,
+): PlaylistMlState {
+  const placeText = [place?.title, place?.category, place?.address]
+    .filter(Boolean)
+    .join(" ");
 
-  if (/바다|해변|해수욕|해안|항구|선착|해양|섬|beach|ocean|sea/i.test(placeText)) {
-    return '바다';
+  if (
+    /바다|해변|해수욕|해안|항구|선착|해양|섬|beach|ocean|sea/i.test(placeText)
+  ) {
+    return "바다";
   }
 
   if (/카페|커피|디저트|베이커리|찻집|cafe|coffee/i.test(placeText)) {
-    return '카페';
+    return "카페";
   }
 
   if (/야경|전망|전망대|타워|루프탑|스카이|night|view/i.test(placeText)) {
-    return '야경';
+    return "야경";
   }
 
   if (/드라이브|해안도로|도로|휴게소|drive|road/i.test(placeText)) {
-    return '드라이브';
+    return "드라이브";
   }
 
   return DEFAULT_PLACE_RECOMMENDATION_STATE;
 }
 
 function resolvePlaceLabel(place?: PlaceContext) {
-  return place?.title ?? place?.category ?? '현재 위치 주변';
+  return getPlaceDisplayTitle(place, place?.category ?? "선택한 지역");
 }
 
 function toFeaturedPlaylist(playlist: PlaylistCuration): FeaturedPlaylist {
@@ -130,15 +142,18 @@ function HomeContent() {
   const insets = useSafeAreaInsets();
   const authStatus = useAuthStore((state) => state.status);
   const [actionMessage, setActionMessage] = useState<string>();
-  const [isSoundtrackSheetVisible, setIsSoundtrackSheetVisible] = useState(false);
-  const [selectedMusicPlaylistId, setSelectedMusicPlaylistId] = useState<string>();
-  const [selectedMusicPlaylistEyebrowLabel, setSelectedMusicPlaylistEyebrowLabel] =
-    useState('Music Playlist');
+  const [isPlacePickerVisible, setIsPlacePickerVisible] = useState(false);
+  const [isSoundtrackSheetVisible, setIsSoundtrackSheetVisible] =
+    useState(false);
+  const [selectedMusicPlaylistId, setSelectedMusicPlaylistId] =
+    useState<string>();
+  const [
+    selectedMusicPlaylistEyebrowLabel,
+    setSelectedMusicPlaylistEyebrowLabel,
+  ] = useState("Music Playlist");
   const {
     selectedMoodFilter,
-    selectedTopFilter,
     setSelectedMoodFilter,
-    setSelectedTopFilter,
   } = useHomeFilterStore();
   const { currentTrack, setTrack } = usePlayerStore();
   const {
@@ -155,6 +170,7 @@ function HomeContent() {
   );
   const { profile, updateProfile } = useUserProfileStore();
   const {
+    clearLocation,
     currentLocation,
     currentPlace,
     locationStatus,
@@ -184,7 +200,6 @@ function HomeContent() {
       preferredGenres: profile.preferredGenres,
       preferredMoods: profile.preferredMoods,
       recommendationMode: EVERYDAY_RECOMMENDATION_MODE,
-      topFilter: selectedTopFilter,
       travelStyles: profile.travelStyles,
     }),
     [
@@ -193,7 +208,6 @@ function HomeContent() {
       profile.preferredMoods,
       profile.travelStyles,
       selectedMoodFilter,
-      selectedTopFilter,
     ],
   );
   const recommendedPlaylistInput = useMemo(
@@ -226,11 +240,16 @@ function HomeContent() {
     () => createMoodRecommendationsCacheKey(moodRecommendationParams),
     [moodRecommendationParams],
   );
-  const featuredFallback = useRecommendationCacheStore((state) => state.featuredFallback);
-  const moodFallback = useRecommendationCacheStore((state) => state.moodFallback);
-  const isUsingCachedFeaturedPlaylists = featuredFallback?.key === featuredCacheKey;
+  const featuredFallback = useRecommendationCacheStore(
+    (state) => state.featuredFallback,
+  );
+  const moodFallback = useRecommendationCacheStore(
+    (state) => state.moodFallback,
+  );
+  const isUsingCachedFeaturedPlaylists =
+    featuredFallback?.key === featuredCacheKey;
   const isUsingCachedMoodRecommendations = moodFallback?.key === moodCacheKey;
-  const isAuthenticated = authStatus === 'authenticated';
+  const isAuthenticated = authStatus === "authenticated";
   const isMusicPlaylistSheetVisible = Boolean(selectedMusicPlaylistId);
 
   const nearbyPlacesQuery = useNearbyPlacesQuery({
@@ -238,12 +257,28 @@ function HomeContent() {
     location: currentLocation,
     radiusMeters: 2000,
   });
-  const featuredPlaylistsQuery = useFeaturedPlaylistsQuery(featuredPlaylistParams, {
-    enabled: isAuthenticated,
+  const shouldReverseGeocode =
+    isAuthenticated &&
+    profile.locationRecommendationEnabled &&
+    Boolean(currentLocation) &&
+    !nearbyPlacesQuery.isFetching &&
+    (nearbyPlacesQuery.data?.length ?? 0) === 0;
+  const reverseGeocodedPlaceQuery = useReverseGeocodedPlaceQuery({
+    enabled: shouldReverseGeocode,
+    location: currentLocation,
   });
-  const recommendedPlaylistQuery = useRecommendedPlaylistQuery(recommendedPlaylistInput, {
-    enabled: isAuthenticated && Boolean(recommendedPlaylistInput.location),
-  });
+  const featuredPlaylistsQuery = useFeaturedPlaylistsQuery(
+    featuredPlaylistParams,
+    {
+      enabled: isAuthenticated,
+    },
+  );
+  const recommendedPlaylistQuery = useRecommendedPlaylistQuery(
+    recommendedPlaylistInput,
+    {
+      enabled: isAuthenticated && Boolean(recommendedPlaylistInput.location),
+    },
+  );
   const {
     data: recommendedPlaylist,
     isError: isRecommendedPlaylistError,
@@ -253,16 +288,22 @@ function HomeContent() {
   } = recommendedPlaylistQuery;
   const {
     data: selectedMusicPlaylist,
+    isError: isSelectedMusicPlaylistError,
     isFetching: isSelectedMusicPlaylistFetching,
     isLoading: isSelectedMusicPlaylistLoading,
+    refetch: refetchSelectedMusicPlaylist,
   } = usePlaylistCurationQuery(selectedMusicPlaylistId, {
     enabled: isAuthenticated && isMusicPlaylistSheetVisible,
   });
-  const moodRecommendationsQuery = useMoodRecommendationsQuery(moodRecommendationParams, {
-    enabled: isAuthenticated,
-  });
+  const moodRecommendationsQuery = useMoodRecommendationsQuery(
+    moodRecommendationParams,
+    {
+      enabled: isAuthenticated,
+    },
+  );
   const currentSoundtrackPlaylist = useMemo(
-    () => (recommendedPlaylist ? toFeaturedPlaylist(recommendedPlaylist) : undefined),
+    () =>
+      recommendedPlaylist ? toFeaturedPlaylist(recommendedPlaylist) : undefined,
     [recommendedPlaylist],
   );
   const displayedFeaturedPlaylists = useMemo(() => {
@@ -278,18 +319,26 @@ function HomeContent() {
     ];
   }, [currentSoundtrackPlaylist, featuredPlaylistsQuery.data]);
   const currentSoundtrackSummary = useMemo(
-    () => (recommendedPlaylist ? toLibraryPlaylistSummary(recommendedPlaylist) : undefined),
+    () =>
+      recommendedPlaylist
+        ? toLibraryPlaylistSummary(recommendedPlaylist)
+        : undefined,
     [recommendedPlaylist],
   );
   const selectedMusicPlaylistSummary = useMemo(
-    () => (selectedMusicPlaylist ? toLibraryPlaylistSummary(selectedMusicPlaylist) : undefined),
+    () =>
+      selectedMusicPlaylist
+        ? toLibraryPlaylistSummary(selectedMusicPlaylist)
+        : undefined,
     [selectedMusicPlaylist],
   );
   const currentSoundtrackLikedTrackIds = useMemo(
     () =>
       new Set(
         recommendedPlaylist?.tracks
-          .filter((track) => likedTracks.some((record) => record.track.id === track.id))
+          .filter((track) =>
+            likedTracks.some((record) => record.track.id === track.id),
+          )
           .map((track) => track.id) ?? [],
       ),
     [likedTracks, recommendedPlaylist?.tracks],
@@ -298,7 +347,9 @@ function HomeContent() {
     () =>
       new Set(
         recommendedPlaylist?.tracks
-          .filter((track) => savedTracks.some((record) => record.track.id === track.id))
+          .filter((track) =>
+            savedTracks.some((record) => record.track.id === track.id),
+          )
           .map((track) => track.id) ?? [],
       ),
     [recommendedPlaylist?.tracks, savedTracks],
@@ -307,7 +358,9 @@ function HomeContent() {
     () =>
       new Set(
         selectedMusicPlaylist?.tracks
-          .filter((track) => likedTracks.some((record) => record.track.id === track.id))
+          .filter((track) =>
+            likedTracks.some((record) => record.track.id === track.id),
+          )
           .map((track) => track.id) ?? [],
       ),
     [likedTracks, selectedMusicPlaylist?.tracks],
@@ -316,44 +369,56 @@ function HomeContent() {
     () =>
       new Set(
         selectedMusicPlaylist?.tracks
-          .filter((track) => savedTracks.some((record) => record.track.id === track.id))
+          .filter((track) =>
+            savedTracks.some((record) => record.track.id === track.id),
+          )
           .map((track) => track.id) ?? [],
       ),
     [savedTracks, selectedMusicPlaylist?.tracks],
   );
   const placeInfoMessage =
-    profile.locationRecommendationEnabled &&
-    currentLocation &&
-    !nearbyPlacesQuery.isFetching &&
-    (nearbyPlacesQuery.data?.length ?? 0) === 0
-      ? '주변 관광지 결과가 없어도 기본 추천은 계속 사용할 수 있어요.'
-      : nearbyPlacesQuery.isError
-        ? '주변 관광지를 불러오지 못했지만 기본 추천은 계속 사용할 수 있어요.'
+    shouldReverseGeocode && reverseGeocodedPlaceQuery.isFetching
+      ? "주변 관광지 대신 한국어 지역명을 확인하고 있어요."
+      : shouldReverseGeocode &&
+          !reverseGeocodedPlaceQuery.isFetching &&
+          !reverseGeocodedPlaceQuery.data
+        ? "지역명은 확인하지 못했지만 기본 추천은 계속 사용할 수 있어요."
         : undefined;
 
   useEffect(() => {
     if (!isMoodRecommendationFilter(selectedMoodFilter)) {
-      setSelectedMoodFilter('전체');
+      setSelectedMoodFilter("전체");
     }
   }, [selectedMoodFilter, setSelectedMoodFilter]);
 
   useEffect(() => {
-    if (!isHomeTopFilter(selectedTopFilter)) {
-      setSelectedTopFilter('전체');
-    }
-  }, [selectedTopFilter, setSelectedTopFilter]);
-
-  useEffect(() => {
-    if (!nearbyPlacesQuery.data) {
+    if (!currentLocation) {
       return;
     }
 
-    const nextPlace = nearbyPlacesQuery.data[0];
+    if (
+      nearbyPlacesQuery.isFetching ||
+      (shouldReverseGeocode && reverseGeocodedPlaceQuery.isFetching)
+    ) {
+      return;
+    }
+
+    const nextPlace =
+      nearbyPlacesQuery.data?.[0] ?? reverseGeocodedPlaceQuery.data ?? undefined;
 
     if (nextPlace?.id !== currentPlace?.id) {
       setPlace(nextPlace);
     }
-  }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
+  }, [
+    currentLocation,
+    currentPlace?.id,
+    nearbyPlacesQuery.data,
+    nearbyPlacesQuery.isFetching,
+    reverseGeocodedPlaceQuery.data,
+    reverseGeocodedPlaceQuery.isFetching,
+    setPlace,
+    shouldReverseGeocode,
+  ]);
 
   useEffect(() => {
     if (!recommendedPlaylist) {
@@ -395,13 +460,13 @@ function HomeContent() {
 
     if (item.playlistId) {
       setIsSoundtrackSheetVisible(false);
-      setSelectedMusicPlaylistEyebrowLabel('나의 무드 추천');
+      setSelectedMusicPlaylistEyebrowLabel("나의 무드 추천");
       setSelectedMusicPlaylistId(item.playlistId);
       syncRecommendationEvent(
         addRecommendationEvent({
           context: createRecommendationEventContext(),
           playlistId: item.playlistId,
-          type: 'playlist_open',
+          type: "playlist_open",
           value: item.playlistId,
         }),
       );
@@ -414,11 +479,13 @@ function HomeContent() {
         context: createRecommendationEventContext(),
         playlistId: item.playlistId,
         trackId: item.track.id,
-        type: 'track_selected',
-        value: 'home_mood_recommendation',
+        type: "track_selected",
+        value: "home_mood_recommendation",
       }),
     );
-    setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
+    setActionMessage(
+      "이 곡을 선택했어요. 하단 음악 패널에서 외부 앱으로 듣거나 리캡에 담을 수 있어요.",
+    );
   };
   const handleSelectFeaturedPlaylist = useCallback(
     (playlist: FeaturedPlaylist) => {
@@ -434,39 +501,22 @@ function HomeContent() {
       }
 
       setIsSoundtrackSheetVisible(false);
-      setSelectedMusicPlaylistEyebrowLabel('Music Playlist');
+      setSelectedMusicPlaylistEyebrowLabel("Music Playlist");
       setSelectedMusicPlaylistId(playlist.id);
       syncRecommendationEvent(
         addRecommendationEvent({
           context: createRecommendationEventContext({
             source: isCurrentRecommendation
               ? recommendedPlaylist?.context?.source
-              : 'featured-playlist',
+              : "featured-playlist",
           }),
           playlistId: playlist.id,
-          type: 'playlist_open',
+          type: "playlist_open",
           value: playlist.id,
         }),
       );
     },
     [addRecommendationEvent, recommendedPlaylist],
-  );
-  const handleSelectTopFilter = useCallback(
-    (filter: string) => {
-      if (filter === selectedTopFilter) {
-        return;
-      }
-
-      setSelectedTopFilter(filter);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext({ topFilter: filter }),
-          type: 'top_filter_change',
-          value: filter,
-        }),
-      );
-    },
-    [addRecommendationEvent, selectedTopFilter, setSelectedTopFilter],
   );
   const handleSelectMoodFilter = useCallback(
     (filter: string) => {
@@ -478,7 +528,7 @@ function HomeContent() {
       syncRecommendationEvent(
         addRecommendationEvent({
           context: createRecommendationEventContext({ moodFilter: filter }),
-          type: 'mood_filter_change',
+          type: "mood_filter_change",
           value: filter,
         }),
       );
@@ -501,30 +551,53 @@ function HomeContent() {
       updateProfile(nextProfile);
       return true;
     } catch {
-      setActionMessage('위치 추천 설정을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+      setActionMessage(
+        "위치 추천 설정을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.",
+      );
       return false;
     }
   }, [profile, updateProfile]);
   const handleRefreshLocation = useCallback(async () => {
-    if (locationStatus === 'loading') {
+    if (locationStatus === "loading") {
       return;
     }
 
-    setLocationStatus('loading');
+    setLocationStatus("loading");
 
     try {
       const result = await requestForegroundLocationWithStatus();
 
       if (result.location) {
+        setPlace(undefined);
         setLocation(result.location);
         return;
       }
 
-      setLocationStatus(result.status === 'denied' ? 'denied' : 'unavailable');
+      if (result.status === "denied") {
+        clearLocation();
+      }
+      setLocationStatus(result.status === "denied" ? "denied" : "unavailable");
     } catch {
-      setLocationStatus('unavailable');
+      setLocationStatus("unavailable");
     }
-  }, [locationStatus, setLocation, setLocationStatus]);
+  }, [
+    clearLocation,
+    locationStatus,
+    setLocation,
+    setLocationStatus,
+    setPlace,
+  ]);
+  const handleSelectManualPlace = useCallback(
+    (place: PlaceContext) => {
+      clearLocation();
+      setPlace(place);
+      setIsPlacePickerVisible(false);
+      setActionMessage(
+        `${place.title} 기준으로 오늘의 사운드트랙을 준비할게요.`,
+      );
+    },
+    [clearLocation, setPlace],
+  );
   const handleSetCurrentLocation = useCallback(async () => {
     if (!profile.locationRecommendationEnabled) {
       const didEnable = await handleEnableLocationRecommendation();
@@ -582,7 +655,7 @@ function HomeContent() {
           source: recommendedPlaylist.context?.source,
         }),
         playlistId: recommendedPlaylist.id,
-        type: 'playlist_open',
+        type: "playlist_open",
         value: recommendedPlaylist.id,
       }),
     );
@@ -620,11 +693,13 @@ function HomeContent() {
           context,
           playlistId: recommendedPlaylist.id,
           trackId: track.id,
-          type: 'track_selected',
-          value: 'home_current_soundtrack',
+          type: "track_selected",
+          value: "home_current_soundtrack",
         }),
       );
-      setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
+      setActionMessage(
+        "이 곡을 선택했어요. 하단 음악 패널에서 외부 앱으로 듣거나 리캡에 담을 수 있어요.",
+      );
     },
     [
       addRecommendationEvent,
@@ -643,23 +718,33 @@ function HomeContent() {
       });
 
       setActionMessage(undefined);
-      setLikeState(track, nextLiked, recommendedPlaylist?.id, currentSoundtrackSummary);
+      setLikeState(
+        track,
+        nextLiked,
+        recommendedPlaylist?.id,
+        currentSoundtrackSummary,
+      );
       void libraryApi
         .updateTrackState(track.id, {
-          action: nextLiked ? 'like' : 'unlike',
+          action: nextLiked ? "like" : "unlike",
           context,
           playlistId: recommendedPlaylist?.id,
         })
         .catch(() => {
-          setLikeState(track, !nextLiked, recommendedPlaylist?.id, currentSoundtrackSummary);
-          setActionMessage('서버 저장에 실패해서 좋아요 상태를 되돌렸어요.');
+          setLikeState(
+            track,
+            !nextLiked,
+            recommendedPlaylist?.id,
+            currentSoundtrackSummary,
+          );
+          setActionMessage("서버 저장에 실패해서 좋아요 상태를 되돌렸어요.");
         });
       syncRecommendationEvent(
         addRecommendationEvent({
           context,
           playlistId: recommendedPlaylist?.id,
           trackId: track.id,
-          type: nextLiked ? 'track_like' : 'track_unlike',
+          type: nextLiked ? "track_like" : "track_unlike",
         }),
       );
     },
@@ -681,23 +766,33 @@ function HomeContent() {
       });
 
       setActionMessage(undefined);
-      setSaveState(track, nextSaved, recommendedPlaylist?.id, currentSoundtrackSummary);
+      setSaveState(
+        track,
+        nextSaved,
+        recommendedPlaylist?.id,
+        currentSoundtrackSummary,
+      );
       void libraryApi
         .updateTrackState(track.id, {
-          action: nextSaved ? 'save' : 'unsave',
+          action: nextSaved ? "save" : "unsave",
           context,
           playlistId: recommendedPlaylist?.id,
         })
         .catch(() => {
-          setSaveState(track, !nextSaved, recommendedPlaylist?.id, currentSoundtrackSummary);
-          setActionMessage('서버 저장에 실패해서 저장 상태를 되돌렸어요.');
+          setSaveState(
+            track,
+            !nextSaved,
+            recommendedPlaylist?.id,
+            currentSoundtrackSummary,
+          );
+          setActionMessage("서버 저장에 실패해서 저장 상태를 되돌렸어요.");
         });
       syncRecommendationEvent(
         addRecommendationEvent({
           context,
           playlistId: recommendedPlaylist?.id,
           trackId: track.id,
-          type: nextSaved ? 'track_save' : 'track_unsave',
+          type: nextSaved ? "track_save" : "track_unsave",
         }),
       );
     },
@@ -721,7 +816,7 @@ function HomeContent() {
 
       const context = createRecommendationEventContext({
         moodFilter: selectedMoodFilter,
-        source: selectedMusicPlaylist.context?.source ?? 'featured-playlist',
+        source: selectedMusicPlaylist.context?.source ?? "featured-playlist",
       });
 
       setActionMessage(undefined);
@@ -736,11 +831,13 @@ function HomeContent() {
           context,
           playlistId: selectedMusicPlaylist.id,
           trackId: track.id,
-          type: 'track_selected',
-          value: 'home_music_playlist',
+          type: "track_selected",
+          value: "home_music_playlist",
         }),
       );
-      setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
+      setActionMessage(
+        "이 곡을 Soundlog 음악으로 선택했어요. 하단 패널에서 저장하거나 리캡에 담을 수 있어요.",
+      );
     },
     [
       addRecommendationEvent,
@@ -755,27 +852,37 @@ function HomeContent() {
       const nextLiked = !isLiked(track.id);
       const context = createRecommendationEventContext({
         moodFilter: selectedMoodFilter,
-        source: selectedMusicPlaylist?.context?.source ?? 'featured-playlist',
+        source: selectedMusicPlaylist?.context?.source ?? "featured-playlist",
       });
 
       setActionMessage(undefined);
-      setLikeState(track, nextLiked, selectedMusicPlaylist?.id, selectedMusicPlaylistSummary);
+      setLikeState(
+        track,
+        nextLiked,
+        selectedMusicPlaylist?.id,
+        selectedMusicPlaylistSummary,
+      );
       void libraryApi
         .updateTrackState(track.id, {
-          action: nextLiked ? 'like' : 'unlike',
+          action: nextLiked ? "like" : "unlike",
           context,
           playlistId: selectedMusicPlaylist?.id,
         })
         .catch(() => {
-          setLikeState(track, !nextLiked, selectedMusicPlaylist?.id, selectedMusicPlaylistSummary);
-          setActionMessage('서버 저장에 실패해서 좋아요 상태를 되돌렸어요.');
+          setLikeState(
+            track,
+            !nextLiked,
+            selectedMusicPlaylist?.id,
+            selectedMusicPlaylistSummary,
+          );
+          setActionMessage("서버 저장에 실패해서 좋아요 상태를 되돌렸어요.");
         });
       syncRecommendationEvent(
         addRecommendationEvent({
           context,
           playlistId: selectedMusicPlaylist?.id,
           trackId: track.id,
-          type: nextLiked ? 'track_like' : 'track_unlike',
+          type: nextLiked ? "track_like" : "track_unlike",
         }),
       );
     },
@@ -793,27 +900,37 @@ function HomeContent() {
       const nextSaved = !isSaved(track.id);
       const context = createRecommendationEventContext({
         moodFilter: selectedMoodFilter,
-        source: selectedMusicPlaylist?.context?.source ?? 'featured-playlist',
+        source: selectedMusicPlaylist?.context?.source ?? "featured-playlist",
       });
 
       setActionMessage(undefined);
-      setSaveState(track, nextSaved, selectedMusicPlaylist?.id, selectedMusicPlaylistSummary);
+      setSaveState(
+        track,
+        nextSaved,
+        selectedMusicPlaylist?.id,
+        selectedMusicPlaylistSummary,
+      );
       void libraryApi
         .updateTrackState(track.id, {
-          action: nextSaved ? 'save' : 'unsave',
+          action: nextSaved ? "save" : "unsave",
           context,
           playlistId: selectedMusicPlaylist?.id,
         })
         .catch(() => {
-          setSaveState(track, !nextSaved, selectedMusicPlaylist?.id, selectedMusicPlaylistSummary);
-          setActionMessage('서버 저장에 실패해서 저장 상태를 되돌렸어요.');
+          setSaveState(
+            track,
+            !nextSaved,
+            selectedMusicPlaylist?.id,
+            selectedMusicPlaylistSummary,
+          );
+          setActionMessage("서버 저장에 실패해서 저장 상태를 되돌렸어요.");
         });
       syncRecommendationEvent(
         addRecommendationEvent({
           context,
           playlistId: selectedMusicPlaylist?.id,
           trackId: track.id,
-          type: nextSaved ? 'track_save' : 'track_unsave',
+          type: nextSaved ? "track_save" : "track_unsave",
         }),
       );
     },
@@ -832,27 +949,29 @@ function HomeContent() {
       <ScrollView
         className="flex-1"
         contentContainerStyle={{
-          gap: 20,
+          gap: 28,
           paddingBottom: getHomeContentBottomPadding(
             insets.bottom,
             Boolean(currentTrack),
           ),
           paddingHorizontal: 20,
-          paddingTop: 16,
+          paddingTop: 32,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <HomeNavigationBar />
-
         <HomeHeader recommendationMode={EVERYDAY_RECOMMENDATION_MODE} />
 
         <LocationContextCard
           enabled={profile.locationRecommendationEnabled}
-          isLoading={locationStatus === 'loading'}
-          isPlaceLoading={nearbyPlacesQuery.isFetching}
+          isLoading={locationStatus === "loading"}
+          isPlaceLoading={
+            nearbyPlacesQuery.isFetching ||
+            reverseGeocodedPlaceQuery.isFetching
+          }
           location={currentLocation}
           onEnable={handleSetCurrentLocation}
           onRefresh={handleRefreshLocation}
+          onSelectPlace={() => setIsPlacePickerVisible(true)}
           place={currentPlace}
           placeCount={nearbyPlacesQuery.data?.length ?? 0}
           placeInfoMessage={placeInfoMessage}
@@ -864,7 +983,7 @@ function HomeContent() {
           currentPlace={currentPlace}
           isError={isRecommendedPlaylistError}
           isLoading={
-            locationStatus === 'loading' ||
+            locationStatus === "loading" ||
             isRecommendedPlaylistLoading ||
             isRecommendedPlaylistFetching
           }
@@ -872,14 +991,11 @@ function HomeContent() {
             isSoundtrackSheetVisible &&
             (isRecommendedPlaylistLoading || isRecommendedPlaylistFetching)
           }
-          moodLabel={resolveCurrentMoodLabel(selectedMoodFilter, profile.preferredMoods)}
+          moodLabel={resolveCurrentMoodLabel(
+            selectedMoodFilter,
+            profile.preferredMoods,
+          )}
           needsLocation={!recommendedPlaylistInput.location}
-          onCaptureMoment={() =>
-            router.push({
-              params: { returnTo: 'music' },
-              pathname: '/camera',
-            } as never)
-          }
           onOpenPlaylist={handleOpenCurrentSoundtrack}
           onRetry={handleRefreshCurrentSoundtrack}
           playlist={currentSoundtrackPlaylist}
@@ -887,15 +1003,12 @@ function HomeContent() {
           recommendationSource={recommendedPlaylist?.context?.source}
         />
 
-        <View className="-mt-2">
-          <HomeTopFilterBar
-            onSelectTopFilter={handleSelectTopFilter}
-            selectedTopFilter={selectedTopFilter}
-          />
-        </View>
-
         <FeaturedPlaylistSection
-          cachedAt={isUsingCachedFeaturedPlaylists ? featuredFallback?.cachedAt : undefined}
+          cachedAt={
+            isUsingCachedFeaturedPlaylists
+              ? featuredFallback?.cachedAt
+              : undefined
+          }
           data={displayedFeaturedPlaylists}
           isCached={isUsingCachedFeaturedPlaylists}
           isError={featuredPlaylistsQuery.isError}
@@ -904,35 +1017,39 @@ function HomeContent() {
           onRetry={() => void featuredPlaylistsQuery.refetch()}
         />
 
-        <View className="mt-2">
-          <MoodRecommendationSection
-            cachedAt={isUsingCachedMoodRecommendations ? moodFallback?.cachedAt : undefined}
-            data={moodRecommendationsQuery.data}
-            isCached={isUsingCachedMoodRecommendations}
-            isError={moodRecommendationsQuery.isError}
-            isLoading={moodRecommendationsQuery.isLoading}
-            onSelectMoodFilter={handleSelectMoodFilter}
-            onSelectRecommendation={handleSelectRecommendation}
-            selectedMoodFilter={selectedMoodFilter}
-          />
-        </View>
+        <MoodRecommendationSection
+          cachedAt={
+            isUsingCachedMoodRecommendations
+              ? moodFallback?.cachedAt
+              : undefined
+          }
+          data={moodRecommendationsQuery.data}
+          isCached={isUsingCachedMoodRecommendations}
+          isError={moodRecommendationsQuery.isError}
+          isLoading={moodRecommendationsQuery.isLoading}
+          onSelectMoodFilter={handleSelectMoodFilter}
+          onSelectRecommendation={handleSelectRecommendation}
+          onRetry={() => void moodRecommendationsQuery.refetch()}
+          selectedMoodFilter={selectedMoodFilter}
+        />
 
         {actionMessage ? (
-          <View className="rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
-            <AppText className="text-xs leading-5 text-amber-100">{actionMessage}</AppText>
-          </View>
+          <AppText className="text-xs leading-5 text-amber-100">
+            {actionMessage}
+          </AppText>
         ) : null}
-
       </ScrollView>
       <HomeSoundtrackBottomSheet
         actionMessage={isSoundtrackSheetVisible ? actionMessage : undefined}
         currentTrackId={currentTrack?.id}
+        isError={isRecommendedPlaylistError && !recommendedPlaylist}
         isLoading={
           (isRecommendedPlaylistLoading || isRecommendedPlaylistFetching) &&
           !recommendedPlaylist
         }
         likedTrackIds={currentSoundtrackLikedTrackIds}
         onClose={handleCloseCurrentSoundtrack}
+        onRetry={() => void refetchRecommendedPlaylist()}
         onSelectTrack={handleSelectCurrentSoundtrackTrack}
         onToggleLike={handleToggleCurrentSoundtrackLike}
         onToggleSave={handleToggleCurrentSoundtrackSave}
@@ -944,18 +1061,25 @@ function HomeContent() {
         actionMessage={isMusicPlaylistSheetVisible ? actionMessage : undefined}
         currentTrackId={currentTrack?.id}
         eyebrowLabel={selectedMusicPlaylistEyebrowLabel}
+        isError={isSelectedMusicPlaylistError && !selectedMusicPlaylist}
         isLoading={
           (isSelectedMusicPlaylistLoading || isSelectedMusicPlaylistFetching) &&
           !selectedMusicPlaylist
         }
         likedTrackIds={selectedMusicPlaylistLikedTrackIds}
         onClose={handleCloseMusicPlaylistSheet}
+        onRetry={() => void refetchSelectedMusicPlaylist()}
         onSelectTrack={handleSelectMusicPlaylistTrack}
         onToggleLike={handleToggleMusicPlaylistLike}
         onToggleSave={handleToggleMusicPlaylistSave}
         playlist={selectedMusicPlaylist}
         savedTrackIds={selectedMusicPlaylistSavedTrackIds}
         visible={isMusicPlaylistSheetVisible}
+      />
+      <ManualPlacePickerModal
+        onClose={() => setIsPlacePickerVisible(false)}
+        onSelect={handleSelectManualPlace}
+        visible={isPlacePickerVisible}
       />
       {currentTrack ? <MiniPlayer /> : null}
     </Screen>
@@ -968,16 +1092,20 @@ export default function HomeScreen() {
 
   useEffect(() => {
     if (isHydrated && !profile.completedOnboarding) {
-      router.replace('/onboarding' as never);
+      router.replace("/onboarding" as never);
     }
   }, [isHydrated, profile.completedOnboarding]);
 
-  if (!authHydrated || status === 'checking') {
+  if (!authHydrated || status === "checking") {
     return <Screen />;
   }
 
-  if (status !== 'authenticated') {
-    return <Redirect href={profile.completedOnboarding ? '/auth/login' : '/onboarding'} />;
+  if (status !== "authenticated") {
+    return (
+      <Redirect
+        href={profile.completedOnboarding ? "/auth/login" : "/onboarding"}
+      />
+    );
   }
 
   if (!isHydrated || !profile.completedOnboarding) {

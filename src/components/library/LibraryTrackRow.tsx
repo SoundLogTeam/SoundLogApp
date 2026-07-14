@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { Pressable, View } from 'react-native';
 
@@ -19,15 +20,15 @@ export function LibraryTrackRow({
   const { track } = record;
 
   return (
-    <View className="flex-row items-center rounded-[18px] border border-white/10 bg-white/10 p-3">
+    <View className="min-h-[72px] flex-row items-center py-2">
       <Pressable
         accessibilityLabel={`${track.title} SoundLog 음악으로 선택`}
         accessibilityRole="button"
-        className="min-w-0 flex-1 flex-row items-center"
+        className="min-w-0 flex-1 flex-row items-center py-1"
         onPress={onPress}
       >
         <View
-          className="h-[58px] w-[58px] overflow-hidden rounded-[14px]"
+          className="h-[52px] w-[52px] overflow-hidden rounded-lg"
           style={{ backgroundColor: track.fallbackColor ?? '#2B176C' }}
         >
           {track.albumImageUrl ? (
@@ -42,30 +43,27 @@ export function LibraryTrackRow({
           <AppText className="mt-1 text-xs text-white/55" numberOfLines={1}>
             {track.artist}
           </AppText>
-          <AppText className="mt-2 text-[11px] text-white/35" numberOfLines={1}>
+          <AppText className="mt-1.5 text-[11px] text-white/35" numberOfLines={1}>
             {formatRecapRecordedAt(record.createdAt)}
           </AppText>
         </View>
+        <Feather
+          color="rgba(255,255,255,0.32)"
+          name="chevron-right"
+          size={18}
+        />
       </Pressable>
 
-      <View className="ml-2 flex-row items-center gap-1.5">
-        <Pressable
-          accessibilityLabel={`${track.title} 열기`}
-          accessibilityRole="button"
-          className="h-9 items-center justify-center rounded-full bg-white/10 px-3"
-          onPress={onPress}
-        >
-          <AppText className="text-xs font-semibold text-white">열기</AppText>
-        </Pressable>
-        <Pressable
-          accessibilityLabel={`${track.title} 보관함에서 삭제`}
-          accessibilityRole="button"
-          className="h-9 items-center justify-center rounded-full border border-white/10 px-3"
-          onPress={onRemove}
-        >
-          <AppText className="text-xs font-semibold text-white/70">삭제</AppText>
-        </Pressable>
-      </View>
+      <Pressable
+        accessibilityHint="보관함에서 이 곡을 제거합니다."
+        accessibilityLabel={`${track.title} 보관함에서 삭제`}
+        accessibilityRole="button"
+        className="ml-1 h-11 w-11 items-center justify-center"
+        hitSlop={4}
+        onPress={onRemove}
+      >
+        <Feather color="rgba(255,255,255,0.42)" name="trash-2" size={17} />
+      </Pressable>
     </View>
   );
 }

@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import {
   NativeScrollEvent,
   NativeSyntheticEvent,
-  Pressable,
   ScrollView,
   View,
 } from 'react-native';
@@ -10,6 +9,8 @@ import {
 import { AppText } from '@/components/AppText';
 import { CarouselProgress } from '@/components/home/CarouselProgress';
 import { FeaturedPlaylistCard } from '@/components/home/FeaturedPlaylistCard';
+import { SectionTitle } from '@/components/SectionTitle';
+import { SettingsRow } from '@/components/SettingsRow';
 import { FeaturedPlaylist } from '@/types/domain';
 
 type FeaturedPlaylistSectionProps = {
@@ -28,7 +29,7 @@ function FeaturedPlaylistSkeleton() {
       {[0, 1].map((item) => (
         <View
           key={item}
-          className="mr-4 h-[260px] w-[180px] rounded-[20px] border border-white/10 bg-white/10"
+          className="mr-4 h-[260px] w-[180px] rounded-[8px] border border-white/10 bg-white/10"
         />
       ))}
     </View>
@@ -79,31 +80,32 @@ export function FeaturedPlaylistSection({
 
   return (
     <View className="gap-4">
-      <View className="flex-row items-center justify-between gap-3">
-        <AppText className="text-[24px] font-semibold text-white">Music Playlist</AppText>
-        {isCached ? (
-          <View className="rounded-full bg-amber-300/15 px-3 py-1.5">
-            <AppText className="text-[10px] font-semibold text-amber-100">
+      <SectionTitle
+        rightContent={
+          isCached ? (
+            <AppText className="text-xs font-semibold text-white/42">
               {cacheLabel}
             </AppText>
-          </View>
-        ) : null}
-      </View>
+          ) : undefined
+        }
+        title="장소별 플레이리스트"
+      />
 
       {isLoading ? (
         <FeaturedPlaylistSkeleton />
       ) : isError ? (
-        <Pressable className="rounded-[20px] bg-white/10 p-5" onPress={onRetry}>
-          <AppText className="text-base font-semibold text-white">추천을 불러오지 못했어요</AppText>
-          <AppText className="mt-2 text-sm text-white/60">눌러서 다시 시도해보세요.</AppText>
-        </Pressable>
+        <SettingsRow
+          description="눌러서 다시 시도해보세요."
+          icon="alert-circle"
+          label="추천을 불러오지 못했어요"
+          onPress={onRetry}
+        />
       ) : data.length === 0 ? (
-        <View className="rounded-[20px] bg-white/10 p-5">
-          <AppText className="text-base font-semibold text-white">추천을 준비 중이에요</AppText>
-          <AppText className="mt-2 text-sm text-white/60">
-            위치와 무드를 바탕으로 플레이리스트를 보여드릴게요.
-          </AppText>
-        </View>
+        <SettingsRow
+          description="위치와 무드를 바탕으로 플레이리스트를 보여드릴게요."
+          icon="music"
+          label="추천을 준비 중이에요"
+        />
       ) : (
         <ScrollView
           horizontal

@@ -63,6 +63,21 @@ export const recapApi = {
 
     return sanitizeRecapItem(recap);
   },
+  updateRecapThumbnail: async (recapId: string, momentId: string) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return Promise.resolve<RecapItem | undefined>(undefined);
+    }
+
+    const recap = await requestApi<RecapItem>(
+      `/v1/recaps/${encodeURIComponent(recapId)}/thumbnail`,
+      {
+        body: { momentId },
+        method: 'PATCH',
+      },
+    );
+
+    return sanitizeRecapItem(recap);
+  },
   createShareEvent: async (recapId: string, type: RecapShareEventType) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve({ accepted: false });
@@ -80,14 +95,15 @@ export const recapApi = {
       },
     );
   },
-  createRecap: async (input: CreateRecapInput) => {
+  createRecap: async (input: CreateRecapInput, idempotencyKey?: string) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<RecapItem | undefined>(undefined);
     }
 
     const recap = await requestApi<RecapItem>('/v1/recaps', {
       body: input,
-      idempotencyKey: createIdempotencyKey(`recap-${input.sessionId ?? 'session'}`),
+      idempotencyKey:
+        idempotencyKey ?? createIdempotencyKey(`recap-${input.sessionId ?? 'session'}`),
       method: 'POST',
     });
 

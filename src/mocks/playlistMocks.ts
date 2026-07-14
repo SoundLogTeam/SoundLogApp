@@ -222,8 +222,8 @@ const festivalKpopTracks = createMoodPlaylistTracks('festival-kpop', [
 ], ['#9A3E62', '#D70D31', '#E66A73', '#29376B']);
 
 export const playlistDetail: PlaylistCuration = {
-  backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
-  coverImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/97/4033397_image2_1.jpg',
+  backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+  coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
   durationText: '36:00분',
   id: 'seoul-night',
   placeName: '서울 야경',
@@ -258,7 +258,7 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   'city-night': {
     accentColor: '#1F2937',
-    coverImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/97/4033397_image2_1.jpg',
+    coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
     durationText: '31:00분',
     id: 'city-night',
     placeName: '도시 야경 산책',

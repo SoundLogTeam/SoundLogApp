@@ -43,7 +43,7 @@ export function TrackList({
       <View className="mx-5 mb-3">
         <AppText className="text-lg font-semibold text-white">추천 곡</AppText>
         <AppText className="mt-1 text-xs leading-5 text-white/50">
-          좋아요 · 저장 · 열기로 지금 장소의 사운드트랙을 골라보세요.
+          좋아요 · 저장 · 선택으로 지금 장소의 사운드트랙을 골라보세요.
         </AppText>
       </View>
       {tracks.map((item) => (

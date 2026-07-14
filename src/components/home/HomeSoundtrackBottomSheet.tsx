@@ -22,12 +22,14 @@ type HomeSoundtrackBottomSheetProps = {
   actionMessage?: string;
   currentTrackId?: string;
   eyebrowLabel?: string;
+  isError?: boolean;
   isLoading?: boolean;
   likedTrackIds: Set<string>;
   onClose: () => void;
   onSelectTrack: (track: Track) => void;
   onToggleLike: (track: Track) => void;
   onToggleSave: (track: Track) => void;
+  onRetry?: () => void;
   playlist?: PlaylistCuration;
   savedTrackIds: Set<string>;
   visible: boolean;
@@ -61,12 +63,14 @@ export function HomeSoundtrackBottomSheet({
   actionMessage,
   currentTrackId,
   eyebrowLabel = '오늘의 사운드트랙',
+  isError = false,
   isLoading = false,
   likedTrackIds,
   onClose,
   onSelectTrack,
   onToggleLike,
   onToggleSave,
+  onRetry,
   playlist,
   savedTrackIds,
   visible,
@@ -295,10 +299,25 @@ export function HomeSoundtrackBottomSheet({
                 tracks={playlist.tracks}
               />
             </ScrollView>
+          ) : isError ? (
+            <View className="items-center px-7 py-10">
+              <AppText className="text-center text-base font-semibold text-white">
+                추천 곡을 열지 못했어요
+              </AppText>
+              <Pressable
+                accessibilityRole="button"
+                className="mt-4 min-h-11 items-center justify-center rounded-full bg-[#B7E628] px-6"
+                onPress={onRetry}
+              >
+                <AppText className="text-sm font-semibold text-[#07101E]">
+                  다시 시도
+                </AppText>
+              </Pressable>
+            </View>
           ) : (
             <View className="px-7 py-10">
               <AppText className="text-center text-base font-semibold text-white">
-                추천 곡을 열지 못했어요
+                아직 추천 곡이 없어요
               </AppText>
             </View>
           )}
