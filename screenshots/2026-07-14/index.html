@@ -41,6 +41,7 @@
       }
 
       figure {
+        position: relative;
         background: #11162a;
         border: 1px solid #252d48;
         border-radius: 8px;
@@ -55,9 +56,19 @@
       }
 
       figcaption {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 1;
+        max-width: calc(100% - 24px);
+        background: rgba(8, 11, 25, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 6px;
+        color: #ffffff;
         font-size: 14px;
         font-weight: 600;
-        padding: 12px 14px;
+        line-height: 1.4;
+        padding: 8px 10px;
       }
     </style>
   </head>
