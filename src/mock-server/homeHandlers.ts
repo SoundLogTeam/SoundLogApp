@@ -14,6 +14,22 @@ import {
   PlaceContext,
 } from '@/types/domain';
 
+function normalizeMoodLabel(value?: string) {
+  return value === '청량한' ? '시원한' : value;
+}
+
+function matchesMoodFilter(item: MoodRecommendation, moodFilter?: string) {
+  const normalizedFilter = normalizeMoodLabel(moodFilter);
+
+  if (!normalizedFilter || normalizedFilter === '전체') {
+    return true;
+  }
+
+  return (item.moods ?? []).some(
+    (mood) => normalizeMoodLabel(mood) === normalizedFilter,
+  );
+}
+
 function getMatchScore(
   item: MoodRecommendation,
   params?: MoodRecommendationMockParams,
@@ -38,19 +54,15 @@ function getMatchScore(
   const travelModeWeight = params.recommendationMode === 'travel' ? 2.4 : 1;
   const tasteWeight = params.recommendationMode === 'travel' ? 0.7 : 1.4;
 
-  if (params.topFilter !== '전체' && itemMoods.includes(params.topFilter)) {
-    score += 8;
-  }
-
-  if (params.moodFilter !== '전체' && itemMoods.includes(params.moodFilter)) {
-    score += 8;
-  }
-
   score +=
     (params.preferredGenres ?? []).filter((genre) => itemGenres.includes(genre))
       .length * 3 * tasteWeight;
   score +=
-    (params.preferredMoods ?? []).filter((mood) => itemMoods.includes(mood))
+    (params.preferredMoods ?? []).filter((mood) =>
+      itemMoods.some(
+        (itemMood) => normalizeMoodLabel(itemMood) === normalizeMoodLabel(mood),
+      ),
+    )
       .length * 2 * tasteWeight;
   score +=
     (params.travelStyles ?? []).filter((style) =>
@@ -65,7 +77,7 @@ function getMatchScore(
     }
 
     if (/해변|바다|해수욕장|ocean|beach/.test(placeContext)) {
-      score += itemMoods.some((mood) => /청량한|잔잔한|신나는/.test(mood)) ? 18 : 0;
+      score += itemMoods.some((mood) => /시원한|청량한|잔잔한|신나는/.test(mood)) ? 18 : 0;
     }
 
     if (/야경|타워|전망|city|night/.test(placeContext)) {
@@ -155,10 +167,12 @@ export const homeMockHandlers = {
   getMoodRecommendations: (params?: MoodRecommendationMockParams) =>
     mockServerDelay(
       'home.moodRecommendations',
-      [...moodRecommendations].sort(
-        (first, second) =>
-          getMatchScore(second, params) - getMatchScore(first, params),
-      ),
+      [...moodRecommendations]
+        .filter((item) => matchesMoodFilter(item, params?.moodFilter))
+        .sort(
+          (first, second) =>
+            getMatchScore(second, params) - getMatchScore(first, params),
+        ),
     ),
   getRecentMusicLogs: () =>
     mockServerDelay('home.recentMusicLogs', recentMusicLogs),

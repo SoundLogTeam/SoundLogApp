@@ -5,7 +5,7 @@ import { useTravelSessionStore } from '@/store/travelSessionStore';
 export function createRecommendationEventContext(
   overrides: RecommendationEventContext = {},
 ): RecommendationEventContext {
-  const { selectedMoodFilter, selectedTopFilter } = useHomeFilterStore.getState();
+  const { selectedMoodFilter } = useHomeFilterStore.getState();
   const { currentPlace, recommendationMode, selectedMode } =
     useTravelSessionStore.getState();
 
@@ -15,7 +15,6 @@ export function createRecommendationEventContext(
     placeCategory: currentPlace?.category,
     placeId: currentPlace?.id,
     placeName: currentPlace?.title,
-    topFilter: selectedTopFilter,
     travelMode: selectedMode,
     ...overrides,
   };

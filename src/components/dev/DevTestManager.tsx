@@ -58,7 +58,7 @@ const placePresets: Array<{
       category: '야경',
       contentType: '문화시설',
       id: 'dev-seoul-night',
-      imageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
+      imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
       location: { lat: 37.5512, lng: 126.9882 },
       overview: '도시 야경과 감성 음악 추천을 테스트하는 개발용 장소입니다.',
       source: 'seed',
@@ -67,7 +67,6 @@ const placePresets: Array<{
   },
 ];
 
-const topFilterOptions = ['전체', '근처', '지역 트렌드', '내 취향', '저장 많은'];
 const moodFilterOptions = ['전체', '잔잔한', '신나는', '시원한', '설레는', '감성적인'];
 const travelModeOptions: Array<{ label: string; value: TravelMode }> = [
   { label: '산책', value: 'walk' },
@@ -211,8 +210,7 @@ function DevTestManagerContent() {
     [maxX, maxY, pan],
   );
 
-  const { selectedMoodFilter, selectedTopFilter, setSelectedMoodFilter, setSelectedTopFilter } =
-    useHomeFilterStore();
+  const { selectedMoodFilter, setSelectedMoodFilter } = useHomeFilterStore();
   const { currentLocation, currentPlace, locationStatus, selectedMode, session } =
     useTravelSessionStore();
   const clearLocation = useTravelSessionStore((state) => state.clearLocation);
@@ -305,13 +303,11 @@ function DevTestManagerContent() {
       preferredMoods: ['시원한', '잔잔한'],
       travelStyles: ['산책', '바다 보기'],
     });
-    setSelectedTopFilter('전체');
     setSelectedMoodFilter('시원한');
     router.replace('/' as never);
   };
   const resetProfile = () => {
     resetOnboarding();
-    setSelectedTopFilter('전체');
     setSelectedMoodFilter('전체');
     setIsOpen(false);
     router.replace('/onboarding' as never);
@@ -364,7 +360,7 @@ function DevTestManagerContent() {
         id: `dev-moment-seoul-${baseTime}`,
         location: placePresets[1].location,
         moodTags: ['emotional'],
-        photoUri: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
+        photoUri: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
         placeCategory: '야경',
         placeId: placePresets[1].place.id,
         placeName: '남산서울타워',
@@ -454,7 +450,6 @@ function DevTestManagerContent() {
                 subtitle={`세션 ${session.status} · 위치 ${locationStatus} · 로그 ${logs.length}개 · 이벤트 ${events.length}개`}
                 title="현재 상태"
               >
-                <StatusPill label={`상단 ${selectedTopFilter}`} />
                 <StatusPill label={`무드 ${selectedMoodFilter}`} />
                 <StatusPill label={`모드 ${selectedMode ?? '없음'}`} />
                 <StatusPill label={`장소 ${currentPlace?.title ?? '없음'}`} />
@@ -505,14 +500,6 @@ function DevTestManagerContent() {
               </ManagerSection>
 
               <ManagerSection title="추천 필터">
-                {topFilterOptions.map((filter) => (
-                  <ManagerButton
-                    key={filter}
-                    active={selectedTopFilter === filter}
-                    label={filter}
-                    onPress={() => setSelectedTopFilter(filter)}
-                  />
-                ))}
                 {moodFilterOptions.map((filter) => (
                   <ManagerButton
                     key={filter}

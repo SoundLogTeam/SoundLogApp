@@ -187,9 +187,25 @@ function assertNativeIosPlist() {
   });
 
   if (plist.includes('Expo Dev Launcher')) {
-    addWarning(
-      'iOS native Info.plist contains Expo Dev Launcher local-network copy. Confirm the release strip phase removes it from the archived plist.',
+    const projectPath = path.join(
+      projectRoot,
+      'ios/Soundlog.xcodeproj/project.pbxproj',
     );
+    const project = fs.existsSync(projectPath)
+      ? fs.readFileSync(projectPath, 'utf8')
+      : '';
+    const hasReleaseStripPhase = [
+      '[Expo Dev Launcher] Strip Local Network Keys for Release',
+      'if [ \\\"$CONFIGURATION\\\" != \\\"Debug\\\" ]',
+      'Delete :NSLocalNetworkUsageDescription',
+      'Delete :NSBonjourServices',
+    ].every((expectedText) => project.includes(expectedText));
+
+    if (!hasReleaseStripPhase) {
+      addError(
+        'iOS Info.plist contains Expo Dev Launcher local-network keys without a verified non-Debug strip phase.',
+      );
+    }
   }
 
   if (fs.existsSync(entitlementsPath)) {

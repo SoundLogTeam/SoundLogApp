@@ -5,10 +5,10 @@ import { AppText } from '@/components/AppText';
 export function PlaylistLoadingState() {
   return (
     <View className="px-5">
-      <View className="mb-5 h-[118px] rounded-[20px] bg-white/10" />
+      <View className="mb-5 h-[118px] rounded-lg bg-white/10" />
       {[0, 1, 2, 3, 4].map((item) => (
         <View key={item} className="mb-4 h-[54px] flex-row items-center">
-          <View className="h-[42px] w-[42px] rounded-[10px] bg-white/10" />
+          <View className="h-[42px] w-[42px] rounded-lg bg-white/10" />
           <View className="ml-3 flex-1">
             <View className="h-4 w-2/3 rounded-full bg-white/10" />
             <View className="mt-2 h-3 w-1/3 rounded-full bg-white/10" />
@@ -33,8 +33,14 @@ export function PlaylistErrorState({ onRetry }: PlaylistErrorStateProps) {
         네트워크 상태를 확인한 뒤 다시 시도해주세요.
       </AppText>
       {onRetry ? (
-        <Pressable className="mt-6 rounded-full bg-white px-5 py-3" onPress={onRetry}>
-          <AppText className="font-semibold text-[#050916]">다시 시도</AppText>
+        <Pressable
+          accessibilityRole="button"
+          className="mt-6 min-h-12 justify-center rounded-xl bg-soundlog-lime px-5"
+          onPress={onRetry}
+        >
+          <AppText className="text-center font-semibold text-soundlog-inverse">
+            다시 시도
+          </AppText>
         </Pressable>
       ) : null}
     </View>

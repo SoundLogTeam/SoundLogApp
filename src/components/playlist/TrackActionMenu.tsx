@@ -26,6 +26,9 @@ type MenuActionProps = {
 function MenuAction({ disabled = false, icon, label, onPress }: MenuActionProps) {
   return (
     <Pressable
+      accessibilityLabel={label}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
       className="h-12 flex-row items-center gap-3"
       disabled={disabled}
       onPress={onPress}
@@ -94,18 +97,14 @@ export function TrackActionMenu({
             onPress={onToggleSave}
           />
           {track ? (
-            <View className="mt-2 rounded-[14px] border border-white/10 bg-white/5 px-4 py-3">
-              <AppText className="text-xs leading-5 text-white/55">
-                곡을 누르면 SoundLog 안에서 현재 여행 음악으로 선택돼요.
-              </AppText>
-            </View>
+            <AppText className="mt-3 text-xs leading-5 text-white/48">
+              곡을 누르면 Soundlog에서 현재 음악으로 선택돼요.
+            </AppText>
           ) : null}
           {actionMessage ? (
-            <View className="mt-2 rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
-              <AppText className="text-xs leading-5 text-amber-100">
-                {actionMessage}
-              </AppText>
-            </View>
+            <AppText className="mt-2 text-xs leading-5 text-amber-100">
+              {actionMessage}
+            </AppText>
           ) : null}
         </View>
       </View>

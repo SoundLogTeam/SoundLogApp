@@ -1,12 +1,17 @@
-import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useState } from 'react';
-import { Image, Modal, Pressable, StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
+import { useEffect, useState } from "react";
+import { Image, Modal, Pressable, StyleSheet, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AppText } from '@/components/AppText';
+import { AppText } from "@/components/AppText";
 
-import { modeIconByValue, modeLabelByValue, sampleMoments, type TravelRecap } from './travelData';
+import {
+  modeIconByValue,
+  modeLabelByValue,
+  sampleMoments,
+  type TravelRecap,
+} from "./travelData";
 
 type TravelReportModalProps = {
   item?: TravelRecap;
@@ -31,33 +36,54 @@ const STORY_PAGE_COUNT = 6;
 function CoverGeometry({ accent }: { accent: string }) {
   return (
     <>
-      <View className="absolute left-8 top-24 h-44 w-44 rounded-full" style={{ backgroundColor: accent }} />
-      <View className="absolute -right-10 top-28 h-36 w-36 bg-black" style={{ transform: [{ rotate: '24deg' }] }} />
-      <View className="absolute right-10 top-[246px] h-20 w-20 bg-[#D7D0C4]" style={{ transform: [{ rotate: '45deg' }] }} />
-      <View className="absolute left-6 top-[324px] h-4 w-28 bg-black" style={{ transform: [{ rotate: '-12deg' }] }} />
-      <View className="absolute left-[132px] top-[370px] h-3 w-20 bg-[#FF352B]" style={{ transform: [{ rotate: '18deg' }] }} />
-      <View className="absolute bottom-40 left-8 h-24 w-24 border-[10px] border-black" style={{ transform: [{ rotate: '18deg' }] }} />
+      <View
+        className="absolute left-8 top-24 h-44 w-44 rounded-full"
+        style={{ backgroundColor: accent }}
+      />
+      <View
+        className="absolute -right-10 top-28 h-36 w-36 bg-black"
+        style={{ transform: [{ rotate: "24deg" }] }}
+      />
+      <View
+        className="absolute right-10 top-[246px] h-20 w-20 bg-[#D7D0C4]"
+        style={{ transform: [{ rotate: "45deg" }] }}
+      />
+      <View
+        className="absolute left-6 top-[324px] h-4 w-28 bg-black"
+        style={{ transform: [{ rotate: "-12deg" }] }}
+      />
+      <View
+        className="absolute left-[132px] top-[370px] h-3 w-20 bg-[#FF352B]"
+        style={{ transform: [{ rotate: "18deg" }] }}
+      />
+      <View
+        className="absolute bottom-40 left-8 h-24 w-24 border-[10px] border-black"
+        style={{ transform: [{ rotate: "18deg" }] }}
+      />
       <View
         className="absolute bottom-[186px] right-12"
         style={{
-          borderBottomColor: '#111111',
+          borderBottomColor: "#111111",
           borderBottomWidth: 72,
-          borderLeftColor: 'transparent',
+          borderLeftColor: "transparent",
           borderLeftWidth: 42,
-          borderRightColor: 'transparent',
+          borderRightColor: "transparent",
           borderRightWidth: 42,
           height: 0,
-          transform: [{ rotate: '-10deg' }],
+          transform: [{ rotate: "-10deg" }],
           width: 0,
         }}
       />
-      <View className="absolute bottom-24 right-4 h-4 w-32 bg-[#D7D0C4]" style={{ transform: [{ rotate: '-18deg' }] }} />
+      <View
+        className="absolute bottom-24 right-4 h-4 w-32 bg-[#D7D0C4]"
+        style={{ transform: [{ rotate: "-18deg" }] }}
+      />
       <View className="absolute bottom-16 left-20 h-3 w-40 bg-black" />
     </>
   );
 }
 
-function DotPattern({ color = 'rgba(255,255,255,0.16)' }: { color?: string }) {
+function DotPattern({ color = "rgba(255,255,255,0.16)" }: { color?: string }) {
   return (
     <View className="absolute inset-0">
       {Array.from({ length: 42 }).map((_, index) => {
@@ -96,16 +122,19 @@ function StoryBackdrop({
   hideInnerCircles?: boolean;
   hideShapes?: boolean;
   minimal?: boolean;
-  pattern?: 'dots';
+  pattern?: "dots";
 }) {
   return (
     <View style={StyleSheet.absoluteFill}>
-      {pattern === 'dots' ? <DotPattern /> : null}
+      {pattern === "dots" ? <DotPattern /> : null}
       {minimal ? (
         <CoverGeometry accent={accent} />
       ) : hideShapes ? null : (
         <>
-          <View className="absolute left-10 top-28 h-44 w-44 rounded-full" style={{ backgroundColor: accent }} />
+          <View
+            className="absolute left-10 top-28 h-44 w-44 rounded-full"
+            style={{ backgroundColor: accent }}
+          />
           {hideInnerCircles ? null : (
             <View className="absolute left-[86px] top-[154px] h-24 w-24 rounded-full bg-black" />
           )}
@@ -128,14 +157,23 @@ function StoryBackdrop({
   );
 }
 
-function ProgressBars({ currentIndex, total }: { currentIndex: number; total: number }) {
+function ProgressBars({
+  currentIndex,
+  total,
+}: {
+  currentIndex: number;
+  total: number;
+}) {
   return (
     <View className="flex-row gap-1.5">
       {Array.from({ length: total }).map((_, index) => (
-        <View key={index} className="h-1 flex-1 overflow-hidden rounded-full bg-white/20">
+        <View
+          key={index}
+          className="h-1 flex-1 overflow-hidden rounded-full bg-white/20"
+        >
           <View
             className="h-full rounded-full bg-white"
-            style={{ width: index <= currentIndex ? '100%' : '0%' }}
+            style={{ width: index <= currentIndex ? "100%" : "0%" }}
           />
         </View>
       ))}
@@ -162,7 +200,7 @@ function StoryShell({
   hideShapes?: boolean;
   minimalBackdrop?: boolean;
   palette: [string, string, string];
-  pattern?: 'dots';
+  pattern?: "dots";
 }) {
   return (
     <LinearGradient
@@ -195,7 +233,11 @@ function SmallCaps({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function TravelReportModal({ item, onClose, visible }: TravelReportModalProps) {
+export function TravelReportModal({
+  item,
+  onClose,
+  visible,
+}: TravelReportModalProps) {
   const insets = useSafeAreaInsets();
   const [pageIndex, setPageIndex] = useState(0);
 
@@ -230,21 +272,24 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
   const modeLabel = modeLabelByValue[item.mode];
   const modeIcon = modeIconByValue[item.mode];
   const mostPlayed = item.topTracks[0];
-  const [startedAtText = item.periodText, rawEndedAtText = item.periodText] = item.periodText
-    .split(' - ')
-    .map((value) => value.trim());
-  const startedDateText = startedAtText.split(' ')[0] ?? '';
-  const endedAtText = rawEndedAtText.includes('.')
+  const [startedAtText = item.periodText, rawEndedAtText = item.periodText] =
+    item.periodText.split(" - ").map((value) => value.trim());
+  const startedDateText = startedAtText.split(" ")[0] ?? "";
+  const endedAtText = rawEndedAtText.includes(".")
     ? rawEndedAtText
     : `${startedDateText} ${rawEndedAtText}`.trim();
-  const recapThumbnails = [sampleMoments[0], sampleMoments[1], sampleMoments[0]].filter(Boolean);
+  const recapThumbnails = [
+    sampleMoments[0],
+    sampleMoments[1],
+    sampleMoments[0],
+  ].filter(Boolean);
   const pages: StoryPage[] = [
     {
-      accent: '#F2C94C',
+      accent: "#F2C94C",
       hideBottomBar: true,
       hideInnerCircles: true,
-      key: 'cover',
-      palette: ['#070B1F', '#070B1F', '#070B1F'],
+      key: "cover",
+      palette: ["#070B1F", "#070B1F", "#070B1F"],
       node: (
         <View className="flex-1 justify-between">
           <View>
@@ -252,7 +297,7 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
               Soundlog
             </AppText>
             <AppText className="mt-5 text-[58px] font-semibold leading-[58px] text-white">
-              Travel{'\n'}Recap
+              Travel{"\n"}Recap
             </AppText>
             <AppText className="mt-5 text-[64px]">{modeIcon}</AppText>
             <AppText className="mt-2 text-[32px] font-semibold leading-9 text-white">
@@ -272,18 +317,18 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
               Travel location
             </AppText>
             <AppText className="mt-3 text-right text-[26px] font-semibold leading-8 text-white">
-              {item.locations.join('\n')}
+              {item.locations.join("\n")}
             </AppText>
           </View>
         </View>
       ),
     },
     {
-      accent: '#FF352B',
+      accent: "#FF352B",
       hideBottomBar: true,
       hideInnerCircles: true,
-      key: 'summary',
-      palette: ['#F2C94C', '#F2C94C', '#F2C94C'],
+      key: "summary",
+      palette: ["#F2C94C", "#F2C94C", "#F2C94C"],
       node: (
         <View className="flex-1 justify-between">
           <View>
@@ -291,10 +336,11 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
               Music records
             </AppText>
             <AppText className="mt-8 text-[64px] font-semibold leading-[68px] text-white">
-              {item.playTimeText.replace('음악 기록 ', '')}
+              {item.playTimeText.replace("음악 기록 ", "")}
             </AppText>
             <AppText className="mt-4 text-xl font-semibold leading-7 text-white">
-              음악으로 남긴{'\n'}{item.durationText}
+              음악으로 남긴{"\n"}
+              {item.durationText}
             </AppText>
           </View>
           <View className="gap-7">
@@ -305,7 +351,9 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
               <AppText className="mt-1 text-[72px] font-semibold leading-[76px] text-white">
                 {item.playCount}
               </AppText>
-              <AppText className="text-xl font-semibold text-white">회 기록</AppText>
+              <AppText className="text-xl font-semibold text-white">
+                회 기록
+              </AppText>
             </View>
             <View className="items-end">
               <AppText className="text-[11px] font-semibold uppercase tracking-[2px] text-white">
@@ -314,23 +362,25 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
               <AppText className="mt-1 text-[64px] font-semibold leading-[68px] text-white">
                 {item.trackCount}
               </AppText>
-              <AppText className="text-lg font-semibold text-white">곡 감상</AppText>
+              <AppText className="text-lg font-semibold text-white">
+                곡 감상
+              </AppText>
             </View>
           </View>
         </View>
       ),
     },
     {
-      accent: '#FF352B',
+      accent: "#FF352B",
       hideInnerCircles: true,
-      key: 'most',
-      palette: ['#07131A', '#07131A', '#111C22'],
+      key: "most",
+      palette: ["#07131A", "#07131A", "#111C22"],
       node: (
         <View className="flex-1 justify-between">
           <View>
             <SmallCaps>Most recorded</SmallCaps>
             <AppText className="mt-8 text-[38px] font-semibold leading-[44px] text-white">
-              이 여행에서{'\n'}가장 많이 기록한 노래
+              이 여행에서{"\n"}가장 많이 기록한 노래
             </AppText>
           </View>
           <View className="items-center">
@@ -356,11 +406,11 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
       ),
     },
     {
-      accent: '#F2C94C',
+      accent: "#F2C94C",
       hideInnerCircles: true,
       hideBottomBar: true,
-      key: 'ranking',
-      palette: ['#FF352B', '#FF352B', '#FF352B'],
+      key: "ranking",
+      palette: ["#FF352B", "#FF352B", "#FF352B"],
       node: (
         <View className="flex-1 justify-between">
           <View>
@@ -371,14 +421,25 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
           </View>
           <View className="gap-5">
             {item.topTracks.map((track, index) => (
-              <View key={`${track.artist}-${track.title}`} className="flex-row items-center gap-4">
-                <AppText className="w-8 text-[36px] font-semibold text-white">{index + 1}</AppText>
+              <View
+                key={`${track.artist}-${track.title}`}
+                className="flex-row items-center gap-4"
+              >
+                <AppText className="w-8 text-[36px] font-semibold text-white">
+                  {index + 1}
+                </AppText>
                 <View className="h-14 w-14 rounded-[12px] bg-white/90" />
                 <View className="min-w-0 flex-1">
-                  <AppText className="text-base font-semibold text-white" numberOfLines={1}>
+                  <AppText
+                    className="text-base font-semibold text-white"
+                    numberOfLines={1}
+                  >
                     {track.title}
                   </AppText>
-                  <AppText className="mt-1 text-sm text-white" numberOfLines={1}>
+                  <AppText
+                    className="mt-1 text-sm text-white"
+                    numberOfLines={1}
+                  >
                     {track.artist}
                   </AppText>
                 </View>
@@ -390,25 +451,27 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
       ),
     },
     {
-      accent: '#FF352B',
+      accent: "#FF352B",
       hideBottomBar: true,
       hideGrayCircle: true,
       hideInnerCircles: true,
-      key: 'recaps',
-      palette: ['#F2C94C', '#F2C94C', '#F2C94C'],
+      key: "recaps",
+      palette: ["#F2C94C", "#F2C94C", "#F2C94C"],
       node: (
         <View className="flex-1 justify-between">
           <View>
             <SmallCaps>Saved recaps</SmallCaps>
             <AppText className="mt-8 text-[38px] font-semibold leading-[44px] text-white">
-              이 여행에서{'\n'}남긴 기록
+              이 여행에서{"\n"}남긴 기록
             </AppText>
           </View>
           <View>
             <AppText className="text-[86px] font-semibold leading-[92px] text-white">
               {item.momentCount}
             </AppText>
-            <AppText className="text-xl font-semibold text-white">개의 Recap</AppText>
+            <AppText className="text-xl font-semibold text-white">
+              개의 Recap
+            </AppText>
           </View>
           <View className="rounded-[30px] bg-white/20 p-3">
             <View className="flex-row items-center justify-center gap-3">
@@ -427,9 +490,13 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
                   ) : (
                     <View
                       className="h-full w-full items-center justify-center"
-                      style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+                      style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
                     >
-                      <Feather color="rgba(255,255,255,0.82)" name="music" size={26} />
+                      <Feather
+                        color="rgba(255,255,255,0.82)"
+                        name="music"
+                        size={26}
+                      />
                       <AppText className="mt-2 text-center text-xs font-semibold text-white/80">
                         음악 기록
                       </AppText>
@@ -443,17 +510,17 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
       ),
     },
     {
-      accent: '#FF352B',
+      accent: "#FF352B",
       hideBottomBar: true,
       hideInnerCircles: true,
-      key: 'share',
-      palette: ['#07131A', '#07131A', '#111C22'],
+      key: "share",
+      palette: ["#07131A", "#07131A", "#111C22"],
       node: (
         <View className="flex-1 justify-between">
           <View>
             <SmallCaps>Travel summary</SmallCaps>
             <AppText className="mt-8 text-[40px] font-semibold leading-[46px] text-white">
-              숫자로 남은{'\n'}이번 여행
+              숫자로 남은{"\n"}이번 여행
             </AppText>
           </View>
           <View className="gap-5">
@@ -462,7 +529,7 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
                 Travel time
               </AppText>
               <AppText className="mt-1 text-[44px] font-semibold leading-[48px] text-white">
-                {item.durationText.replace('의 여행', '')}
+                {item.durationText.replace("의 여행", "")}
               </AppText>
             </View>
             <View className="flex-row gap-4">
@@ -485,7 +552,7 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
             </View>
             <View className="items-end">
               <AppText className="text-[11px] font-semibold uppercase tracking-[2px] text-white/70">
-                Moments
+                리캡
               </AppText>
               <AppText className="mt-1 text-[64px] font-semibold leading-[68px] text-white">
                 {item.momentCount}
@@ -506,7 +573,8 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
   ];
 
   const goPrevious = () => setPageIndex((index) => Math.max(0, index - 1));
-  const goNext = () => setPageIndex((index) => Math.min(pages.length - 1, index + 1));
+  const goNext = () =>
+    setPageIndex((index) => Math.min(pages.length - 1, index + 1));
   const currentPage = pages[pageIndex];
 
   return (
@@ -519,7 +587,7 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
           hideInnerCircles={currentPage.hideInnerCircles}
           hideShapes={currentPage.hideShapes}
           palette={currentPage.palette}
-          pattern={currentPage.key === 'summary' ? 'dots' : undefined}
+          pattern={currentPage.key === "summary" ? "dots" : undefined}
         >
           <View style={{ paddingTop: 8, zIndex: 6 }}>
             <ProgressBars currentIndex={pageIndex} total={pages.length} />
@@ -548,9 +616,9 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
             style={{
               bottom: 0,
               left: 0,
-              position: 'absolute',
+              position: "absolute",
               top: insets.top + 104,
-              width: '50%',
+              width: "50%",
               zIndex: 3,
             }}
           />
@@ -560,10 +628,10 @@ export function TravelReportModal({ item, onClose, visible }: TravelReportModalP
             onPress={goNext}
             style={{
               bottom: 0,
-              position: 'absolute',
+              position: "absolute",
               right: 0,
               top: insets.top + 104,
-              width: '50%',
+              width: "50%",
               zIndex: 3,
             }}
           />

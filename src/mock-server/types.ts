@@ -40,7 +40,6 @@ export type MoodRecommendationMockParams = {
   recommendationMode: MusicRecommendationMode;
   preferredGenres?: string[];
   preferredMoods?: string[];
-  topFilter: string;
   travelStyles?: string[];
 };
 

@@ -1,52 +1,30 @@
-import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 
 import { meApi } from '@/api/meApi';
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { AppText } from '@/components/AppText';
-import { LocationContextCard } from '@/components/home/LocationContextCard';
 import { AuthAccountCard } from '@/components/my/AuthAccountCard';
+import { MySettingsRow } from '@/components/my/MySettingsRow';
 import { PermissionSettingsCard } from '@/components/my/PermissionSettingsCard';
+import { PageHeader } from '@/components/PageHeader';
 import { Screen } from '@/components/Screen';
+import { SectionTitle } from '@/components/SectionTitle';
 import { useNativePermissionSettings } from '@/hooks/useNativePermissionSettings';
-import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { requestForegroundLocationWithStatus } from '@/utils/location';
 
-type MyMenuItem = {
-  description?: string;
-  icon: keyof typeof Feather.glyphMap;
-  label: string;
-  onPress?: () => void;
-};
-
-function formatEventTime(value?: string) {
-  if (!value) {
-    return '아직 없음';
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return '확인 불가';
-  }
-
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-}
-
 export default function MyScreen() {
   const { profile, resetOnboarding, updateProfile } = useUserProfileStore();
   const [profileMessage, setProfileMessage] = useState<string>();
-  const { clearEvents, events, isHydrated } = useRecommendationEventStore();
   const permissionSettings = useNativePermissionSettings();
   const {
+    clearLocation,
     currentLocation,
     currentPlace,
     locationStatus,
-    locationUpdatedAt,
     setLocation,
     setLocationStatus,
     setPlace,
@@ -61,6 +39,21 @@ export default function MyScreen() {
     ...profile.preferredMoods.slice(0, 1),
     ...profile.travelStyles.slice(0, 1),
   ].join(' · ');
+  const currentPlaceSummary =
+    locationStatus === 'loading'
+      ? '확인 중'
+      : currentPlace?.title
+        ? currentPlace.title
+        : currentLocation
+          ? '주변 관광지 없음'
+          : locationStatus === 'denied'
+            ? '권한 꺼짐'
+            : '확인 필요';
+  const currentPlaceDescription = nearbyPlacesQuery.isLoading
+    ? '현재 위치 주변 관광지를 확인하고 있어요.'
+    : nearbyPlacesQuery.data?.length
+      ? `주변 관광지 ${nearbyPlacesQuery.data.length}곳을 추천에 반영하고 있어요.`
+      : '현재 장소를 다시 확인할 수 있어요.';
 
   useEffect(() => {
     if (!nearbyPlacesQuery.data) {
@@ -69,7 +62,7 @@ export default function MyScreen() {
 
     const nextPlace = nearbyPlacesQuery.data[0];
 
-    if (nextPlace?.id !== currentPlace?.id) {
+    if (nextPlace && nextPlace.id !== currentPlace?.id) {
       setPlace(nextPlace);
     }
   }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
@@ -89,7 +82,9 @@ export default function MyScreen() {
       await meApi.updateProfile(nextProfile);
       updateProfile(nextProfile);
     } catch {
-      setProfileMessage('위치 추천 설정을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+      setProfileMessage(
+        '위치 추천 설정을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.',
+      );
     }
   }, [profile, updateProfile]);
 
@@ -108,69 +103,89 @@ export default function MyScreen() {
         return;
       }
 
+      if (result.status === 'denied') {
+        clearLocation();
+      }
       setLocationStatus(result.status === 'denied' ? 'denied' : 'unavailable');
     } catch {
       setLocationStatus('unavailable');
     }
-  }, [locationStatus, setLocation, setLocationStatus]);
-
-  const menuItems: MyMenuItem[] = [
-    {
-      description: selectedSummary || '아직 저장된 취향 정보가 없어요.',
-      icon: 'sliders',
-      label: '취향 수정',
-      onPress: () =>
-        router.push({
-          pathname: '/onboarding',
-          params: { mode: 'edit' },
-        } as never),
-    },
-    {
-      description: '위치 · 카메라 · 사진',
-      icon: 'map-pin',
-      label: '권한 설정',
-    },
-    {
-      description: '데이터 수집과 보관, 삭제 요청 방법을 확인합니다.',
-      icon: 'shield',
-      label: '개인정보 처리방침',
-      onPress: () => router.push('/legal/privacy' as never),
-    },
-    {
-      description: '서비스 이용 조건과 사용자 콘텐츠 기준을 확인합니다.',
-      icon: 'file-text',
-      label: '서비스 이용약관',
-      onPress: () => router.push('/legal/terms' as never),
-    },
-    {
-      description: '온보딩을 다시 볼 수 있도록 초기화합니다.',
-      icon: 'rotate-ccw',
-      label: '온보딩 초기화',
-      onPress: () => {
-        resetOnboarding();
-        router.replace('/onboarding' as never);
-      },
-    },
-  ];
+  }, [clearLocation, locationStatus, setLocation, setLocationStatus]);
 
   return (
     <Screen>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 132, paddingHorizontal: 20, paddingTop: 32 }}
+        contentContainerStyle={{
+          paddingBottom: 132,
+          paddingHorizontal: 20,
+          paddingTop: 32,
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <AppText className="text-[26px] font-semibold text-white">마이</AppText>
+        <PageHeader title="마이" />
 
         <AuthAccountCard />
 
-        <View className="mt-5 rounded-[22px] border border-white/10 bg-white/10 p-5">
-          <AppText className="text-sm font-semibold text-white/45">내 추천 프로필</AppText>
-          <AppText className="mt-3 text-[20px] font-semibold text-white">
-            {profile.completedOnboarding ? '취향 설정 완료' : '취향 설정 전'}
-          </AppText>
-          <AppText className="mt-2 text-sm leading-6 text-white/60">
-            {selectedSummary || '취향을 입력하면 홈 추천 필터가 더 자연스럽게 맞춰져요.'}
-          </AppText>
+        <View className="mt-7">
+          <SectionTitle title="Soundlog 설정" />
+          <MySettingsRow
+            icon="sliders"
+            label="추천 취향 수정"
+            onPress={() =>
+              router.push({
+                pathname: '/onboarding',
+                params: { mode: 'edit' },
+              } as never)
+            }
+            rightText={selectedSummary || '설정 전'}
+          />
+          <MySettingsRow
+            icon="bookmark"
+            label="음악 보관함"
+            onPress={() => router.push('/library' as never)}
+          />
+          <MySettingsRow
+            icon="eye"
+            label="내 로그 공개 설정"
+            onPress={() =>
+              router.push({
+                pathname: '/recap',
+                params: { view: 'all' },
+              } as never)
+            }
+          />
+        </View>
+
+        <View className="mt-7">
+          <SectionTitle title="위치 및 추천" />
+          <MySettingsRow
+            description={currentPlaceDescription}
+            disabled={locationStatus === 'loading'}
+            icon="map-pin"
+            label="현재 장소 다시 확인"
+            onPress={() => void handleRefreshLocation()}
+            rightText={currentPlaceSummary}
+          />
+          <MySettingsRow
+            description={
+              profile.locationRecommendationEnabled
+                ? '현재 장소를 음악 추천과 여행 기록에 사용해요.'
+                : '켜면 현재 장소에 맞춰 음악 추천 순서를 조정해요.'
+            }
+            icon="navigation"
+            label="위치 기반 추천"
+            onPress={
+              profile.locationRecommendationEnabled
+                ? undefined
+                : () => void handleEnableLocationRecommendation()
+            }
+            rightText={profile.locationRecommendationEnabled ? '켜짐' : '꺼짐'}
+          />
+          {profileMessage ? (
+            <AppText className="ml-12 mt-1 text-xs leading-5 text-amber-200">
+              {profileMessage}
+            </AppText>
+          ) : null}
         </View>
 
         <PermissionSettingsCard
@@ -183,85 +198,31 @@ export default function MyScreen() {
           onRequest={permissionSettings.requestPermission}
         />
 
-        <View className="mt-6">
-          <LocationContextCard
-            enabled={profile.locationRecommendationEnabled}
-            isLoading={locationStatus === 'loading'}
-            isPlaceLoading={nearbyPlacesQuery.isLoading}
-            location={currentLocation}
-            onEnable={handleEnableLocationRecommendation}
-            onRefresh={handleRefreshLocation}
-            place={currentPlace}
-            placeCount={nearbyPlacesQuery.data?.length ?? 0}
-            placeInfoMessage={
-              currentPlace?.source === 'seed'
-                ? '주변 장소 정보를 기본 장소 데이터로 보여주고 있어요.'
-                : undefined
-            }
-            status={locationStatus}
-            updatedAt={locationUpdatedAt}
+        <View className="mt-7">
+          <SectionTitle title="서비스" />
+          <MySettingsRow
+            icon="shield"
+            label="개인정보 처리방침"
+            onPress={() => router.push('/legal/privacy' as never)}
           />
-          {profileMessage ? (
-            <View className="mt-3 rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
-              <AppText className="text-xs leading-5 text-amber-100">{profileMessage}</AppText>
-            </View>
-          ) : null}
-        </View>
-
-        <View className="mt-6 gap-3">
-          {menuItems.map((item) => (
-            <Pressable
-              key={item.label}
-              accessibilityRole="button"
-              className="flex-row items-center rounded-[16px] bg-white/10 px-5 py-4"
-              onPress={item.onPress}
-            >
-              <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                <Feather color="#fff" name={item.icon} size={18} />
-              </View>
-              <View className="ml-3 min-w-0 flex-1">
-                <AppText className="text-base font-medium text-white">{item.label}</AppText>
-                {item.description ? (
-                  <AppText className="mt-1 text-xs leading-5 text-white/45">
-                    {item.description}
-                  </AppText>
-                ) : null}
-              </View>
-              {item.onPress ? (
-                <Feather color="rgba(255,255,255,0.5)" name="chevron-right" size={18} />
-              ) : null}
-            </Pressable>
-          ))}
+          <MySettingsRow
+            icon="file-text"
+            label="서비스 이용약관"
+            onPress={() => router.push('/legal/terms' as never)}
+          />
         </View>
 
         {__DEV__ ? (
-          <View className="mt-6 rounded-[18px] border border-white/10 bg-white/10 p-5">
-            <View className="flex-row items-start justify-between gap-3">
-              <View className="min-w-0 flex-1">
-                <AppText className="text-sm font-semibold text-white/45">
-                  추천 피드백 로그
-                </AppText>
-                <AppText className="mt-2 text-[20px] font-semibold text-white">
-                  {isHydrated ? `${events.length}개` : '동기화 중'}
-                </AppText>
-                <AppText className="mt-2 text-xs leading-5 text-white/50">
-                  마지막 이벤트 {formatEventTime(events[0]?.createdAt)}
-                </AppText>
-                {events[0] ? (
-                  <AppText className="mt-1 text-xs leading-5 text-white/35">
-                    {events[0].type}
-                    {events[0].value ? ` · ${events[0].value}` : ''}
-                  </AppText>
-                ) : null}
-              </View>
-              <Pressable
-                accessibilityRole="button"
-                className="rounded-full border border-white/10 px-4 py-2"
-                onPress={clearEvents}
-              >
-                <AppText className="text-xs font-semibold text-white/70">초기화</AppText>
-              </Pressable>
-            </View>
+          <View className="mt-7">
+            <SectionTitle title="개발 도구" />
+            <MySettingsRow
+              icon="rotate-ccw"
+              label="온보딩 초기화"
+              onPress={() => {
+                resetOnboarding();
+                router.replace('/onboarding' as never);
+              }}
+            />
           </View>
         ) : null}
       </ScrollView>

@@ -10,6 +10,7 @@ export type RoutePoint = GeoPoint & {
 
 export type PlaceContext = {
   address?: string;
+  attribution?: string;
   category?: string;
   contentType?: string;
   distanceMeters?: number;
@@ -17,11 +18,17 @@ export type PlaceContext = {
   imageUrl?: string;
   location?: GeoPoint;
   overview?: string;
-  source: 'seed' | 'tour-api';
+  source: 'reverse-geocode' | 'seed' | 'tour-api' | 'user';
   title: string;
 };
 
-export type TravelMode = 'walk' | 'drive' | 'cafe' | 'ocean' | 'festival' | 'night';
+export type TravelMode =
+  | 'walk'
+  | 'drive'
+  | 'cafe'
+  | 'ocean'
+  | 'festival'
+  | 'night';
 
 export type MusicRecommendationMode = 'everyday' | 'travel';
 
@@ -29,7 +36,11 @@ export type MoodTag = 'calm' | 'fresh' | 'emotional' | 'active' | 'local';
 
 export type MusicPlatformId = 'none' | 'spotify' | 'youtubeMusic' | 'youtube';
 
-export type ExternalMusicPlatformId = 'melon' | 'spotify' | 'youtube' | 'youtubeMusic';
+export type ExternalMusicPlatformId =
+  | 'melon'
+  | 'spotify'
+  | 'youtube'
+  | 'youtubeMusic';
 
 export type PlaylistRecommendationSource =
   | 'ml-recommendation'
@@ -125,12 +136,16 @@ export type MomentLog = {
   placeCategory?: string;
   placeId?: string;
   placeName?: string;
+  recapId?: string;
+  recapVisibility?: RecapVisibility;
   note?: string;
   track?: Track;
   travelMode?: TravelMode;
   moodTags: MoodTag[];
   source: 'camera';
+  syncError?: string;
   syncStatus: 'failed' | 'local' | 'pending' | 'synced';
+  templateId?: RecapTemplateId;
 };
 
 export type RecapItem = {
@@ -139,8 +154,10 @@ export type RecapItem = {
   placeName: string;
   representativeTrack: Track;
   createdAt: string;
+  backgroundImageUrl?: string;
   momentCount?: number;
   sessionId?: string;
+  thumbnailMomentId?: string;
   visibility?: RecapVisibility;
 };
 
@@ -174,6 +191,9 @@ export type RecapShareMoment = {
   trackTitle: string;
   artistName: string;
   recordedAt: string;
+  templateId?: RecapTemplateId;
+  track?: Track;
+  visibility?: RecapVisibility;
 };
 
 export type RecapTravelSummary = {
@@ -190,6 +210,7 @@ export type RecapTravelSummary = {
 
 export type RecapShare = {
   id: string;
+  isMine?: boolean;
   placeName: string;
   trackTitle: string;
   artistName: string;
@@ -198,7 +219,10 @@ export type RecapShare = {
   moments?: RecapShareMoment[];
   recordedAt: string;
   routePoints?: RoutePoint[];
+  sessionId?: string;
   shareImageUrl?: string;
+  templateId?: RecapTemplateId;
+  thumbnailMomentId?: string;
   travelSummary?: RecapTravelSummary;
   visibility?: RecapVisibility;
 };
@@ -275,7 +299,9 @@ export type MusicMatch = {
   matchScore: number;
   safety: {
     exactLocationHidden: boolean;
-    firstMessageTemplates: Array<'cafe_together' | 'liked_track' | 'walk_together'>;
+    firstMessageTemplates: Array<
+      'cafe_together' | 'liked_track' | 'walk_together'
+    >;
     contactHiddenUntilAccepted: boolean;
   };
 };

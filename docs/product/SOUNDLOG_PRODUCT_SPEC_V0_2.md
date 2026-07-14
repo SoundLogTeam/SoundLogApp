@@ -1,5 +1,7 @@
 # Soundlog Product Spec v0.2
 
+> **Canonical domain notice:** 리캡과 로그의 최신 정의는 [리캡·로그 도메인 기준](RECAP_LOG_DOMAIN_MODEL.md)을 따른다. 특히 `Recap = 카메라 저장 1회`, `Log = 같은 여행모드 세션의 Recap 집합`이며 여행모드 밖의 독립 Recap은 Log가 아니다.
+
 ## 1. Product Direction
 
 Soundlog is a location-based music travel log app.
@@ -100,8 +102,9 @@ Filter chips:
 Marker policy:
 
 - `전체 리캡` returns only public recaps within 300m of the user location.
-- `내 리캡` can include private recaps.
-- Markers outside the radius are not rendered in MVP.
+- `내 리캡` includes every location-backed recap owned by the user, including private recaps, without applying the current-location radius.
+- My recap markers are clustered by visited coordinates and open in an overview viewport that avoids tight automatic zoom.
+- The 300m radius restriction applies only to `전체 리캡`.
 
 ### 3.2 Everyday Mode
 

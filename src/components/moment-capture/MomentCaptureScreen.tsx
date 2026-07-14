@@ -1,59 +1,64 @@
-import { CameraView, useCameraPermissions } from 'expo-camera';
-import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { CameraView, useCameraPermissions } from "expo-camera";
+import { router, useLocalSearchParams } from "expo-router";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Platform, Pressable, View } from "react-native";
 
-import { momentLogApi } from '@/api/momentLogApi';
-import { syncRecommendationEvent } from '@/api/recommendationEventApi';
-import { AppText } from '@/components/AppText';
-import { CameraCaptureView } from '@/components/moment-capture/CameraCaptureView';
-import { CameraPermissionState } from '@/components/moment-capture/CameraPermissionState';
+import { syncRecommendationEvent } from "@/api/recommendationEventApi";
+import { AppText } from "@/components/AppText";
+import { PageHeader } from "@/components/PageHeader";
+import { CameraCaptureView } from "@/components/moment-capture/CameraCaptureView";
+import { CameraPermissionState } from "@/components/moment-capture/CameraPermissionState";
 import {
   MomentReviewPanel,
   type MomentReviewPanelHandle,
-} from '@/components/moment-capture/MomentReviewPanel';
-import { Screen } from '@/components/Screen';
-import { useHomeFilterStore } from '@/store/homeFilterStore';
+} from "@/components/moment-capture/MomentReviewPanel";
+import { Screen } from "@/components/Screen";
+import { SectionTitle } from "@/components/SectionTitle";
+import { SettingsRow } from "@/components/SettingsRow";
+import { useHomeFilterStore } from "@/store/homeFilterStore";
 import {
   useMomentLogStore,
   type MomentLogCreateQueuePayload,
-} from '@/store/momentLogStore';
-import { usePlayerStore } from '@/store/playerStore';
-import { useRecommendationEventStore } from '@/store/recommendationEventStore';
-import { useTravelSessionStore } from '@/store/travelSessionStore';
-import { GeoPoint, MomentLog } from '@/types/domain';
-import { getForegroundLocationWithTimeout } from '@/utils/location';
-import { getMoodTagsFromFilter } from '@/utils/moodTags';
-import { persistMomentPhoto } from '@/utils/momentFiles';
-import { pickMomentPhotoFromLibrary } from '@/utils/momentPhotoPicker';
-import { formatPlaceLabel } from '@/utils/placeLabel';
-import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
+} from "@/store/momentLogStore";
+import { usePlayerStore } from "@/store/playerStore";
+import { useRecommendationEventStore } from "@/store/recommendationEventStore";
+import { useTravelSessionStore } from "@/store/travelSessionStore";
+import {
+  GeoPoint,
+  MomentLog,
+  RecapTemplateId,
+  RecapVisibility,
+} from "@/types/domain";
+import { getForegroundLocationWithTimeout } from "@/utils/location";
+import { getMoodTagsFromFilter } from "@/utils/moodTags";
+import { persistMomentPhoto } from "@/utils/momentFiles";
+import { pickMomentPhotoFromLibrary } from "@/utils/momentPhotoPicker";
+import { createRecommendationEventContext } from "@/utils/recommendationEventContext";
+import { getDistanceMeters } from "@/utils/recapTravelSummary";
 
-type LocationStatus = 'denied' | 'granted' | 'idle' | 'loading' | 'unavailable';
-type MomentCaptureReturnTo = 'map' | 'music' | 'recap';
+type LocationStatus = "denied" | "granted" | "idle" | "loading" | "unavailable";
+type MomentCaptureReturnTo = "map" | "music" | "recap";
 
-const fallbackRecommendedPhotoUrls = [
-  'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
-  'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
-  'https://tong.visitkorea.or.kr/cms/resource_photo/85/2613985_image2_1.jpg',
-];
+const CAPTURE_PLACE_RADIUS_METERS = 3000;
 
 function resolveReturnPath(returnTo?: string | string[]) {
   const value = Array.isArray(returnTo) ? returnTo[0] : returnTo;
 
-  if (value === 'recap') {
-    return '/recap';
+  if (value === "recap") {
+    return "/recap";
   }
 
-  if (value === 'music') {
-    return '/music';
+  if (value === "music") {
+    return "/music";
   }
 
-  return '/';
+  return "/";
 }
 
 export function MomentCaptureScreen() {
-  const { returnTo } = useLocalSearchParams<{ returnTo?: MomentCaptureReturnTo }>();
+  const { returnTo } = useLocalSearchParams<{
+    returnTo?: MomentCaptureReturnTo;
+  }>();
   const cameraRef = useRef<CameraView>(null);
   const reviewPanelRef = useRef<MomentReviewPanelHandle>(null);
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
@@ -61,33 +66,46 @@ export function MomentCaptureScreen() {
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string>();
   const [errorMessage, setErrorMessage] = useState<string>();
   const [isReviewing, setIsReviewing] = useState(false);
-  const [reviewMoodTags, setReviewMoodTags] = useState<MomentLog['moodTags']>(
+  const [reviewMoodTags, setReviewMoodTags] = useState<MomentLog["moodTags"]>(
     [],
   );
-  const [reviewNote, setReviewNote] = useState('');
-  const [reviewPlaceName, setReviewPlaceName] = useState('');
+  const [reviewPlaceName, setReviewPlaceName] = useState("");
+  const [reviewTemplate, setReviewTemplate] = useState<RecapTemplateId>("film");
+  const [recapVisibility, setRecapVisibility] =
+    useState<RecapVisibility>("private");
   const [shouldSaveMusic, setShouldSaveMusic] = useState(true);
   const [isCapturing, setIsCapturing] = useState(false);
   const [isPickingPhoto, setIsPickingPhoto] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
 
   const addLog = useMomentLogStore((state) => state.addLog);
   const queueCreate = useMomentLogStore((state) => state.queueCreate);
-  const resolveLocalLog = useMomentLogStore((state) => state.resolveLocalLog);
-  const updateLog = useMomentLogStore((state) => state.updateLog);
   const addRecommendationEvent = useRecommendationEventStore(
     (state) => state.addEvent,
   );
   const { selectedMoodFilter } = useHomeFilterStore();
   const { currentTrack, playlistId } = usePlayerStore();
-  const {
-    currentLocation,
-    currentPlace,
-    selectedMode,
-    session,
-    setLocation,
-  } = useTravelSessionStore();
+  const { currentLocation, currentPlace, selectedMode, session, setLocation } =
+    useTravelSessionStore();
+  const capturePlace = useMemo(() => {
+    if (!currentPlace) {
+      return undefined;
+    }
+
+    if (!currentLocation) {
+      return currentPlace;
+    }
+
+    if (!currentPlace.location) {
+      return undefined;
+    }
+
+    return getDistanceMeters(currentLocation, currentPlace.location) <=
+      CAPTURE_PLACE_RADIUS_METERS
+      ? currentPlace
+      : undefined;
+  }, [currentLocation, currentPlace]);
 
   const moodTags = useMemo(
     () => getMoodTagsFromFilter(selectedMoodFilter),
@@ -97,25 +115,24 @@ export function MomentCaptureScreen() {
   const prepareReview = (photoUri?: string) => {
     setCapturedAt(new Date().toISOString());
     setCapturedPhotoUri(photoUri);
-    setReviewPlaceName(
-      currentPlace?.title ?? formatPlaceLabel(currentLocation),
-    );
+    setReviewPlaceName("");
+    setReviewTemplate("film");
     setReviewMoodTags(moodTags);
-    setReviewNote('');
+    setRecapVisibility("private");
     setShouldSaveMusic(Boolean(currentTrack));
     setIsReviewing(true);
     setErrorMessage(undefined);
   };
 
   useEffect(() => {
-    if (Platform.OS === 'web') {
+    if (Platform.OS === "web") {
       return;
     }
 
     let isMounted = true;
 
     async function loadLocation() {
-      setLocationStatus('loading');
+      setLocationStatus("loading");
 
       try {
         const location = await getForegroundLocationWithTimeout();
@@ -126,17 +143,17 @@ export function MomentCaptureScreen() {
 
         if (location) {
           setLocation(location);
-          setLocationStatus('granted');
+          setLocationStatus("granted");
         } else {
           const fallbackLocation =
             useTravelSessionStore.getState().currentLocation;
-          setLocationStatus(fallbackLocation ? 'granted' : 'unavailable');
+          setLocationStatus(fallbackLocation ? "granted" : "unavailable");
         }
       } catch {
         if (isMounted) {
           const fallbackLocation =
             useTravelSessionStore.getState().currentLocation;
-          setLocationStatus(fallbackLocation ? 'granted' : 'unavailable');
+          setLocationStatus(fallbackLocation ? "granted" : "unavailable");
         }
       }
     }
@@ -163,12 +180,12 @@ export function MomentCaptureScreen() {
       });
 
       if (!photo?.uri) {
-        throw new Error('capture_failed');
+        throw new Error("capture_failed");
       }
 
       prepareReview(photo.uri);
     } catch {
-      setErrorMessage('사진을 촬영하지 못했어요. 다시 시도해주세요.');
+      setErrorMessage("사진을 촬영하지 못했어요. 다시 시도해주세요.");
     } finally {
       setIsCapturing(false);
     }
@@ -184,30 +201,34 @@ export function MomentCaptureScreen() {
     try {
       const result = await pickMomentPhotoFromLibrary();
 
-      if (result.status === 'selected') {
+      if (result.status === "selected") {
         prepareReview(result.uri);
         return;
       }
 
-      if (result.status === 'permission-denied') {
-        setErrorMessage('갤러리 사진을 사용하려면 사진 보관함 권한이 필요해요.');
+      if (result.status === "permission-denied") {
+        setErrorMessage(
+          "갤러리 사진을 사용하려면 사진 보관함 권한이 필요해요.",
+        );
         return;
       }
 
-      if (result.status === 'unavailable') {
-        setErrorMessage('갤러리를 열지 못했어요. 다시 시도해주세요.');
+      if (result.status === "unavailable") {
+        setErrorMessage("갤러리를 열지 못했어요. 다시 시도해주세요.");
       }
     } finally {
       setIsPickingPhoto(false);
     }
   };
   const handleUseRecommendedPhoto = () => {
-    const recommendedPhotoUri =
-      currentPlace?.imageUrl ??
-      fallbackRecommendedPhotoUrls[
-        Math.abs((currentPlace?.id ?? currentPlace?.title ?? 'soundlog').length) %
-          fallbackRecommendedPhotoUrls.length
-      ];
+    const recommendedPhotoUri = capturePlace?.imageUrl;
+
+    if (!recommendedPhotoUri) {
+      setErrorMessage(
+        "현재 위치에서 추천할 관광지 사진이 없어요. 직접 촬영하거나 갤러리 사진을 선택해주세요.",
+      );
+      return;
+    }
 
     prepareReview(recommendedPhotoUri);
   };
@@ -223,7 +244,8 @@ export function MomentCaptureScreen() {
     try {
       const id = `moment-${Date.now()}`;
       const locationSnapshot: GeoPoint | undefined = currentLocation;
-      const activeSessionId = session.status === 'active' ? session.id : undefined;
+      const activeSessionId =
+        session.status === "active" ? session.id : undefined;
       let photoSourceUri = capturedPhotoUri;
 
       if (capturedPhotoUri) {
@@ -239,44 +261,45 @@ export function MomentCaptureScreen() {
         ? await persistMomentPhoto(photoSourceUri, id)
         : undefined;
       const createdAt = capturedAt ?? new Date().toISOString();
-      const placeName =
-        reviewPlaceName.trim() || formatPlaceLabel(locationSnapshot);
-      const note = reviewNote.trim() || undefined;
+      const placeName = reviewPlaceName.trim() || undefined;
       const trackSnapshot = shouldSaveMusic ? currentTrack : undefined;
+      const activeTravelMode = activeSessionId ? selectedMode : undefined;
       const recommendationContext = createRecommendationEventContext({
-        placeCategory: currentPlace?.category,
-        placeId: currentPlace?.id,
+        placeCategory: capturePlace?.category,
+        placeId: capturePlace?.id,
         placeName,
-        travelMode: selectedMode,
+        travelMode: activeTravelMode,
       });
       const localLog: MomentLog = {
         createdAt,
         id,
         location: locationSnapshot,
         moodTags: reviewMoodTags,
-        note,
-        placeCategory: currentPlace?.category,
-        placeId: currentPlace?.id,
+        placeCategory: capturePlace?.category,
+        placeId: capturePlace?.id,
         photoUri,
         placeName,
+        recapVisibility,
         sessionId: activeSessionId,
-        source: 'camera',
-        syncStatus: 'pending',
+        source: "camera",
+        syncStatus: "pending",
+        templateId: reviewTemplate,
         track: trackSnapshot,
-        travelMode: selectedMode,
+        travelMode: activeTravelMode,
       };
       const createPayload: MomentLogCreateQueuePayload = {
         createdAt,
         location: locationSnapshot,
         moodTags: reviewMoodTags,
-        note,
         photoUri,
-        placeCategory: currentPlace?.category,
-        placeId: currentPlace?.id,
+        placeCategory: capturePlace?.category,
+        placeId: capturePlace?.id,
         placeName,
+        recapVisibility,
         sessionId: activeSessionId,
+        templateId: reviewTemplate,
         track: trackSnapshot,
-        travelMode: selectedMode,
+        travelMode: activeTravelMode,
       };
 
       addLog(localLog);
@@ -286,40 +309,14 @@ export function MomentCaptureScreen() {
           context: recommendationContext,
           playlistId,
           trackId: trackSnapshot?.id,
-          type: 'moment_log_saved',
+          type: "moment_log_saved",
           value: localLog.syncStatus,
         }),
       );
 
-      void momentLogApi
-        .createMomentLog({
-          ...createPayload,
-          idempotencyKey: id,
-        })
-        .then((serverLog) => {
-          if (!serverLog) {
-            updateLog(id, { syncStatus: 'local' });
-            return;
-          }
-
-          resolveLocalLog(id, serverLog);
-        })
-        .catch(() => {
-          updateLog(id, { syncStatus: 'failed' });
-          syncRecommendationEvent(
-            addRecommendationEvent({
-              context: recommendationContext,
-              playlistId,
-              trackId: trackSnapshot?.id,
-              type: 'moment_log_sync_failed',
-              value: 'network_error',
-            }),
-          );
-        });
-
       router.replace(resolveReturnPath(returnTo) as never);
     } catch {
-      setErrorMessage('이 리캡을 저장하지 못했어요. 다시 시도해주세요.');
+      setErrorMessage("이 리캡을 저장하지 못했어요. 다시 시도해주세요.");
     } finally {
       setIsSaving(false);
     }
@@ -335,10 +332,10 @@ export function MomentCaptureScreen() {
         isSaving={isSaving}
         location={currentLocation}
         moodTags={reviewMoodTags}
-        note={reviewNote}
         onChangeMoodTags={setReviewMoodTags}
-        onChangeNote={setReviewNote}
         onChangePlaceName={setReviewPlaceName}
+        onChangeTemplate={setReviewTemplate}
+        onChangeVisibility={setRecapVisibility}
         onRetake={() => {
           setCapturedAt(undefined);
           setCapturedPhotoUri(undefined);
@@ -349,38 +346,49 @@ export function MomentCaptureScreen() {
         onToggleMusic={() => setShouldSaveMusic((value) => !value)}
         photoUri={capturedPhotoUri}
         placeName={reviewPlaceName}
+        selectedTemplate={reviewTemplate}
         track={currentTrack}
-        travelMode={selectedMode}
+        travelMode={session.status === "active" ? selectedMode : undefined}
+        visibility={recapVisibility}
       />
     );
   }
 
-  if (Platform.OS === 'web') {
+  if (Platform.OS === "web") {
     return (
-      <Screen contentClassName="items-center justify-center px-8">
-        <View className="rounded-[24px] border border-white/10 bg-white/10 p-6">
-          <AppText className="text-center text-[24px] font-semibold text-white">
-            앱에서 사용할 수 있어요
-          </AppText>
-          <AppText className="mt-3 text-center text-sm leading-6 text-white/60">
-            카메라 촬영은 모바일 앱에서 사용할 수 있어요. 대신 사진 없이 음악과
-            장소만 먼저 리캡으로 남길 수 있습니다.
-          </AppText>
+      <Screen>
+        <View className="flex-1 px-6 pb-10 pt-10">
+          <PageHeader title="리캡 만들기" />
+
+          <View className="mt-9">
+            <SectionTitle title="카메라" />
+            <SettingsRow
+              description="카메라 촬영은 iOS와 Android 앱에서 사용할 수 있어요."
+              icon="camera"
+              label="웹에서는 촬영할 수 없어요"
+            />
+            <SettingsRow
+              description="장소, 음악과 무드만으로도 리캡을 저장할 수 있어요."
+              icon="edit-3"
+              label="사진 없는 리캡"
+            />
+          </View>
+
           <Pressable
             accessibilityRole="button"
-            className="mt-7 rounded-full bg-white px-5 py-3"
+            className="mt-auto h-14 items-center justify-center rounded-xl bg-soundlog-lime px-5"
             onPress={() => prepareReview()}
           >
-            <AppText className="text-center font-semibold text-[#050916]">
+            <AppText className="text-center font-semibold text-soundlog-inverse">
               사진 없이 기록하기
             </AppText>
           </Pressable>
           <Pressable
             accessibilityRole="button"
-            className="mt-3 rounded-full border border-white/15 px-5 py-3"
+            className="mt-2 h-12 items-center justify-center"
             onPress={() => router.back()}
           >
-            <AppText className="text-center font-semibold text-white/80">
+            <AppText className="text-center font-semibold text-white/58">
               돌아가기
             </AppText>
           </Pressable>

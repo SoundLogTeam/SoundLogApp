@@ -1,5 +1,5 @@
 import { LibraryScreen } from '@/components/library/LibraryScreen';
 
-export default function LibraryTabScreen() {
+export default function LibraryScreenRoute() {
   return <LibraryScreen />;
 }

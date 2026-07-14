@@ -23,7 +23,7 @@ export function RecapTemplateSelector({
   selectedTemplate,
 }: RecapTemplateSelectorProps) {
   return (
-    <View className="flex-row rounded-full border border-white/10 bg-white/[0.06] p-1">
+    <View className="w-full flex-row rounded-full border border-white/10 bg-white/[0.06] p-1">
       {templateOptions.map((option) => {
         const isSelected = selectedTemplate === option.id;
 
@@ -32,7 +32,7 @@ export function RecapTemplateSelector({
             accessibilityLabel={`${option.label} 리캡 템플릿 선택`}
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
-            className={`min-w-[74px] items-center rounded-full px-4 py-2 ${
+            className={`min-h-[44px] flex-1 items-center justify-center rounded-full px-1 ${
               isSelected ? 'bg-white' : 'bg-transparent'
             }`}
             key={option.id}

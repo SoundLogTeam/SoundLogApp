@@ -21,6 +21,7 @@ import {
 } from '@/types/domain';
 
 type RecapPreviewCardProps = {
+  isMusicStickerDraggable?: boolean;
   musicSticker?: RecapMusicStickerSettings;
   onMusicStickerDragChange?: (isDragging: boolean) => void;
   recap: RecapShare;
@@ -42,7 +43,10 @@ type RecapCanvasSize = {
 };
 
 const RECAP_STICKER_PADDING = 14;
-const recapMusicStickerSizes: Record<RecapMusicStickerTemplate, { height: number; width: number }> = {
+const recapMusicStickerSizes: Record<
+  RecapMusicStickerTemplate,
+  { height: number; width: number }
+> = {
   badge: { height: 68, width: 190 },
   label: { height: 72, width: 214 },
   player: { height: 82, width: 226 },
@@ -55,12 +59,17 @@ function RecapBackground({
   imageUrl?: string;
   overlayClassName?: string;
 }) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string>();
+  const visibleImageUrl =
+    imageUrl && failedImageUrl !== imageUrl ? imageUrl : undefined;
+
   return (
     <>
-      {imageUrl ? (
+      {visibleImageUrl ? (
         <Image
           contentFit="cover"
-          source={{ uri: imageUrl }}
+          onError={() => setFailedImageUrl(visibleImageUrl)}
+          source={{ uri: visibleImageUrl }}
           style={StyleSheet.absoluteFill}
           transition={300}
         />
@@ -88,13 +97,21 @@ function RecapLpTemplate({ recap }: { recap: RecapShare }) {
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={['rgba(255,255,255,0.08)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0.4)']}
+        colors={[
+          'rgba(255,255,255,0.08)',
+          'rgba(255,255,255,0)',
+          'rgba(0,0,0,0.4)',
+        ]}
         end={{ x: 0.5, y: 1 }}
         start={{ x: 0.5, y: 0 }}
         style={StyleSheet.absoluteFill}
       />
       <LinearGradient
-        colors={['rgba(183,230,40,0.12)', 'rgba(183,230,40,0)', 'rgba(0,0,0,0)']}
+        colors={[
+          'rgba(183,230,40,0.12)',
+          'rgba(183,230,40,0)',
+          'rgba(0,0,0,0)',
+        ]}
         end={{ x: 0.5, y: 1 }}
         start={{ x: 0.5, y: 0 }}
         style={styles.lpAccentWash}
@@ -271,7 +288,10 @@ function createLocationPinPositions(moments: LocatedRecapMoment[]) {
   return createLocationPositions(moments.map((moment) => moment.location));
 }
 
-function getRouteLocations(routePoints: RoutePoint[] | undefined, moments: LocatedRecapMoment[]) {
+function getRouteLocations(
+  routePoints: RoutePoint[] | undefined,
+  moments: LocatedRecapMoment[],
+) {
   if (routePoints && routePoints.length > 1) {
     return routePoints;
   }
@@ -475,9 +495,16 @@ function RecapMapTemplate({ recap }: { recap: RecapShare }) {
 
       <View className="absolute left-7 right-7 top-7">
         <AppText className="text-[11px] font-semibold tracking-[2px] text-[#B7E628]">
-          {routeSegments.length ? 'TRAVEL ROUTE' : hasRecordedLocations ? 'MOMENT MAP' : 'SOUNDLOG MAP'}
+          {routeSegments.length
+            ? 'TRAVEL ROUTE'
+            : hasRecordedLocations
+              ? 'MOMENT MAP'
+              : 'SOUNDLOG MAP'}
         </AppText>
-        <AppText className="mt-2 text-[25px] font-semibold leading-8 text-white" numberOfLines={2}>
+        <AppText
+          className="mt-2 text-[25px] font-semibold leading-8 text-white"
+          numberOfLines={2}
+        >
           {recap.placeName}
         </AppText>
         <View className="mt-3 self-start rounded-full border border-white/12 bg-black/35 px-3 py-1.5">
@@ -503,7 +530,10 @@ function RecapMapTemplate({ recap }: { recap: RecapShare }) {
             </AppText>
           </View>
           <View className="mt-1 rounded-full bg-black/60 px-2 py-1">
-            <AppText className="text-[9px] font-semibold text-white" numberOfLines={1}>
+            <AppText
+              className="text-[9px] font-semibold text-white"
+              numberOfLines={1}
+            >
               {moment.placeName}
             </AppText>
           </View>
@@ -514,10 +544,16 @@ function RecapMapTemplate({ recap }: { recap: RecapShare }) {
         <AppText className="text-[10px] font-semibold text-white/55">
           {hasRecordedLocations ? '촬영 위치와 대표 사운드' : '대표 사운드'}
         </AppText>
-        <AppText className="mt-2 text-[22px] font-semibold text-white" numberOfLines={1}>
+        <AppText
+          className="mt-2 text-[22px] font-semibold text-white"
+          numberOfLines={1}
+        >
           {recap.trackTitle}
         </AppText>
-        <AppText className="mt-2 text-xs font-medium text-white/70" numberOfLines={1}>
+        <AppText
+          className="mt-2 text-xs font-medium text-white/70"
+          numberOfLines={1}
+        >
           {moments.length}개 장소 · {recap.artistName}
         </AppText>
       </View>
@@ -537,11 +573,17 @@ function clampStickerPosition(
   return {
     x: Math.min(
       Math.max(position.x, RECAP_STICKER_PADDING),
-      Math.max(RECAP_STICKER_PADDING, canvasSize.width - stickerSize.width - RECAP_STICKER_PADDING),
+      Math.max(
+        RECAP_STICKER_PADDING,
+        canvasSize.width - stickerSize.width - RECAP_STICKER_PADDING,
+      ),
     ),
     y: Math.min(
       Math.max(position.y, RECAP_STICKER_PADDING),
-      Math.max(RECAP_STICKER_PADDING, canvasSize.height - stickerSize.height - RECAP_STICKER_PADDING),
+      Math.max(
+        RECAP_STICKER_PADDING,
+        canvasSize.height - stickerSize.height - RECAP_STICKER_PADDING,
+      ),
     ),
   };
 }
@@ -602,7 +644,9 @@ function getRecapMusicStickerThemeStyle(theme: RecapMusicStickerTheme) {
   };
 }
 
-function getRecapMusicStickerTemplateStyle(template: RecapMusicStickerTemplate) {
+function getRecapMusicStickerTemplateStyle(
+  template: RecapMusicStickerTemplate,
+) {
   if (template === 'badge') {
     return {
       borderRadius: 999,
@@ -642,18 +686,30 @@ function RecapMusicSticker({
   if (settings.template === 'badge') {
     return (
       <View className="flex-row items-center gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-full" style={themeStyle.iconBubble}>
+        <View
+          className="h-10 w-10 items-center justify-center rounded-full"
+          style={themeStyle.iconBubble}
+        >
           <Feather color={themeStyle.iconColor} name="music" size={17} />
         </View>
         <View className="min-w-0 flex-1">
-          <AppText className="text-[9px] font-semibold uppercase" style={themeStyle.metaText}>
+          <AppText
+            className="text-[9px] font-semibold uppercase"
+            style={themeStyle.metaText}
+          >
             Current music
           </AppText>
-          <AppText className="mt-1 text-[14px] font-semibold" numberOfLines={1} style={themeStyle.primaryText}>
+          <AppText
+            className="mt-1 text-[14px] font-semibold"
+            numberOfLines={1}
+            style={themeStyle.primaryText}
+          >
             {title}
           </AppText>
         </View>
-        {isDragging ? <Feather color={themeStyle.iconColor} name="move" size={13} /> : null}
+        {isDragging ? (
+          <Feather color={themeStyle.iconColor} name="move" size={13} />
+        ) : null}
       </View>
     );
   }
@@ -662,15 +718,26 @@ function RecapMusicSticker({
     return (
       <View>
         <View className="flex-row items-center justify-between">
-          <AppText className="text-[9px] font-semibold uppercase" style={themeStyle.metaText}>
+          <AppText
+            className="text-[9px] font-semibold uppercase"
+            style={themeStyle.metaText}
+          >
             Soundlog pick
           </AppText>
           <Feather color={themeStyle.iconColor} name="move" size={13} />
         </View>
-        <AppText className="mt-2 text-[17px] font-semibold" numberOfLines={1} style={themeStyle.primaryText}>
+        <AppText
+          className="mt-2 text-[17px] font-semibold"
+          numberOfLines={1}
+          style={themeStyle.primaryText}
+        >
           {title}
         </AppText>
-        <AppText className="mt-1 text-[11px] font-semibold" numberOfLines={1} style={themeStyle.secondaryText}>
+        <AppText
+          className="mt-1 text-[11px] font-semibold"
+          numberOfLines={1}
+          style={themeStyle.secondaryText}
+        >
           {artist}
         </AppText>
       </View>
@@ -680,20 +747,34 @@ function RecapMusicSticker({
   return (
     <>
       <View className="flex-row items-center justify-between">
-        <AppText className="text-[9px] font-semibold uppercase" style={themeStyle.metaText}>
+        <AppText
+          className="text-[9px] font-semibold uppercase"
+          style={themeStyle.metaText}
+        >
           Now playing
         </AppText>
         <Feather color={themeStyle.iconColor} name="move" size={13} />
       </View>
       <View className="mt-2 flex-row items-center gap-3">
-        <View className="h-10 w-10 items-center justify-center rounded-full" style={themeStyle.iconBubble}>
+        <View
+          className="h-10 w-10 items-center justify-center rounded-full"
+          style={themeStyle.iconBubble}
+        >
           <Feather color={themeStyle.iconColor} name="headphones" size={17} />
         </View>
         <View className="min-w-0 flex-1">
-          <AppText className="text-[15px] font-semibold" numberOfLines={1} style={themeStyle.primaryText}>
+          <AppText
+            className="text-[15px] font-semibold"
+            numberOfLines={1}
+            style={themeStyle.primaryText}
+          >
             {title}
           </AppText>
-          <AppText className="mt-0.5 text-[11px] font-semibold" numberOfLines={1} style={themeStyle.secondaryText}>
+          <AppText
+            className="mt-0.5 text-[11px] font-semibold"
+            numberOfLines={1}
+            style={themeStyle.secondaryText}
+          >
             {artist}
           </AppText>
         </View>
@@ -703,17 +784,27 @@ function RecapMusicSticker({
 }
 
 export function RecapPreviewCard({
+  isMusicStickerDraggable = true,
   musicSticker = { template: 'player', theme: 'glass', visible: true },
   onMusicStickerDragChange,
   recap,
   template = 'lp',
 }: RecapPreviewCardProps) {
   const stickerPan = useRef(
-    new Animated.ValueXY({ x: RECAP_STICKER_PADDING, y: RECAP_STICKER_PADDING }),
+    new Animated.ValueXY({
+      x: RECAP_STICKER_PADDING,
+      y: RECAP_STICKER_PADDING,
+    }),
   ).current;
-  const stickerPositionRef = useRef({ x: RECAP_STICKER_PADDING, y: RECAP_STICKER_PADDING });
+  const stickerPositionRef = useRef({
+    x: RECAP_STICKER_PADDING,
+    y: RECAP_STICKER_PADDING,
+  });
   const didPlaceStickerRef = useRef(false);
-  const [canvasSize, setCanvasSize] = useState<RecapCanvasSize>({ height: 0, width: 0 });
+  const [canvasSize, setCanvasSize] = useState<RecapCanvasSize>({
+    height: 0,
+    width: 0,
+  });
   const [isDraggingSticker, setIsDraggingSticker] = useState(false);
   const stickerSize = recapMusicStickerSizes[musicSticker.template];
   const stickerThemeStyle = getRecapMusicStickerThemeStyle(musicSticker.theme);
@@ -730,7 +821,11 @@ export function RecapPreviewCard({
     setIsDraggingSticker(false);
     onMusicStickerDragChange?.(false);
     stickerPan.stopAnimation((value) => {
-      stickerPositionRef.current = clampStickerPosition(value, canvasSize, stickerSize);
+      stickerPositionRef.current = clampStickerPosition(
+        value,
+        canvasSize,
+        stickerSize,
+      );
       stickerPan.setValue(stickerPositionRef.current);
     });
   }, [canvasSize, onMusicStickerDragChange, stickerPan, stickerSize]);
@@ -738,14 +833,20 @@ export function RecapPreviewCard({
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponder: (_, gestureState) =>
-          Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2,
+          isMusicStickerDraggable &&
+          (Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2),
         onMoveShouldSetPanResponderCapture: (_, gestureState) =>
-          Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2,
+          isMusicStickerDraggable &&
+          (Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2),
         onPanResponderGrant: () => {
           setIsDraggingSticker(true);
           onMusicStickerDragChange?.(true);
           stickerPan.stopAnimation((value) => {
-            const nextPosition = clampStickerPosition(value, canvasSize, stickerSize);
+            const nextPosition = clampStickerPosition(
+              value,
+              canvasSize,
+              stickerSize,
+            );
             stickerPositionRef.current = nextPosition;
             stickerPan.setValue(nextPosition);
           });
@@ -766,10 +867,17 @@ export function RecapPreviewCard({
         onPanResponderTerminationRequest: () => false,
         onPanResponderTerminate: finishDragging,
         onShouldBlockNativeResponder: () => true,
-        onStartShouldSetPanResponder: () => true,
-        onStartShouldSetPanResponderCapture: () => true,
+        onStartShouldSetPanResponder: () => isMusicStickerDraggable,
+        onStartShouldSetPanResponderCapture: () => isMusicStickerDraggable,
       }),
-    [canvasSize, finishDragging, onMusicStickerDragChange, stickerPan, stickerSize],
+    [
+      canvasSize,
+      finishDragging,
+      isMusicStickerDraggable,
+      onMusicStickerDragChange,
+      stickerPan,
+      stickerSize,
+    ],
   );
 
   useEffect(() => {
@@ -782,7 +890,10 @@ export function RecapPreviewCard({
     }
 
     if (!didPlaceStickerRef.current) {
-      const defaultPosition = getDefaultMusicStickerPosition(canvasSize, stickerSize);
+      const defaultPosition = getDefaultMusicStickerPosition(
+        canvasSize,
+        stickerSize,
+      );
 
       stickerPositionRef.current = defaultPosition;
       stickerPan.setValue(defaultPosition);
@@ -813,7 +924,7 @@ export function RecapPreviewCard({
         <Animated.View
           {...panResponder.panHandlers}
           accessibilityLabel={`${recap.trackTitle} 음악 스티커`}
-          accessibilityRole="button"
+          accessibilityRole={isMusicStickerDraggable ? 'button' : 'image'}
           style={[
             styles.recapMusicSticker,
             stickerThemeStyle.container,

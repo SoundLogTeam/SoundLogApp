@@ -20,14 +20,12 @@ export { Chip } from '@/components/Chip';
 export { EmptyState } from '@/components/EmptyState';
 export { IconButton } from '@/components/IconButton';
 export { MiniPlayer } from '@/components/MiniPlayer';
+export { PageHeader } from '@/components/PageHeader';
 export { Screen } from '@/components/Screen';
+export { SectionTitle } from '@/components/SectionTitle';
+export { SettingsRow } from '@/components/SettingsRow';
 export { FeaturedPlaylistCard } from '@/components/home/FeaturedPlaylistCard';
-export {
-  HomeHeader,
-  HomeNavigationBar,
-  HomeTopFilterBar,
-  isHomeTopFilter,
-} from '@/components/home/HomeHeader';
+export { HomeHeader, HomeNavigationBar } from '@/components/home/HomeHeader';
 export { LocationContextCard } from '@/components/home/LocationContextCard';
 export { MoodRecommendationCard } from '@/components/home/MoodRecommendationCard';
 export {

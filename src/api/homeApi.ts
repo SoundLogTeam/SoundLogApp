@@ -27,7 +27,6 @@ export type MoodRecommendationParams = {
   recommendationMode?: MusicRecommendationMode;
   preferredGenres?: string[];
   preferredMoods?: string[];
-  topFilter?: string;
   travelStyles?: string[];
 };
 
@@ -75,7 +74,6 @@ export const homeApi = {
           preferredGenres: params?.preferredGenres,
           preferredMoods: params?.preferredMoods,
           recommendationMode: params?.recommendationMode ?? 'everyday',
-          topFilter: params?.topFilter ?? '전체',
           travelStyles: params?.travelStyles,
         },
       });

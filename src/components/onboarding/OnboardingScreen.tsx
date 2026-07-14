@@ -1,12 +1,14 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Switch, View } from 'react-native';
 
 import { meApi } from '@/api/meApi';
 import { AppText } from '@/components/AppText';
-import { BrandLogo } from '@/components/BrandLogo';
+import { IconButton } from '@/components/IconButton';
+import { PageHeader } from '@/components/PageHeader';
 import { Screen } from '@/components/Screen';
+import { SectionTitle } from '@/components/SectionTitle';
+import { SettingsRow } from '@/components/SettingsRow';
 import { useAuthStore } from '@/store/authStore';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
 import {
@@ -74,7 +76,7 @@ export function OnboardingScreen() {
   const isEditMode = mode === 'edit';
   const { completeOnboarding, profile, updateProfile } = useUserProfileStore();
   const { status } = useAuthStore();
-  const { setSelectedMoodFilter, setSelectedTopFilter } = useHomeFilterStore();
+  const { setSelectedMoodFilter } = useHomeFilterStore();
   const [currentStep, setCurrentStep] = useState<IntroStep>(isEditMode ? 'setup' : 'intro');
   const [selectedTravelLabel, setSelectedTravelLabel] = useState(() =>
     getTravelLabelFromProfile(profile),
@@ -98,7 +100,6 @@ export function OnboardingScreen() {
   );
 
   const applyHomeFilters = (input: UserProfileInput) => {
-    setSelectedTopFilter('전체');
     setSelectedMoodFilter(input.preferredMoods[0] ?? '전체');
   };
 
@@ -157,87 +158,62 @@ export function OnboardingScreen() {
 
   const renderIntro = () => (
     <>
-      <View className="flex-row items-center justify-between">
-        <View className="flex-row items-center gap-3">
-          <BrandLogo className="border border-white/20" size={50} />
-          <AppText className="text-base font-semibold text-white">Soundlog</AppText>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          disabled={isSaving}
-          onPress={() => router.push('/auth/login' as never)}
-          style={{ opacity: isSaving ? 0.45 : 1 }}
-        >
-          <AppText className="text-sm font-semibold text-white/55">로그인</AppText>
-        </Pressable>
-      </View>
+      <PageHeader
+        rightContent={
+          status === 'authenticated' ? undefined : (
+            <Pressable
+              accessibilityRole="button"
+              disabled={isSaving}
+              onPress={() => router.push('/auth/login' as never)}
+              style={{ opacity: isSaving ? 0.45 : 1 }}
+            >
+              <AppText className="text-sm font-semibold text-white/55">로그인</AppText>
+            </Pressable>
+          )
+        }
+        title="Soundlog"
+      />
 
       <View>
-        <AppText className="text-[36px] font-semibold leading-[43px] text-white">
+        <AppText className="text-[30px] font-semibold leading-9 text-white">
           지금 장소의 음악을{'\n'}여행 앨범으로
         </AppText>
-        <AppText className="mt-4 text-[15px] leading-7 text-white/60">
+        <AppText className="mt-4 text-[15px] leading-7 text-white/54">
           음악은 외부 앱에서 듣고, Soundlog에는 여행의 사운드트랙을 남겨요.
         </AppText>
       </View>
 
-      <LinearGradient
-        colors={['rgba(29,185,84,0.28)', 'rgba(39,211,255,0.18)', 'rgba(255,255,255,0.08)']}
-        end={{ x: 1, y: 1 }}
-        start={{ x: 0, y: 0 }}
-        style={{ borderRadius: 30, padding: 1 }}
-      >
-        <View className="overflow-hidden rounded-[29px] bg-[#070A0F] p-5">
-          <View className="flex-row items-start justify-between">
-            <View>
-              <AppText className="text-xs font-semibold uppercase text-[#B7E628]">
-                Recap preview
-              </AppText>
-              <AppText className="mt-2 text-[24px] font-semibold leading-8 text-white">
-                서울숲 산책{'\n'}사운드트랙
-              </AppText>
-            </View>
-            <View className="h-16 w-16 items-center justify-center rounded-2xl bg-white">
-              <View className="h-11 w-11 rounded-full border-[10px] border-[#050916] bg-[#B7E628]" />
-            </View>
-          </View>
-
-          <View className="mt-6 flex-row gap-2">
-            <View className="h-24 flex-1 rounded-[18px] bg-white/10 p-3">
-              <AppText className="text-xs font-semibold text-white/45">ALBUM</AppText>
-              <AppText className="mt-auto text-sm font-semibold text-white">대표 곡</AppText>
-              <AppText className="mt-1 text-xs text-white/50">사진과 장소를 한 장으로</AppText>
-            </View>
-            <View className="h-24 flex-1 rounded-[18px] bg-white/10 p-3">
-              <AppText className="text-xs font-semibold text-white/45">FILM</AppText>
-              <View className="mt-auto flex-row gap-1">
-                {[0, 1, 2, 3].map((item) => (
-                  <View className="h-8 flex-1 rounded bg-white/20" key={item} />
-                ))}
-              </View>
-            </View>
-          </View>
-
-          <View className="mt-5 rounded-[18px] border border-white/10 bg-white/5 px-4 py-3">
-            <AppText className="text-xs leading-5 text-white/60">
-              앱 안에서는 음원을 재생하지 않고, 곡 정보와 외부 링크, 여행 기록을 이어 붙입니다.
-            </AppText>
-          </View>
+      <View>
+        <SectionTitle title="Soundlog에서 하는 일" />
+        <View className="mt-2">
+          <SettingsRow
+            description="현재 장소와 취향을 바탕으로 오늘의 음악을 골라요."
+            icon="map-pin"
+            label="장소 기반 음악 추천"
+          />
+          <SettingsRow
+            description="사진, 장소와 음악을 한 번의 리캡으로 저장해요."
+            icon="camera"
+            label="순간을 리캡으로 기록"
+          />
+          <SettingsRow
+            description="여행모드에서 만든 리캡을 이동 경로와 함께 모아봐요."
+            icon="map"
+            label="여행 로그로 회고"
+          />
         </View>
-      </LinearGradient>
+      </View>
 
-      <View className="mt-auto gap-3">
+      <View className="mt-auto gap-2">
         {saveErrorMessage ? (
-          <View className="rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
-            <AppText className="text-xs leading-5 text-amber-100">
-              {saveErrorMessage}
-            </AppText>
-          </View>
+          <AppText className="text-xs leading-5 text-amber-100">
+            {saveErrorMessage}
+          </AppText>
         ) : null}
 
         <Pressable
           accessibilityRole="button"
-          className="h-14 items-center justify-center rounded-full bg-[#B7E628]"
+          className="h-14 items-center justify-center rounded-xl bg-soundlog-lime"
           disabled={isSaving}
           onPress={() => {
             if (status !== 'authenticated') {
@@ -249,19 +225,10 @@ export function OnboardingScreen() {
           }}
           style={{ opacity: isSaving ? 0.55 : 1 }}
         >
-          <AppText className="text-base font-semibold text-[#050916]">
-            {status === 'authenticated' ? '시작하기' : '로그인하고 시작하기'}
-          </AppText>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          className="h-14 items-center justify-center rounded-full border border-white/10 bg-white/10"
-          disabled={isSaving}
-          onPress={() => router.push('/auth/login' as never)}
-          style={{ opacity: isSaving ? 0.55 : 1 }}
-        >
-          <AppText className="text-base font-semibold text-white">
-            계정 만들기 또는 로그인
+          <AppText className="text-base font-semibold text-soundlog-inverse">
+            {status === 'authenticated'
+              ? '추천 취향 설정하기'
+              : '계정 만들기 또는 로그인'}
           </AppText>
         </Pressable>
       </View>
@@ -270,68 +237,77 @@ export function OnboardingScreen() {
 
   const renderSetup = () => (
     <>
-      <View className="flex-row items-center justify-between">
-        <Pressable
-          accessibilityRole="button"
-          className="h-11 w-11 items-center justify-center rounded-full bg-white/10"
-          disabled={isSaving}
-          onPress={() => (isEditMode ? router.replace('/my' as never) : setCurrentStep('intro'))}
-        >
-          <AppText className="text-lg font-semibold text-white">‹</AppText>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          disabled={isSaving}
-          onPress={() => handlePrimarySetup(false)}
-          style={{ opacity: isSaving ? 0.45 : 1 }}
-        >
-          <AppText className="text-sm font-semibold text-white/55">
-            {isEditMode ? '변경 없이 나가기' : '나중에 하기'}
-          </AppText>
-        </Pressable>
-      </View>
+      <PageHeader
+        leftContent={
+          <IconButton
+            label={isEditMode ? '마이페이지로 돌아가기' : '이전 단계로 돌아가기'}
+            name="arrow-left"
+            onPress={() =>
+              isEditMode
+                ? router.replace('/my' as never)
+                : setCurrentStep('intro')
+            }
+          />
+        }
+        rightContent={
+          <Pressable
+            accessibilityRole="button"
+            disabled={isSaving}
+            onPress={() => {
+              if (isEditMode) {
+                router.replace('/my' as never);
+                return;
+              }
+
+              handlePrimarySetup(false);
+            }}
+            style={{ opacity: isSaving ? 0.45 : 1 }}
+          >
+            <AppText className="text-sm font-semibold text-white/48">
+              {isEditMode ? '취소' : '나중에'}
+            </AppText>
+          </Pressable>
+        }
+        title={isEditMode ? '추천 취향 수정' : '추천 취향'}
+      />
+
+      <AppText className="text-sm leading-6 text-white/48">
+        장소 기반 추천에 반영할 여행 스타일과 무드를 선택하세요.
+      </AppText>
 
       <View>
-        <AppText className="text-[32px] font-semibold leading-[39px] text-white">
-          어떤 여행 중인가요?
-        </AppText>
-        <AppText className="mt-3 text-sm leading-6 text-white/60">
-          지금 장면과 듣고 싶은 분위기만 고르면 첫 추천을 바로 시작할게요.
-        </AppText>
-      </View>
+        <SectionTitle title="여행 스타일" />
+        <View className="mt-3 flex-row flex-wrap gap-2">
+          {travelOptions.map((option) => {
+            const selected = selectedTravelLabel === option.label;
 
-      <View className="flex-row flex-wrap gap-2">
-        {travelOptions.map((option) => {
-          const selected = selectedTravelLabel === option.label;
-
-          return (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ selected }}
-              className={`min-h-12 justify-center rounded-full border px-5 ${
-                selected
-                  ? 'border-[#B7E628] bg-[#B7E628]'
-                  : 'border-white/10 bg-white/10'
-              }`}
-              key={option.label}
-              onPress={() => setSelectedTravelLabel(option.label)}
-            >
-              <AppText
-                className={`text-sm font-semibold ${
-                  selected ? 'text-[#050916]' : 'text-white/72'
+            return (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                className={`min-h-11 justify-center rounded-full border px-5 ${
+                  selected
+                    ? 'border-soundlog-lime bg-soundlog-lime'
+                    : 'border-white/10 bg-white/[0.06]'
                 }`}
+                key={option.label}
+                onPress={() => setSelectedTravelLabel(option.label)}
               >
-                {option.label}
-              </AppText>
-            </Pressable>
-          );
-        })}
+                <AppText
+                  className={`text-sm font-semibold ${
+                    selected ? 'text-soundlog-inverse' : 'text-white/68'
+                  }`}
+                >
+                  {option.label}
+                </AppText>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
 
       <View>
-        <AppText className="text-xs font-semibold text-white/40">
-          어떤 분위기인가요?
-        </AppText>
+        <SectionTitle title="듣고 싶은 무드" />
         <View className="mt-3 flex-row flex-wrap gap-2">
           {moodOptions.map((mood) => {
             const selected = selectedMood === mood;
@@ -340,17 +316,17 @@ export function OnboardingScreen() {
               <Pressable
                 accessibilityRole="button"
                 accessibilityState={{ selected }}
-                className={`min-h-12 justify-center rounded-full border px-5 ${
+                className={`min-h-11 justify-center rounded-full border px-5 ${
                   selected
-                    ? 'border-[#9EA8FF]/70 bg-[#243A75]/80'
-                    : 'border-white/10 bg-white/10'
+                    ? 'border-soundlog-lime bg-soundlog-lime'
+                    : 'border-white/10 bg-white/[0.06]'
                 }`}
                 key={mood}
                 onPress={() => setSelectedMood(mood)}
               >
                 <AppText
                   className={`text-sm font-semibold ${
-                    selected ? 'text-white' : 'text-white/72'
+                    selected ? 'text-soundlog-inverse' : 'text-white/68'
                   }`}
                 >
                   {mood}
@@ -362,17 +338,12 @@ export function OnboardingScreen() {
       </View>
 
       <View>
-        <AppText className="text-xs font-semibold uppercase text-white/40">권한</AppText>
-        <View className="mt-3 rounded-[24px] border border-white/10 bg-white/10 p-4">
-          <View className="flex-row items-center justify-between gap-4">
-            <View className="min-w-0 flex-1">
-              <AppText className="text-base font-semibold text-white">
-                현재 위치로 추천받기
-              </AppText>
-              <AppText className="mt-2 text-sm leading-6 text-white/60">
-                거부해도 산책·잔잔한 기본 추천과 수동 탐색은 계속 가능해요.
-              </AppText>
-            </View>
+        <SectionTitle title="위치 및 추천" />
+        <SettingsRow
+          description="꺼도 수동 장소 선택과 기본 추천은 계속 사용할 수 있어요."
+          icon="navigation"
+          label="현재 위치로 추천받기"
+          rightContent={
             <Switch
               onValueChange={setLocationRecommendationEnabled}
               thumbColor="#ffffff"
@@ -382,39 +353,45 @@ export function OnboardingScreen() {
               }}
               value={locationRecommendationEnabled}
             />
-          </View>
-        </View>
+          }
+        />
       </View>
 
       <View className="mt-auto gap-3">
         {saveErrorMessage ? (
-          <View className="rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
-            <AppText className="text-xs leading-5 text-amber-100">
-              {saveErrorMessage}
-            </AppText>
-          </View>
+          <AppText className="text-xs leading-5 text-amber-100">
+            {saveErrorMessage}
+          </AppText>
         ) : null}
 
         <Pressable
           accessibilityRole="button"
-          className="h-14 items-center justify-center rounded-full bg-[#B7E628]"
+          className="h-14 items-center justify-center rounded-xl bg-soundlog-lime"
           disabled={isSaving}
-          onPress={() => handlePrimarySetup(true)}
+          onPress={() => handlePrimarySetup(locationRecommendationEnabled)}
           style={{ opacity: isSaving ? 0.55 : 1 }}
         >
-          <AppText className="text-base font-semibold text-[#050916]">
-            {isSaving ? '저장 중...' : '위치 추천 켜기'}
+          <AppText className="text-base font-semibold text-soundlog-inverse">
+            {isSaving
+              ? '저장 중...'
+              : isEditMode
+                ? '추천 설정 저장하기'
+                : '설정 저장하고 시작하기'}
           </AppText>
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          className="h-14 items-center justify-center rounded-full border border-white/10 bg-white/10"
-          disabled={isSaving}
-          onPress={() => handlePrimarySetup(false)}
-          style={{ opacity: isSaving ? 0.55 : 1 }}
-        >
-          <AppText className="text-base font-semibold text-white">나중에 하기</AppText>
-        </Pressable>
+        {!isEditMode ? (
+          <Pressable
+            accessibilityRole="button"
+            className="h-12 items-center justify-center"
+            disabled={isSaving}
+            onPress={() => handlePrimarySetup(false)}
+            style={{ opacity: isSaving ? 0.55 : 1 }}
+          >
+            <AppText className="text-sm font-semibold text-white/54">
+              나중에 하기
+            </AppText>
+          </Pressable>
+        ) : null}
       </View>
     </>
   );

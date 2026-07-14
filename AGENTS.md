@@ -10,3 +10,13 @@
 - Treat Expo web as a development or CI/export compatibility target only. Do not design product behavior around web deployment unless the user explicitly asks for web support.
 - When a feature depends on native capabilities such as camera, location, media library, sharing, secure storage, or app permissions, prioritize iOS/Android behavior and native Expo APIs.
 - Do not block mobile feature work just because the same flow cannot fully work on web. Provide a minimal web fallback only when it is needed for local development, type checking, preview safety, or export stability.
+
+## Recap And Log Domain
+
+- Before changing Recap, Log, camera capture, travel mode, route tracking, map pins, visibility, or related API behavior, read `docs/product/RECAP_LOG_DOMAIN_MODEL.md`.
+- Treat that document as the canonical product contract when older planning docs or legacy code names conflict with it.
+- Product `Recap` means one capture saved from the camera flow.
+- Product `Log` means one or more Recaps created in the same travel-mode session. A standalone Recap created outside travel mode is not a one-item Log.
+- A travel Log is identified by `sessionId`, even when it contains only one Recap. Never merge Logs by date, place, distance, or track.
+- A Log detail map may show only its member Recap pins and its own session route. Do not mix nearby/public pins or other Logs into that map.
+- `MomentLog` and the server `Recap` model are legacy technical names. Follow the product-to-code mapping in the canonical domain document instead of exposing those terms to users.

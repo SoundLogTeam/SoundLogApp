@@ -146,7 +146,7 @@ async function verifyNearbyPlaces() {
 async function verifyMusicMetadata() {
   try {
     const payload = await fetchAuthenticatedJson(
-      '/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday&topFilter=%EC%A0%84%EC%B2%B4',
+      '/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday',
     );
     const serialized = JSON.stringify(payload?.data ?? {});
 

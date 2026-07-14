@@ -139,14 +139,20 @@ function verifyRuntimeSourceDoesNotImportMocks() {
     });
 }
 
-function verifyHomeScreenUsesServerQueries() {
-  const homeRoutePath = path.join(projectRoot, 'app/(tabs)/index.tsx');
-  const text = fs.readFileSync(homeRoutePath, 'utf8');
+function verifyMusicScreenUsesServerQueries() {
+  const musicRoutePath = path.join(projectRoot, 'app/(tabs)/music.tsx');
+  const text = fs.readFileSync(musicRoutePath, 'utf8');
 
   [
-    ['useFeaturedPlaylistsQuery', 'Home screen must request featured playlists through the API query.'],
-    ['useMoodRecommendationsQuery', 'Home screen must request mood recommendations through the API query.'],
-    ['useNearbyPlacesQuery', 'Home screen must request nearby places through the API query.'],
+    [
+      'useFeaturedPlaylistsQuery',
+      'Music screen must request featured playlists through the API query.',
+    ],
+    [
+      'useMoodRecommendationsQuery',
+      'Music screen must request mood recommendations through the API query.',
+    ],
+    ['useNearbyPlacesQuery', 'Music screen must request nearby places through the API query.'],
   ].forEach(([marker, message]) => {
     if (!text.includes(marker)) {
       addError(message);
@@ -155,7 +161,7 @@ function verifyHomeScreenUsesServerQueries() {
 
   ['@/mock-server', '@/mocks', 'playlistCurationById'].forEach((marker) => {
     if (text.includes(marker)) {
-      addError(`Home screen must not use mock data marker: ${marker}`);
+      addError(`Music screen must not use mock data marker: ${marker}`);
     }
   });
 }
@@ -243,7 +249,7 @@ try {
   verifyApiSourceFiles();
   verifyHonestMusicActionSourceFiles();
   verifyRuntimeSourceDoesNotImportMocks();
-  verifyHomeScreenUsesServerQueries();
+  verifyMusicScreenUsesServerQueries();
   runExport();
 
   if (errors.length === 0) {

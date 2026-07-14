@@ -33,7 +33,7 @@ function toRadians(value: number) {
   return (value * Math.PI) / 180;
 }
 
-function getDistanceMeters(first: GeoPoint, second: GeoPoint) {
+export function getDistanceMeters(first: GeoPoint, second: GeoPoint) {
   const latDistance = toRadians(second.lat - first.lat);
   const lngDistance = toRadians(second.lng - first.lng);
   const firstLat = toRadians(first.lat);
