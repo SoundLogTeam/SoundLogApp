@@ -724,6 +724,10 @@ export function TravelScreen() {
   };
   const handleSubmitTravelMode = async () => {
     if (session.status === 'active') {
+      if (session.id && selectedMode) {
+        travelSessionApi.updateTravelMode(session.id, selectedMode).catch(() => undefined);
+      }
+
       setIsModeSheetVisible(false);
       setRecapMessage(
         '현재 여행 상태를 수정했어요. 다음 추천과 리캡에 반영돼요.',

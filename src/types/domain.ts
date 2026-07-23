@@ -219,7 +219,9 @@ export type RecapShare = {
   moments?: RecapShareMoment[];
   recordedAt: string;
   routePoints?: RoutePoint[];
+  sessionEndedAt?: string;
   sessionId?: string;
+  sessionStartedAt?: string;
   shareImageUrl?: string;
   templateId?: RecapTemplateId;
   thumbnailMomentId?: string;

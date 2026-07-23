@@ -70,4 +70,18 @@ export const travelSessionApi = {
       method: 'PATCH',
     });
   },
+
+  updateTravelMode: async (sessionId: string, travelMode: TravelMode) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return undefined;
+    }
+
+    return requestApi<TravelSessionDto>(`/v1/travel-sessions/${encodeURIComponent(sessionId)}`, {
+      body: {
+        status: 'active',
+        travelMode,
+      },
+      method: 'PATCH',
+    });
+  },
 };

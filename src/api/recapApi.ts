@@ -19,7 +19,7 @@ type CreateRecapInput = {
   representativeTrackId?: string;
   routePoints?: RoutePoint[];
   sessionId?: string;
-  templateId: RecapTemplateId | 'video';
+  templateId: RecapTemplateId;
   title?: string;
   visibility?: RecapVisibility;
 };
