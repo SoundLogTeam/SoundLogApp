@@ -139,9 +139,11 @@ export function getRecapTravelSummary(recap: RecapShare) {
   return (
     recap.travelSummary ??
     createRecapTravelSummary({
+      endedAt: recap.sessionEndedAt,
       fallbackPlaceName: recap.placeName,
       moments: getRecapSoundLogs(recap),
       routePoints: recap.routePoints,
+      startedAt: recap.sessionStartedAt,
     })
   );
 }
