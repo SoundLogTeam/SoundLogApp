@@ -1,5 +1,7 @@
 # iOS Apple + Kakao Social Login Plan
 
+> **Archived proposal:** 2026-07-02 자체 이메일/비밀번호 로그인으로 MVP 정책이 변경되어 현재 구현 기준이 아니다. 소셜 로그인 재도입 시 참고용으로만 사용한다.
+
 ## Goal
 
 iOS 앱에서 실제 소셜 로그인 진입점을 Apple과 Kakao 두 개로 제한한다. Google 버튼은 사용자 플로우에서 제거하고, 주요 앱 기능은 로그인 이후에만 사용할 수 있게 한다. 키가 없는 개발/프리뷰 환경에서는 dev fallback 또는 안내 상태로 앱이 깨지지 않아야 한다.

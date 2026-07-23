@@ -57,7 +57,7 @@ export function PlaylistHeroInfo({
     <View className="px-5 pb-5">
       <View className="flex-row items-center justify-between">
         <View className="flex-1 pr-4">
-          <AppText className="text-[40px] font-semibold leading-[46px] text-white" numberOfLines={1}>
+          <AppText className="text-[30px] font-semibold leading-9 text-white" numberOfLines={1}>
             {playlist.regionName}
           </AppText>
           {playlist.placeName ? (
@@ -93,12 +93,12 @@ export function PlaylistHeroInfo({
         <Pressable
           accessibilityLabel="플레이리스트 대표곡 SoundLog 음악으로 선택"
           accessibilityRole="button"
-          className="h-[54px] w-[54px] items-center justify-center rounded-full bg-[#20146F]"
+          className="h-[52px] w-[52px] items-center justify-center rounded-full bg-soundlog-lime"
           disabled={disabled}
           onPress={onOpenFirstTrack}
           style={{ opacity: disabled ? 0.45 : 1 }}
         >
-          <Feather color="#fff" name="music" size={23} />
+          <Feather color="#050916" name="music" size={22} />
         </Pressable>
       </View>
 

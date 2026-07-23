@@ -1,387 +1,727 @@
-import { useQueryClient } from '@tanstack/react-query';
-import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Feather } from "@expo/vector-icons";
+import { useQueryClient } from "@tanstack/react-query";
+import { router, useLocalSearchParams } from "expo-router";
+import { Image } from "expo-image";
+import { LinearGradient } from "expo-linear-gradient";
+import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  Animated,
+  GestureResponderEvent,
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { recapApi } from '@/api/recapApi';
-import { recapQueryKeys, useRecapListQuery } from '@/api/recapQueries';
-import { AppText } from '@/components/AppText';
-import { RecapEmptyState } from '@/components/recap/RecapEmptyState';
-import { RecapListCard } from '@/components/recap/RecapListCard';
-import { Screen } from '@/components/Screen';
-import { useMomentLogStore } from '@/store/momentLogStore';
-import { useTravelSessionStore } from '@/store/travelSessionStore';
-import type { MomentLog } from '@/types/domain';
+import { ApiError } from "@/api/client";
+import { recapApi } from "@/api/recapApi";
+import { recapQueryKeys, useRecapListQuery } from "@/api/recapQueries";
+import { AppText } from "@/components/AppText";
+import { PageHeader } from "@/components/PageHeader";
+import { RecapEmptyState } from "@/components/recap/RecapEmptyState";
+import { Screen } from "@/components/Screen";
+import { getTabBarHeight } from "@/constants/layout";
+import { useMomentLogStore } from "@/store/momentLogStore";
+import type { MomentLog, RecapItem, RecapVisibility } from "@/types/domain";
 import {
   createMomentLogGroups,
-  createSessionRecapId,
-  extractSessionIdFromRecapId,
   momentLogGroupToRecapItem,
-} from '@/utils/recapMappers';
+} from "@/utils/recapMappers";
+import { flushPendingMomentActions } from "@/utils/momentLogSync";
 
-type RecapListEntry = {
+type LogFeedTabId = "others" | "all";
+
+type LogGridEntry = {
   imageUrl?: string;
-  item: ReturnType<typeof momentLogGroupToRecapItem>;
+  item: RecapItem;
+  owner: "mine" | "other";
   shareId: string;
+  source: "local" | "server";
+  syncStatus?: MomentLog["syncStatus"];
 };
 
-type CurrentTripRecapCardProps = {
-  isCreating: boolean;
-  message?: string;
-  momentCount: number;
-  onPress: () => void;
-  representativeLog?: MomentLog;
-  status: 'empty' | 'failed' | 'local' | 'ready' | 'synced';
-  trackCount: number;
-  unsyncedMomentCount: number;
-};
+const logFeedTabs: Array<{
+  label: string;
+  value: LogFeedTabId;
+}> = [
+  {
+    label: "다른사람 보기",
+    value: "others",
+  },
+  {
+    label: "모든 사람 보기",
+    value: "all",
+  },
+];
 
-function getUniqueTrackCount(logs: MomentLog[]) {
-  return new Set(logs.map((log) => log.track?.id).filter(Boolean)).size;
-}
-
-function getNewestMomentLog(logs: MomentLog[]) {
-  return [...logs].sort(
+function sortEntriesByCreatedAt(entries: LogGridEntry[]) {
+  return [...entries].sort(
     (first, second) =>
-      new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime(),
-  )[0];
+      new Date(second.item.createdAt).getTime() -
+      new Date(first.item.createdAt).getTime(),
+  );
 }
 
-function CurrentTripRecapCard({
-  isCreating,
-  message,
-  momentCount,
+function dedupeEntries(entries: LogGridEntry[]) {
+  const seenKeys = new Set<string>();
+
+  return entries.filter((entry) => {
+    const key = `${entry.source}:${entry.shareId}`;
+
+    if (seenKeys.has(key)) {
+      return false;
+    }
+
+    seenKeys.add(key);
+    return true;
+  });
+}
+
+function getEntryImageUrl(entry: LogGridEntry) {
+  return entry.imageUrl ?? entry.item.representativeTrack.albumImageUrl;
+}
+
+function getVisibilityLabel(visibility?: RecapVisibility) {
+  return visibility === "public" ? "공개" : "비공개";
+}
+
+function getMomentCountLabel(item: RecapItem) {
+  if (item.momentCount && item.momentCount > 1) {
+    return `${item.momentCount}개`;
+  }
+
+  return "1개";
+}
+
+function getGroupSyncStatus(logs: MomentLog[]): MomentLog["syncStatus"] {
+  if (logs.some((log) => log.syncStatus === "failed")) {
+    return "failed";
+  }
+
+  if (logs.some((log) => log.syncStatus === "pending")) {
+    return "pending";
+  }
+
+  if (logs.some((log) => log.syncStatus === "local")) {
+    return "local";
+  }
+
+  return "synced";
+}
+
+function getLocalSyncLabel(syncStatus?: MomentLog["syncStatus"]) {
+  if (syncStatus === "failed") {
+    return "재시도";
+  }
+
+  if (syncStatus === "pending") {
+    return "동기화 중";
+  }
+
+  return "기기 저장";
+}
+
+type LogGridCardProps = {
+  entry: LogGridEntry;
+  itemSize: number;
+  isMine: boolean;
+  isUpdating: boolean;
+  onChangeVisibility: (
+    entry: LogGridEntry,
+    visibility: RecapVisibility,
+    event: GestureResponderEvent,
+  ) => void;
+  onPress: () => void;
+};
+
+function LogGridCard({
+  entry,
+  itemSize,
+  isMine,
+  isUpdating,
+  onChangeVisibility,
   onPress,
-  representativeLog,
-  status,
-  trackCount,
-  unsyncedMomentCount,
-}: CurrentTripRecapCardProps) {
-  const statusLabel = isCreating
-    ? '생성 중...'
-    : status === 'failed'
-      ? '실패 · 재시도 가능'
-      : status === 'synced'
-        ? '완료'
-        : status === 'local'
-          ? '로컬 미리보기'
-        : status === 'ready'
-          ? '생성 가능'
-          : '생성 전';
-  const buttonLabel = isCreating
-    ? '생성 중...'
-    : status === 'failed'
-      ? '다시 시도'
-      : status === 'synced'
-        ? 'Recap 열기'
-        : status === 'local'
-          ? unsyncedMomentCount > 0
-            ? '로컬 Recap 열기'
-            : '서버 Recap으로 저장'
-          : status === 'empty'
-            ? '첫 Moment 저장'
-            : 'Recap 만들기';
-  const representativeTrackLabel = representativeLog?.track
-    ? `${representativeLog.track.title} - ${representativeLog.track.artist}`
-    : '대표 곡 없음';
+}: LogGridCardProps) {
+  const imageUrl = getEntryImageUrl(entry);
+  const [failedImageUrl, setFailedImageUrl] = useState<string>();
+  const visibleImageUrl =
+    imageUrl && failedImageUrl !== imageUrl ? imageUrl : undefined;
+  const visibility = entry.item.visibility ?? "private";
+  const nextVisibility: RecapVisibility =
+    visibility === "public" ? "private" : "public";
+  const canChangeVisibility = entry.source === "server";
 
   return (
-    <View className="overflow-hidden rounded-[24px] border border-white/10 bg-white/10 p-5">
-      <View className="flex-row items-start justify-between gap-3">
-        <View className="min-w-0 flex-1">
-          <AppText className="text-[11px] font-semibold uppercase text-white/45">
-            이번 여행
-          </AppText>
-          <AppText className="mt-2 text-[26px] font-semibold leading-8 text-white">
-            {statusLabel}
-          </AppText>
-          <AppText className="mt-2 text-sm leading-6 text-white/55">
-            {momentCount}개 Moment · {trackCount}곡
-          </AppText>
-          {status === 'local' && !message ? (
-            <AppText className="mt-2 text-xs leading-5 text-amber-100/80">
-              {unsyncedMomentCount > 0
-                ? `서버에 올라가지 않은 Moment ${unsyncedMomentCount}개가 있어 로컬 결과물로 먼저 볼 수 있어요.`
-                : '모든 Moment가 동기화됐어요. 서버 Recap으로 저장할 수 있어요.'}
-            </AppText>
-          ) : null}
-        </View>
-        <View className="rounded-full bg-soundlog-lime px-3 py-1.5">
-          <AppText className="text-xs font-semibold text-soundlog-inverse">Recap</AppText>
-        </View>
-      </View>
-
-      <View className="mt-4 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3">
-        <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
-          {representativeLog?.placeName ?? '아직 대표 장소가 없어요'}
-        </AppText>
-        <AppText className="mt-1 text-xs leading-5 text-white/55" numberOfLines={2}>
-          {representativeTrackLabel}
-        </AppText>
-      </View>
-
-      {message ? (
-        <View className="mt-3 rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
-          <AppText className="text-xs leading-5 text-amber-100">{message}</AppText>
-        </View>
-      ) : null}
-
+    <View
+      className="overflow-hidden bg-white/10"
+      style={[
+        styles.gridCard,
+        { height: Math.round(itemSize * 1.25), width: itemSize },
+      ]}
+    >
       <Pressable
+        accessibilityLabel={`${entry.item.title} 자세히 보기`}
         accessibilityRole="button"
-        className="mt-4 min-h-[52px] items-center justify-center rounded-full bg-soundlog-lime"
-        disabled={isCreating}
         onPress={onPress}
-        style={{ opacity: isCreating ? 0.62 : 1 }}
-      >
-        <AppText className="text-sm font-semibold text-soundlog-inverse">
-          {buttonLabel}
-        </AppText>
-      </Pressable>
+        style={StyleSheet.absoluteFill}
+      />
+
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+        {visibleImageUrl ? (
+          <Image
+            contentFit="cover"
+            onError={() => setFailedImageUrl(visibleImageUrl)}
+            source={{ uri: visibleImageUrl }}
+            style={StyleSheet.absoluteFill}
+            transition={180}
+          />
+        ) : (
+          <LinearGradient
+            colors={["#241747", "#1D365C", "#121829"]}
+            end={{ x: 1, y: 1 }}
+            start={{ x: 0, y: 0 }}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
+        <LinearGradient
+          colors={["rgba(0,0,0,0.02)", "rgba(0,0,0,0.18)", "rgba(0,0,0,0.76)"]}
+          end={{ x: 0.5, y: 1 }}
+          start={{ x: 0.5, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+        {!visibleImageUrl ? (
+          <View className="absolute inset-0 items-center justify-center px-3 pb-5">
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
+              <Feather color="rgba(255,255,255,0.78)" name="disc" size={19} />
+            </View>
+            <AppText
+              className="mt-2 text-center text-xs font-semibold leading-4 text-white/82"
+              numberOfLines={2}
+            >
+              {entry.item.title}
+            </AppText>
+          </View>
+        ) : null}
+        <View className="absolute left-2 top-2 rounded-full bg-black/42 px-2 py-1">
+          <AppText className="text-[10px] font-semibold text-white/82">
+            {getMomentCountLabel(entry.item)}
+          </AppText>
+        </View>
+
+        <View className="absolute bottom-2 left-2 right-2 flex-row items-center justify-between gap-2">
+          <View className="min-w-0 flex-1 rounded-full bg-black/42 px-2 py-1">
+            <AppText
+              className="text-[10px] font-semibold text-white/82"
+              numberOfLines={1}
+            >
+              {entry.item.placeName}
+            </AppText>
+          </View>
+          <Feather
+            color="rgba(255,255,255,0.82)"
+            name="chevrons-right"
+            size={13}
+          />
+        </View>
+      </View>
+
+      {isMine ? (
+        <Pressable
+          accessibilityLabel={
+            canChangeVisibility
+              ? `${entry.item.title} ${getVisibilityLabel(visibility)}, ${getVisibilityLabel(nextVisibility)}로 변경`
+              : `${entry.item.title} ${getLocalSyncLabel(entry.syncStatus)}`
+          }
+          accessibilityRole="button"
+          accessibilityState={{ disabled: isUpdating }}
+          className={`absolute right-2 top-2 rounded-full px-2 py-1 ${
+            visibility === "public" ? "bg-soundlog-lime" : "bg-black/48"
+          }`}
+          disabled={isUpdating}
+          onPress={(event) => onChangeVisibility(entry, nextVisibility, event)}
+          style={{ opacity: canChangeVisibility ? 1 : 0.62 }}
+        >
+          <AppText
+            className={`text-[10px] font-semibold ${
+              visibility === "public"
+                ? "text-soundlog-inverse"
+                : "text-white/80"
+            }`}
+          >
+            {isUpdating
+              ? "변경중"
+              : canChangeVisibility
+                ? getVisibilityLabel(visibility)
+                : getLocalSyncLabel(entry.syncStatus)}
+          </AppText>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
 
+type LogFeedPageProps = {
+  actionMessage?: string;
+  contentBottomPadding: number;
+  emptyMessage: string;
+  entries: LogGridEntry[];
+  hasAnyLog: boolean;
+  isActive: boolean;
+  isError: boolean;
+  isLoading: boolean;
+  itemSize: number;
+  onChangeVisibility: (
+    entry: LogGridEntry,
+    visibility: RecapVisibility,
+    event: GestureResponderEvent,
+  ) => void;
+  onOpenEntry: (entry: LogGridEntry) => void;
+  tabId: LogFeedTabId;
+  updatingRecapId?: string;
+  width: number;
+};
+
+function LogFeedPage({
+  actionMessage,
+  contentBottomPadding,
+  emptyMessage,
+  entries,
+  hasAnyLog,
+  isActive,
+  isError,
+  isLoading,
+  itemSize,
+  onChangeVisibility,
+  onOpenEntry,
+  tabId,
+  updatingRecapId,
+  width,
+}: LogFeedPageProps) {
+  return (
+    <ScrollView
+      accessibilityElementsHidden={!isActive}
+      contentContainerStyle={{
+        gap: 14,
+        paddingBottom: contentBottomPadding,
+        paddingTop: 14,
+      }}
+      directionalLockEnabled
+      keyboardShouldPersistTaps="handled"
+      importantForAccessibility={isActive ? "auto" : "no-hide-descendants"}
+      nestedScrollEnabled
+      showsVerticalScrollIndicator={false}
+      style={{ width }}
+    >
+      {actionMessage ? (
+        <View className="px-5">
+          <AppText className="text-xs leading-5 text-white/55">
+            {actionMessage}
+          </AppText>
+        </View>
+      ) : null}
+
+      {isLoading ? (
+        <View className="px-5">
+          <AppText className="text-sm text-white/55">
+            로그 데이터를 불러오는 중이에요.
+          </AppText>
+        </View>
+      ) : null}
+
+      {isError && !hasAnyLog ? (
+        <View className="px-5">
+          <AppText className="text-sm text-white/55">
+            로그 데이터를 불러오지 못했어요. 잠시 후 다시 확인해주세요.
+          </AppText>
+        </View>
+      ) : null}
+
+      {!isLoading && !hasAnyLog ? (
+        <View className="px-5">
+          <RecapEmptyState />
+        </View>
+      ) : null}
+
+      {entries.length > 0 ? (
+        <View className="flex-row flex-wrap" style={{ gap: 1, width }}>
+          {entries.map((entry) => (
+            <LogGridCard
+              entry={entry}
+              itemSize={itemSize}
+              isMine={entry.owner === "mine"}
+              isUpdating={updatingRecapId === entry.item.id}
+              key={`${tabId}-${entry.source}-${entry.item.id}`}
+              onChangeVisibility={onChangeVisibility}
+              onPress={() => onOpenEntry(entry)}
+            />
+          ))}
+        </View>
+      ) : hasAnyLog && !isLoading ? (
+        <View className="px-5">
+          <AppText className="text-sm leading-6 text-white/55">
+            {emptyMessage}
+          </AppText>
+        </View>
+      ) : null}
+    </ScrollView>
+  );
+}
+
 export function RecapListScreen() {
+  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const params = useLocalSearchParams<{ view?: string | string[] }>();
+  const initialView = Array.isArray(params.view) ? params.view[0] : params.view;
   const queryClient = useQueryClient();
   const momentLogs = useMomentLogStore((state) => state.logs);
-  const { session, setSessionRecapId } = useTravelSessionStore();
-  const [currentRecapStatus, setCurrentRecapStatus] =
-    useState<'empty' | 'failed' | 'local' | 'ready' | 'synced'>('empty');
-  const [currentRecapMessage, setCurrentRecapMessage] = useState<string>();
-  const [isCreatingCurrentRecap, setIsCreatingCurrentRecap] = useState(false);
-  const {
-    data: serverRecapItems = [],
-    isError,
-    isLoading,
-  } = useRecapListQuery();
-  const currentTripLogs = useMemo(
+  const [selectedTab, setSelectedTab] = useState<LogFeedTabId>(
+    initialView === "all" ? "all" : "others",
+  );
+  const [updatingRecapId, setUpdatingRecapId] = useState<string>();
+  const [actionMessage, setActionMessage] = useState<string>();
+  const pagerRef = useRef<ScrollView>(null);
+  const initialTabIndex = initialView === "all" ? 1 : 0;
+  const scrollX = useRef(new Animated.Value(initialTabIndex * width)).current;
+  const mineRecapsQuery = useRecapListQuery("mine");
+  const otherRecapsQuery = useRecapListQuery("others");
+  const contentBottomPadding = getTabBarHeight(insets.bottom) + 56;
+  const gridItemSize = Math.floor((width - 1) / 2);
+  const isLoading = mineRecapsQuery.isLoading || otherRecapsQuery.isLoading;
+  const isError = mineRecapsQuery.isError || otherRecapsQuery.isError;
+
+  const serverMineEntries: LogGridEntry[] = useMemo(
     () =>
-      session.status === 'idle'
-        ? []
-        : momentLogs.filter((log) => log.sessionId === session.id),
-    [momentLogs, session.id, session.status],
+      (mineRecapsQuery.data ?? [])
+        .filter((item) => Boolean(item.sessionId))
+        .map((item) => ({
+          imageUrl: item.backgroundImageUrl,
+          item,
+          owner: "mine" as const,
+          shareId: item.id,
+          source: "server",
+        })),
+    [mineRecapsQuery.data],
   );
-  const currentTripRepresentativeLog = useMemo(
-    () => getNewestMomentLog(currentTripLogs),
-    [currentTripLogs],
+  const serverSessionIds = useMemo(
+    () =>
+      new Set(
+        serverMineEntries.map(({ item }) => item.sessionId).filter(Boolean),
+      ),
+    [serverMineEntries],
   );
-  const currentTripTrackCount = useMemo(
-    () => getUniqueTrackCount(currentTripLogs),
-    [currentTripLogs],
+  const serverRecapIds = useMemo(
+    () => new Set(serverMineEntries.map(({ item }) => item.id)),
+    [serverMineEntries],
   );
-  const currentTripSyncedLogs = useMemo(
-    () => currentTripLogs.filter((log) => log.syncStatus === 'synced'),
-    [currentTripLogs],
+  const localEntries: LogGridEntry[] = useMemo(
+    () =>
+      createMomentLogGroups(momentLogs)
+        .filter((group) => Boolean(group.sessionId))
+        .map((group) => ({
+          imageUrl: group.logs[0]?.photoUri,
+          item: momentLogGroupToRecapItem(group),
+          owner: "mine" as const,
+          shareId: group.id,
+          source: "local" as const,
+          syncStatus: getGroupSyncStatus(group.logs),
+        }))
+        .filter(
+          ({ item }) =>
+            !serverRecapIds.has(item.id) &&
+            (!item.sessionId || !serverSessionIds.has(item.sessionId)),
+        ),
+    [momentLogs, serverRecapIds, serverSessionIds],
   );
-  const currentTripUnsyncedMomentCount =
-    currentTripLogs.length - currentTripSyncedLogs.length;
-  const isLocalSessionRecap = Boolean(extractSessionIdFromRecapId(session.recapId));
-  const serverSessionRecapId = session.recapId && !isLocalSessionRecap
-    ? session.recapId
-    : undefined;
-  const currentTripStatus =
-    isCreatingCurrentRecap || currentRecapStatus === 'failed'
-      ? currentRecapStatus
-      : serverSessionRecapId
-        ? 'synced'
-        : isLocalSessionRecap
-          ? 'local'
-        : currentTripLogs.length > 0
-          ? 'ready'
-          : 'empty';
-  const serverRecaps: RecapListEntry[] = serverRecapItems.map((item) => ({
-    imageUrl: item.representativeTrack.albumImageUrl,
-    item,
-    shareId: item.id,
-  }));
-  const serverSessionIds = new Set(serverRecaps.map(({ item }) => item.sessionId).filter(Boolean));
-  const localRecaps: RecapListEntry[] = createMomentLogGroups(momentLogs)
-    .filter((group) => !group.sessionId || !serverSessionIds.has(group.sessionId))
-    .map((group) => ({
-      imageUrl: group.logs[0]?.photoUri,
-      item: momentLogGroupToRecapItem(group),
-      shareId: group.id,
-    }));
-  const recaps = [...localRecaps, ...serverRecaps];
-  const hasRecaps = recaps.length > 0;
-  const savedMomentCount = recaps.reduce(
-    (sum, { item }) => sum + (item.momentCount ?? 1),
-    0,
+  const otherEntries = useMemo(
+    () =>
+      sortEntriesByCreatedAt(
+        (otherRecapsQuery.data ?? [])
+          .filter((item) => Boolean(item.sessionId))
+          .map((item) => ({
+            imageUrl: item.backgroundImageUrl,
+            item,
+            owner: "other" as const,
+            shareId: item.id,
+            source: "server" as const,
+          })),
+      ),
+    [otherRecapsQuery.data],
   );
-  const handleCreateRecap = () => {
-    const latestLocalRecap = localRecaps[0];
+  const myEntries = useMemo(
+    () => sortEntriesByCreatedAt([...localEntries, ...serverMineEntries]),
+    [localEntries, serverMineEntries],
+  );
+  const allEntries = useMemo(
+    () =>
+      sortEntriesByCreatedAt(dedupeEntries([...myEntries, ...otherEntries])),
+    [myEntries, otherEntries],
+  );
+  const hasAnyLog = otherEntries.length > 0 || allEntries.length > 0;
+  const handleOpenEntry = useCallback((entry: LogGridEntry) => {
+    router.push(`/recap-share/${entry.shareId}`);
+  }, []);
 
-    if (latestLocalRecap) {
-      router.push(`/recap-share/${latestLocalRecap.shareId}`);
-      return;
-    }
+  const handleSelectTab = useCallback(
+    (tab: LogFeedTabId) => {
+      const tabIndex = tab === "others" ? 0 : 1;
 
-    router.push('/camera');
+      setActionMessage(undefined);
+      setSelectedTab(tab);
+      pagerRef.current?.scrollTo({
+        animated: true,
+        x: tabIndex * width,
+        y: 0,
+      });
+    },
+    [width],
+  );
+
+  const handlePagerScrollEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const tabIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+      const nextTab = logFeedTabs[tabIndex]?.value ?? "others";
+
+      if (nextTab !== selectedTab) {
+        setActionMessage(undefined);
+        setSelectedTab(nextTab);
+      }
+    },
+    [selectedTab, width],
+  );
+
+  const updateVisibilityCache = (
+    recapId: string,
+    visibility: RecapVisibility,
+    replacement?: RecapItem,
+  ) => {
+    queryClient.setQueryData<RecapItem[]>(
+      recapQueryKeys.list("mine"),
+      (previous = []) =>
+        previous.map((item) =>
+          item.id === recapId
+            ? {
+                ...(replacement ?? item),
+                visibility,
+              }
+            : item,
+        ),
+    );
   };
-  const handleCurrentTripRecap = async () => {
-    if (isCreatingCurrentRecap) {
+
+  const handleChangeVisibility = async (
+    entry: LogGridEntry,
+    nextVisibility: RecapVisibility,
+    event: GestureResponderEvent,
+  ) => {
+    event.stopPropagation();
+
+    if (updatingRecapId) {
       return;
     }
 
-    if (currentTripLogs.length === 0) {
-      router.push('/camera');
+    if (entry.owner !== "mine" || entry.source === "local") {
+      if (entry.source !== "local") {
+        return;
+      }
+
+      setUpdatingRecapId(entry.item.id);
+      setActionMessage("기기에 저장된 로그를 서버와 다시 동기화하고 있어요.");
+
+      try {
+        const result = await flushPendingMomentActions();
+
+        if (result.failureCount > 0) {
+          setActionMessage(
+            "동기화하지 못했어요. 네트워크를 확인한 뒤 다시 눌러주세요.",
+          );
+          return;
+        }
+
+        setActionMessage(
+          "서버 동기화를 마쳤어요. 로그 목록을 새로 불러올게요.",
+        );
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists }),
+          queryClient.invalidateQueries({ queryKey: ["moment-logs"] }),
+        ]);
+      } finally {
+        setUpdatingRecapId(undefined);
+      }
       return;
     }
 
-    const localRecapId = createSessionRecapId(session.id);
+    const previousRecaps = queryClient.getQueryData<RecapItem[]>(
+      recapQueryKeys.list("mine"),
+    );
 
-    if (serverSessionRecapId && currentRecapStatus !== 'failed') {
-      router.push(`/recap-share/${serverSessionRecapId}`);
-      return;
-    }
-
-    const hasOnlySyncedLogs = currentTripUnsyncedMomentCount === 0;
-    const representativeTrackId = currentTripLogs.find((log) => log.track?.id)?.track?.id;
-
-    if (!hasOnlySyncedLogs) {
-      setSessionRecapId(localRecapId);
-      setCurrentRecapStatus('local');
-      setCurrentRecapMessage(
-        `아직 동기화되지 않은 Moment ${currentTripUnsyncedMomentCount}개가 있어 로컬 Recap으로 먼저 보여드릴게요.`,
-      );
-      router.push(`/recap-share/${localRecapId}`);
-      return;
-    }
-
-    setIsCreatingCurrentRecap(true);
-    setCurrentRecapMessage(undefined);
+    setUpdatingRecapId(entry.item.id);
+    setActionMessage(undefined);
+    updateVisibilityCache(entry.item.id, nextVisibility);
 
     try {
-      const serverRecap = await recapApi.createRecap({
-        momentLogIds: currentTripSyncedLogs.map((log) => log.id),
-        representativeTrackId,
-        sessionId: session.id,
-        templateId: 'lp',
-        title: `${currentTripRepresentativeLog?.placeName ?? '이번 여행'} Recap`,
-      });
-      const recapId = serverRecap?.id ?? localRecapId;
+      const updatedRecap = await recapApi.updateRecapVisibility(
+        entry.item.id,
+        nextVisibility,
+      );
 
-      setSessionRecapId(recapId);
-      setCurrentRecapStatus('synced');
-      await queryClient.invalidateQueries({ queryKey: recapQueryKeys.list });
-      router.push(`/recap-share/${recapId}`);
-    } catch {
-      setSessionRecapId(localRecapId);
-      setCurrentRecapStatus('failed');
-      setCurrentRecapMessage('서버 Recap 생성에 실패해서 로컬 Recap으로 먼저 보여드릴게요.');
-      router.push(`/recap-share/${localRecapId}`);
+      if (updatedRecap) {
+        updateVisibilityCache(entry.item.id, nextVisibility, updatedRecap);
+      }
+
+      setActionMessage(
+        nextVisibility === "public"
+          ? "전체공개로 바꿨어요. 다른사람 보기와 지도 공개 영역에 표시돼요."
+          : "비공개로 바꿨어요. 내 로그에서만 확인할 수 있어요.",
+      );
+      void queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists });
+    } catch (error) {
+      queryClient.setQueryData(recapQueryKeys.list("mine"), previousRecaps);
+      setActionMessage(
+        error instanceof ApiError
+          ? error.message
+          : "공개 범위를 바꾸지 못했어요. 잠시 후 다시 시도해주세요.",
+      );
     } finally {
-      setIsCreatingCurrentRecap(false);
+      setUpdatingRecapId(undefined);
     }
   };
 
   return (
     <Screen>
-      <ScrollView
-        contentContainerStyle={{
-          gap: 18,
-          paddingBottom: 132,
-          paddingHorizontal: 20,
-          paddingTop: 28,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="overflow-hidden rounded-[28px] border border-white/10">
-          <LinearGradient
-            colors={[
-              'rgba(91,45,255,0.42)',
-              'rgba(11,16,31,0.96)',
-              'rgba(6,9,19,1)',
+      <View className="px-5 pt-8">
+        <PageHeader title="로그" />
+      </View>
+
+      <View className="mt-[14px] border-b border-white/10">
+        <View className="flex-row">
+          {logFeedTabs.map((tab) => {
+            const selected = selectedTab === tab.value;
+            const count =
+              tab.value === "others" ? otherEntries.length : allEntries.length;
+
+            return (
+              <Pressable
+                accessibilityHint="피드를 좌우로 밀어도 전환할 수 있어요."
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                className="min-h-[48px] flex-1 items-center justify-center px-2"
+                key={tab.value}
+                onPress={() => handleSelectTab(tab.value)}
+              >
+                <View className="flex-row items-center gap-1.5">
+                  <AppText
+                    className={`text-sm font-semibold ${
+                      selected ? "text-white" : "text-white/45"
+                    }`}
+                  >
+                    {tab.label}
+                  </AppText>
+                  <AppText
+                    className={`text-[11px] font-semibold ${
+                      selected ? "text-soundlog-lime" : "text-white/35"
+                    }`}
+                  >
+                    {count}
+                  </AppText>
+                </View>
+              </Pressable>
+            );
+          })}
+
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.tabIndicator,
+              {
+                transform: [
+                  {
+                    translateX: scrollX.interpolate({
+                      extrapolate: "clamp",
+                      inputRange: [0, width],
+                      outputRange: [0, width / 2],
+                    }),
+                  },
+                ],
+                width: width / 2,
+              },
             ]}
-            end={{ x: 1, y: 1 }}
-            start={{ x: 0, y: 0 }}
-            style={{ paddingHorizontal: 20, paddingVertical: 24 }}
-          >
-            <View className="self-start rounded-full border border-white/15 bg-white/10 px-3 py-1">
-              <AppText className="text-[11px] font-semibold text-white/70">
-                SOUNDLOG ARCHIVE
-              </AppText>
-            </View>
-            <AppText className="mt-5 text-[32px] font-semibold leading-9 text-white">
-              Recap
-            </AppText>
-            <AppText className="mt-3 text-sm leading-6 text-white/60">
-              여행별 사운드트랙 앨범 생성 상태를 확인하고 다시 꺼내보세요.
-            </AppText>
-
-            <View className="mt-6 flex-row gap-3">
-              <View className="flex-1 rounded-[18px] bg-white/10 p-4">
-                <AppText className="text-[24px] font-semibold text-white">
-                  {recaps.length}
-                </AppText>
-                <AppText className="mt-1 text-[11px] text-white/55">
-                  Recap
-                </AppText>
-              </View>
-              <View className="flex-1 rounded-[18px] bg-white/10 p-4">
-                <AppText className="text-[24px] font-semibold text-white">
-                  {savedMomentCount}
-                </AppText>
-                <AppText className="mt-1 text-[11px] text-white/55">
-                  Saved moments
-                </AppText>
-              </View>
-            </View>
-
-            <Pressable
-              accessibilityRole="button"
-              className="mt-5 min-h-[52px] items-center justify-center rounded-full bg-soundlog-lime"
-              onPress={handleCreateRecap}
-            >
-              <AppText className="text-sm font-semibold text-soundlog-inverse">
-                {hasRecaps ? '새 Recap 생성' : '첫 Moment로 Recap 만들기'}
-              </AppText>
-            </Pressable>
-          </LinearGradient>
+          />
         </View>
+      </View>
 
-        <CurrentTripRecapCard
-          isCreating={isCreatingCurrentRecap}
-          message={currentRecapMessage}
-          momentCount={currentTripLogs.length}
-          onPress={handleCurrentTripRecap}
-          representativeLog={currentTripRepresentativeLog}
-          status={currentTripStatus}
-          trackCount={currentTripTrackCount}
-          unsyncedMomentCount={currentTripUnsyncedMomentCount}
+      <Animated.ScrollView
+        accessibilityLabel="로그 피드"
+        bounces={false}
+        contentOffset={{ x: initialTabIndex * width, y: 0 }}
+        decelerationRate="fast"
+        directionalLockEnabled
+        horizontal
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled
+        onMomentumScrollEnd={handlePagerScrollEnd}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { useNativeDriver: true },
+        )}
+        pagingEnabled
+        ref={pagerRef}
+        scrollEventThrottle={16}
+        showsHorizontalScrollIndicator={false}
+        style={styles.pager}
+      >
+        <LogFeedPage
+          actionMessage={selectedTab === "others" ? actionMessage : undefined}
+          contentBottomPadding={contentBottomPadding}
+          emptyMessage="아직 다른 사람이 공개한 로그가 없어요."
+          entries={otherEntries}
+          hasAnyLog={hasAnyLog}
+          isActive={selectedTab === "others"}
+          isError={isError}
+          isLoading={isLoading}
+          itemSize={gridItemSize}
+          onChangeVisibility={handleChangeVisibility}
+          onOpenEntry={handleOpenEntry}
+          tabId="others"
+          updatingRecapId={updatingRecapId}
+          width={width}
         />
-
-        {isLoading ? (
-          <AppText className="text-sm text-white/55">
-            Recap 데이터를 불러오는 중이에요.
-          </AppText>
-        ) : null}
-
-        {isError && !hasRecaps ? (
-          <AppText className="text-sm text-white/55">
-            Recap 데이터를 불러오지 못했어요. 잠시 후 다시 확인해주세요.
-          </AppText>
-        ) : null}
-
-        {!isLoading && !hasRecaps ? <RecapEmptyState /> : null}
-
-        <View className="gap-3">
-          {hasRecaps ? (
-            <AppText className="mb-1 text-[18px] font-semibold text-white">
-              최근 Recap
-            </AppText>
-          ) : null}
-          {recaps.map(({ imageUrl, item, shareId }) => (
-            <RecapListCard
-              key={item.id}
-              imageUrl={imageUrl}
-              item={item}
-              onPress={() => router.push(`/recap-share/${shareId}`)}
-            />
-          ))}
-        </View>
-      </ScrollView>
+        <LogFeedPage
+          actionMessage={selectedTab === "all" ? actionMessage : undefined}
+          contentBottomPadding={contentBottomPadding}
+          emptyMessage="아직 볼 수 있는 로그가 없어요."
+          entries={allEntries}
+          hasAnyLog={hasAnyLog}
+          isActive={selectedTab === "all"}
+          isError={isError}
+          isLoading={isLoading}
+          itemSize={gridItemSize}
+          onChangeVisibility={handleChangeVisibility}
+          onOpenEntry={handleOpenEntry}
+          tabId="all"
+          updatingRecapId={updatingRecapId}
+          width={width}
+        />
+      </Animated.ScrollView>
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  gridCard: {
+    backgroundColor: "#151927",
+  },
+  pager: {
+    flex: 1,
+  },
+  tabIndicator: {
+    backgroundColor: "#B9F20D",
+    bottom: 0,
+    height: 2,
+    left: 0,
+    position: "absolute",
+  },
+});

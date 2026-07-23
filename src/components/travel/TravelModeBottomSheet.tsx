@@ -12,6 +12,7 @@ type TravelModeBottomSheetProps = {
   onSelectMode: (mode: TravelMode) => void;
   onStart: () => void;
   selectedMode?: TravelMode;
+  submitLabel?: string;
   visible: boolean;
 };
 
@@ -20,6 +21,7 @@ export function TravelModeBottomSheet({
   onSelectMode,
   onStart,
   selectedMode,
+  submitLabel = '여행 시작',
   visible,
 }: TravelModeBottomSheetProps) {
   const insets = useSafeAreaInsets();
@@ -38,7 +40,7 @@ export function TravelModeBottomSheet({
             <View className="min-w-0 flex-1">
               <AppText className="text-[22px] font-semibold text-white">여행 모드 선택</AppText>
               <AppText className="mt-2 text-sm leading-6 text-white">
-                지금의 여행 맥락을 고르면 음악 추천과 Moment가 같은 세션으로 묶여요.
+                지금의 여행 맥락을 고르면 음악 추천과 리캡이 같은 로그로 묶여요.
               </AppText>
             </View>
             <Pressable
@@ -92,7 +94,7 @@ export function TravelModeBottomSheet({
                 selectedMode ? 'text-soundlog-inverse' : 'text-white/38'
               }`}
             >
-              여행 시작
+              {submitLabel}
             </AppText>
           </Pressable>
         </View>

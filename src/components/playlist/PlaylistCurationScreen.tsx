@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ScrollView, useWindowDimensions, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 import { libraryApi } from '@/api/libraryApi';
 import { usePlaylistCurationQuery } from '@/api/playlistQueries';
 import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
+import { IconButton } from '@/components/IconButton';
 import { MiniPlayer } from '@/components/MiniPlayer';
 import { PlaylistBackground } from '@/components/playlist/PlaylistBackground';
 import { PlaylistBottomSheet } from '@/components/playlist/PlaylistBottomSheet';
@@ -31,7 +33,6 @@ type PlaylistCurationScreenProps = {
 
 export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenProps) {
   const insets = useSafeAreaInsets();
-  const { height } = useWindowDimensions();
   const { currentTrack, setTrack } = usePlayerStore();
   const { selectedMoodFilter, setSelectedMoodFilter } = useHomeFilterStore();
   const addRecommendationEvent = useRecommendationEventStore((state) => state.addEvent);
@@ -81,7 +82,6 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
 
   const hasMiniPlayer = Boolean(currentTrack);
   const listBottomPadding = getCurationListBottomPadding(insets.bottom, hasMiniPlayer);
-  const usesPlainMoodPage = playlistId === 'calm-walk' || Boolean(playlist?.accentColor);
 
   const selectTrackForSoundlog = (track: Track) => {
     if (!playlist) {
@@ -101,7 +101,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
         value: 'playlist_detail',
       }),
     );
-    setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
+    setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 리캡에 담을 수 있어요.');
   };
 
   const selectFirstTrack = () => {
@@ -203,14 +203,13 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     <View className="flex-1 bg-soundlog-bg">
       <PlaylistBackground accentColor={playlist?.accentColor} imageUrl={playlist?.backgroundImageUrl} />
 
-      {usesPlainMoodPage ? (
-        <ScrollView
-          className="absolute inset-0"
-          contentContainerStyle={{ minHeight: height + 205, paddingTop: 205 }}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-        >
-          {playlist ? (
+      <View className="absolute left-5 z-20" style={{ top: insets.top + 8 }}>
+        <IconButton label="이전 화면으로 돌아가기" name="arrow-left" onPress={() => router.back()} />
+      </View>
+
+      <PlaylistBottomSheet
+        stickyHeader={
+          playlist ? (
             <PlaylistHeroInfo
               disabled={playlist.tracks.length === 0}
               onAdjustMood={handleAdjustMood}
@@ -218,26 +217,11 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
               playlist={playlist}
               selectedMoodFilter={selectedMoodFilter}
             />
-          ) : null}
-          {playlistContent}
-        </ScrollView>
-      ) : (
-        <PlaylistBottomSheet
-          stickyHeader={
-            playlist ? (
-              <PlaylistHeroInfo
-                disabled={playlist.tracks.length === 0}
-                onAdjustMood={handleAdjustMood}
-                onOpenFirstTrack={selectFirstTrack}
-                playlist={playlist}
-                selectedMoodFilter={selectedMoodFilter}
-              />
-            ) : undefined
-          }
-        >
-          {playlistContent}
-        </PlaylistBottomSheet>
-      )}
+          ) : undefined
+        }
+      >
+        {playlistContent}
+      </PlaylistBottomSheet>
 
       {actionMessage ? (
         <View

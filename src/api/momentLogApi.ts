@@ -2,9 +2,20 @@ import {
   createIdempotencyKey,
   requestApi,
   shouldAttemptAuthenticatedApi,
+  uploadApiFile,
 } from '@/api/client';
-import { GeoPoint, MomentLog, MoodTag, Track, TravelMode } from '@/types/domain';
+import {
+  GeoPoint,
+  MomentLog,
+  MoodTag,
+  RecapTemplateId,
+  RecapVisibility,
+  Track,
+  TravelMode,
+} from '@/types/domain';
 import { sanitizeTrack } from '@/utils/trackSanitizer';
+
+const RECAP_CAPTURE_API_PATH = '/v1/recap-captures';
 
 export type CreateMomentLogInput = {
   createdAt: string;
@@ -16,7 +27,9 @@ export type CreateMomentLogInput = {
   placeCategory?: string;
   placeId?: string;
   placeName?: string;
+  recapVisibility?: RecapVisibility;
   sessionId?: string;
+  templateId?: RecapTemplateId;
   track?: Track;
   travelMode?: TravelMode;
 };
@@ -35,59 +48,67 @@ export type UpdateMomentLogInput = {
   placeCategory?: string | null;
   placeId?: string | null;
   placeName?: string | null;
+  recapVisibility?: RecapVisibility;
   sessionId?: string | null;
+  templateId?: RecapTemplateId;
   track?: Track;
   travelMode?: TravelMode | null;
 };
-
-function appendIfDefined(formData: FormData, key: string, value?: number | string) {
-  if (value === undefined || value === null || value === '') {
-    return;
-  }
-
-  formData.append(key, String(value));
-}
 
 function getPhotoName(photoUri: string) {
   return photoUri.split('/').pop() || `moment-${Date.now()}.jpg`;
 }
 
+function getPhotoContentType(photoUri: string) {
+  const extension = getPhotoName(photoUri).split('.').pop()?.toLowerCase();
+
+  if (extension === 'png') {
+    return 'image/png';
+  }
+
+  if (extension === 'webp') {
+    return 'image/webp';
+  }
+
+  return 'image/jpeg';
+}
+
+function toCreateParameters(input: CreateMomentLogInput) {
+  const parameters: Record<string, string> = {
+    createdAt: input.createdAt,
+    moodTags: input.moodTags.join(','),
+  };
+  const optionalParameters = {
+    artistName: input.track?.artist,
+    lat: input.location?.lat,
+    lng: input.location?.lng,
+    note: input.note,
+    placeCategory: input.placeCategory,
+    placeId: input.placeId,
+    placeName: input.placeName,
+    sessionId: input.sessionId,
+    templateId: input.templateId,
+    trackId: input.track?.id,
+    trackTitle: input.track?.title,
+    travelMode: input.travelMode,
+    visibility: input.recapVisibility,
+  };
+
+  Object.entries(optionalParameters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== '') {
+      parameters[key] = String(value);
+    }
+  });
+
+  return parameters;
+}
+
 function toFormData(input: CreateMomentLogInput) {
   const formData = new FormData();
 
-  if (input.photoUri) {
-    formData.append('photo', {
-      name: getPhotoName(input.photoUri),
-      type: 'image/jpeg',
-      uri: input.photoUri,
-    } as unknown as Blob);
-  }
-  formData.append('createdAt', input.createdAt);
-  formData.append('moodTags', input.moodTags.join(','));
-
-  appendIfDefined(formData, 'artistName', input.track?.artist);
-  appendIfDefined(formData, 'lat', input.location?.lat);
-  appendIfDefined(formData, 'lng', input.location?.lng);
-  appendIfDefined(formData, 'note', input.note);
-  appendIfDefined(formData, 'placeCategory', input.placeCategory);
-  appendIfDefined(formData, 'placeId', input.placeId);
-  appendIfDefined(formData, 'placeName', input.placeName);
-  appendIfDefined(formData, 'sessionId', input.sessionId);
-  appendIfDefined(formData, 'trackId', input.track?.id);
-  appendIfDefined(formData, 'trackTitle', input.track?.title);
-  appendIfDefined(formData, 'travelMode', input.travelMode);
-
-  return formData;
-}
-
-function toPhotoFormData(photoUri: string) {
-  const formData = new FormData();
-
-  formData.append('photo', {
-    name: getPhotoName(photoUri),
-    type: 'image/jpeg',
-    uri: photoUri,
-  } as unknown as Blob);
+  Object.entries(toCreateParameters(input)).forEach(([key, value]) => {
+    formData.append(key, value);
+  });
 
   return formData;
 }
@@ -128,6 +149,10 @@ function toUpdateBody(input: UpdateMomentLogInput) {
     body.sessionId = input.sessionId;
   }
 
+  if ('templateId' in input) {
+    body.templateId = input.templateId;
+  }
+
   if ('track' in input) {
     body.artistName = input.track?.artist;
     body.trackId = input.track?.id;
@@ -136,6 +161,10 @@ function toUpdateBody(input: UpdateMomentLogInput) {
 
   if ('travelMode' in input) {
     body.travelMode = input.travelMode;
+  }
+
+  if ('recapVisibility' in input) {
+    body.visibility = input.recapVisibility;
   }
 
   return body;
@@ -149,23 +178,32 @@ function sanitizeMomentLog(log: MomentLog) {
 }
 
 export const momentLogApi = {
-  createMomentLog: (input: CreateMomentLogInput) => {
+  createMomentLog: async (input: CreateMomentLogInput) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<MomentLog | undefined>(undefined);
     }
 
-    return requestApi<MomentLog>('/v1/moment-logs', {
-      body: toFormData(input),
-      idempotencyKey: input.idempotencyKey ?? createIdempotencyKey('moment-log'),
-      method: 'POST',
-    }).then(sanitizeMomentLog);
+    const idempotencyKey = input.idempotencyKey ?? createIdempotencyKey('recap-capture');
+    const request = input.photoUri
+      ? uploadApiFile<MomentLog>(RECAP_CAPTURE_API_PATH, input.photoUri, {
+          idempotencyKey,
+          mimeType: getPhotoContentType(input.photoUri),
+          parameters: toCreateParameters(input),
+        })
+      : requestApi<MomentLog>(RECAP_CAPTURE_API_PATH, {
+          body: toFormData(input),
+          idempotencyKey,
+          method: 'POST',
+        });
+
+    return request.then(sanitizeMomentLog);
   },
   getMomentLogs: async (params: MomentLogListParams = {}) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<MomentLog[]>([]);
     }
 
-    const logs = await requestApi<MomentLog[]>('/v1/moment-logs', {
+    const logs = await requestApi<MomentLog[]>(RECAP_CAPTURE_API_PATH, {
       query: params,
     });
 
@@ -176,7 +214,7 @@ export const momentLogApi = {
       return Promise.resolve<boolean | undefined>(undefined);
     }
 
-    return requestApi<{ accepted: boolean }>(`/v1/moment-logs/${momentLogId}`, {
+    return requestApi<{ accepted: boolean }>(`${RECAP_CAPTURE_API_PATH}/${momentLogId}`, {
       method: 'DELETE',
     }).then((response) => response.accepted);
   },
@@ -185,27 +223,31 @@ export const momentLogApi = {
       return Promise.resolve<MomentLog | undefined>(undefined);
     }
 
-    return requestApi<MomentLog>(`/v1/moment-logs/${momentLogId}`, {
+    return requestApi<MomentLog>(`${RECAP_CAPTURE_API_PATH}/${momentLogId}`, {
       body: toUpdateBody(input),
       method: 'PATCH',
     }).then(sanitizeMomentLog);
   },
-  updateMomentLogPhoto: (momentLogId: string, photoUri: string) => {
+  updateMomentLogPhoto: async (momentLogId: string, photoUri: string) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<MomentLog | undefined>(undefined);
     }
 
-    return requestApi<MomentLog>(`/v1/moment-logs/${momentLogId}/photo`, {
-      body: toPhotoFormData(photoUri),
-      method: 'PUT',
-    }).then(sanitizeMomentLog);
+    return uploadApiFile<MomentLog>(
+      `${RECAP_CAPTURE_API_PATH}/${momentLogId}/photo`,
+      photoUri,
+      {
+        httpMethod: 'PUT',
+        mimeType: getPhotoContentType(photoUri),
+      },
+    ).then(sanitizeMomentLog);
   },
   deleteMomentLogPhoto: (momentLogId: string) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return Promise.resolve<MomentLog | undefined>(undefined);
     }
 
-    return requestApi<MomentLog>(`/v1/moment-logs/${momentLogId}/photo`, {
+    return requestApi<MomentLog>(`${RECAP_CAPTURE_API_PATH}/${momentLogId}/photo`, {
       method: 'DELETE',
     }).then(sanitizeMomentLog);
   },

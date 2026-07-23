@@ -1,7 +1,7 @@
 import { Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
-import { RecapTemplateId } from '@/types/domain';
+import type { RecapTemplateId } from '@/types/domain';
 
 const templateOptions: Array<{
   id: RecapTemplateId;
@@ -14,32 +14,34 @@ const templateOptions: Array<{
 ];
 
 type RecapTemplateSelectorProps = {
-  selectedTemplate: RecapTemplateId;
   onSelect: (template: RecapTemplateId) => void;
+  selectedTemplate: RecapTemplateId;
 };
 
 export function RecapTemplateSelector({
-  selectedTemplate,
   onSelect,
+  selectedTemplate,
 }: RecapTemplateSelectorProps) {
   return (
-    <View className="flex-row rounded-full border border-white/10 bg-white/[0.06] p-1">
+    <View className="w-full flex-row rounded-full border border-white/10 bg-white/[0.06] p-1">
       {templateOptions.map((option) => {
         const isSelected = selectedTemplate === option.id;
 
         return (
           <Pressable
-            key={option.id}
             accessibilityLabel={`${option.label} 리캡 템플릿 선택`}
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
-            className={`min-w-[74px] items-center rounded-full px-4 py-2 ${
+            className={`min-h-[44px] flex-1 items-center justify-center rounded-full px-1 ${
               isSelected ? 'bg-white' : 'bg-transparent'
             }`}
+            key={option.id}
             onPress={() => onSelect(option.id)}
           >
             <AppText
-              className={`text-xs font-semibold ${isSelected ? 'text-soundlog-bg' : 'text-white/65'}`}
+              className={`text-xs font-semibold ${
+                isSelected ? 'text-soundlog-bg' : 'text-white/65'
+              }`}
             >
               {option.label}
             </AppText>

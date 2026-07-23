@@ -30,7 +30,7 @@ export function MomentCard({ item, onPress, onRetry }: MomentCardProps) {
       className="min-h-[132px] flex-row overflow-hidden rounded-[22px] border border-white/10 bg-white/10"
     >
       <Pressable
-        accessibilityLabel={`${item.placeName ?? '저장한 순간'} 사진으로 Music Log 열기`}
+        accessibilityLabel={`${item.placeName ?? '저장한 리캡'} 사진으로 리캡 열기`}
         accessibilityRole={onPress ? 'button' : undefined}
         className="h-full w-[108px] bg-white/10"
         disabled={!onPress}
@@ -47,14 +47,14 @@ export function MomentCard({ item, onPress, onRetry }: MomentCardProps) {
 
       <View className="min-w-0 flex-1 justify-between p-4">
         <Pressable
-          accessibilityLabel={`${item.placeName ?? '저장한 순간'} Music Log 열기`}
+          accessibilityLabel={`${item.placeName ?? '저장한 리캡'} 리캡 열기`}
           accessibilityRole={onPress ? 'button' : undefined}
           disabled={!onPress}
           onPress={onPress}
         >
           <View className="flex-row items-center gap-2">
             <View className="rounded-full bg-white/10 px-2.5 py-1">
-              <AppText className="text-[10px] font-semibold text-white/70">Moment</AppText>
+              <AppText className="text-[10px] font-semibold text-white/70">리캡</AppText>
             </View>
             {syncLabel ? (
               <View className="rounded-full bg-amber-300/10 px-2.5 py-1">

@@ -13,6 +13,12 @@ export function useLoginMutation() {
   });
 }
 
+export function useDeleteAccountMutation() {
+  return useMutation({
+    mutationFn: () => authApi.deleteAccount(),
+  });
+}
+
 export function useRegisterMutation() {
   return useMutation({
     mutationFn: (request: RegisterRequest) => authApi.register(request),

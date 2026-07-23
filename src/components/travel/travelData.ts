@@ -95,7 +95,7 @@ export const sampleMoments: MomentLog[] = [
     createdAt: '2026-06-06T13:18:00.000+09:00',
     id: 'sample-night',
     moodTags: ['emotional'],
-    photoUri: 'https://tong.visitkorea.or.kr/cms/resource_photo/96/4033396_image2_1.jpg',
+    photoUri: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
     placeName: '남산 산책로',
     source: 'camera',
     syncStatus: 'synced',

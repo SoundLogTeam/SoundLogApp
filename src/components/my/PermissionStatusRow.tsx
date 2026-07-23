@@ -3,7 +3,10 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { PermissionStatusBadge } from '@/components/my/PermissionStatusBadge';
-import type { NativePermissionItem, NativePermissionKind } from '@/utils/nativePermissions';
+import type {
+  NativePermissionItem,
+  NativePermissionKind,
+} from '@/utils/nativePermissions';
 
 type PermissionStatusRowProps = {
   isRequesting: boolean;
@@ -13,7 +16,10 @@ type PermissionStatusRowProps = {
   onRequest: (kind: NativePermissionKind) => void;
 };
 
-const permissionIcons: Record<NativePermissionKind, keyof typeof Feather.glyphMap> = {
+const permissionIcons: Record<
+  NativePermissionKind,
+  keyof typeof Feather.glyphMap
+> = {
   camera: 'camera',
   location: 'map-pin',
   mediaLibrary: 'image',
@@ -83,37 +89,74 @@ export function PermissionStatusRow({
     onRequest(item.kind);
   };
 
-  return (
-    <View className="flex-row items-center gap-3 py-4">
-      <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
-        <Feather color="#fff" name={permissionIcons[item.kind]} size={18} />
+  const content = (
+    <>
+      <View className="w-9 items-center justify-center">
+        <Feather
+          color="rgba(255,255,255,0.76)"
+          name={permissionIcons[item.kind]}
+          size={20}
+        />
       </View>
 
-      <View className="min-w-0 flex-1">
-        <View className="flex-row items-center gap-2">
-          <AppText className="text-base font-semibold text-white">{item.title}</AppText>
-          <PermissionStatusBadge status={item.status} />
-        </View>
-        <AppText className="mt-1 text-xs leading-5 text-white/45">
+      <View className="ml-3 min-w-0 flex-1">
+        <AppText
+          className="text-[15px] font-medium"
+          style={{ color: '#FFFFFF' }}
+        >
+          {item.title}
+        </AppText>
+        <AppText
+          className="mt-1 text-xs leading-5"
+          numberOfLines={2}
+          style={{ color: 'rgba(255,255,255,0.62)' }}
+        >
           {item.description}
         </AppText>
       </View>
 
-      {action ? (
-        <Pressable
-          accessibilityLabel={`${item.title} ${action.label}`}
-          accessibilityRole="button"
-          className="min-w-[78px] items-center rounded-full border border-white/10 px-3 py-2"
-          disabled={isRequesting}
-          onPress={handlePress}
-        >
-          {isRequesting ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <AppText className="text-xs font-semibold text-white/70">{action.label}</AppText>
-          )}
-        </Pressable>
-      ) : null}
-    </View>
+      <View className="ml-3 items-end gap-1">
+        <PermissionStatusBadge status={item.status} />
+        {isRequesting ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : action ? (
+          <View className="flex-row items-center">
+            <AppText
+              className="text-[11px]"
+              style={{ color: 'rgba(255,255,255,0.62)' }}
+            >
+              {action.label}
+            </AppText>
+            <Feather
+              color="rgba(255,255,255,0.54)"
+              name="chevron-right"
+              size={16}
+              style={{ marginLeft: 4 }}
+            />
+          </View>
+        ) : null}
+      </View>
+    </>
+  );
+
+  if (!action) {
+    return (
+      <View className="min-h-[60px] flex-row items-center py-2">{content}</View>
+    );
+  }
+
+  return (
+    <Pressable
+      accessibilityLabel={`${item.title} ${action.label}`}
+      accessibilityRole="button"
+      className="min-h-[60px] flex-row items-center py-2"
+      disabled={isRequesting}
+      onPress={handlePress}
+      style={({ pressed }) => ({
+        opacity: isRequesting ? 0.5 : pressed ? 0.62 : 1,
+      })}
+    >
+      {content}
+    </Pressable>
   );
 }

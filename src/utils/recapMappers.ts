@@ -1,9 +1,16 @@
-import { MomentLog, RecapItem, RecapShare, RecapShareMoment } from '@/types/domain';
+import {
+  MomentLog,
+  RecapItem,
+  RecapShare,
+  RecapShareMoment,
+  RoutePoint,
+} from "@/types/domain";
+import { createRecapTravelSummary } from "@/utils/recapTravelSummary";
 
-const FALLBACK_ARTIST = 'Soundlog';
-const FALLBACK_PLACE = '위치 없음';
-const FALLBACK_TITLE = '저장된 순간';
-export const SESSION_RECAP_ID_PREFIX = 'session-recap__';
+const FALLBACK_ARTIST = "Soundlog";
+const FALLBACK_PLACE = "위치 없음";
+const FALLBACK_TITLE = "저장된 리캡";
+export const SESSION_RECAP_ID_PREFIX = "session-recap__";
 
 export type MomentLogGroup = {
   id: string;
@@ -28,9 +35,13 @@ function momentLogToRecapShareMoment(log: MomentLog): RecapShareMoment {
     artistName: log.track?.artist ?? FALLBACK_ARTIST,
     id: log.id,
     imageUrl: log.photoUri,
+    location: log.location,
     placeName: log.placeName ?? FALLBACK_PLACE,
     recordedAt: log.createdAt,
+    templateId: log.templateId,
+    track: log.track,
     trackTitle: log.track?.title ?? FALLBACK_TITLE,
+    visibility: log.recapVisibility,
   };
 }
 
@@ -50,7 +61,9 @@ export function createMomentLogGroups(logs: MomentLog[]): MomentLogGroup[] {
   const groupMap = new Map<string, MomentLogGroup>();
 
   logs.forEach((log) => {
-    const groupKey = log.sessionId ? `session:${log.sessionId}` : `log:${log.id}`;
+    const groupKey = log.sessionId
+      ? `session:${log.sessionId}`
+      : `log:${log.id}`;
     const existingGroup = groupMap.get(groupKey);
 
     if (existingGroup) {
@@ -59,7 +72,9 @@ export function createMomentLogGroups(logs: MomentLog[]): MomentLogGroup[] {
     }
 
     groupMap.set(groupKey, {
-      id: log.sessionId ? createSessionRecapId(log.sessionId) : log.id,
+      id: log.sessionId
+        ? createSessionRecapId(log.sessionId)
+        : (log.recapId ?? log.id),
       logs: [log],
       sessionId: log.sessionId,
     });
@@ -69,7 +84,8 @@ export function createMomentLogGroups(logs: MomentLog[]): MomentLogGroup[] {
     .map((group) => ({
       ...group,
       logs: [...group.logs].sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
     }))
     .sort((a, b) => {
@@ -94,12 +110,13 @@ export function momentLogGroupToRecapItem(group: MomentLogGroup): RecapItem {
       placeName: FALLBACK_PLACE,
       representativeTrack: {
         artist: FALLBACK_ARTIST,
-        fallbackColor: '#2B176C',
+        fallbackColor: "#2B176C",
         id: `${group.id}-fallback-track`,
         title: FALLBACK_TITLE,
       },
       sessionId: group.sessionId,
-      title: '여행 Recap',
+      title: "여행 로그",
+      visibility: "private",
     };
   }
 
@@ -112,21 +129,42 @@ export function momentLogGroupToRecapItem(group: MomentLogGroup): RecapItem {
     id: group.id,
     momentCount,
     sessionId: group.sessionId,
-    title: momentCount > 1 ? `${placeName} 여행 기록` : baseItem.title,
+    title: group.sessionId ? `${placeName} 여행 로그` : baseItem.title,
+    visibility: representativeLog.recapVisibility ?? "private",
   };
 }
 
-export function momentLogGroupToRecapShare(group: MomentLogGroup): RecapShare | undefined {
+export function momentLogGroupToRecapShare(
+  group: MomentLogGroup,
+  timing: {
+    endedAt?: string;
+    routePoints?: RoutePoint[];
+    startedAt?: string;
+  } = {},
+): RecapShare | undefined {
   const representativeLog = getNewestLog(group.logs);
 
   if (!representativeLog) {
     return undefined;
   }
 
+  const moments = getOldestFirstLogs(group.logs).map(
+    momentLogToRecapShareMoment,
+  );
+
   return {
     ...momentLogToRecapShare(representativeLog),
     id: group.id,
-    moments: getOldestFirstLogs(group.logs).map(momentLogToRecapShareMoment),
+    moments,
+    routePoints: timing.routePoints,
+    sessionId: group.sessionId,
+    travelSummary: createRecapTravelSummary({
+      endedAt: timing.endedAt,
+      fallbackPlaceName: representativeLog.placeName ?? FALLBACK_PLACE,
+      moments,
+      routePoints: timing.routePoints,
+      startedAt: timing.startedAt,
+    }),
   };
 }
 
@@ -137,23 +175,33 @@ export function momentLogToRecapItem(log: MomentLog): RecapItem {
     placeName: log.placeName ?? FALLBACK_PLACE,
     representativeTrack: log.track ?? {
       artist: FALLBACK_ARTIST,
-      fallbackColor: '#2B176C',
+      fallbackColor: "#2B176C",
       id: `${log.id}-fallback-track`,
       title: FALLBACK_TITLE,
     },
     title: log.track?.title ?? FALLBACK_TITLE,
+    visibility: log.recapVisibility ?? "private",
   };
 }
 
 export function momentLogToRecapShare(log: MomentLog): RecapShare {
+  const moments = [momentLogToRecapShareMoment(log)];
+
   return {
     artistName: log.track?.artist ?? FALLBACK_ARTIST,
     backgroundImageUrl: log.photoUri,
     discImageUrl: log.photoUri,
     id: log.id,
-    moments: [momentLogToRecapShareMoment(log)],
+    isMine: true,
+    moments,
     placeName: log.placeName ?? FALLBACK_PLACE,
     recordedAt: log.createdAt,
+    templateId: log.templateId ?? "album",
     trackTitle: log.track?.title ?? FALLBACK_TITLE,
+    travelSummary: createRecapTravelSummary({
+      fallbackPlaceName: log.placeName ?? FALLBACK_PLACE,
+      moments,
+    }),
+    visibility: log.recapVisibility ?? "private",
   };
 }

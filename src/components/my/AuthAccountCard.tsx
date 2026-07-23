@@ -1,41 +1,33 @@
-import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Linking, Pressable, View } from 'react-native';
+import { Alert, View } from 'react-native';
 
-import { useLogoutMutation } from '@/api/authQueries';
+import { useDeleteAccountMutation, useLogoutMutation } from '@/api/authQueries';
 import { AppText } from '@/components/AppText';
-import { SOUNDLOG_SUPPORT_EMAIL } from '@/constants/legal';
+import { MySettingsRow } from '@/components/my/MySettingsRow';
+import { SectionTitle } from '@/components/SectionTitle';
 import { useAuthStore } from '@/store/authStore';
+import { clearAccountSession } from '@/utils/accountSession';
 import { migrateLocalDataToAccount } from '@/utils/localDataMigration';
 
-function openAccountDeletionEmail(userId?: string, email?: string) {
-  const subject = encodeURIComponent('Soundlog 계정 삭제 요청');
-  const body = encodeURIComponent(
-    [
-      'Soundlog 계정 삭제를 요청합니다.',
-      '',
-      `계정 ID: ${userId ?? '확인 필요'}`,
-      `계정 이메일: ${email ?? '확인 필요'}`,
-      '',
-      '삭제 요청 처리에 필요한 추가 확인 절차가 있다면 안내해주세요.',
-    ].join('\n'),
-  );
+function getAccountInitial(displayName?: string, email?: string) {
+  const source = displayName?.trim() || email?.trim() || 'S';
 
-  return Linking.openURL(`mailto:${SOUNDLOG_SUPPORT_EMAIL}?subject=${subject}&body=${body}`);
+  return source.slice(0, 1).toUpperCase();
 }
 
 export function AuthAccountCard() {
   const [isMigratingLocalData, setIsMigratingLocalData] = useState(false);
   const [migrationMessage, setMigrationMessage] = useState<string>();
+  const deleteAccountMutation = useDeleteAccountMutation();
   const logoutMutation = useLogoutMutation();
-  const { logoutLocal, refreshToken, status, user } = useAuthStore();
+  const { refreshToken, status, user } = useAuthStore();
 
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync(refreshToken);
     } finally {
-      logoutLocal();
+      clearAccountSession();
       router.replace('/auth/login' as never);
     }
   };
@@ -46,15 +38,18 @@ export function AuthAccountCard() {
 
     try {
       const result = await migrateLocalDataToAccount();
-      const failedCount = result.momentLogFailedCount + result.libraryFailedCount;
+      const failedCount =
+        result.momentLogFailedCount + result.libraryFailedCount;
 
       setMigrationMessage(
         failedCount > 0
-          ? `순간 ${result.momentLogSyncedCount}/${result.summary.momentLogCount}개, 보관함 ${result.librarySyncedCount}/${result.summary.libraryTrackCount}개를 동기화했어요. 실패한 항목은 다시 시도할 수 있어요.`
-          : `순간 ${result.summary.momentLogCount}개, 보관함 ${result.summary.libraryTrackCount}개를 서버 동기화에 반영했어요.`,
+          ? `리캡 ${result.momentLogSyncedCount}/${result.summary.momentLogCount}개, 보관함 ${result.librarySyncedCount}/${result.summary.libraryTrackCount}개를 동기화했어요. 실패한 항목은 다시 시도할 수 있어요.`
+          : `리캡 ${result.summary.momentLogCount}개, 보관함 ${result.summary.libraryTrackCount}개를 서버 동기화에 반영했어요.`,
       );
     } catch {
-      setMigrationMessage('동기화 요청에 실패했어요. 네트워크 상태를 확인해주세요.');
+      setMigrationMessage(
+        '동기화 요청에 실패했어요. 네트워크 상태를 확인해주세요.',
+      );
     } finally {
       setIsMigratingLocalData(false);
     }
@@ -64,82 +59,88 @@ export function AuthAccountCard() {
     router.push('/auth/login' as never);
   };
 
-  const handleDeleteAccountRequest = () => {
+  const handleDeleteAccount = () => {
     Alert.alert(
-      '계정 삭제 요청',
-      '요청을 보내면 계정과 서버에 동기화된 여행 기록 삭제 절차를 안내받게 됩니다.',
+      'Soundlog 계정을 삭제할까요?',
+      '계정과 서버에 저장된 여행 기록, 리캡, 보관함 데이터가 즉시 삭제됩니다. 이 작업은 되돌릴 수 없어요.',
       [
         { style: 'cancel', text: '취소' },
         {
           onPress: () => {
-            void openAccountDeletionEmail(user?.id, user?.email).catch(() => {
-              setMigrationMessage(
-                `메일 앱을 열지 못했어요. ${SOUNDLOG_SUPPORT_EMAIL} 으로 계정 삭제를 요청해주세요.`,
-              );
-            });
+            setMigrationMessage(undefined);
+            void deleteAccountMutation
+              .mutateAsync()
+              .then(() => {
+                clearAccountSession();
+                router.replace('/auth/login' as never);
+              })
+              .catch(() => {
+                setMigrationMessage(
+                  '계정을 삭제하지 못했어요. 네트워크 상태를 확인한 뒤 다시 시도해주세요.',
+                );
+              });
           },
           style: 'destructive',
-          text: '요청 메일 작성',
+          text: '계정 삭제',
         },
       ],
     );
   };
 
   if (status === 'authenticated' && user) {
+    const accountInitial = getAccountInitial(user.displayName, user.email);
+
     return (
-      <View className="mt-5 rounded-[22px] border border-[#1DB954]/25 bg-[#0D1D15] p-5">
-        <View className="flex-row items-start gap-3">
-          <View className="h-11 w-11 items-center justify-center rounded-full bg-[#1DB954]/20">
-            <Feather color="#7CFF8A" name="user-check" size={19} />
-          </View>
-          <View className="min-w-0 flex-1">
-            <AppText className="text-sm font-semibold text-[#7CFF8A]/80">
-              로그인됨
+      <View className="mt-7">
+        <SectionTitle title="계정 관리" />
+
+        <View className="mt-2 min-h-[60px] flex-row items-center py-2">
+          <View className="h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/[0.06]">
+            <AppText className="text-xl font-semibold text-white">
+              {accountInitial}
             </AppText>
-            <AppText className="mt-2 text-[20px] font-semibold text-white">
+          </View>
+          <View className="ml-3 min-w-0 flex-1">
+            <AppText
+              className="text-lg font-semibold text-white"
+              numberOfLines={1}
+            >
               {user.displayName}
             </AppText>
-            <AppText className="mt-1 text-xs leading-5 text-white/50">
-              Soundlog 계정{user.email ? ` · ${user.email}` : ''}
+            <AppText className="mt-1 text-sm text-white/45" numberOfLines={1}>
+              {user.email ?? 'Soundlog 계정'}
             </AppText>
           </View>
-        </View>
-
-        <View className="mt-5 flex-row gap-2">
-          <Pressable
-            accessibilityRole="button"
-            className="min-h-11 flex-1 items-center justify-center rounded-full bg-[#1DB954] px-4"
-            disabled={isMigratingLocalData}
-            onPress={handleMigrate}
-          >
-            <AppText className="text-xs font-semibold text-[#05110A]">
-              {isMigratingLocalData ? '동기화 중' : '로컬 기록 동기화'}
-            </AppText>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            className="min-h-11 items-center justify-center rounded-full border border-white/10 px-4"
-            disabled={logoutMutation.isPending}
-            onPress={handleLogout}
-          >
-            <AppText className="text-xs font-semibold text-white/70">
-              {logoutMutation.isPending ? '정리 중' : '로그아웃'}
-            </AppText>
-          </Pressable>
-        </View>
-
-        <Pressable
-          accessibilityRole="button"
-          className="mt-3 min-h-11 items-center justify-center rounded-full border border-[#FF6B6B]/30 px-4"
-          onPress={handleDeleteAccountRequest}
-        >
-          <AppText className="text-xs font-semibold text-[#FFB3B3]">
-            계정 삭제 요청
+          <AppText className="ml-3 text-xs font-semibold text-soundlog-lime">
+            로그인됨
           </AppText>
-        </Pressable>
+        </View>
+
+        <MySettingsRow
+          disabled={isMigratingLocalData || deleteAccountMutation.isPending}
+          icon="refresh-cw"
+          label="로컬 기록 동기화"
+          onPress={() => void handleMigrate()}
+          rightText={isMigratingLocalData ? '동기화 중' : undefined}
+        />
+        <MySettingsRow
+          disabled={logoutMutation.isPending || deleteAccountMutation.isPending}
+          icon="log-out"
+          label="로그아웃"
+          onPress={() => void handleLogout()}
+          rightText={logoutMutation.isPending ? '정리 중' : undefined}
+        />
+        <MySettingsRow
+          disabled={deleteAccountMutation.isPending || logoutMutation.isPending}
+          icon="trash-2"
+          label="계정 삭제"
+          onPress={handleDeleteAccount}
+          rightText={deleteAccountMutation.isPending ? '삭제 중' : undefined}
+          tone="danger"
+        />
 
         {migrationMessage ? (
-          <AppText className="mt-3 text-xs leading-5 text-[#7CFF8A]/70">
+          <AppText className="ml-12 mt-1 text-xs leading-5 text-soundlog-lime/70">
             {migrationMessage}
           </AppText>
         ) : null}
@@ -148,31 +149,15 @@ export function AuthAccountCard() {
   }
 
   return (
-    <View className="mt-5 rounded-[22px] border border-white/10 bg-white/10 p-5">
-      <View className="flex-row items-start gap-3">
-        <View className="h-11 w-11 items-center justify-center rounded-full bg-white/10">
-          <Feather color="#fff" name="log-in" size={19} />
-        </View>
-        <View className="min-w-0 flex-1">
-          <AppText className="text-sm font-semibold text-white/45">계정</AppText>
-          <AppText className="mt-2 text-[20px] font-semibold text-white">
-            로그인이 필요해요
-          </AppText>
-          <AppText className="mt-2 text-xs leading-5 text-white/50">
-            Soundlog의 추천, 기록, Recap은 계정에 저장된 상태로 사용할 수 있어요.
-          </AppText>
-        </View>
-      </View>
-
-      <Pressable
-        accessibilityRole="button"
-        className="mt-5 min-h-11 items-center justify-center rounded-full bg-white px-4"
+    <View className="mt-7">
+      <SectionTitle title="계정 관리" />
+      <MySettingsRow
+        description="추천, 리캡과 로그를 계정에 안전하게 저장해요."
+        icon="log-in"
+        label="Soundlog 계정으로 로그인"
         onPress={handleLoginPress}
-      >
-        <AppText className="text-xs font-semibold text-[#05070C]">
-          Soundlog 계정으로 로그인
-        </AppText>
-      </Pressable>
+        rightText="로그인 필요"
+      />
     </View>
   );
 }

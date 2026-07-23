@@ -183,7 +183,7 @@ async function verifyApiProxy() {
     },
     {
       auth: true,
-      path: '/api/soundlog/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday&topFilter=%EC%A0%84%EC%B2%B4',
+      path: '/api/soundlog/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday',
     },
     {
       auth: true,
@@ -259,7 +259,7 @@ async function verifyServerContract() {
 
   try {
     const payload = await fetchAuthenticatedJson(
-      '/api/soundlog/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday&topFilter=%EC%A0%84%EC%B2%B4',
+      '/api/soundlog/v1/home/mood-recommendations?limit=3&moodFilter=%EC%A0%84%EC%B2%B4&recommendationMode=everyday',
     );
     const serialized = JSON.stringify(payload?.data ?? {});
 

@@ -1,5 +1,7 @@
 # Soundlog 리캡 공유 페이지 제작 문서
 
+> **Current domain rule:** 제품의 Recap은 카메라 저장 1회이고, Log는 같은 여행모드 세션의 Recap 집합이다. Log 상세의 템플릿은 읽기 전용이며 지도에는 해당 Log의 Recap 핀과 세션 경로만 표시한다. 세부 기준은 [리캡·로그 도메인 기준](../product/RECAP_LOG_DOMAIN_MODEL.md)을 우선한다.
+
 ## 1. 문서 목적
 
 이 문서는 Figma의 `Music log` 화면 중 리캡 공유 페이지를 React Native 기반 Soundlog 앱에서 구현하기 위한 제작 기준서이다.

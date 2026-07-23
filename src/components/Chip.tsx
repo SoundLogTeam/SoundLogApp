@@ -14,6 +14,8 @@ export function Chip({ label, onPress, selected = false, size = 'default' }: Chi
 
   return (
     <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
       className={`justify-center rounded-full border ${
         isSmall ? 'min-h-[28px] px-3' : 'min-h-[38px] px-5'
       } ${

@@ -1,5 +1,3 @@
-import { View } from 'react-native';
-
 import { AppText } from '@/components/AppText';
 
 type MomentSaveStateProps = {
@@ -13,24 +11,18 @@ export function MomentSaveState({ message, type = 'info' }: MomentSaveStateProps
   }
 
   return (
-    <View
-      className="mt-4 rounded-[16px] border px-4 py-3"
+    <AppText
+      className="mt-4 text-center text-sm leading-5"
       style={{
-        backgroundColor:
+        color:
           type === 'error'
-            ? 'rgba(248,113,113,0.12)'
+            ? '#FECACA'
             : type === 'success'
-              ? 'rgba(34,197,94,0.12)'
-              : 'rgba(255,255,255,0.1)',
-        borderColor:
-          type === 'error'
-            ? 'rgba(248,113,113,0.22)'
-            : type === 'success'
-              ? 'rgba(34,197,94,0.22)'
-              : 'rgba(255,255,255,0.1)',
+              ? '#B7E628'
+              : 'rgba(255,255,255,0.62)',
       }}
     >
-      <AppText className="text-center text-sm leading-5 text-white/75">{message}</AppText>
-    </View>
+      {message}
+    </AppText>
   );
 }

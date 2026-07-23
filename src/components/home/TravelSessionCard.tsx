@@ -37,13 +37,13 @@ const statusCopy: Record<
 > = {
   active: {
     cta: '여행 보기',
-    description: '순간 저장과 Music Log가 지금 여행에 함께 묶이고 있어요.',
+    description: '여행 중 저장한 리캡들이 지금 로그에 함께 묶이고 있어요.',
     icon: 'radio',
     title: '여행 기록 중',
   },
   ended: {
-    cta: '리캡 보기',
-    description: '저장한 순간은 Recap에서 다시 확인할 수 있어요.',
+    cta: '로그 보기',
+    description: '저장한 리캡들은 여행 로그에서 다시 확인할 수 있어요.',
     icon: 'check-circle',
     title: '여행이 종료됐어요',
   },

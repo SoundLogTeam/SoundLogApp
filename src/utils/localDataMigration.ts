@@ -27,7 +27,9 @@ export type LocalDataMigrationSyncResult = {
   summary: LocalDataMigrationSummary;
 };
 
-function momentLogCreatePayloadFromLog(log: MomentLog): MomentLogCreateQueuePayload {
+function momentLogCreatePayloadFromLog(
+  log: MomentLog,
+): MomentLogCreateQueuePayload {
   return {
     createdAt: log.createdAt,
     location: log.location,
@@ -37,7 +39,9 @@ function momentLogCreatePayloadFromLog(log: MomentLog): MomentLogCreateQueuePayl
     placeCategory: log.placeCategory,
     placeId: log.placeId,
     placeName: log.placeName,
+    recapVisibility: 'private',
     sessionId: log.sessionId,
+    templateId: log.templateId,
     track: log.track,
     travelMode: log.travelMode,
   };
@@ -71,13 +75,8 @@ async function syncCompletedLocalProfile() {
 }
 
 async function syncLocalMomentLogs() {
-  const {
-    logs,
-    pendingActions,
-    queueCreate,
-    resolveLocalLog,
-    updateLog,
-  } = useMomentLogStore.getState();
+  const { logs, pendingActions, queueCreate, resolveLocalLog, updateLog } =
+    useMomentLogStore.getState();
   let syncedCount = 0;
   let failedCount = 0;
 
@@ -89,7 +88,8 @@ async function syncLocalMomentLogs() {
     const queuedCreateAction = pendingActions
       .filter(isCreatePendingAction)
       .find((action) => action.momentLogId === log.id);
-    const payload = queuedCreateAction?.payload ?? momentLogCreatePayloadFromLog(log);
+    const payload =
+      queuedCreateAction?.payload ?? momentLogCreatePayloadFromLog(log);
 
     queueCreate(log.id, payload);
     updateLog(log.id, { syncStatus: 'pending' });

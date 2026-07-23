@@ -3,8 +3,14 @@ export type GeoPoint = {
   lng: number;
 };
 
+export type RoutePoint = GeoPoint & {
+  accuracyMeters?: number;
+  recordedAt: string;
+};
+
 export type PlaceContext = {
   address?: string;
+  attribution?: string;
   category?: string;
   contentType?: string;
   distanceMeters?: number;
@@ -12,11 +18,17 @@ export type PlaceContext = {
   imageUrl?: string;
   location?: GeoPoint;
   overview?: string;
-  source: 'seed' | 'tour-api';
+  source: 'reverse-geocode' | 'seed' | 'tour-api' | 'user';
   title: string;
 };
 
-export type TravelMode = 'walk' | 'drive' | 'cafe' | 'ocean' | 'festival' | 'night';
+export type TravelMode =
+  | 'walk'
+  | 'drive'
+  | 'cafe'
+  | 'ocean'
+  | 'festival'
+  | 'night';
 
 export type MusicRecommendationMode = 'everyday' | 'travel';
 
@@ -24,7 +36,11 @@ export type MoodTag = 'calm' | 'fresh' | 'emotional' | 'active' | 'local';
 
 export type MusicPlatformId = 'none' | 'spotify' | 'youtubeMusic' | 'youtube';
 
-export type ExternalMusicPlatformId = 'melon' | 'spotify' | 'youtube' | 'youtubeMusic';
+export type ExternalMusicPlatformId =
+  | 'melon'
+  | 'spotify'
+  | 'youtube'
+  | 'youtubeMusic';
 
 export type PlaylistRecommendationSource =
   | 'ml-recommendation'
@@ -68,6 +84,7 @@ export type MoodRecommendation = {
   subtitle?: string;
   color: string;
   genres?: string[];
+  imageUrl?: string;
   moods?: string[];
   playlistId?: string;
   track: Track;
@@ -119,12 +136,16 @@ export type MomentLog = {
   placeCategory?: string;
   placeId?: string;
   placeName?: string;
+  recapId?: string;
+  recapVisibility?: RecapVisibility;
   note?: string;
   track?: Track;
   travelMode?: TravelMode;
   moodTags: MoodTag[];
   source: 'camera';
+  syncError?: string;
   syncStatus: 'failed' | 'local' | 'pending' | 'synced';
+  templateId?: RecapTemplateId;
 };
 
 export type RecapItem = {
@@ -133,23 +154,63 @@ export type RecapItem = {
   placeName: string;
   representativeTrack: Track;
   createdAt: string;
+  backgroundImageUrl?: string;
   momentCount?: number;
   sessionId?: string;
+  thumbnailMomentId?: string;
+  visibility?: RecapVisibility;
 };
 
 export type RecapTemplateId = 'album' | 'film' | 'lp' | 'map';
 
+export type RecapVisibility = 'private' | 'public';
+
+export type RecapMapScope = 'mine' | 'public';
+
+export type RecapMapMarker = {
+  artistName: string;
+  createdAt: string;
+  distanceMeters?: number;
+  id: string;
+  imageUrl?: string;
+  location: GeoPoint;
+  ownerAlias: string;
+  placeName: string;
+  recapId: string;
+  templateId: RecapTemplateId;
+  title: string;
+  trackTitle: string;
+  visibility: RecapVisibility;
+};
+
 export type RecapShareMoment = {
   id: string;
   imageUrl?: string;
+  location?: GeoPoint;
   placeName: string;
   trackTitle: string;
   artistName: string;
   recordedAt: string;
+  templateId?: RecapTemplateId;
+  track?: Track;
+  visibility?: RecapVisibility;
+};
+
+export type RecapTravelSummary = {
+  distanceMeters: number;
+  durationMinutes: number;
+  endedAt?: string;
+  endPlaceName: string;
+  placeNames: string[];
+  recordedLocationCount: number;
+  routePointCount?: number;
+  startedAt?: string;
+  startPlaceName: string;
 };
 
 export type RecapShare = {
   id: string;
+  isMine?: boolean;
   placeName: string;
   trackTitle: string;
   artistName: string;
@@ -157,7 +218,15 @@ export type RecapShare = {
   discImageUrl?: string;
   moments?: RecapShareMoment[];
   recordedAt: string;
+  routePoints?: RoutePoint[];
+  sessionEndedAt?: string;
+  sessionId?: string;
+  sessionStartedAt?: string;
   shareImageUrl?: string;
+  templateId?: RecapTemplateId;
+  thumbnailMomentId?: string;
+  travelSummary?: RecapTravelSummary;
+  visibility?: RecapVisibility;
 };
 
 export type CommunityVisibility = 'companions' | 'nearby' | 'private';
@@ -232,7 +301,9 @@ export type MusicMatch = {
   matchScore: number;
   safety: {
     exactLocationHidden: boolean;
-    firstMessageTemplates: Array<'cafe_together' | 'liked_track' | 'walk_together'>;
+    firstMessageTemplates: Array<
+      'cafe_together' | 'liked_track' | 'walk_together'
+    >;
     contactHiddenUntilAccepted: boolean;
   };
 };

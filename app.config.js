@@ -100,6 +100,13 @@ function getApiBaseUrl() {
   return process.env.EXPO_PUBLIC_SOUNDLOG_API_BASE_URL?.replace(/\/+$/, '');
 }
 
+function getGoogleMapsAndroidApiKey() {
+  return (
+    process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_API_KEY ??
+    process.env.GOOGLE_MAPS_ANDROID_API_KEY
+  );
+}
+
 function isProductionBuildProfile() {
   return process.env.EAS_BUILD_PROFILE === 'production';
 }
@@ -166,11 +173,31 @@ function upsertBuildPropertiesPlugin(config, nextAndroidConfig) {
   );
 }
 
+function applyAndroidGoogleMapsApiKey(config) {
+  const apiKey = getGoogleMapsAndroidApiKey();
+
+  if (!apiKey) {
+    return;
+  }
+
+  config.android = {
+    ...config.android,
+    config: {
+      ...(config.android?.config ?? {}),
+      googleMaps: {
+        ...(config.android?.config?.googleMaps ?? {}),
+        apiKey,
+      },
+    },
+  };
+}
+
 module.exports = () => {
   const nextConfig = JSON.parse(JSON.stringify(baseConfig));
   const apiBaseUrl = getApiBaseUrl();
   const httpApiHost = getHttpApiHost(apiBaseUrl);
 
+  applyAndroidGoogleMapsApiKey(nextConfig);
   assertProductionConfig(apiBaseUrl);
 
   if (!httpApiHost || isProductionBuildProfile()) {

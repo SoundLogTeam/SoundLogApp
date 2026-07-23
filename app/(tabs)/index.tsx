@@ -1,583 +1,394 @@
-import { Redirect, router } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Redirect, router } from "expo-router";
+import { useEffect, useState } from "react";
+import { View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { travelSessionApi } from "@/api/travelSessionApi";
+import { recapQueryKeys } from "@/api/recapQueries";
+import { useNearbyPlacesQuery } from "@/api/tourQueries";
+import { AppText } from "@/components/AppText";
+import { MiniPlayer } from "@/components/MiniPlayer";
+import { Screen } from "@/components/Screen";
+import { EndTravelConfirmModal } from "@/components/travel/EndTravelConfirmModal";
+import { TravelModeBottomSheet } from "@/components/travel/TravelModeBottomSheet";
+import { RecapMapSection } from "@/components/travel/recap-map";
 import {
-  useFeaturedPlaylistsQuery,
-  useMoodRecommendationsQuery,
-  useRecentMusicLogsQuery,
-} from '@/api/homeQueries';
-import { meApi } from '@/api/meApi';
-import { playlistApi, PlaylistMlMood, PlaylistMlState } from '@/api/playlistApi';
-import { playlistQueryKeys } from '@/api/playlistQueries';
-import { syncRecommendationEvent } from '@/api/recommendationEventApi';
-import { AppText } from '@/components/AppText';
-import { useNearbyPlacesQuery } from '@/api/tourQueries';
-import { MiniPlayer } from '@/components/MiniPlayer';
-import { FeaturedPlaylistSection } from '@/components/home/FeaturedPlaylistSection';
-import { CurrentSoundtrackCard } from '@/components/home/CurrentSoundtrackCard';
+  getMiniPlayerBottom,
+  getTabBarHeight,
+  layout,
+} from "@/constants/layout";
 import {
-  HomeHeader,
-  HomeNavigationBar,
-  HomeTopFilterBar,
-  isHomeTopFilter,
-} from '@/components/home/HomeHeader';
-import { LocationContextCard } from '@/components/home/LocationContextCard';
-import {
-  MoodRecommendationSection,
-  isMoodRecommendationFilter,
-} from '@/components/home/MoodRecommendationSection';
-import { MusicLogSection } from '@/components/home/MusicLogSection';
-import { TravelSessionCard } from '@/components/home/TravelSessionCard';
-import { Screen } from '@/components/Screen';
-import { getHomeContentBottomPadding } from '@/constants/layout';
-import { useHomeFilterStore } from '@/store/homeFilterStore';
-import {
-  momentLogToMusicLogItem,
-  useMomentLogStore,
-} from '@/store/momentLogStore';
-import { usePlayerStore } from '@/store/playerStore';
-import { useRecommendationEventStore } from '@/store/recommendationEventStore';
-import {
-  createFeaturedPlaylistsCacheKey,
-  createMoodRecommendationsCacheKey,
-  useRecommendationCacheStore,
-} from '@/store/recommendationCacheStore';
-import { queryClient } from '@/providers/queryClient';
-import { useAuthStore } from '@/store/authStore';
-import { useTravelSessionStore } from '@/store/travelSessionStore';
-import { useUserProfileStore } from '@/store/userProfileStore';
-import { FeaturedPlaylist, MoodRecommendation, MusicLogItem, TravelMode } from '@/types/domain';
-import { requestForegroundLocationWithStatus } from '@/utils/location';
-import { getMoodTagsFromFilter } from '@/utils/moodTags';
-import { createRecommendationEventContext } from '@/utils/recommendationEventContext';
+  createRoutePoint,
+  useTravelRouteTracking,
+} from "@/hooks/useTravelRouteTracking";
+import { useAuthStore } from "@/store/authStore";
+import { useMomentLogStore } from "@/store/momentLogStore";
+import { usePlayerStore } from "@/store/playerStore";
+import { queryClient } from "@/providers/queryClient";
+import { useTravelSessionStore } from "@/store/travelSessionStore";
+import { useTravelLogSyncStore } from "@/store/travelLogSyncStore";
+import { useUserProfileStore } from "@/store/userProfileStore";
+import type { TravelMode } from "@/types/domain";
+import { requestForegroundLocationWithStatus } from "@/utils/location";
+import { createSessionRecapId } from "@/utils/recapMappers";
+import { flushPendingMomentActions } from "@/utils/momentLogSync";
+import { flushPendingTravelLogFinalizations } from "@/utils/travelLogSync";
 
-const moodFilterToMlMood: Record<string, PlaylistMlMood> = {
-  감성적인: '감성적인',
-  로컬한: '설레는',
-  설레는: '설레는',
-  시원한: '시원한',
-  신나는: '신나는',
-  잔잔한: '잔잔한',
-  청량한: '시원한',
-  활기찬: '신나는',
-};
+const NEARBY_TOUR_RADIUS_METERS = 2000;
 
-const travelModeToMlState: Partial<Record<TravelMode, PlaylistMlState>> = {
-  cafe: '카페',
-  drive: '드라이브',
-  night: '야경',
-  ocean: '바다',
-  walk: '산책',
-};
-
-const travelModeDisplayLabel: Record<TravelMode, string> = {
-  cafe: '카페',
-  drive: '드라이브',
-  festival: '축제',
-  night: '야경',
-  ocean: '바다',
-  walk: '산책',
-};
-
-const travelStyleDisplayLabel: Record<string, string> = {
-  '바다 보기': '바다',
-  '야경 감상': '야경',
-  '카페 투어': '카페',
-};
-
-function resolvePlaylistMood(filter: string, preferredMoods: string[]): PlaylistMlMood {
-  if (filter !== '전체' && moodFilterToMlMood[filter]) {
-    return moodFilterToMlMood[filter];
-  }
-
-  return preferredMoods.map((mood) => moodFilterToMlMood[mood]).find(Boolean) ?? '잔잔한';
-}
-
-function resolvePlaylistState(mode?: TravelMode): PlaylistMlState {
-  return (mode ? travelModeToMlState[mode] : undefined) ?? '산책';
-}
-
-function resolveCurrentTravelLabel(mode: TravelMode | undefined, travelStyles: string[]) {
-  if (mode) {
-    return travelModeDisplayLabel[mode];
-  }
-
-  const firstTravelStyle = travelStyles[0];
-
-  return firstTravelStyle ? travelStyleDisplayLabel[firstTravelStyle] ?? firstTravelStyle : '산책';
-}
-
-function resolveCurrentMoodLabel(filter: string, preferredMoods: string[]) {
-  if (filter !== '전체') {
-    return filter;
-  }
-
-  return preferredMoods[0] ?? '잔잔한';
-}
-
-function HomeContent() {
+export default function MapHomeScreen() {
   const insets = useSafeAreaInsets();
-  const authStatus = useAuthStore((state) => state.status);
-  const [actionMessage, setActionMessage] = useState<string>();
-  const [creatingPlaylistId, setCreatingPlaylistId] = useState<string>();
-  const {
-    selectedMoodFilter,
-    selectedTopFilter,
-    setSelectedMoodFilter,
-    setSelectedTopFilter,
-  } = useHomeFilterStore();
-  const { currentTrack, setTrack } = usePlayerStore();
-  const addRecommendationEvent = useRecommendationEventStore(
-    (state) => state.addEvent,
-  );
+  useTravelRouteTracking();
+  const { isHydrated: authHydrated, status } = useAuthStore();
+  const { isHydrated, profile } = useUserProfileStore();
+  const { currentTrack } = usePlayerStore();
+  const [isModeSheetVisible, setIsModeSheetVisible] = useState(false);
+  const [isStartingTravel, setIsStartingTravel] = useState(false);
+  const [isEndConfirmVisible, setIsEndConfirmVisible] = useState(false);
+  const [isEndingTravel, setIsEndingTravel] = useState(false);
+  const [mapMessage, setMapMessage] = useState<string>();
   const momentLogs = useMomentLogStore((state) => state.logs);
-  const { profile, updateProfile } = useUserProfileStore();
   const {
+    clearLocation,
     currentLocation,
     currentPlace,
+    endSession,
     locationStatus,
-    locationUpdatedAt,
-    recommendationMode,
     selectedMode,
     session,
     resetSession,
     setLocation,
     setLocationStatus,
+    setMode,
     setPlace,
     setRecommendationMode,
+    setSessionRecapId,
+    startSession,
   } = useTravelSessionStore();
-  const featuredPlaylistParams = useMemo(
-    () => ({
-      location: currentLocation,
-      locationRecommendationEnabled: profile.locationRecommendationEnabled,
-      place: currentPlace,
-      recommendationMode,
-    }),
-    [
-      currentLocation,
-      currentPlace,
-      profile.locationRecommendationEnabled,
-      recommendationMode,
-    ],
-  );
-  const moodRecommendationParams = useMemo(
-    () => ({
-      currentPlace,
-      moodFilter: selectedMoodFilter,
-      preferredGenres: profile.preferredGenres,
-      preferredMoods: profile.preferredMoods,
-      recommendationMode,
-      topFilter: selectedTopFilter,
-      travelStyles: profile.travelStyles,
-    }),
-    [
-      currentPlace,
-      profile.preferredGenres,
-      profile.preferredMoods,
-      profile.travelStyles,
-      recommendationMode,
-      selectedMoodFilter,
-      selectedTopFilter,
-    ],
-  );
-  const featuredCacheKey = useMemo(
-    () => createFeaturedPlaylistsCacheKey(featuredPlaylistParams),
-    [featuredPlaylistParams],
-  );
-  const moodCacheKey = useMemo(
-    () => createMoodRecommendationsCacheKey(moodRecommendationParams),
-    [moodRecommendationParams],
-  );
-  const featuredFallback = useRecommendationCacheStore((state) => state.featuredFallback);
-  const moodFallback = useRecommendationCacheStore((state) => state.moodFallback);
-  const isUsingCachedFeaturedPlaylists = featuredFallback?.key === featuredCacheKey;
-  const isUsingCachedMoodRecommendations = moodFallback?.key === moodCacheKey;
-  const isAuthenticated = authStatus === 'authenticated';
-
   const nearbyPlacesQuery = useNearbyPlacesQuery({
-    enabled: isAuthenticated && profile.locationRecommendationEnabled,
+    enabled:
+      status === "authenticated" &&
+      isHydrated &&
+      profile.locationRecommendationEnabled,
     location: currentLocation,
-    radiusMeters: 2000,
+    radiusMeters: NEARBY_TOUR_RADIUS_METERS,
   });
-  const featuredPlaylistsQuery = useFeaturedPlaylistsQuery(featuredPlaylistParams, {
-    enabled: isAuthenticated,
-  });
-  const moodRecommendationsQuery = useMoodRecommendationsQuery(moodRecommendationParams, {
-    enabled: isAuthenticated,
-  });
-  const recentMusicLogsQuery = useRecentMusicLogsQuery({ enabled: isAuthenticated });
-  const musicLogs = [
-    ...momentLogs.slice(0, 6).map(momentLogToMusicLogItem),
-    ...(recentMusicLogsQuery.data ?? []),
-  ].slice(0, 10);
-  const placeInfoMessage =
-    profile.locationRecommendationEnabled &&
-    currentLocation &&
-    !nearbyPlacesQuery.isFetching &&
-    (nearbyPlacesQuery.data?.length ?? 0) === 0
-      ? '주변 관광지 결과가 없어도 기본 추천은 계속 사용할 수 있어요.'
-      : nearbyPlacesQuery.isError
-        ? '주변 관광지를 불러오지 못했지만 기본 추천은 계속 사용할 수 있어요.'
-        : undefined;
+  const nearestTourPlace = currentLocation
+    ? nearbyPlacesQuery.data?.find(
+        (place) => place.source === "tour-api" && Boolean(place.location),
+      )
+    : undefined;
+  const cachedTourPlace =
+    currentPlace?.source === "tour-api" && currentPlace.location
+      ? currentPlace
+      : undefined;
+  const activeCurrentPlace = currentLocation
+    ? nearestTourPlace
+    : cachedTourPlace;
+  const tourPlaceStatus = activeCurrentPlace
+    ? "ready"
+    : !currentLocation
+      ? "unavailable"
+      : !profile.locationRecommendationEnabled
+        ? "disabled"
+        : nearbyPlacesQuery.isFetching
+          ? "loading"
+          : nearbyPlacesQuery.isError
+            ? "error"
+            : "empty";
+  const sessionMomentCount = momentLogs.filter(
+    (log) => log.sessionId === session.id,
+  ).length;
 
-  useEffect(() => {
-    if (!isMoodRecommendationFilter(selectedMoodFilter)) {
-      setSelectedMoodFilter('전체');
-    }
-  }, [selectedMoodFilter, setSelectedMoodFilter]);
+  useEffect(
+    function synchronizeRecommendationMode() {
+      setRecommendationMode("travel");
+    },
+    [setRecommendationMode],
+  );
 
-  useEffect(() => {
-    if (!isHomeTopFilter(selectedTopFilter)) {
-      setSelectedTopFilter('전체');
-    }
-  }, [selectedTopFilter, setSelectedTopFilter]);
-
-  useEffect(() => {
-    if (!nearbyPlacesQuery.data) {
-      return;
-    }
-
-    const nextPlace = nearbyPlacesQuery.data[0];
-
-    if (nextPlace?.id !== currentPlace?.id) {
-      setPlace(nextPlace);
-    }
-  }, [currentPlace?.id, nearbyPlacesQuery.data, setPlace]);
-
-  const handleSelectRecommendation = async (item: MoodRecommendation) => {
-    setActionMessage(undefined);
-
-    if (item.playlistId) {
-      router.push(`/playlist/${item.playlistId}`);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext(),
-          playlistId: item.playlistId,
-          type: 'playlist_open',
-          value: item.playlistId,
-        }),
-      );
-      return;
-    }
-
-    setTrack(item.track);
-    syncRecommendationEvent(
-      addRecommendationEvent({
-        context: createRecommendationEventContext(),
-        playlistId: item.playlistId,
-        trackId: item.track.id,
-        type: 'track_selected',
-        value: 'home_mood_recommendation',
-      }),
-    );
-    setActionMessage('이 곡을 SoundLog 음악으로 선택했어요. 하단 패널에서 저장하거나 순간 기록에 담을 수 있어요.');
-  };
-  const handleSelectFeaturedPlaylist = useCallback(
-    async (playlist: FeaturedPlaylist) => {
-      if (creatingPlaylistId) {
+  useEffect(
+    function loadInitialLocationAfterLogin() {
+      if (
+        status !== "authenticated" ||
+        !isHydrated ||
+        !profile.completedOnboarding ||
+        !profile.locationRecommendationEnabled ||
+        currentLocation ||
+        locationStatus !== "idle"
+      ) {
         return;
       }
 
-      setActionMessage(undefined);
-      setCreatingPlaylistId(playlist.id);
+      setLocationStatus("loading");
 
-      try {
-        const contextualPlaylist = await playlistApi.getRecommendedPlaylist({
-          location: currentLocation ?? currentPlace?.location,
-          mood: resolvePlaylistMood(selectedMoodFilter, profile.preferredMoods),
-          moodTags: getMoodTagsFromFilter(selectedMoodFilter),
-          placeId: currentPlace?.id,
-          preferredGenres: profile.preferredGenres,
-          preferredMoods: profile.preferredMoods,
-          state: resolvePlaylistState(selectedMode),
-          travelMode: selectedMode,
-        });
-        const nextPlaylistId = contextualPlaylist?.id ?? playlist.id;
+      void requestForegroundLocationWithStatus()
+        .then((result) => {
+          if (useAuthStore.getState().status !== "authenticated") {
+            return;
+          }
 
-        if (contextualPlaylist) {
-          queryClient.setQueryData(
-            playlistQueryKeys.detail(nextPlaylistId),
-            contextualPlaylist,
+          if (result.location) {
+            setLocation(result.location);
+            return;
+          }
+
+          if (result.status === "denied") {
+            clearLocation();
+          }
+          setLocationStatus(
+            result.status === "denied" ? "denied" : "unavailable",
           );
-        }
+        })
+        .catch(() => {
+          if (useAuthStore.getState().status === "authenticated") {
+            setLocationStatus("unavailable");
+          }
+        });
+    },
+    [
+      clearLocation,
+      currentLocation,
+      isHydrated,
+      locationStatus,
+      profile.completedOnboarding,
+      profile.locationRecommendationEnabled,
+      setLocation,
+      setLocationStatus,
+      status,
+    ],
+  );
 
-        syncRecommendationEvent(
-          addRecommendationEvent({
-            context: createRecommendationEventContext({
-              moodFilter: selectedMoodFilter,
-              source: contextualPlaylist.context?.source,
-            }),
-            playlistId: nextPlaylistId,
-            type: 'playlist_open',
-            value: nextPlaylistId,
-          }),
-        );
-        router.push(`/playlist/${nextPlaylistId}`);
-      } catch {
-        setActionMessage('맞춤 플레이리스트를 만들지 못했어요. 잠시 후 다시 시도해주세요.');
-      } finally {
-        setCreatingPlaylistId(undefined);
+  useEffect(
+    function redirectIncompleteOnboarding() {
+      if (isHydrated && !profile.completedOnboarding) {
+        router.replace("/onboarding" as never);
+      }
+    },
+    [isHydrated, profile.completedOnboarding],
+  );
+
+  useEffect(
+    function synchronizeNearestTourPlace() {
+      if (
+        !currentLocation ||
+        !nearbyPlacesQuery.isSuccess ||
+        !nearestTourPlace
+      ) {
+        return;
+      }
+
+      if (nearestTourPlace.id !== currentPlace?.id) {
+        setPlace(nearestTourPlace);
       }
     },
     [
-      addRecommendationEvent,
-      creatingPlaylistId,
       currentLocation,
-      currentPlace,
-      profile.preferredGenres,
-      profile.preferredMoods,
-      selectedMode,
-      selectedMoodFilter,
+      currentPlace?.id,
+      nearestTourPlace,
+      nearbyPlacesQuery.isSuccess,
+      setPlace,
     ],
   );
-  const handleSelectMusicLog = useCallback((item: MusicLogItem) => {
-    router.push(`/recap-share/${item.recapShareId ?? item.id}`);
-  }, []);
-  const handleSelectTopFilter = useCallback(
-    (filter: string) => {
-      if (filter === selectedTopFilter) {
-        return;
-      }
 
-      setSelectedTopFilter(filter);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext({ topFilter: filter }),
-          type: 'top_filter_change',
-          value: filter,
-        }),
-      );
-    },
-    [addRecommendationEvent, selectedTopFilter, setSelectedTopFilter],
-  );
-  const handleSelectMoodFilter = useCallback(
-    (filter: string) => {
-      if (filter === selectedMoodFilter) {
-        return;
-      }
-
-      setSelectedMoodFilter(filter);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext({ moodFilter: filter }),
-          type: 'mood_filter_change',
-          value: filter,
-        }),
-      );
-    },
-    [addRecommendationEvent, selectedMoodFilter, setSelectedMoodFilter],
-  );
-  const handleSelectRecommendationMode = useCallback(
-    (mode: typeof recommendationMode) => {
-      if (mode === recommendationMode) {
-        return;
-      }
-
-      setRecommendationMode(mode);
-      syncRecommendationEvent(
-        addRecommendationEvent({
-          context: createRecommendationEventContext({ recommendationMode: mode }),
-          type: 'recommendation_mode_change',
-          value: mode,
-        }),
-      );
-    },
-    [addRecommendationEvent, recommendationMode, setRecommendationMode],
-  );
-  const handleEnableLocationRecommendation = useCallback(async () => {
-    const nextProfile = {
-      companionType: profile.companionType,
-      locationRecommendationEnabled: true,
-      preferredGenres: profile.preferredGenres,
-      preferredMoods: profile.preferredMoods,
-      travelStyles: profile.travelStyles,
-    };
-
-    setActionMessage(undefined);
-
-    try {
-      await meApi.updateProfile(nextProfile);
-      updateProfile(nextProfile);
-      return true;
-    } catch {
-      setActionMessage('위치 추천 설정을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
-      return false;
-    }
-  }, [profile, updateProfile]);
-  const handleRefreshLocation = useCallback(async () => {
-    if (locationStatus === 'loading') {
-      return;
-    }
-
-    setLocationStatus('loading');
-
-    try {
-      const result = await requestForegroundLocationWithStatus();
-
-      if (result.location) {
-        setLocation(result.location);
-        return;
-      }
-
-      setLocationStatus(result.status === 'denied' ? 'denied' : 'unavailable');
-    } catch {
-      setLocationStatus('unavailable');
-    }
-  }, [locationStatus, setLocation, setLocationStatus]);
-  const handleSetCurrentLocation = useCallback(async () => {
-    if (!profile.locationRecommendationEnabled) {
-      const didEnable = await handleEnableLocationRecommendation();
-
-      if (!didEnable) {
-        return;
-      }
-    }
-
-    void handleRefreshLocation();
-  }, [
-    handleEnableLocationRecommendation,
-    handleRefreshLocation,
-    profile.locationRecommendationEnabled,
-  ]);
-
-  return (
-    <Screen>
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{
-          gap: 20,
-          paddingBottom: getHomeContentBottomPadding(
-            insets.bottom,
-            Boolean(currentTrack),
-          ),
-          paddingHorizontal: 20,
-          paddingTop: 16,
-        }}
-        showsVerticalScrollIndicator={false}
-      >
-        <HomeNavigationBar />
-
-        <HomeHeader
-          onSelectRecommendationMode={handleSelectRecommendationMode}
-          recommendationMode={recommendationMode}
-        />
-
-        <LocationContextCard
-          enabled={profile.locationRecommendationEnabled}
-          isLoading={locationStatus === 'loading'}
-          isPlaceLoading={nearbyPlacesQuery.isFetching}
-          location={currentLocation}
-          onEnable={handleSetCurrentLocation}
-          onRefresh={handleRefreshLocation}
-          place={currentPlace}
-          placeCount={nearbyPlacesQuery.data?.length ?? 0}
-          placeInfoMessage={placeInfoMessage}
-          status={locationStatus}
-          updatedAt={locationUpdatedAt}
-        />
-
-        <CurrentSoundtrackCard
-          cachedAt={isUsingCachedFeaturedPlaylists ? featuredFallback?.cachedAt : undefined}
-          currentPlace={currentPlace}
-          isCached={isUsingCachedFeaturedPlaylists}
-          isError={featuredPlaylistsQuery.isError}
-          isLoading={featuredPlaylistsQuery.isLoading}
-          moodLabel={resolveCurrentMoodLabel(selectedMoodFilter, profile.preferredMoods)}
-          onCaptureMoment={() => router.push('/camera' as never)}
-          onOpenPlaylist={handleSelectFeaturedPlaylist}
-          onRetry={() => void featuredPlaylistsQuery.refetch()}
-          playlist={featuredPlaylistsQuery.data?.[0]}
-          travelLabel={resolveCurrentTravelLabel(selectedMode, profile.travelStyles)}
-        />
-
-        {recommendationMode === 'travel' ? (
-          <View className="-mt-2">
-            <TravelSessionCard
-              currentPlace={currentPlace}
-              endedAt={session.endedAt}
-              onDismissEnded={resetSession}
-              onOpenRecap={() => router.push('/recap')}
-              onOpenTravel={() => router.push('/(tabs)/travel' as never)}
-              selectedMode={selectedMode}
-              startedAt={session.startedAt}
-              status={session.status}
-            />
-          </View>
-        ) : null}
-
-        <View className={recommendationMode === 'travel' ? '' : '-mt-2'}>
-          <HomeTopFilterBar
-            onSelectTopFilter={handleSelectTopFilter}
-            selectedTopFilter={selectedTopFilter}
-          />
-        </View>
-
-        <FeaturedPlaylistSection
-          cachedAt={isUsingCachedFeaturedPlaylists ? featuredFallback?.cachedAt : undefined}
-          data={featuredPlaylistsQuery.data}
-          isCached={isUsingCachedFeaturedPlaylists}
-          isError={featuredPlaylistsQuery.isError}
-          isLoading={featuredPlaylistsQuery.isLoading}
-          onSelectPlaylist={handleSelectFeaturedPlaylist}
-          onRetry={() => void featuredPlaylistsQuery.refetch()}
-        />
-
-        <View className="mt-2">
-          <MoodRecommendationSection
-            cachedAt={isUsingCachedMoodRecommendations ? moodFallback?.cachedAt : undefined}
-            data={moodRecommendationsQuery.data}
-            isCached={isUsingCachedMoodRecommendations}
-            isError={moodRecommendationsQuery.isError}
-            isLoading={moodRecommendationsQuery.isLoading}
-            onSelectMoodFilter={handleSelectMoodFilter}
-            onSelectRecommendation={handleSelectRecommendation}
-            selectedMoodFilter={selectedMoodFilter}
-          />
-        </View>
-
-        {actionMessage ? (
-          <View className="rounded-[14px] border border-amber-300/20 bg-amber-300/10 px-4 py-3">
-            <AppText className="text-xs leading-5 text-amber-100">{actionMessage}</AppText>
-          </View>
-        ) : null}
-
-        <View className="mt-2">
-          <MusicLogSection
-            data={musicLogs}
-            isError={recentMusicLogsQuery.isError}
-            isLoading={recentMusicLogsQuery.isLoading && momentLogs.length === 0}
-            onSelectLog={handleSelectMusicLog}
-          />
-        </View>
-      </ScrollView>
-      {currentTrack ? <MiniPlayer /> : null}
-    </Screen>
-  );
-}
-
-export default function HomeScreen() {
-  const { isHydrated: authHydrated, status } = useAuthStore();
-  const { isHydrated, profile } = useUserProfileStore();
-
-  useEffect(() => {
-    if (isHydrated && !profile.completedOnboarding) {
-      router.replace('/onboarding' as never);
-    }
-  }, [isHydrated, profile.completedOnboarding]);
-
-  if (!authHydrated || status === 'checking') {
+  if (!authHydrated || status === "checking") {
     return <Screen />;
   }
 
-  if (status !== 'authenticated') {
-    return <Redirect href={profile.completedOnboarding ? '/auth/login' : '/onboarding'} />;
+  if (status !== "authenticated") {
+    return (
+      <Redirect
+        href={profile.completedOnboarding ? "/auth/login" : "/onboarding"}
+      />
+    );
   }
 
   if (!isHydrated || !profile.completedOnboarding) {
     return isHydrated ? <Redirect href="/onboarding" /> : <Screen />;
   }
 
-  return <HomeContent />;
+  const openModeSheet = () => {
+    if (session.status === "ended") {
+      resetSession();
+    }
+
+    setIsModeSheetVisible(true);
+  };
+  const handleSelectMode = (mode: TravelMode) => {
+    setMode(mode);
+  };
+  const handleStartTravel = async () => {
+    if (isStartingTravel) {
+      return;
+    }
+
+    const nextMode = selectedMode ?? "walk";
+
+    if (!selectedMode) {
+      setMode(nextMode);
+    }
+
+    setIsStartingTravel(true);
+    setMapMessage(undefined);
+
+    try {
+      const startLocation = currentLocation ?? activeCurrentPlace?.location;
+      const startedAt = new Date().toISOString();
+      const initialRoutePoints = startLocation
+        ? [createRoutePoint(startLocation, new Date(startedAt))]
+        : undefined;
+      const serverSession = await travelSessionApi.createTravelSession({
+        location: startLocation,
+        routePoints: initialRoutePoints,
+        startedAt,
+        travelMode: nextMode,
+      });
+
+      startSession({
+        id: serverSession?.id,
+        routePoints: serverSession?.routePoints ?? initialRoutePoints,
+        startedAt: serverSession?.startedAt ?? startedAt,
+      });
+    } catch {
+      const startLocation = currentLocation ?? activeCurrentPlace?.location;
+      const startedAt = new Date().toISOString();
+
+      startSession({
+        routePoints: startLocation
+          ? [createRoutePoint(startLocation, new Date(startedAt))]
+          : undefined,
+        startedAt,
+      });
+      setMapMessage(
+        "서버 여행 세션 연결에 실패해서 로컬 여행모드로 먼저 시작했어요.",
+      );
+    } finally {
+      setIsStartingTravel(false);
+      setIsModeSheetVisible(false);
+    }
+  };
+  const handleEndTravel = async () => {
+    if (isEndingTravel || session.status !== "active") {
+      return;
+    }
+
+    const endingSession = session;
+    const endedAt = new Date().toISOString();
+    const localRecapId = createSessionRecapId(endingSession.id);
+
+    setIsEndingTravel(true);
+    setMapMessage(undefined);
+
+    try {
+      await flushPendingMomentActions();
+
+      const latestSessionLogs = useMomentLogStore
+        .getState()
+        .logs.filter((log) => log.sessionId === endingSession.id);
+
+      endSession();
+      setIsEndConfirmVisible(false);
+
+      if (latestSessionLogs.length === 0) {
+        setSessionRecapId(undefined);
+        setMapMessage(
+          "여행을 종료했어요. 남긴 리캡이 없어 로그는 만들지 않았어요.",
+        );
+        return;
+      }
+
+      useTravelLogSyncStore.getState().queueFinalization({
+        endedAt,
+        location: currentLocation ?? activeCurrentPlace?.location,
+        routePoints: endingSession.routePoints,
+        sessionId: endingSession.id,
+        templateId: "album",
+        title: `${latestSessionLogs[0]?.placeName ?? "여행"} 로그`,
+      });
+      const syncResult = await flushPendingTravelLogFinalizations();
+      const recapId =
+        syncResult.createdRecapIds[endingSession.id] ?? localRecapId;
+
+      setSessionRecapId(recapId);
+      await queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists });
+
+      if (recapId === localRecapId) {
+        setMapMessage(
+          "서버 동기화가 끝나면 여행 로그가 자동으로 완성돼요. 지금은 기기 기록을 보여드릴게요.",
+        );
+      }
+
+      router.push(`/recap-share/${recapId}`);
+    } catch {
+      endSession();
+      setSessionRecapId(localRecapId);
+      setIsEndConfirmVisible(false);
+      setMapMessage(
+        "서버 로그 생성에 실패해 기기에 저장된 여행 로그를 먼저 보여드려요.",
+      );
+      router.push(`/recap-share/${localRecapId}`);
+    } finally {
+      setIsEndingTravel(false);
+    }
+  };
+  const mapOverlayBottomInset = currentTrack
+    ? getMiniPlayerBottom(insets.bottom) + layout.miniPlayerHeight + 14
+    : getTabBarHeight(insets.bottom) + 14;
+  const mapOverlayTopInset = insets.top + 12;
+
+  return (
+    <View className="flex-1 bg-soundlog-bg">
+      <View className="flex-1">
+        {mapMessage ? (
+          <View
+            className="absolute left-4 right-4 z-10 rounded-[16px] border border-amber-300/20 bg-black/64 px-4 py-3"
+            style={{ top: mapOverlayTopInset + 126 }}
+          >
+            <AppText className="text-sm leading-5 text-amber-50">
+              {mapMessage}
+            </AppText>
+          </View>
+        ) : null}
+
+        <RecapMapSection
+          currentLocation={currentLocation}
+          currentPlace={activeCurrentPlace}
+          onCreateMoment={() =>
+            router.push({
+              params: { returnTo: "map" },
+              pathname: "/camera",
+            } as never)
+          }
+          isEndingTravel={isEndingTravel}
+          onEndTravel={() => setIsEndConfirmVisible(true)}
+          onOpenRecap={(recapId) => router.push(`/recap-share/${recapId}`)}
+          onStartTravel={openModeSheet}
+          overlayBottomInset={mapOverlayBottomInset}
+          overlayTopInset={mapOverlayTopInset}
+          sessionStatus={session.status}
+          tourPlaceStatus={tourPlaceStatus}
+          variant="page"
+        />
+      </View>
+
+      {currentTrack ? <MiniPlayer /> : null}
+
+      <TravelModeBottomSheet
+        onClose={() => setIsModeSheetVisible(false)}
+        onSelectMode={handleSelectMode}
+        onStart={() => void handleStartTravel()}
+        selectedMode={selectedMode}
+        submitLabel={isStartingTravel ? "시작 중" : "여행 시작"}
+        visible={isModeSheetVisible}
+      />
+
+      <EndTravelConfirmModal
+        isConfirming={isEndingTravel}
+        momentCount={sessionMomentCount}
+        onCancel={() => setIsEndConfirmVisible(false)}
+        onConfirm={() => void handleEndTravel()}
+        visible={isEndConfirmVisible}
+      />
+    </View>
+  );
 }
