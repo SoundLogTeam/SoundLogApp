@@ -30,7 +30,7 @@ Soundlog 문서는 목적별로 관리합니다. 공모전 기획, RN 프론트 
 
 ## Deployment
 
-- [soundlog.shop 배포 설정](deployment/SOUNDLOG_SHOP_DOMAIN.md): Gabia DNS, Vercel, EC2 API 도메인, EAS env 설정 기준
+- [soundlog.shop 배포 설정](deployment/SOUNDLOG_SHOP_DOMAIN.md): Gabia DNS, Vercel, GCP API 도메인, EAS env 설정 기준
 
 ## Legacy Mock API
 

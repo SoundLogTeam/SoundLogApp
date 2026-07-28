@@ -200,7 +200,7 @@ function verifyBundle(bundleText) {
   assertExcludes(
     bundleText,
     /http:\/\/\d+\.\d+\.\d+\.\d+:4000/,
-    'Server web export must not inline a direct EC2 HTTP API URL.',
+    'Server web export must not inline a direct raw-IP HTTP API URL.',
   );
   [
     ['authMockHandlers', 'Server web export must not include auth mock handlers.'],
