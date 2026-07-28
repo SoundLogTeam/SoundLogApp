@@ -8,7 +8,7 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://soundlog.shop/api/soundlog",
+        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://api.soundlog.shop",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server",
         "EXPO_PUBLIC_SOUNDLOG_UPLOAD_ORIGIN": "https://api.soundlog.shop"
       }
@@ -16,7 +16,7 @@
     "preview": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://soundlog.shop/api/soundlog",
+        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://api.soundlog.shop",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server",
         "EXPO_PUBLIC_SOUNDLOG_UPLOAD_ORIGIN": "https://api.soundlog.shop"
       }
@@ -24,7 +24,7 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://soundlog.shop/api/soundlog",
+        "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://api.soundlog.shop",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server",
         "EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL": "https://soundlog.shop/legal/privacy",
         "EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL": "support@soundlog.shop",

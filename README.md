@@ -45,21 +45,21 @@ EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/so
 ```
 
 Vercel web 배포는 브라우저 API 호출을 같은 origin에서 처리하도록
-`https://soundlog.shop/api/soundlog` rewrite proxy를 사용합니다. 브라우저와 네이티브 앱은 별도 `api` 서브도메인을 쓰지 않습니다. Vercel 내부 rewrite 대상은
-`SOUNDLOG_API_ORIGIN` 환경변수로 관리하며, 이 값은 최신 SoundLogServer origin이어야 합니다. `vercel.mjs`의 build command가
+`https://soundlog.shop/api/soundlog` rewrite proxy를 사용합니다. Vercel 내부 rewrite 대상은
+`SOUNDLOG_API_ORIGIN` 환경변수로 관리하며, 이 값은 최신 SoundLogServer origin(`https://api.soundlog.shop`)이어야 합니다. `vercel.mjs`의 build command가
 `EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server`와
 `EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/soundlog`를 주입합니다.
 
-네이티브 실배포 빌드는 `https://soundlog.shop/api/soundlog` HTTPS 프록시를 사용합니다. 로그인은 Soundlog 자체 이메일/비밀번호 계정으로 처리합니다.
+네이티브 실배포 빌드는 `api.soundlog.shop` 서브도메인을 직접 호출합니다(GCP VM 위 Caddy가 HTTPS를 종료). 로그인은 Soundlog 자체 이메일/비밀번호 계정으로 처리합니다.
 
 ## 테스트 설치 빌드
 
-`development`, `preview` EAS profile은 HTTPS Vercel API proxy를 바라보도록 설정되어 있습니다.
+`development`, `preview` EAS profile은 `api.soundlog.shop`을 직접 바라보도록 설정되어 있습니다.
 
 본인 iPhone을 USB로 연결해 최신 코드를 직접 테스트할 때는 [iPhone 실기기 테스트 가이드](docs/deployment/IOS_PHYSICAL_DEVICE_TESTING.md)를 먼저 확인합니다. 실기기에서 `127.0.0.1`은 Mac이 아니라 iPhone 자신이므로, 로컬 서버를 사용할 때는 Mac의 LAN IP를 앱 빌드 환경변수로 지정해야 합니다.
 
 - Web: `https://soundlog.shop`
-- API: `https://soundlog.shop/api/soundlog`
+- API: `https://api.soundlog.shop`
 - API source: `server`
 - auth: Soundlog 자체 이메일/비밀번호 로그인
 - iOS/Android: HTTPS API만 사용
@@ -69,7 +69,7 @@ Mock API로 되돌리는 런타임 경로는 제거했습니다. 화면 상태 �
 API origin이 최신 서버인지 확인하려면 아래처럼 실행합니다.
 
 ```bash
-SOUNDLOG_API_ORIGIN=http://<EC2_HOST>:4000 npm run check:api-origin
+SOUNDLOG_API_ORIGIN=https://api.soundlog.shop npm run check:api-origin
 ```
 
 이 검사는 로그인 필수 API도 함께 확인하므로 `SOUNDLOG_CHECK_EMAIL`,
@@ -82,7 +82,7 @@ Android 지인 테스트용 내부 배포 빌드는 아래 명령으로 생성�
 npx eas build --profile preview --platform android
 ```
 
-iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/TestFlight에 올릴 production profile도 현재는 `https://soundlog.shop/api/soundlog`을 사용합니다.
+iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/TestFlight에 올릴 production profile도 현재는 `https://api.soundlog.shop`을 사용합니다.
 
 ## 문서
 

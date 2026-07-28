@@ -145,7 +145,7 @@ https://soundlog.shop/api/soundlog
 curl https://soundlog.shop/api/soundlog/v1/health
 ```
 
-DNS 오류나 타임아웃이 발생하면 배포 API 테스트를 중단하고 로컬 LAN API를 사용하거나 도메인·EC2 상태를 먼저 복구합니다. 도메인 장애 중에 EC2 IP를 앱에 임시 하드코딩하지 않습니다.
+DNS 오류나 타임아웃이 발생하면 배포 API 테스트를 중단하고 로컬 LAN API를 사용하거나 도메인과 GCP API 상태를 먼저 복구합니다. 도메인 장애 중에 GCP IP를 앱에 임시 하드코딩하지 않습니다.
 
 ## 7. EAS 내부 배포
 
@@ -229,7 +229,7 @@ Xcode에서 기기 페어링을 먼저 시작한 뒤 iPhone의 `설정 > 개인�
 - 실기기에서 `127.0.0.1`을 사용하고 있지 않은지 확인합니다.
 - iPhone Safari에서 API 헬스 체크 URL을 엽니다.
 - Metro를 시작할 때와 네이티브 앱을 빌드할 때 같은 API 환경변수를 사용합니다.
-- `soundlog.shop` 사용 시 DNS와 Vercel rewrite, EC2 API 상태를 확인합니다.
+- `soundlog.shop` 사용 시 Vercel DNS와 rewrite, GCP API 상태를 확인합니다.
 
 ### Metro에 연결되지 않음
 
