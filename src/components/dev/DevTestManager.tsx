@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authApi } from '@/api/authApi';
 import { getApiBaseUrl } from '@/api/client';
 import { isScreenshotModeEnabled } from '@/components/dev/devTestManagerVisibility';
-import { createScreenshotSeed } from '@/components/dev/screenshotSeed';
+import { applyScreenshotSeed } from '@/components/dev/screenshotSeedBootstrap';
 import { queryClient } from '@/providers/queryClient';
 import { AppText } from '@/components/AppText';
 import { playlistCurationById } from '@/mocks/playlistMocks';
@@ -25,7 +25,6 @@ import { useLibraryStore } from '@/store/libraryStore';
 import { useMomentLogStore } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
-import { useTravelLogSyncStore } from '@/store/travelLogSyncStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { AuthProvider, AuthSession } from '@/types/auth';
@@ -310,35 +309,7 @@ function DevTestManagerContent() {
     router.replace('/' as never);
   };
   const applyAppStoreScreenshotSeed = () => {
-    const seed = createScreenshotSeed();
-
-    // This is intentionally local-only. Clearing queues prevents a mock
-    // account or screenshot fixture from ever being sent to the API.
-    finishLogin(seed.authSession);
-    completeOnboarding(seed.profile);
-    setSelectedMoodFilter(seed.selectedMoodFilter);
-    useTravelSessionStore.setState({
-      currentLocation: seed.location,
-      currentPlace: seed.place,
-      locationStatus: 'granted',
-      locationUpdatedAt: seed.session.endedAt,
-      quarantinedSessions: [],
-      recommendationMode: 'travel',
-      selectedMode: seed.selectedMode,
-      session: seed.session,
-    });
-    useMomentLogStore.setState({
-      logs: [],
-      pendingActions: [],
-      quarantinedLogs: [],
-      quarantinedPendingActions: [],
-    });
-    seed.momentLogs.forEach(addLog);
-    useLibraryStore.setState(seed.library);
-    setTrack(seed.currentTrack, seed.playlist.id, seed.playlist.tracks, seed.playlist);
-    useTravelLogSyncStore.setState({ pendingFinalizations: [] });
-    clearEvents();
-    queryClient.clear();
+    applyScreenshotSeed();
     setIsOpen(false);
     router.replace('/' as never);
   };

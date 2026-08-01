@@ -5,7 +5,16 @@ import { Platform } from 'react-native';
 import { queryClient } from '@/providers/queryClient';
 import { MomentLogSyncWorker } from '@/providers/MomentLogSyncWorker';
 import { useAuthStore } from '@/store/authStore';
-import { shouldRenderDevTestManager } from '@/components/dev/devTestManagerVisibility';
+import {
+  isScreenshotModeEnabled,
+  shouldRenderDevTestManager,
+} from '@/components/dev/devTestManagerVisibility';
+
+const shouldBootstrapScreenshotSeed = __DEV__ && isScreenshotModeEnabled();
+
+const ScreenshotSeedBootstrap = shouldBootstrapScreenshotSeed
+  ? require('@/components/dev/ScreenshotSeedBootstrap').ScreenshotSeedBootstrap
+  : undefined;
 
 const DevTestManager = shouldRenderDevTestManager({
   isDev: __DEV__,
@@ -42,6 +51,7 @@ export function AppProviders({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthScopedQueryCache>
+        {ScreenshotSeedBootstrap ? <ScreenshotSeedBootstrap /> : null}
         {children}
         <MomentLogSyncWorker />
         {DevTestManager ? <DevTestManager /> : null}

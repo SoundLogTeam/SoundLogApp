@@ -185,6 +185,8 @@ development build에서 Test Manager를 열고 맨 위의 `App Store 스크린�
 
 캡처할 때는 `EXPO_PUBLIC_SOUNDLOG_SCREENSHOT_MODE=true`로 development build를 실행해 Test Manager 오버레이를 숨긴다. 이 값은 production 환경에 넣지 않으며, `npm run check:store-release`가 설정된 production build를 실패시킨다.
 
+스크린샷 모드에서는 AppProviders가 인증·온보딩 hydration 이후 seed를 한 번 자동 적용하고 홈으로 이동하므로 Test Manager 버튼을 누를 필요가 없다.
+
 ### 출시 권한 및 개인정보 선언
 
 production 설정은 사진 기록에 필요한 카메라와 사진 보관함, 현재 장소와 여행 기록에 필요한 `When In Use` 위치 권한만 요청한다. 녹음, 항상 위치, 모션 활동, iOS/Android 백그라운드 위치 권한은 사용하지 않는다.
