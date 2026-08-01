@@ -5,8 +5,12 @@ import { Platform } from 'react-native';
 import { queryClient } from '@/providers/queryClient';
 import { MomentLogSyncWorker } from '@/providers/MomentLogSyncWorker';
 import { useAuthStore } from '@/store/authStore';
+import { shouldRenderDevTestManager } from '@/components/dev/devTestManagerVisibility';
 
-const DevTestManager = __DEV__ && Platform.OS !== 'web'
+const DevTestManager = shouldRenderDevTestManager({
+  isDev: __DEV__,
+  platform: Platform.OS,
+})
   ? require('@/components/dev/DevTestManager').DevTestManager
   : undefined;
 

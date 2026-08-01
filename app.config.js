@@ -21,11 +21,12 @@ const baseConfig = {
       NSPhotoLibraryUsageDescription:
         'Soundlog가 리캡 이미지를 저장하기 위해 사진 접근 권한이 필요합니다.',
     },
-    supportsTablet: true,
+    supportsTablet: false,
     bundleIdentifier: 'com.mannomi.soundlog',
-    // Declares data actually collected and linked to the account (email, precise
-    // location, photos, user-entered place/notes). None of it is used for
-    // cross-app/company ad tracking, so NSPrivacyTracking stays false. The
+    // Declares data actually collected and linked to the account (name, email,
+    // account ID, precise location, photos, user-entered content, and in-app
+    // interactions). None of it is used for cross-app/company ad tracking, so
+    // NSPrivacyTracking stays false. The
     // NSPrivacyAccessedAPITypes entries mirror the reasons already present in the
     // generated ios/Soundlog/PrivacyInfo.xcprivacy (UserDefaults, FileTimestamp,
     // SystemBootTime) so they survive `expo prebuild --clean`.
@@ -35,6 +36,18 @@ const baseConfig = {
       NSPrivacyCollectedDataTypes: [
         {
           NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeEmailAddress',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeName',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeUserID',
           NSPrivacyCollectedDataTypeLinked: true,
           NSPrivacyCollectedDataTypeTracking: false,
           NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
@@ -56,6 +69,12 @@ const baseConfig = {
           NSPrivacyCollectedDataTypeLinked: true,
           NSPrivacyCollectedDataTypeTracking: false,
           NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeProductInteraction',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAnalytics'],
         },
       ],
       NSPrivacyAccessedAPITypes: [
@@ -109,6 +128,8 @@ const baseConfig = {
       {
         cameraPermission:
           'Soundlog가 여행 순간을 사진으로 기록하기 위해 카메라 권한이 필요합니다.',
+        microphonePermission: false,
+        recordAudioAndroid: false,
       },
     ],
     [
@@ -116,6 +137,13 @@ const baseConfig = {
       {
         locationWhenInUsePermission:
           'Soundlog가 현재 장소에 맞는 음악을 추천하고 여행 순간의 위치를 기록하기 위해 위치 권한이 필요합니다.',
+        locationAlwaysAndWhenInUsePermission: false,
+        locationAlwaysPermission: false,
+        motionUsagePermission: false,
+        isIosBackgroundLocationEnabled: false,
+        isAndroidBackgroundLocationEnabled: false,
+        isAndroidForegroundServiceEnabled: false,
+        isAndroidMotionActivityEnabled: false,
       },
     ],
     'expo-sharing',

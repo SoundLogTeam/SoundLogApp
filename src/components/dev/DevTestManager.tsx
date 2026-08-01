@@ -14,6 +14,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authApi } from '@/api/authApi';
 import { getApiBaseUrl } from '@/api/client';
+import { isScreenshotModeEnabled } from '@/components/dev/devTestManagerVisibility';
+import { createScreenshotSeed } from '@/components/dev/screenshotSeed';
 import { queryClient } from '@/providers/queryClient';
 import { AppText } from '@/components/AppText';
 import { playlistCurationById } from '@/mocks/playlistMocks';
@@ -23,6 +25,7 @@ import { useLibraryStore } from '@/store/libraryStore';
 import { useMomentLogStore } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
+import { useTravelLogSyncStore } from '@/store/travelLogSyncStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { AuthProvider, AuthSession } from '@/types/auth';
@@ -159,7 +162,7 @@ function getSampleTrack(index = 0): Track {
 }
 
 export function DevTestManager() {
-  if (!__DEV__) {
+  if (!__DEV__ || isScreenshotModeEnabled()) {
     return null;
   }
 
@@ -306,6 +309,39 @@ function DevTestManagerContent() {
     setSelectedMoodFilter('시원한');
     router.replace('/' as never);
   };
+  const applyAppStoreScreenshotSeed = () => {
+    const seed = createScreenshotSeed();
+
+    // This is intentionally local-only. Clearing queues prevents a mock
+    // account or screenshot fixture from ever being sent to the API.
+    finishLogin(seed.authSession);
+    completeOnboarding(seed.profile);
+    setSelectedMoodFilter(seed.selectedMoodFilter);
+    useTravelSessionStore.setState({
+      currentLocation: seed.location,
+      currentPlace: seed.place,
+      locationStatus: 'granted',
+      locationUpdatedAt: seed.session.endedAt,
+      quarantinedSessions: [],
+      recommendationMode: 'travel',
+      selectedMode: seed.selectedMode,
+      session: seed.session,
+    });
+    useMomentLogStore.setState({
+      logs: [],
+      pendingActions: [],
+      quarantinedLogs: [],
+      quarantinedPendingActions: [],
+    });
+    seed.momentLogs.forEach(addLog);
+    useLibraryStore.setState(seed.library);
+    setTrack(seed.currentTrack, seed.playlist.id, seed.playlist.tracks, seed.playlist);
+    useTravelLogSyncStore.setState({ pendingFinalizations: [] });
+    clearEvents();
+    queryClient.clear();
+    setIsOpen(false);
+    router.replace('/' as never);
+  };
   const resetProfile = () => {
     resetOnboarding();
     setSelectedMoodFilter('전체');
@@ -446,6 +482,17 @@ function DevTestManagerContent() {
               contentContainerStyle={{ gap: 12, paddingBottom: 18, paddingHorizontal: 20 }}
               showsVerticalScrollIndicator={false}
             >
+              <ManagerSection
+                subtitle="로그인부터 종료된 광안리 여행 로그까지 한 번에 준비하고 홈으로 이동합니다."
+                title="App Store 스크린샷"
+              >
+                <ManagerButton
+                  active
+                  label="App Store 스크린샷 seed"
+                  onPress={applyAppStoreScreenshotSeed}
+                />
+              </ManagerSection>
+
               <ManagerSection
                 subtitle={`세션 ${session.status} · 위치 ${locationStatus} · 로그 ${logs.length}개 · 이벤트 ${events.length}개`}
                 title="현재 상태"

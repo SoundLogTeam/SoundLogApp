@@ -177,6 +177,27 @@ npx eas-cli submit --platform ios --profile production
 
 TestFlight 빌드는 App Store Connect 처리와 내부 또는 외부 테스터 초대가 필요합니다. 외부 테스터는 Apple의 베타 앱 심사를 거칠 수 있습니다.
 
+v1.0은 iPhone 전용으로 제출한다. iPad 스크린샷 자산과 iPad 실기기 QA가 완료되지 않았으므로 `ios.supportsTablet`은 `false`로 유지한다.
+
+### App Store 스크린샷 seed
+
+development build에서 Test Manager를 열고 맨 위의 `App Store 스크린샷 seed`를 누르면 mock 로그인, 온보딩 완료, 부산 광안리·시원한 무드, 선택 곡과 보관함, 리캡 3개, 이동 경로가 있는 종료 여행 세션을 준비한 뒤 홈으로 이동한다. 이 도구는 `__DEV__`에서만 존재하며 서버 동기화 큐를 비운다.
+
+캡처할 때는 `EXPO_PUBLIC_SOUNDLOG_SCREENSHOT_MODE=true`로 development build를 실행해 Test Manager 오버레이를 숨긴다. 이 값은 production 환경에 넣지 않으며, `npm run check:store-release`가 설정된 production build를 실패시킨다.
+
+### 출시 권한 및 개인정보 선언
+
+production 설정은 사진 기록에 필요한 카메라와 사진 보관함, 현재 장소와 여행 기록에 필요한 `When In Use` 위치 권한만 요청한다. 녹음, 항상 위치, 모션 활동, iOS/Android 백그라운드 위치 권한은 사용하지 않는다.
+
+`ios.privacyManifests`에는 계정 이름·이메일·사용자 ID, 정확한 위치, 사진 또는 비디오, 사용자 콘텐츠를 앱 기능 목적으로 선언하고, 추천·저장·공유 등 앱 내 상호작용은 분석 목적으로 선언한다. 모든 선언은 계정과 연결되지만 추적에는 사용하지 않는다. App Store Connect의 App Privacy 응답도 이 설정 및 실제 서버 처리와 동일하게 입력한다.
+
+제출 전 다음 검사를 실행한다.
+
+```bash
+npx expo config --type introspect --json
+npm run check:store-release
+```
+
 ## 9. 실기기 검수 체크리스트
 
 ### 설치와 인증
