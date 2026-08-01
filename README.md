@@ -56,6 +56,8 @@ Vercel web 배포는 브라우저 API 호출을 같은 origin에서 처리하도
 
 `development`, `preview` EAS profile은 HTTPS Vercel API proxy를 바라보도록 설정되어 있습니다.
 
+본인 iPhone을 USB로 연결해 최신 코드를 직접 테스트할 때는 [iPhone 실기기 테스트 가이드](docs/deployment/IOS_PHYSICAL_DEVICE_TESTING.md)를 먼저 확인합니다. 실기기에서 `127.0.0.1`은 Mac이 아니라 iPhone 자신이므로, 로컬 서버를 사용할 때는 Mac의 LAN IP를 앱 빌드 환경변수로 지정해야 합니다.
+
 - Web: `https://soundlog.shop`
 - API: `https://soundlog.shop/api/soundlog`
 - API source: `server`
@@ -94,6 +96,7 @@ iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/Test
 - [개발용 테스트 매니저](docs/codex/TEST_MANAGER.md)
 - [PR 전용 개발 흐름](docs/codex/PR_ONLY_WORKFLOW.md)
 - [soundlog.shop 배포 설정](docs/deployment/SOUNDLOG_SHOP_DOMAIN.md)
+- [iPhone 실기기 테스트 가이드](docs/deployment/IOS_PHYSICAL_DEVICE_TESTING.md)
 - [Mock Server 안내](src/mock-server/README.md)
 
 ## Codex로 개발할 때

@@ -1,5 +1,7 @@
 import {
   createIdempotencyKey,
+  getPageMeta,
+  type PageMeta,
   requestApi,
   shouldAttemptAuthenticatedApi,
 } from '@/api/client';
@@ -25,20 +27,34 @@ export type RemoteLibraryTrackRecord = {
   track: Track;
 };
 
+export type LibraryTracksPage = {
+  page?: PageMeta;
+  records: RemoteLibraryTrackRecord[];
+};
+
 export const libraryApi = {
-  getTracks: async (kind: 'all' | 'liked' | 'saved' = 'all') => {
+  // `cursor` lets callers page past the server's default limit (50) instead
+  // of silently truncating at page one — see P2-2. Existing single-page
+  // callers can simply omit it.
+  getTracks: async (
+    kind: 'all' | 'liked' | 'saved' = 'all',
+    cursor?: string,
+  ): Promise<LibraryTracksPage> => {
     if (!shouldAttemptAuthenticatedApi()) {
-      return Promise.resolve<RemoteLibraryTrackRecord[]>([]);
+      return Promise.resolve({ records: [] });
     }
 
-    const records = await requestApi<RemoteLibraryTrackRecord[]>('/v1/library/tracks', {
-      query: { kind, limit: 50 },
+    const rawRecords = await requestApi<RemoteLibraryTrackRecord[]>('/v1/library/tracks', {
+      query: { cursor, kind, limit: 50 },
     });
 
-    return records.map((record) => ({
-      ...record,
-      track: sanitizeTrack(record.track),
-    }));
+    return {
+      page: getPageMeta(rawRecords),
+      records: rawRecords.map((record) => ({
+        ...record,
+        track: sanitizeTrack(record.track),
+      })),
+    };
   },
   updateTrackState: (
     trackId: string,

@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { useAuthenticatedImageSource } from '@/hooks/useAuthenticatedImageSource';
 import type { RecapMapMarker } from '@/types/domain';
 import { formatRecapRecordedAt } from '@/utils/dateFormat';
 
@@ -14,6 +15,30 @@ type SelectedRecapPinPanelProps = {
   onOpenRecap: (recapId: string) => void;
   pin: SoundMapPin;
 };
+
+// Extracted so `useAuthenticatedImageSource` can be called safely: it must run in a
+// component's own render body, not directly inside the `markers.map()` below (a hook call
+// site would otherwise vary per render as the marker list's length changes).
+function MarkerThumbnail({ imageUrl }: { imageUrl?: string }) {
+  const photoSource = useAuthenticatedImageSource(imageUrl);
+
+  return (
+    <View className="h-14 w-14 shrink-0 overflow-hidden rounded-[8px] bg-white/10">
+      {imageUrl ? (
+        <Image
+          className="h-full w-full"
+          contentFit="cover"
+          source={photoSource}
+          transition={180}
+        />
+      ) : (
+        <View className="h-full w-full items-center justify-center">
+          <Feather color="rgba(255,255,255,0.48)" name="music" size={19} />
+        </View>
+      )}
+    </View>
+  );
+}
 
 export function SelectedRecapPinPanel({
   markers,
@@ -65,24 +90,7 @@ export function SelectedRecapPinPanel({
             key={marker.id}
             onPress={() => onOpenRecap(marker.recapId)}
           >
-            <View className="h-14 w-14 shrink-0 overflow-hidden rounded-[8px] bg-white/10">
-              {marker.imageUrl ? (
-                <Image
-                  className="h-full w-full"
-                  contentFit="cover"
-                  source={{ uri: marker.imageUrl }}
-                  transition={180}
-                />
-              ) : (
-                <View className="h-full w-full items-center justify-center">
-                  <Feather
-                    color="rgba(255,255,255,0.48)"
-                    name="music"
-                    size={19}
-                  />
-                </View>
-              )}
-            </View>
+            <MarkerThumbnail imageUrl={marker.imageUrl} />
 
             <View className="min-w-0 flex-1">
               <View className="flex-row items-center gap-2">

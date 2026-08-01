@@ -1,10 +1,22 @@
 import { ApiError, shouldAttemptAuthenticatedApi } from "@/api/client";
 import { momentLogApi } from "@/api/momentLogApi";
 import { recapApi } from "@/api/recapApi";
+import { useAuthStore } from "@/store/authStore";
 import {
   useMomentLogStore,
   type MomentLogPendingAction,
 } from "@/store/momentLogStore";
+
+// A pending action only syncs when it was queued by the account that is
+// currently logged in. `undefined` ownerUserId covers both legacy data
+// (persisted before this field existed) and drafts queued while signed out
+// — both stay quarantined rather than uploading under whichever account
+// happens to log in next.
+function belongsToCurrentAccount(action: MomentLogPendingAction) {
+  const currentUserId = useAuthStore.getState().user?.id;
+
+  return Boolean(action.ownerUserId) && action.ownerUserId === currentUserId;
+}
 
 export type MomentLogSyncResult = {
   failureCount: number;
@@ -154,7 +166,9 @@ async function performFlush(): Promise<MomentLogSyncResult> {
     return { failureCount: 0, successCount: 0 };
   }
 
-  const actions = [...useMomentLogStore.getState().pendingActions];
+  const actions = [...useMomentLogStore.getState().pendingActions].filter(
+    belongsToCurrentAccount,
+  );
   let failureCount = 0;
   let successCount = 0;
 

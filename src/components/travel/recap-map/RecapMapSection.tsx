@@ -476,7 +476,7 @@ export function RecapMapSection({
               className={`h-8 w-full items-center justify-center rounded-full border px-2 ${
                 selected
                   ? 'border-soundlog-lime bg-soundlog-lime'
-                  : 'border-white/10 bg-white/10'
+                  : 'border-white/22 bg-black/68'
               }`}
             >
               <AppText
@@ -505,7 +505,7 @@ export function RecapMapSection({
           onPress={() => mapViewRef.current?.focusCurrentLocation()}
           style={{ opacity: currentLocation ? 1 : 0.48 }}
         >
-          <View className="h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-black/80">
+          <View className="h-8 w-8 items-center justify-center rounded-full border border-white/22 bg-black/85">
             <Feather
               color={currentLocation ? '#FFFFFF' : 'rgba(255,255,255,0.42)'}
               name="crosshair"
@@ -543,24 +543,24 @@ export function RecapMapSection({
         />
 
         <View
-          className="absolute left-4 right-4 gap-3"
+          className="absolute left-4 right-4 gap-3.5"
           pointerEvents="box-none"
           style={{ top: overlayTopInset }}
         >
-          <View className="overflow-hidden rounded-[24px] border border-white/12 bg-black/42 px-4 py-3">
+          <View className="overflow-hidden rounded-[24px] border border-white/16 bg-black/72 px-5 py-4">
             <View className="flex-row items-center justify-between gap-3">
               <View className="min-w-0 flex-1">
                 <AppText className="text-[11px] font-semibold text-soundlog-lime">
                   지도 / 여행모드
                 </AppText>
                 <AppText
-                  className="mt-1 text-lg font-semibold text-white"
+                  className="mt-1.5 text-lg font-semibold text-white"
                   numberOfLines={1}
                 >
                   {mapTitle}
                 </AppText>
               </View>
-              <View className="rounded-full bg-white/12 px-3 py-1.5">
+              <View className="rounded-full bg-white/16 px-3 py-1.5">
                 <AppText
                   className="text-[11px] font-semibold text-white/65"
                   numberOfLines={1}
@@ -574,7 +574,7 @@ export function RecapMapSection({
           {renderFilterChips()}
 
           {mapMessage ? (
-            <View className="rounded-[16px] bg-black/52 px-4 py-3">
+            <View className="rounded-[16px] border border-white/10 bg-black/72 px-4 py-3">
               <AppText className="text-xs leading-5 text-white/70">
                 {mapMessage}
               </AppText>
@@ -590,7 +590,7 @@ export function RecapMapSection({
             <View className="gap-2">
               <Pressable
                 accessibilityRole="button"
-                className="rounded-[22px] border border-soundlog-lime/35 bg-black/58 p-4"
+                className="rounded-[22px] border border-soundlog-lime/40 bg-black/76 p-4"
                 onPress={
                   sessionStatus === 'active' ? onCreateMoment : onStartTravel
                 }
@@ -622,7 +622,7 @@ export function RecapMapSection({
               {sessionStatus === 'active' && onEndTravel ? (
                 <Pressable
                   accessibilityRole="button"
-                  className="h-11 items-center justify-center rounded-full border border-white/15 bg-black/58"
+                  className="h-11 items-center justify-center rounded-full border border-white/22 bg-black/76"
                   disabled={isEndingTravel}
                   onPress={onEndTravel}
                   style={{ opacity: isEndingTravel ? 0.65 : 1 }}
@@ -641,7 +641,7 @@ export function RecapMapSection({
               pin={selectedPinGroup.pin}
             />
           ) : visibleMarkers.length === 0 ? (
-            <View className="rounded-[18px] border border-white/10 bg-black/58 px-4 py-3">
+            <View className="rounded-[18px] border border-white/12 bg-black/76 px-4 py-3">
               <AppText className="text-xs leading-5 text-white/65">
                 {getEmptyCopy(filter)}
               </AppText>

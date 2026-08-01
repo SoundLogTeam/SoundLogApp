@@ -1,6 +1,6 @@
 import { useAuthStore } from '@/store/authStore';
 import { AuthSession } from '@/types/auth';
-import { clearAccountSession } from '@/utils/accountSession';
+import { clearAuthSession } from '@/utils/accountSession';
 
 type QueryValue = boolean | number | string | Array<boolean | number | string> | null | undefined;
 
@@ -106,9 +106,42 @@ function shouldSendJsonContentType(body: ApiRequestOptions['body']) {
   return Boolean(body && !isFormDataBody(body) && typeof body !== 'string');
 }
 
+export type PageMeta = {
+  limit: number;
+  nextCursor?: string | null;
+};
+
+// Server list endpoints respond via pagedResponse() as
+// `{ data: T[], page: { limit, nextCursor } }`. Historically unwrapData
+// discarded `page` entirely, so cursor-based pagination was unreachable
+// from the client (see soundlog task P2-2). To avoid touching every caller
+// of unwrapData/requestApi (whose return type is just `T`), the page
+// metadata is attached as a non-enumerable property on the returned data
+// itself rather than changing the return shape — existing callers keep
+// working unmodified, and callers that care can read it via getPageMeta().
+const PAGE_META = Symbol('soundlog-page-meta');
+
+export function getPageMeta<T>(data: T): PageMeta | undefined {
+  if (!data || typeof data !== 'object') {
+    return undefined;
+  }
+
+  return (data as { [PAGE_META]?: PageMeta })[PAGE_META];
+}
+
 function unwrapData<T>(payload: unknown): T {
   if (payload && typeof payload === 'object' && 'data' in payload) {
-    return (payload as { data: T }).data;
+    const { data, page } = payload as { data: T; page?: PageMeta };
+
+    if (page && data && typeof data === 'object') {
+      Object.defineProperty(data, PAGE_META, {
+        configurable: true,
+        enumerable: false,
+        value: page,
+      });
+    }
+
+    return data;
   }
 
   return payload as T;
@@ -140,7 +173,10 @@ async function refreshSession(baseUrl: string) {
   });
 
   if (!response.ok) {
-    clearAccountSession();
+    // Refresh failed (expired/revoked refresh token): drop auth state only.
+    // Unsynced drafts, pending actions, and the active travel session must
+    // survive so the user can re-login and resume — see clearAuthSession().
+    clearAuthSession();
     return undefined;
   }
 

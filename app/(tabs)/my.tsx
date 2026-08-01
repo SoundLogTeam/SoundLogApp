@@ -150,7 +150,7 @@ export default function MyScreen() {
             onPress={() =>
               router.push({
                 pathname: '/recap',
-                params: { view: 'all' },
+                params: { view: 'mine' },
               } as never)
             }
           />

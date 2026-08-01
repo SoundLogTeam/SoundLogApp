@@ -13,6 +13,7 @@ import MapView, { Marker, Polyline, type Region } from "react-native-maps";
 
 import { AppText } from "@/components/AppText";
 import { googleDarkMapStyle } from "@/components/travel/live-sound-map/SoundMapView";
+import { useAuthenticatedImageSource } from "@/hooks/useAuthenticatedImageSource";
 import type {
   GeoPoint,
   RecapShare,
@@ -70,13 +71,15 @@ function MomentPreview({
   moment: RecapShareMoment;
   onOpen: () => void;
 }) {
+  const photoSource = useAuthenticatedImageSource(moment.imageUrl);
+
   return (
     <View className="w-[238px] flex-row items-center gap-3 rounded-[14px] border border-white/10 bg-[#111629]/95 p-3">
       <View className="h-16 w-16 overflow-hidden rounded-[10px] bg-white/10">
         {moment.imageUrl ? (
           <Image
             contentFit="cover"
-            source={{ uri: moment.imageUrl }}
+            source={photoSource}
             style={StyleSheet.absoluteFill}
           />
         ) : (
@@ -116,6 +119,8 @@ function MomentDetailModal({
   moment?: RecapShareMoment;
   onClose: () => void;
 }) {
+  const photoSource = useAuthenticatedImageSource(moment?.imageUrl);
+
   return (
     <Modal
       animationType="slide"
@@ -158,7 +163,7 @@ function MomentDetailModal({
               {moment?.imageUrl ? (
                 <Image
                   contentFit="cover"
-                  source={{ uri: moment.imageUrl }}
+                  source={photoSource}
                   style={StyleSheet.absoluteFill}
                 />
               ) : (
