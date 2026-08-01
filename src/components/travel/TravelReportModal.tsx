@@ -5,6 +5,7 @@ import { Image, Modal, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText } from "@/components/AppText";
+import { useAuthenticatedImageSource } from "@/hooks/useAuthenticatedImageSource";
 
 import {
   modeIconByValue,
@@ -18,6 +19,35 @@ type TravelReportModalProps = {
   onClose: () => void;
   visible: boolean;
 };
+
+// Extracted so `useAuthenticatedImageSource` can be called safely: it must run in a
+// component's own render body, not directly inside the `recapThumbnails.map()` below (a
+// hook call site would otherwise vary per render as the thumbnail list's length changes).
+function RecapThumbnailFrame({ photoUri }: { photoUri?: string }) {
+  const photoSource = useAuthenticatedImageSource(photoUri);
+
+  if (!photoUri) {
+    return (
+      <View
+        className="h-full w-full items-center justify-center"
+        style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
+      >
+        <Feather color="rgba(255,255,255,0.82)" name="music" size={26} />
+        <AppText className="mt-2 text-center text-xs font-semibold text-white/80">
+          음악 기록
+        </AppText>
+      </View>
+    );
+  }
+
+  return (
+    <Image
+      className="h-full w-full"
+      resizeMode="cover"
+      source={photoSource}
+    />
+  );
+}
 
 type StoryPage = {
   accent: string;
@@ -481,27 +511,7 @@ export function TravelReportModal({
                   className="flex-1 overflow-hidden rounded-[22px]"
                   style={{ height: 154 }}
                 >
-                  {moment.photoUri ? (
-                    <Image
-                      className="h-full w-full"
-                      resizeMode="cover"
-                      source={{ uri: moment.photoUri }}
-                    />
-                  ) : (
-                    <View
-                      className="h-full w-full items-center justify-center"
-                      style={{ backgroundColor: "rgba(0,0,0,0.45)" }}
-                    >
-                      <Feather
-                        color="rgba(255,255,255,0.82)"
-                        name="music"
-                        size={26}
-                      />
-                      <AppText className="mt-2 text-center text-xs font-semibold text-white/80">
-                        음악 기록
-                      </AppText>
-                    </View>
-                  )}
+                  <RecapThumbnailFrame photoUri={moment.photoUri} />
                 </View>
               ))}
             </View>

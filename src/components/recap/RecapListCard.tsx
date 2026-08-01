@@ -4,6 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/AppText";
+import { useAuthenticatedImageSource } from "@/hooks/useAuthenticatedImageSource";
 import { RecapItem } from "@/types/domain";
 import { formatRecapRecordedAt } from "@/utils/dateFormat";
 
@@ -14,6 +15,7 @@ type RecapListCardProps = {
 };
 
 export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
+  const photoSource = useAuthenticatedImageSource(imageUrl);
   const momentCountLabel =
     item.momentCount && item.momentCount > 1
       ? `기록 ${item.momentCount}개`
@@ -29,7 +31,7 @@ export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
       {imageUrl ? (
         <Image
           contentFit="cover"
-          source={{ uri: imageUrl }}
+          source={photoSource}
           style={StyleSheet.absoluteFill}
           transition={250}
         />

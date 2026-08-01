@@ -22,11 +22,15 @@ export function AppEntryGate() {
   }
 
   if (isAuthRoute && status === 'authenticated') {
-    return <Redirect href={profile.completedOnboarding ? '/' : '/onboarding'} />;
+    return (
+      <Redirect
+        href={profile.completedOnboarding ? '/' : '/onboarding?mode=setup'}
+      />
+    );
   }
 
   if (hasAppSession && !profile.completedOnboarding && !isOnboardingRoute) {
-    return <Redirect href="/onboarding" />;
+    return <Redirect href="/onboarding?mode=setup" />;
   }
 
   return null;

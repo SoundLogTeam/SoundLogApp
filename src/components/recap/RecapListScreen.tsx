@@ -25,6 +25,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { RecapEmptyState } from "@/components/recap/RecapEmptyState";
 import { Screen } from "@/components/Screen";
 import { getTabBarHeight } from "@/constants/layout";
+import { useAuthenticatedImageSource } from "@/hooks/useAuthenticatedImageSource";
 import { useMomentLogStore } from "@/store/momentLogStore";
 import type { MomentLog, RecapItem, RecapVisibility } from "@/types/domain";
 import {
@@ -33,7 +34,7 @@ import {
 } from "@/utils/recapMappers";
 import { flushPendingMomentActions } from "@/utils/momentLogSync";
 
-type LogFeedTabId = "others" | "all";
+type LogFeedTabId = "others" | "mine";
 
 type LogGridEntry = {
   imageUrl?: string;
@@ -53,8 +54,8 @@ const logFeedTabs: Array<{
     value: "others",
   },
   {
-    label: "모든 사람 보기",
-    value: "all",
+    label: "내것만 보기",
+    value: "mine",
   },
 ];
 
@@ -64,21 +65,6 @@ function sortEntriesByCreatedAt(entries: LogGridEntry[]) {
       new Date(second.item.createdAt).getTime() -
       new Date(first.item.createdAt).getTime(),
   );
-}
-
-function dedupeEntries(entries: LogGridEntry[]) {
-  const seenKeys = new Set<string>();
-
-  return entries.filter((entry) => {
-    const key = `${entry.source}:${entry.shareId}`;
-
-    if (seenKeys.has(key)) {
-      return false;
-    }
-
-    seenKeys.add(key);
-    return true;
-  });
 }
 
 function getEntryImageUrl(entry: LogGridEntry) {
@@ -150,6 +136,7 @@ function LogGridCard({
   const [failedImageUrl, setFailedImageUrl] = useState<string>();
   const visibleImageUrl =
     imageUrl && failedImageUrl !== imageUrl ? imageUrl : undefined;
+  const photoSource = useAuthenticatedImageSource(visibleImageUrl);
   const visibility = entry.item.visibility ?? "private";
   const nextVisibility: RecapVisibility =
     visibility === "public" ? "private" : "public";
@@ -175,7 +162,7 @@ function LogGridCard({
           <Image
             contentFit="cover"
             onError={() => setFailedImageUrl(visibleImageUrl)}
-            source={{ uri: visibleImageUrl }}
+            source={photoSource}
             style={StyleSheet.absoluteFill}
             transition={180}
           />
@@ -379,12 +366,13 @@ export function RecapListScreen() {
   const queryClient = useQueryClient();
   const momentLogs = useMomentLogStore((state) => state.logs);
   const [selectedTab, setSelectedTab] = useState<LogFeedTabId>(
-    initialView === "all" ? "all" : "others",
+    initialView === "mine" || initialView === "all" ? "mine" : "others",
   );
   const [updatingRecapId, setUpdatingRecapId] = useState<string>();
   const [actionMessage, setActionMessage] = useState<string>();
   const pagerRef = useRef<ScrollView>(null);
-  const initialTabIndex = initialView === "all" ? 1 : 0;
+  const initialTabIndex =
+    initialView === "mine" || initialView === "all" ? 1 : 0;
   const scrollX = useRef(new Animated.Value(initialTabIndex * width)).current;
   const mineRecapsQuery = useRecapListQuery("mine");
   const otherRecapsQuery = useRecapListQuery("others");
@@ -455,12 +443,7 @@ export function RecapListScreen() {
     () => sortEntriesByCreatedAt([...localEntries, ...serverMineEntries]),
     [localEntries, serverMineEntries],
   );
-  const allEntries = useMemo(
-    () =>
-      sortEntriesByCreatedAt(dedupeEntries([...myEntries, ...otherEntries])),
-    [myEntries, otherEntries],
-  );
-  const hasAnyLog = otherEntries.length > 0 || allEntries.length > 0;
+  const hasAnyLog = otherEntries.length > 0 || myEntries.length > 0;
   const handleOpenEntry = useCallback((entry: LogGridEntry) => {
     router.push(`/recap-share/${entry.shareId}`);
   }, []);
@@ -574,7 +557,7 @@ export function RecapListScreen() {
 
       setActionMessage(
         nextVisibility === "public"
-          ? "전체공개로 바꿨어요. 다른사람 보기와 지도 공개 영역에 표시돼요."
+          ? "전체공개로 바꿨어요. 다른 사람의 공개 피드와 지도에 표시돼요."
           : "비공개로 바꿨어요. 내 로그에서만 확인할 수 있어요.",
       );
       void queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists });
@@ -601,7 +584,7 @@ export function RecapListScreen() {
           {logFeedTabs.map((tab) => {
             const selected = selectedTab === tab.value;
             const count =
-              tab.value === "others" ? otherEntries.length : allEntries.length;
+              tab.value === "others" ? otherEntries.length : myEntries.length;
 
             return (
               <Pressable
@@ -674,7 +657,7 @@ export function RecapListScreen() {
         style={styles.pager}
       >
         <LogFeedPage
-          actionMessage={selectedTab === "others" ? actionMessage : undefined}
+          actionMessage={undefined}
           contentBottomPadding={contentBottomPadding}
           emptyMessage="아직 다른 사람이 공개한 로그가 없어요."
           entries={otherEntries}
@@ -690,18 +673,18 @@ export function RecapListScreen() {
           width={width}
         />
         <LogFeedPage
-          actionMessage={selectedTab === "all" ? actionMessage : undefined}
+          actionMessage={selectedTab === "mine" ? actionMessage : undefined}
           contentBottomPadding={contentBottomPadding}
-          emptyMessage="아직 볼 수 있는 로그가 없어요."
-          entries={allEntries}
+          emptyMessage="아직 저장한 내 로그가 없어요."
+          entries={myEntries}
           hasAnyLog={hasAnyLog}
-          isActive={selectedTab === "all"}
+          isActive={selectedTab === "mine"}
           isError={isError}
           isLoading={isLoading}
           itemSize={gridItemSize}
           onChangeVisibility={handleChangeVisibility}
           onOpenEntry={handleOpenEntry}
-          tabId="all"
+          tabId="mine"
           updatingRecapId={updatingRecapId}
           width={width}
         />

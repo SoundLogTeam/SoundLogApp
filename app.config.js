@@ -9,6 +9,7 @@ const baseConfig = {
   ios: {
     infoPlist: {
       CFBundleAllowMixedLocalizations: true,
+      ITSAppUsesNonExemptEncryption: false,
       NSCameraUsageDescription:
         'Soundlog가 여행 순간을 사진으로 기록하기 위해 카메라 권한이 필요합니다.',
       NSFaceIDUsageDescription:
@@ -22,6 +23,56 @@ const baseConfig = {
     },
     supportsTablet: true,
     bundleIdentifier: 'com.mannomi.soundlog',
+    // Declares data actually collected and linked to the account (email, precise
+    // location, photos, user-entered place/notes). None of it is used for
+    // cross-app/company ad tracking, so NSPrivacyTracking stays false. The
+    // NSPrivacyAccessedAPITypes entries mirror the reasons already present in the
+    // generated ios/Soundlog/PrivacyInfo.xcprivacy (UserDefaults, FileTimestamp,
+    // SystemBootTime) so they survive `expo prebuild --clean`.
+    privacyManifests: {
+      NSPrivacyTracking: false,
+      NSPrivacyTrackingDomains: [],
+      NSPrivacyCollectedDataTypes: [
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeEmailAddress',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypePreciseLocation',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypePhotosorVideos',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeOtherUserContent',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+      ],
+      NSPrivacyAccessedAPITypes: [
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+          NSPrivacyAccessedAPITypeReasons: ['CA92.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+          NSPrivacyAccessedAPITypeReasons: ['C617.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+          NSPrivacyAccessedAPITypeReasons: ['35F9.1'],
+        },
+      ],
+    },
   },
   android: {
     package: 'com.mannomi.soundlog',
@@ -79,7 +130,20 @@ const baseConfig = {
     ],
     'expo-secure-store',
     'expo-image',
-    ['expo-build-properties', {}],
+    // Pin Android SDK versions explicitly instead of relying on the Expo SDK
+    // template default, so Play Store's targetSdk requirement doesn't silently
+    // drift on an SDK upgrade. Values match the current expo-modules-core
+    // default for Expo SDK 56 (confirmed in
+    // node_modules/expo-modules-core/expo-module-gradle-plugin/.../ProjectConfiguration.kt).
+    [
+      'expo-build-properties',
+      {
+        android: {
+          compileSdkVersion: 36,
+          targetSdkVersion: 36,
+        },
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,

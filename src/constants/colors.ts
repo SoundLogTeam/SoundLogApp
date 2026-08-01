@@ -21,7 +21,7 @@ export const colors = {
     chip: '#171B2A',
     chipSelected: '#B7E628',
     player: '#45343D',
-    tab: 'rgba(10, 16, 30, 0.58)',
+    tab: 'rgba(10, 16, 30, 0.78)',
     glass: 'rgba(255,255,255,0.1)',
   },
   border: {
