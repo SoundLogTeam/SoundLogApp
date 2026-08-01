@@ -30,7 +30,7 @@ Soundlog 문서는 목적별로 관리합니다. 공모전 기획, RN 프론트 
 
 ## Deployment
 
-- [soundlog.shop 배포 설정](deployment/SOUNDLOG_SHOP_DOMAIN.md): Vercel DNS와 웹 배포, GCP API 도메인, EAS env 설정 기준
+- [GCP 앱 배포 도메인 설정](deployment/SOUNDLOG_SHOP_DOMAIN.md): 웹 미배포 원칙, GCP Cloud DNS, API·법적 문서 도메인과 EAS env 설정 기준
 - [iPhone 실기기 테스트 가이드](deployment/IOS_PHYSICAL_DEVICE_TESTING.md): USB development build, 로컬 API 연결, EAS 내부 배포, TestFlight, 실기기 검수 체크리스트
 
 ## Legacy Mock API

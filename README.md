@@ -41,14 +41,10 @@ EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=playlist.detail npm run web
 실제 서버와 연동할 때는 Expo 환경변수로 API base URL을 지정합니다. 이 값이 없으면 mock으로 돌아가지 않고 API URL 누락 오류를 표시합니다.
 
 ```bash
-EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/soundlog npm run web
+EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.soundlog.shop npm run ios
 ```
 
-Vercel web 배포는 브라우저 API 호출을 같은 origin에서 처리하도록
-`https://soundlog.shop/api/soundlog` rewrite proxy를 사용합니다. Vercel 내부 rewrite 대상은
-`SOUNDLOG_API_ORIGIN` 환경변수로 관리하며, 이 값은 최신 SoundLogServer origin(`https://api.soundlog.shop`)이어야 합니다. `vercel.mjs`의 build command가
-`EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server`와
-`EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=/api/soundlog`를 주입합니다.
+Soundlog는 웹 서비스를 배포하지 않습니다. 운영 배포 대상은 Expo/EAS로 빌드한 iOS·Android 네이티브 앱이며, 앱은 Vercel 프록시 없이 GCP의 `https://api.soundlog.shop`을 직접 호출합니다. 저장소의 web·Vercel 관련 설정은 로컬 호환성 확인과 과거 실험용 자료일 뿐 운영 배포 경로에 포함하지 않습니다.
 
 네이티브 실배포 빌드는 `api.soundlog.shop` 서브도메인을 직접 호출합니다(GCP VM 위 Caddy가 HTTPS를 종료). 로그인은 Soundlog 자체 이메일/비밀번호 계정으로 처리합니다.
 
@@ -58,8 +54,10 @@ Vercel web 배포는 브라우저 API 호출을 같은 origin에서 처리하도
 
 본인 iPhone을 USB로 연결해 최신 코드를 직접 테스트할 때는 [iPhone 실기기 테스트 가이드](docs/deployment/IOS_PHYSICAL_DEVICE_TESTING.md)를 먼저 확인합니다. 실기기에서 `127.0.0.1`은 Mac이 아니라 iPhone 자신이므로, 로컬 서버를 사용할 때는 Mac의 LAN IP를 앱 빌드 환경변수로 지정해야 합니다.
 
-- Web: `https://soundlog.shop`
 - API: `https://api.soundlog.shop`
+- 개인정보 처리방침: `https://api.soundlog.shop/legal/privacy`
+- 서비스 이용약관: `https://api.soundlog.shop/legal/terms`
+- 고객지원: `https://api.soundlog.shop/support`
 - API source: `server`
 - auth: Soundlog 자체 이메일/비밀번호 로그인
 - iOS/Android: HTTPS API만 사용
@@ -95,7 +93,7 @@ iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/Test
 - [UI 피드백 루프 운영 문서](docs/codex/UI_FEEDBACK_LOOP.md)
 - [개발용 테스트 매니저](docs/codex/TEST_MANAGER.md)
 - [PR 전용 개발 흐름](docs/codex/PR_ONLY_WORKFLOW.md)
-- [soundlog.shop 배포 설정](docs/deployment/SOUNDLOG_SHOP_DOMAIN.md)
+- [GCP 앱 배포 도메인 설정](docs/deployment/SOUNDLOG_SHOP_DOMAIN.md)
 - [iPhone 실기기 테스트 가이드](docs/deployment/IOS_PHYSICAL_DEVICE_TESTING.md)
 - [Mock Server 안내](src/mock-server/README.md)
 
