@@ -77,12 +77,12 @@ MVP 단계에서는 Expo가 적합하다. 온보딩, 위치, 카메라, 이미�
 
 2026년 7월 재정렬 기준 MVP 주요 목적지 탭은 4개로 단순화한다. 앱의 첫 화면은 지도이며, 카메라는 콘텐츠 탭이 아니라 하단 중앙의 리캡 작성 액션이다. 하단 바는 `지도 · 음악추천 · 중앙 카메라 액션 · 로그 · 마이`의 5개 위치로 보인다.
 
-| 탭       | 목적                                | 주요 화면                                                    |
-| -------- | ----------------------------------- | ------------------------------------------------------------ |
-| 지도     | 여행모드 진입과 주변 공개 리캡 탐색 | 지도, 필터 칩, 여행모드 CTA, 공개/내 리캡 핀                 |
-| 음악추천 | 일상모드 위치 기반 사운드트랙 추천  | 오늘의 사운드트랙, 무드 조정, 외부 음악 링크                 |
-| 로그     | 공개 로그 탐색과 내 로그 관리       | 다른사람 보기, 모든 사람 보기, 격자형 로그, 공개/비공개 토글 |
-| 마이     | 계정/권한 관리                      | 취향 수정, 위치/카메라 권한, 설정                            |
+| 탭       | 목적                                | 주요 화면                                                 |
+| -------- | ----------------------------------- | --------------------------------------------------------- |
+| 지도     | 여행모드 진입과 주변 공개 리캡 탐색 | 지도, 필터 칩, 여행모드 CTA, 공개/내 리캡 핀              |
+| 음악추천 | 일상모드 위치 기반 사운드트랙 추천  | 오늘의 사운드트랙, 무드 조정, 외부 음악 링크              |
+| 로그     | 공개 로그 탐색과 내 로그 관리       | 다른사람 보기, 내것만 보기, 격자형 로그, 공개/비공개 토글 |
+| 마이     | 계정/권한 관리                      | 취향 수정, 위치/카메라 권한, 설정                         |
 
 카메라는 독립 콘텐츠 탭으로 두지 않는다. 진입점은 하단 중앙 카메라 버튼과 지도 탭의 `기록 남기기`처럼 기록 맥락이 분명한 CTA다. 로그 탭은 격자로 로그를 탐색하고 공개 범위를 관리하는 화면이며, 새 리캡 작성은 하단 중앙 카메라 버튼에서 시작한다.
 
@@ -92,9 +92,9 @@ MVP 단계에서는 Expo가 적합하다. 온보딩, 위치, 카메라, 이미�
 
 - 여행 세션 시작 전: 지도는 `여행모드 시작` CTA를 보여준다.
 - 여행 세션 중: 지도는 카메라 버튼형 `기록 남기기` CTA를 보여주고, 생성된 리캡을 현재 로그에 묶는다.
-- 로그 탭: `다른사람 보기`와 `모든 사람 보기` 두 탭으로 구성하고, 모든 사람 보기에서 내 로그의 공개/비공개를 설정한다.
+- 로그 탭: `다른사람 보기`와 `내것만 보기` 두 탭으로 구성하고, 내것만 보기에서 내 로그의 공개/비공개를 설정한다.
 - 카메라 화면 하단에는 좌측 `갤러리`, 중앙 촬영 버튼, 우측 `추천사진` CTA를 제공한다.
-- 공개/비공개 선택은 로그 탭의 `모든 사람 보기` 또는 상세 화면에서 처리한다.
+- 공개/비공개 선택은 로그 탭의 `내것만 보기` 또는 상세 화면에서 처리한다.
 
 ### 4.2 화면 목록
 
@@ -283,7 +283,7 @@ MVP에서 미니/풀 링크 패널은 복잡한 음악 앱 수준의 재생 제�
 ```ts
 type TravelSession = {
   id: string;
-  status: 'idle' | 'active' | 'ended';
+  status: "idle" | "active" | "ended";
   startedAt: string;
   endedAt?: string;
   currentLocation?: GeoPoint;
@@ -306,7 +306,7 @@ type PlaceContext = {
   imageUrl?: string;
   overview?: string;
   distanceMeters?: number;
-  source: 'reverse-geocode' | 'seed' | 'tour-api' | 'user';
+  source: "reverse-geocode" | "seed" | "tour-api" | "user";
 };
 ```
 
@@ -318,7 +318,7 @@ type PlaylistRecommendation = {
   title: string;
   reason: string;
   coverImageUrl?: string;
-  source: 'trend' | 'personalized' | 'place_context' | 'fallback';
+  source: "trend" | "personalized" | "place_context" | "fallback";
   tracks: Track[];
   placeContext: PlaceContext;
   mode?: TravelMode;
@@ -352,8 +352,8 @@ type TravelLog = {
   id: string;
   sessionId: string;
   title: string;
-  type: 'album_cover' | 'lp' | 'film' | 'video';
-  status: 'generating' | 'ready' | 'failed';
+  type: "album_cover" | "lp" | "film" | "video";
+  status: "generating" | "ready" | "failed";
   representativePlace?: PlaceContext;
   representativeTrack?: Track;
   imageUrl?: string;

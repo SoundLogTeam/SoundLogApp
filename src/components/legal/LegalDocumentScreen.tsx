@@ -44,7 +44,11 @@ export function LegalDocumentScreen({
       >
         <PageHeader
           leftContent={
-            <IconButton label="뒤로가기" name="arrow-left" onPress={() => router.back()} />
+            <IconButton
+              label="뒤로가기"
+              name="arrow-left"
+              onPress={() => router.back()}
+            />
           }
           title={title}
         />
@@ -53,7 +57,7 @@ export function LegalDocumentScreen({
           <AppText className="text-xs font-semibold text-soundlog-lime">
             {updatedAt}
           </AppText>
-          <AppText className="mt-2 text-sm leading-6 text-white/48">
+          <AppText className="mt-2 text-sm leading-6 text-white">
             {subtitle}
           </AppText>
         </View>
@@ -62,7 +66,7 @@ export function LegalDocumentScreen({
           {sections.map((section) => (
             <View key={section.title}>
               <SectionTitle title={section.title} />
-              <AppText className="mt-3 text-sm leading-6 text-white/58">
+              <AppText className="mt-3 text-sm leading-6 text-white">
                 {section.body}
               </AppText>
             </View>

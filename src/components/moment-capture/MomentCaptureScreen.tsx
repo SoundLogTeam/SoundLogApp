@@ -112,6 +112,13 @@ export function MomentCaptureScreen() {
     [selectedMoodFilter],
   );
 
+  // Synchronous guard against double-submitting a save: `isSaving` is React
+  // state, so a second tap that lands before the first commit still reads
+  // the stale `false` and slips past the state-based check. A ref updates
+  // immediately, before any await, so the second call is rejected in the
+  // same tick as the first one claims the lock.
+  const isSavingRef = useRef(false);
+
   const prepareReview = (photoUri?: string) => {
     const nextCapturedAt = new Date().toISOString();
 
@@ -237,10 +244,11 @@ export function MomentCaptureScreen() {
   };
 
   const handleSave = async () => {
-    if (!isReviewing || isSaving) {
+    if (!isReviewing || isSavingRef.current) {
       return;
     }
 
+    isSavingRef.current = true;
     setIsSaving(true);
     setErrorMessage(undefined);
 
@@ -325,6 +333,7 @@ export function MomentCaptureScreen() {
     } catch {
       setErrorMessage("이 리캡을 저장하지 못했어요. 다시 시도해주세요.");
     } finally {
+      isSavingRef.current = false;
       setIsSaving(false);
     }
   };

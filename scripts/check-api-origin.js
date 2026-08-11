@@ -5,7 +5,7 @@ const apiOrigin = (process.argv[2] || process.env.SOUNDLOG_API_ORIGIN || '').rep
 let authHeaderPromise;
 
 if (!apiOrigin) {
-  console.error('Usage: npm run check:api-origin -- http://<EC2_HOST>:4000');
+  console.error('Usage: npm run check:api-origin -- https://api.soundlog.shop');
   process.exit(1);
 }
 

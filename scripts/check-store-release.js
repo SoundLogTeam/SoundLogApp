@@ -84,6 +84,7 @@ function assertProductionEnv(productionEnv) {
   const privacyUrl = productionEnv.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL;
   const termsUrl = productionEnv.EXPO_PUBLIC_SOUNDLOG_TERMS_URL;
   const supportEmail = productionEnv.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL;
+  const uploadOrigin = productionEnv.EXPO_PUBLIC_SOUNDLOG_UPLOAD_ORIGIN;
 
   if (!apiBaseUrl?.startsWith('https://')) {
     addError('EAS production env must set EXPO_PUBLIC_SOUNDLOG_API_BASE_URL to an HTTPS URL.');
@@ -100,12 +101,36 @@ function assertProductionEnv(productionEnv) {
   if (!supportEmail || supportEmail.endsWith('@example.com')) {
     addError('EAS production env must set EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL to a real mailbox.');
   }
+
+  if (apiBaseUrl !== 'https://api.soundlog.shop') {
+    addError('EAS production API must call the GCP api.soundlog.shop origin directly.');
+  }
+
+  if (uploadOrigin !== 'https://api.soundlog.shop') {
+    addError('EAS production uploads must use the GCP api.soundlog.shop origin directly.');
+  }
+
+  if (privacyUrl !== 'https://api.soundlog.shop/legal/privacy') {
+    addError('EAS production privacy URL must be hosted by the GCP API server.');
+  }
+
+  if (termsUrl !== 'https://api.soundlog.shop/legal/terms') {
+    addError('EAS production terms URL must be hosted by the GCP API server.');
+  }
 }
 
 function hasPlugin(config, pluginName) {
   return (config.plugins ?? []).some((plugin) =>
     Array.isArray(plugin) ? plugin[0] === pluginName : plugin === pluginName,
   );
+}
+
+function getPluginConfig(config, pluginName) {
+  const plugin = (config.plugins ?? []).find(
+    (candidate) => Array.isArray(candidate) && candidate[0] === pluginName,
+  );
+
+  return plugin?.[1];
 }
 
 function assertAppIcon(config) {
@@ -140,6 +165,95 @@ function assertAndroidPermissions(config) {
       addError(`Android release config should not request unused sensitive permission: ${permission}`);
     }
   });
+
+  [
+    'android.permission.ACCESS_BACKGROUND_LOCATION',
+    'android.permission.FOREGROUND_SERVICE',
+    'android.permission.FOREGROUND_SERVICE_LOCATION',
+    'android.permission.ACTIVITY_RECOGNITION',
+    'com.google.android.gms.permission.ACTIVITY_RECOGNITION',
+  ].forEach((permission) => {
+    if (permissions.has(permission)) {
+      addError(`Android release config must not request unused background or motion permission: ${permission}`);
+    }
+  });
+}
+
+function assertRuntimePermissionPlugins(config) {
+  const camera = getPluginConfig(config, 'expo-camera');
+  const location = getPluginConfig(config, 'expo-location');
+
+  if (!camera) {
+    addError('Store release config must include the expo-camera plugin.');
+  } else {
+    if (camera.microphonePermission !== false) {
+      addError('expo-camera must remove the unused iOS microphone permission.');
+    }
+
+    if (camera.recordAudioAndroid !== false) {
+      addError('expo-camera must not add the unused Android RECORD_AUDIO permission.');
+    }
+  }
+
+  if (!location) {
+    addError('Store release config must include the expo-location plugin.');
+    return;
+  }
+
+  if (!location.locationWhenInUsePermission) {
+    addError('expo-location must retain an iOS When In Use location permission message.');
+  }
+
+  [
+    'locationAlwaysAndWhenInUsePermission',
+    'locationAlwaysPermission',
+    'motionUsagePermission',
+    'isIosBackgroundLocationEnabled',
+    'isAndroidBackgroundLocationEnabled',
+    'isAndroidForegroundServiceEnabled',
+    'isAndroidMotionActivityEnabled',
+  ].forEach((key) => {
+    if (location[key] !== false) {
+      addError(`expo-location must explicitly disable unused permission setting: ${key}`);
+    }
+  });
+}
+
+function assertPrivacyManifest(config) {
+  const manifest = config.ios?.privacyManifests;
+  const collectedDataTypes = manifest?.NSPrivacyCollectedDataTypes ?? [];
+  const requiredDeclarations = [
+    ['NSPrivacyCollectedDataTypeName', 'NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+    ['NSPrivacyCollectedDataTypeUserID', 'NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+    ['NSPrivacyCollectedDataTypeProductInteraction', 'NSPrivacyCollectedDataTypePurposeAnalytics'],
+  ];
+
+  if (manifest?.NSPrivacyTracking !== false) {
+    addError('iOS privacy manifest must declare NSPrivacyTracking as false.');
+  }
+
+  requiredDeclarations.forEach(([dataType, purpose]) => {
+    const declaration = collectedDataTypes.find(
+      (entry) => entry.NSPrivacyCollectedDataType === dataType,
+    );
+
+    if (!declaration) {
+      addError(`iOS privacy manifest is missing ${dataType}.`);
+      return;
+    }
+
+    if (declaration.NSPrivacyCollectedDataTypeLinked !== true) {
+      addError(`${dataType} must be declared as linked to the user.`);
+    }
+
+    if (declaration.NSPrivacyCollectedDataTypeTracking !== false) {
+      addError(`${dataType} must be declared as not used for tracking.`);
+    }
+
+    if (!declaration.NSPrivacyCollectedDataTypePurposes?.includes(purpose)) {
+      addError(`${dataType} must declare ${purpose}.`);
+    }
+  });
 }
 
 function assertTransportSecurity(config) {
@@ -160,6 +274,12 @@ function assertTransportSecurity(config) {
 
   if (cleartextPlugin) {
     addError('Android release config must not enable usesCleartextTraffic.');
+  }
+}
+
+function assertIosDeviceSupport(config) {
+  if (config.ios?.supportsTablet !== false) {
+    addError('iOS v1.0 release config must remain iPhone-only until iPad assets and QA are complete.');
   }
 }
 
@@ -232,7 +352,10 @@ function main() {
   if (config) {
     assertAppIcon(config);
     assertAndroidPermissions(config);
+    assertRuntimePermissionPlugins(config);
+    assertPrivacyManifest(config);
     assertTransportSecurity(config);
+    assertIosDeviceSupport(config);
   }
 
   assertNativeIosPlist();

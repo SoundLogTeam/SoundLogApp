@@ -14,6 +14,7 @@ import {
 
 import { AppText } from "@/components/AppText";
 import { SectionTitle } from "@/components/SectionTitle";
+import { useAuthenticatedImageSource } from "@/hooks/useAuthenticatedImageSource";
 import type { RecapShare, RecapShareMoment } from "@/types/domain";
 import { getRecapSoundLogs } from "@/utils/recapTravelSummary";
 
@@ -48,6 +49,7 @@ function SoundLogBackground({ imageUrl }: { imageUrl?: string }) {
   const [failedImageUrl, setFailedImageUrl] = useState<string>();
   const visibleImageUrl =
     imageUrl && failedImageUrl !== imageUrl ? imageUrl : undefined;
+  const photoSource = useAuthenticatedImageSource(visibleImageUrl);
 
   return (
     <>
@@ -55,7 +57,7 @@ function SoundLogBackground({ imageUrl }: { imageUrl?: string }) {
         <Image
           contentFit="cover"
           onError={() => setFailedImageUrl(visibleImageUrl)}
-          source={{ uri: visibleImageUrl }}
+          source={photoSource}
           style={StyleSheet.absoluteFill}
           transition={260}
         />

@@ -1,17 +1,21 @@
 import { Image } from 'expo-image';
 import { View } from 'react-native';
 
+import { useAuthenticatedImageSource } from '@/hooks/useAuthenticatedImageSource';
+
 type RecordDiscProps = {
   imageUrl?: string;
 };
 
 export function RecordDisc({ imageUrl }: RecordDiscProps) {
+  const photoSource = useAuthenticatedImageSource(imageUrl);
+
   return (
     <View className="h-[210px] w-[210px] items-center justify-center overflow-hidden rounded-full border border-white/30 bg-[#060810]">
       {imageUrl ? (
         <Image
           contentFit="cover"
-          source={{ uri: imageUrl }}
+          source={photoSource}
           style={{ height: '100%', position: 'absolute', width: '100%' }}
           transition={300}
         />

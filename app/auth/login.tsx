@@ -8,15 +8,13 @@ import { AppText } from "@/components/AppText";
 import { IconButton } from "@/components/IconButton";
 import { PageHeader } from "@/components/PageHeader";
 import { Screen } from "@/components/Screen";
-import { SectionTitle } from "@/components/SectionTitle";
-import { SettingsRow } from "@/components/SettingsRow";
 import { useAuthStore } from "@/store/authStore";
 import { useUserProfileStore } from "@/store/userProfileStore";
 
 type AuthMode = "login" | "register";
 
 function getNextRoute(completedOnboarding: boolean) {
-  return (completedOnboarding ? "/" : "/onboarding") as never;
+  return (completedOnboarding ? "/" : "/onboarding?mode=setup") as never;
 }
 
 function getErrorMessage(error: unknown) {
@@ -32,6 +30,7 @@ export default function LoginScreen() {
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [hasAcceptedRequiredTerms, setHasAcceptedRequiredTerms] =
     useState(false);
   const loginMutation = useLoginMutation();
@@ -111,7 +110,6 @@ export default function LoginScreen() {
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          justifyContent: "space-between",
           padding: 24,
           paddingBottom: 42,
           paddingTop: 42,
@@ -119,117 +117,122 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View>
-          <PageHeader
-            leftContent={
-              <IconButton
-                label="온보딩으로 돌아가기"
-                name="arrow-left"
-                onPress={() => router.replace("/onboarding" as never)}
-              />
-            }
-            title="Soundlog"
-          />
-
-          <AppText className="mt-9 text-[28px] font-semibold leading-9 text-white">
-            계정으로 계속하기
-          </AppText>
-          <AppText className="mt-4 text-sm leading-6 text-white/58">
-            이메일 계정에 취향, 좋아요, 리캡과 여행 로그를 바로 저장해요.
-            Soundlog 이용은 로그인 후 시작할 수 있습니다.
-          </AppText>
-
-          <View className="mt-8">
-            <SectionTitle title="계정 안내" />
-            <SettingsRow
-              description="외부 계정 연결 없이 이메일과 비밀번호로 기록을 이어둘 수 있어요."
-              icon="lock"
-              label="Soundlog 자체 계정"
+        <PageHeader
+          leftContent={
+            <IconButton
+              label="온보딩으로 돌아가기"
+              name="arrow-left"
+              onPress={() => router.replace("/onboarding" as never)}
             />
-          </View>
+          }
+          title={mode === "login" ? "로그인" : "회원가입"}
+        />
+
+        <View className="mt-10">
+          <AppText className="text-[28px] font-semibold leading-9 text-white">
+            {mode === "login"
+              ? "다시 만나서 반가워요"
+              : "Soundlog를 시작해볼까요?"}
+          </AppText>
+          <AppText className="mt-3 text-sm leading-6 text-white/65">
+            {mode === "login"
+              ? "이메일과 비밀번호를 입력해주세요."
+              : "기록을 안전하게 보관할 계정을 만들어주세요."}
+          </AppText>
         </View>
 
-        <View className="mt-10 gap-3">
-          <View className="flex-row rounded-full border border-white/10 bg-white/[0.06] p-1">
-            {(["login", "register"] as const).map((item) => {
-              const isActive = mode === item;
-
-              return (
-                <Pressable
-                  key={item}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isActive }}
-                  className={`min-h-11 flex-1 items-center justify-center rounded-full ${
-                    isActive ? "bg-soundlog-lime" : "bg-transparent"
-                  }`}
-                  disabled={isPending}
-                  onPress={() => handleModePress(item)}
-                >
-                  <AppText
-                    className={`text-sm font-semibold ${
-                      isActive ? "text-soundlog-inverse" : "text-white/62"
-                    }`}
-                  >
-                    {item === "login" ? "로그인" : "가입"}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </View>
-
+        <View className="mt-10 gap-4">
           {mode === "register" ? (
-            <TextInput
-              autoCapitalize="words"
-              className="min-h-[54px] rounded-xl border border-white/10 bg-white/[0.06] px-4 text-base text-white"
-              editable={!isPending}
-              onChangeText={setDisplayName}
-              placeholder="이름"
-              placeholderTextColor="rgba(255,255,255,0.35)"
-              returnKeyType="next"
-              value={displayName}
-            />
+            <View>
+              <AppText className="mb-2 text-sm font-semibold text-white">
+                이름
+              </AppText>
+              <TextInput
+                autoCapitalize="words"
+                autoComplete="name"
+                className="min-h-[56px] rounded-xl border border-white/16 bg-white/[0.08] px-4 text-base text-white"
+                editable={!isPending}
+                onChangeText={setDisplayName}
+                placeholder="이름을 입력해주세요"
+                placeholderTextColor="rgba(255,255,255,0.38)"
+                returnKeyType="next"
+                textContentType="name"
+                value={displayName}
+              />
+            </View>
           ) : null}
 
-          <TextInput
-            autoCapitalize="none"
-            autoComplete="email"
-            className="min-h-[54px] rounded-xl border border-white/10 bg-white/[0.06] px-4 text-base text-white"
-            editable={!isPending}
-            inputMode="email"
-            keyboardType="email-address"
-            onChangeText={setEmail}
-            placeholder="이메일"
-            placeholderTextColor="rgba(255,255,255,0.35)"
-            returnKeyType="next"
-            textContentType="emailAddress"
-            value={email}
-          />
+          <View>
+            <AppText className="mb-2 text-sm font-semibold text-white">
+              이메일
+            </AppText>
+            <TextInput
+              autoCapitalize="none"
+              autoComplete="email"
+              className="min-h-[56px] rounded-xl border border-white/16 bg-white/[0.08] px-4 text-base text-white"
+              editable={!isPending}
+              inputMode="email"
+              keyboardType="email-address"
+              onChangeText={setEmail}
+              placeholder="name@example.com"
+              placeholderTextColor="rgba(255,255,255,0.38)"
+              returnKeyType="next"
+              textContentType="emailAddress"
+              value={email}
+            />
+          </View>
 
-          <TextInput
-            autoCapitalize="none"
-            autoComplete={
-              mode === "login" ? "current-password" : "new-password"
-            }
-            className="min-h-[54px] rounded-xl border border-white/10 bg-white/[0.06] px-4 text-base text-white"
-            editable={!isPending}
-            onChangeText={setPassword}
-            onSubmitEditing={() => {
-              void handleSubmit();
-            }}
-            placeholder="비밀번호"
-            placeholderTextColor="rgba(255,255,255,0.35)"
-            returnKeyType="done"
-            secureTextEntry
-            textContentType={mode === "login" ? "password" : "newPassword"}
-            value={password}
-          />
+          <View>
+            <AppText className="mb-2 text-sm font-semibold text-white">
+              비밀번호
+            </AppText>
+            <View className="min-h-[56px] flex-row items-center rounded-xl border border-white/16 bg-white/[0.08]">
+              <TextInput
+                autoCapitalize="none"
+                autoComplete={
+                  mode === "login" ? "current-password" : "new-password"
+                }
+                className="min-h-[56px] min-w-0 flex-1 px-4 text-base text-white"
+                editable={!isPending}
+                onChangeText={setPassword}
+                onSubmitEditing={() => {
+                  void handleSubmit();
+                }}
+                placeholder="8자 이상 입력해주세요"
+                placeholderTextColor="rgba(255,255,255,0.38)"
+                returnKeyType="done"
+                secureTextEntry={!isPasswordVisible}
+                textContentType={mode === "login" ? "password" : "newPassword"}
+                value={password}
+              />
+              <Pressable
+                accessibilityLabel={
+                  isPasswordVisible ? "비밀번호 숨기기" : "비밀번호 보기"
+                }
+                accessibilityRole="button"
+                className="h-12 w-12 items-center justify-center"
+                onPress={() => setIsPasswordVisible((visible) => !visible)}
+              >
+                <Feather
+                  color="rgba(255,255,255,0.62)"
+                  name={isPasswordVisible ? "eye-off" : "eye"}
+                  size={18}
+                />
+              </Pressable>
+            </View>
+            {mode === "register" ? (
+              <AppText className="mt-2 text-xs text-white/55">
+                비밀번호는 8자 이상이어야 합니다.
+              </AppText>
+            ) : null}
+          </View>
 
           {mode === "register" ? (
             <Pressable
               accessibilityLabel="필수 이용약관과 개인정보 처리방침 동의"
               accessibilityRole="checkbox"
               accessibilityState={{ checked: hasAcceptedRequiredTerms }}
-              className="min-h-12 flex-row items-center gap-3 py-2"
+              className="min-h-12 flex-row items-center gap-3 py-1"
               disabled={isPending}
               onPress={() => {
                 setHasAcceptedRequiredTerms((accepted) => !accepted);
@@ -264,7 +267,7 @@ export default function LoginScreen() {
 
           <Pressable
             accessibilityRole="button"
-            className="min-h-[56px] items-center justify-center rounded-xl bg-soundlog-lime px-5"
+            className="mt-2 min-h-[56px] items-center justify-center rounded-xl bg-soundlog-lime px-5"
             disabled={isPending}
             onPress={() => {
               void handleSubmit();
@@ -279,13 +282,28 @@ export default function LoginScreen() {
             </AppText>
           </Pressable>
 
-          <View className="mt-3 items-center">
-            <AppText className="text-center text-[11px] leading-5 text-white/35">
-              {mode === "register"
-                ? "필수 약관에 동의한 뒤 계정을 만들 수 있어요."
-                : "로그인하면 기존 계정의 설정과 기록을 불러옵니다."}
+          <View className="mt-2 flex-row items-center justify-center gap-1">
+            <AppText className="text-sm text-white/62">
+              {mode === "login"
+                ? "계정이 없으신가요?"
+                : "이미 계정이 있으신가요?"}
             </AppText>
-            <View className="mt-2 flex-row items-center justify-center gap-3">
+            <Pressable
+              accessibilityRole="button"
+              className="min-h-11 justify-center px-2"
+              disabled={isPending}
+              onPress={() =>
+                handleModePress(mode === "login" ? "register" : "login")
+              }
+            >
+              <AppText className="text-sm font-semibold text-soundlog-lime">
+                {mode === "login" ? "회원가입" : "로그인"}
+              </AppText>
+            </Pressable>
+          </View>
+
+          <View className="mt-1 items-center">
+            <View className="flex-row items-center justify-center gap-3">
               <Pressable
                 accessibilityRole="link"
                 onPress={() => router.push("/legal/terms" as never)}
