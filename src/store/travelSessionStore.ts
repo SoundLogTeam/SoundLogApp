@@ -17,8 +17,8 @@ type TravelSession = {
   endedAt?: string;
   id: string;
   // Account that owned the device when this session was started. Used to
-  // gate display/sync the same way momentLogStore gates moment logs — see
-  // `reconcileOwnership` below. `undefined` means unknown owner (data
+  // keep an active travel sensor buffer isolated by account. `undefined`
+  // means unknown owner (data
   // persisted before this field existed) and is treated like a mismatch:
   // quarantined, never auto-deleted, never shown to whoever is logged in.
   ownerUserId?: string;
@@ -57,11 +57,13 @@ type TravelSessionState = {
   setMode: (mode: TravelMode) => void;
   setRecommendationMode: (mode: MusicRecommendationMode) => void;
   setSessionRecapId: (recapId?: string) => void;
-  startSession: (session?: Partial<Pick<TravelSession, 'id' | 'routePoints' | 'startedAt'>>) => void;
+  startSession: (
+    session: Pick<TravelSession, 'id'> & Partial<Pick<TravelSession, 'routePoints' | 'startedAt'>>,
+  ) => void;
 };
 
 const idleSession: TravelSession = {
-  id: 'local-session',
+  id: 'idle',
   routePoints: [],
   status: 'idle',
 };
@@ -176,10 +178,10 @@ export const useTravelSessionStore = create<TravelSessionState>()(
       startSession: (session) =>
         set({
           session: {
-            id: session?.id ?? `session-${Date.now()}`,
+            id: session.id,
             ownerUserId: useAuthStore.getState().user?.id,
-            routePoints: session?.routePoints ?? [],
-            startedAt: session?.startedAt ?? new Date().toISOString(),
+            routePoints: session.routePoints ?? [],
+            startedAt: session.startedAt ?? new Date().toISOString(),
             status: 'active',
           },
         }),
@@ -203,8 +205,7 @@ export const useTravelSessionStore = create<TravelSessionState>()(
       name: 'soundlog-travel-session',
       // Fires once this store's own persisted session/quarantinedSessions
       // have loaded. Needed alongside the useAuthStore.subscribe below for
-      // the same cold-start reason as momentLogStore: auth can finish
-      // hydrating (and fire its subscription) before this store's own
+      // Auth can finish hydrating and fire its subscription before this store's own
       // async storage read resolves, so reconciliation must also re-run
       // once real persisted data is in place.
       onRehydrateStorage: () => () => {
@@ -230,11 +231,9 @@ export const useTravelSessionStore = create<TravelSessionState>()(
   ),
 );
 
-// --- Cross-account display isolation (mirrors momentLogStore.ts) ------
+// --- Cross-account display isolation ------
 //
-// Registered independently here (rather than piggy-backing on
-// momentLogStore's subscription) to keep the two stores decoupled, but it
-// rides the exact same mechanism: useAuthStore notifies subscribers
+// useAuthStore notifies subscribers
 // synchronously inside the very `set()` call that logs an account in/out,
 // so this reconciliation always finishes before React renders any screen
 // that reads `session` — no one-frame exposure of a stale account's

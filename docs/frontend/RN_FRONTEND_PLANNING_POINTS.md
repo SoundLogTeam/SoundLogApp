@@ -52,7 +52,7 @@ Soundlog의 핵심 UX는 Eyes-free 여행 몰입이다. 따라서 프론트엔�
 | 네비게이션      | React Navigation                                    | 탭, 스택, 모달 흐름 구성에 적합                                                                                       |
 | 서버 상태       | TanStack Query                                      | 관광 API, 추천 API, Recap API 캐싱 및 실패 처리                                                                       |
 | 클라이언트 상태 | Zustand 또는 Jotai                                  | 현재 여행 세션, 선택 태그, 선택 곡 상태 관리                                                                          |
-| 로컬 저장소     | MMKV 또는 AsyncStorage                              | 온보딩 상태, 최근 여행 세션, 임시 로그 저장                                                                           |
+| 로컬 저장소     | MMKV 또는 AsyncStorage                              | 온보딩 상태와 진행 중 GPS 경로 복구용 센서 버퍼 저장                                                                  |
 | 카메라          | expo-camera 또는 react-native-vision-camera         | MVP는 expo-camera, 고성능 촬영/프레임 처리는 vision-camera 검토                                                       |
 | 위치            | expo-location 또는 react-native-geolocation-service | 백그라운드 위치 필요 여부에 따라 선택                                                                                 |
 | 이미지 처리     | expo-image, expo-image-manipulator                  | Recap 썸네일, 이미지 압축, 캐싱                                                                                       |
@@ -341,7 +341,6 @@ type MomentLog = {
   mode?: TravelMode;
   moods: MoodTag[];
   memo?: string;
-  syncStatus: "local" | "syncing" | "synced" | "failed";
 };
 ```
 
@@ -517,9 +516,9 @@ Soundlog는 이미지와 위치, 리스트가 많기 때문에 모바일 성능 
 프론트 대응은 다음과 같다.
 
 - 마지막 추천 플레이리스트를 로컬 캐싱한다.
-- 리캡 저장 요청은 네트워크 실패 시 로컬 큐에 저장한다.
-- 네트워크 복구 후 자동 동기화한다.
-- Recap 생성 요청 실패 시 재시도 가능하게 한다.
+- 리캡 저장 요청은 서버 성공 응답을 받은 뒤 완료 처리한다.
+- 저장 요청이 실패하면 작성 화면을 유지하고 명시적으로 재시도할 수 있게 한다.
+- 여행 시작과 종료도 서버 요청이 실패하면 로컬 성공 상태로 바꾸지 않는다.
 - 오프라인 상태에서는 “최근 추천 기반으로 계속 듣기”를 제공한다.
 
 ---

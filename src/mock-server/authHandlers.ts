@@ -1,12 +1,5 @@
 import { mockServerDelay } from '@/mock-server/delay';
-import {
-  AuthMe,
-  AuthSession,
-  LoginRequest,
-  LocalDataMigrationPayload,
-  LocalDataMigrationResult,
-  RegisterRequest,
-} from '@/types/auth';
+import { AuthMe, AuthSession, LoginRequest, RegisterRequest } from '@/types/auth';
 
 let refreshTokenSeed = 1;
 let activeSession: AuthSession | undefined;
@@ -122,19 +115,6 @@ export const authMockHandlers = {
     return mockServerDelay('auth.me', {
       profile: activeSession.profile,
       user: activeSession.user,
-    });
-  },
-
-  async migrateLocalData(
-    payload: LocalDataMigrationPayload,
-  ): Promise<LocalDataMigrationResult> {
-    return mockServerDelay('auth.migrateLocalData', {
-      accepted: true,
-      migrated: {
-        libraryTrackCount: payload.libraryTrackCount,
-        momentLogCount: payload.momentLogCount,
-        recapDraftCount: payload.recapDraftCount,
-      },
     });
   },
 };

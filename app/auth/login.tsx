@@ -10,7 +10,6 @@ import { PageHeader } from "@/components/PageHeader";
 import { Screen } from "@/components/Screen";
 import { useAuthStore } from "@/store/authStore";
 import { useUserProfileStore } from "@/store/userProfileStore";
-import { migrateLocalDataToAccount } from "@/utils/localDataMigration";
 
 type AuthMode = "login" | "register";
 
@@ -99,7 +98,6 @@ export default function LoginScreen() {
       }
 
       finishLogin(session);
-      void migrateLocalDataToAccount();
       router.replace(getNextRoute(didCompleteOnboarding));
     } catch (error) {
       setStatus("unauthenticated");

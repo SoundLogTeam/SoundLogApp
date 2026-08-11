@@ -2,12 +2,10 @@ import { queryClient } from '@/providers/queryClient';
 import { useAuthStore } from '@/store/authStore';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
 import { useLibraryStore } from '@/store/libraryStore';
-import { useMomentLogStore } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationCacheStore } from '@/store/recommendationCacheStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useTravelRoomStore } from '@/store/travelRoomStore';
-import { useTravelLogSyncStore } from '@/store/travelLogSyncStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 
@@ -20,15 +18,9 @@ import { useUserProfileStore } from '@/store/userProfileStore';
  * previous account's data render on screen after someone else logs in.
  *
  * Used on the silent token-refresh-failure path so an expired session
- * prompts re-login WITHOUT discarding unsynced local data: pending moment
- * log actions, in-progress recap drafts, the active travel session and its
- * route points, and pending Log finalizations. Those are preserved (see
- * momentLogStore's `quarantinedLogs` / `quarantinedPendingActions` and
- * travelSessionStore's `quarantinedSessions`) and are gated back into
- * visibility + sync (see momentLogSync.ts / travelLogSync.ts, and each
- * store's own synchronous `useAuthStore.subscribe(...)` -> `reconcileOwnership`
- * call) only once the SAME account re-authenticates; a different account
- * never sees them, not even for a single render frame.
+ * prompts re-login without discarding the active travel session and its
+ * route points. The travel session is preserved in quarantine and restored
+ * only when the same account signs in again.
  *
  * Use `clearAccountSession` instead for explicit logout / account deletion,
  * where wiping all local data — including those preserved drafts — is the
@@ -55,13 +47,6 @@ export function clearAuthSession() {
 
 export function clearAccountSession() {
   clearAuthSession();
-  useMomentLogStore.setState({
-    logs: [],
-    pendingActions: [],
-    quarantinedLogs: [],
-    quarantinedPendingActions: [],
-  });
-  useTravelLogSyncStore.setState({ pendingFinalizations: [] });
   useTravelSessionStore.setState({
     currentLocation: undefined,
     currentPlace: undefined,
@@ -71,7 +56,7 @@ export function clearAccountSession() {
     recommendationMode: 'everyday',
     selectedMode: undefined,
     session: {
-      id: 'local-session',
+      id: 'idle',
       routePoints: [],
       status: 'idle',
     },

@@ -1,9 +1,14 @@
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { router, useLocalSearchParams } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Platform, Pressable, View } from "react-native";
 
 import { syncRecommendationEvent } from "@/api/recommendationEventApi";
+import { momentLogApi } from "@/api/momentLogApi";
+import { momentLogQueryKeys } from "@/api/momentLogQueries";
+import { recapApi } from "@/api/recapApi";
+import { recapQueryKeys } from "@/api/recapQueries";
 import { AppText } from "@/components/AppText";
 import { PageHeader } from "@/components/PageHeader";
 import { CameraCaptureView } from "@/components/moment-capture/CameraCaptureView";
@@ -16,10 +21,6 @@ import { Screen } from "@/components/Screen";
 import { SectionTitle } from "@/components/SectionTitle";
 import { SettingsRow } from "@/components/SettingsRow";
 import { useHomeFilterStore } from "@/store/homeFilterStore";
-import {
-  useMomentLogStore,
-  type MomentLogCreateQueuePayload,
-} from "@/store/momentLogStore";
 import { usePlayerStore } from "@/store/playerStore";
 import { useRecommendationEventStore } from "@/store/recommendationEventStore";
 import { useTravelSessionStore } from "@/store/travelSessionStore";
@@ -31,7 +32,6 @@ import {
 } from "@/types/domain";
 import { getForegroundLocationWithTimeout } from "@/utils/location";
 import { getMoodTagsFromFilter } from "@/utils/moodTags";
-import { persistMomentPhoto } from "@/utils/momentFiles";
 import { pickMomentPhotoFromLibrary } from "@/utils/momentPhotoPicker";
 import { createRecommendationEventContext } from "@/utils/recommendationEventContext";
 import { getDistanceMeters } from "@/utils/recapTravelSummary";
@@ -61,8 +61,10 @@ export function MomentCaptureScreen() {
   }>();
   const cameraRef = useRef<CameraView>(null);
   const reviewPanelRef = useRef<MomentReviewPanelHandle>(null);
+  const queryClient = useQueryClient();
   const [cameraPermission, requestCameraPermission] = useCameraPermissions();
   const [capturedAt, setCapturedAt] = useState<string>();
+  const [saveIdempotencyKey, setSaveIdempotencyKey] = useState<string>();
   const [capturedPhotoUri, setCapturedPhotoUri] = useState<string>();
   const [errorMessage, setErrorMessage] = useState<string>();
   const [isReviewing, setIsReviewing] = useState(false);
@@ -79,8 +81,6 @@ export function MomentCaptureScreen() {
   const [isSaving, setIsSaving] = useState(false);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
 
-  const addLog = useMomentLogStore((state) => state.addLog);
-  const queueCreate = useMomentLogStore((state) => state.queueCreate);
   const addRecommendationEvent = useRecommendationEventStore(
     (state) => state.addEvent,
   );
@@ -118,16 +118,12 @@ export function MomentCaptureScreen() {
   // immediately, before any await, so the second call is rejected in the
   // same tick as the first one claims the lock.
   const isSavingRef = useRef(false);
-  // The moment/idempotency id for the in-flight (or retry-pending) save
-  // attempt. Generated once per review session and reused across retries so
-  // a failed save followed by the user tapping "저장" again reuses the same
-  // idempotencyKey instead of minting a new one — see queueCreate /
-  // syncCreateAction, which key the server request on this id.
-  const saveIdRef = useRef<string | undefined>(undefined);
 
   const prepareReview = (photoUri?: string) => {
-    saveIdRef.current = undefined;
-    setCapturedAt(new Date().toISOString());
+    const nextCapturedAt = new Date().toISOString();
+
+    setCapturedAt(nextCapturedAt);
+    setSaveIdempotencyKey(`recap-capture:${nextCapturedAt}`);
     setCapturedPhotoUri(photoUri);
     setReviewPlaceName("");
     setReviewTemplate("film");
@@ -257,8 +253,6 @@ export function MomentCaptureScreen() {
     setErrorMessage(undefined);
 
     try {
-      const id = saveIdRef.current ?? `moment-${Date.now()}`;
-      saveIdRef.current = id;
       const locationSnapshot: GeoPoint | undefined = currentLocation;
       const activeSessionId =
         session.status === "active" ? session.id : undefined;
@@ -273,9 +267,6 @@ export function MomentCaptureScreen() {
         photoSourceUri = capturedCanvasUri ?? capturedPhotoUri;
       }
 
-      const photoUri = photoSourceUri
-        ? await persistMomentPhoto(photoSourceUri, id)
-        : undefined;
       const createdAt = capturedAt ?? new Date().toISOString();
       const placeName = reviewPlaceName.trim() || undefined;
       const trackSnapshot = shouldSaveMusic ? currentTrack : undefined;
@@ -286,28 +277,14 @@ export function MomentCaptureScreen() {
         placeName,
         travelMode: activeTravelMode,
       });
-      const localLog: MomentLog = {
+      const idempotencyKey = saveIdempotencyKey ?? `recap-capture:${createdAt}`;
+      const savedLog = await momentLogApi.createMomentLog({
+        createStandaloneRecap: !activeSessionId,
         createdAt,
-        id,
+        idempotencyKey,
         location: locationSnapshot,
         moodTags: reviewMoodTags,
-        placeCategory: capturePlace?.category,
-        placeId: capturePlace?.id,
-        photoUri,
-        placeName,
-        recapVisibility,
-        sessionId: activeSessionId,
-        source: "camera",
-        syncStatus: "pending",
-        templateId: reviewTemplate,
-        track: trackSnapshot,
-        travelMode: activeTravelMode,
-      };
-      const createPayload: MomentLogCreateQueuePayload = {
-        createdAt,
-        location: locationSnapshot,
-        moodTags: reviewMoodTags,
-        photoUri,
+        photoUri: photoSourceUri,
         placeCategory: capturePlace?.category,
         placeId: capturePlace?.id,
         placeName,
@@ -316,19 +293,41 @@ export function MomentCaptureScreen() {
         templateId: reviewTemplate,
         track: trackSnapshot,
         travelMode: activeTravelMode,
-      };
+      });
 
-      addLog(localLog);
-      queueCreate(id, createPayload);
+      if (!savedLog) {
+        throw new Error("recap_save_failed");
+      }
+
+      if (!activeSessionId && !savedLog.recapId) {
+        const fallbackRecap = await recapApi.createRecap(
+          {
+            momentLogIds: [savedLog.id],
+            templateId: reviewTemplate,
+            visibility: recapVisibility,
+          },
+          `standalone-recap:${idempotencyKey}`,
+        );
+
+        if (!fallbackRecap) {
+          throw new Error("standalone_recap_save_failed");
+        }
+      }
+
       syncRecommendationEvent(
         addRecommendationEvent({
           context: recommendationContext,
           playlistId,
           trackId: trackSnapshot?.id,
           type: "moment_log_saved",
-          value: localLog.syncStatus,
+          value: "server",
         }),
       );
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: momentLogQueryKeys.all }),
+        queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists }),
+      ]);
 
       router.replace(resolveReturnPath(returnTo) as never);
     } catch {
@@ -355,6 +354,7 @@ export function MomentCaptureScreen() {
         onChangeVisibility={setRecapVisibility}
         onRetake={() => {
           setCapturedAt(undefined);
+          setSaveIdempotencyKey(undefined);
           setCapturedPhotoUri(undefined);
           setIsReviewing(false);
           setErrorMessage(undefined);

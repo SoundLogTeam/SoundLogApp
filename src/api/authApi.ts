@@ -1,12 +1,5 @@
-import { createIdempotencyKey, requestApi } from '@/api/client';
-import {
-  AuthMe,
-  AuthSession,
-  LoginRequest,
-  LocalDataMigrationPayload,
-  LocalDataMigrationResult,
-  RegisterRequest,
-} from '@/types/auth';
+import { requestApi } from '@/api/client';
+import { AuthMe, AuthSession, LoginRequest, RegisterRequest } from '@/types/auth';
 
 export const authApi = {
   deleteAccount: async () => {
@@ -30,13 +23,6 @@ export const authApi = {
     return requestApi<{ accepted: boolean }>('/v1/auth/logout', {
       auth: false,
       body: { refreshToken },
-      method: 'POST',
-    });
-  },
-  migrateLocalData: async (payload: LocalDataMigrationPayload) => {
-    return requestApi<LocalDataMigrationResult>('/v1/me/migrate-local-data', {
-      body: payload,
-      idempotencyKey: payload.idempotencyKey ?? createIdempotencyKey('migration'),
       method: 'POST',
     });
   },

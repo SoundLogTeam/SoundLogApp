@@ -4,6 +4,8 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { travelSessionApi } from "@/api/travelSessionApi";
+import { useMomentLogListQuery } from "@/api/momentLogQueries";
+import { recapApi } from "@/api/recapApi";
 import { recapQueryKeys } from "@/api/recapQueries";
 import { useNearbyPlacesQuery } from "@/api/tourQueries";
 import { AppText } from "@/components/AppText";
@@ -22,17 +24,12 @@ import {
   useTravelRouteTracking,
 } from "@/hooks/useTravelRouteTracking";
 import { useAuthStore } from "@/store/authStore";
-import { useMomentLogStore } from "@/store/momentLogStore";
 import { usePlayerStore } from "@/store/playerStore";
 import { queryClient } from "@/providers/queryClient";
 import { useTravelSessionStore } from "@/store/travelSessionStore";
-import { useTravelLogSyncStore } from "@/store/travelLogSyncStore";
 import { useUserProfileStore } from "@/store/userProfileStore";
 import type { TravelMode } from "@/types/domain";
 import { requestForegroundLocationWithStatus } from "@/utils/location";
-import { createSessionRecapId } from "@/utils/recapMappers";
-import { flushPendingMomentActions } from "@/utils/momentLogSync";
-import { flushPendingTravelLogFinalizations } from "@/utils/travelLogSync";
 
 const NEARBY_TOUR_RADIUS_METERS = 2000;
 
@@ -47,7 +44,6 @@ export default function MapHomeScreen() {
   const [isEndConfirmVisible, setIsEndConfirmVisible] = useState(false);
   const [isEndingTravel, setIsEndingTravel] = useState(false);
   const [mapMessage, setMapMessage] = useState<string>();
-  const momentLogs = useMomentLogStore((state) => state.logs);
   const {
     clearLocation,
     currentLocation,
@@ -73,6 +69,13 @@ export default function MapHomeScreen() {
     location: currentLocation,
     radiusMeters: NEARBY_TOUR_RADIUS_METERS,
   });
+  const sessionMomentsQuery = useMomentLogListQuery(
+    {
+      limit: 100,
+      sessionId: session.status === "active" ? session.id : undefined,
+    },
+    { enabled: status === "authenticated" && session.status === "active" },
+  );
   const nearestTourPlace = currentLocation
     ? nearbyPlacesQuery.data?.find(
         (place) => place.source === "tour-api" && Boolean(place.location),
@@ -96,9 +99,7 @@ export default function MapHomeScreen() {
           : nearbyPlacesQuery.isError
             ? "error"
             : "empty";
-  const sessionMomentCount = momentLogs.filter(
-    (log) => log.sessionId === session.id,
-  ).length;
+  const sessionMomentCount = sessionMomentsQuery.data?.length ?? 0;
 
   useEffect(
     function synchronizeRecommendationMode() {
@@ -244,23 +245,18 @@ export default function MapHomeScreen() {
         travelMode: nextMode,
       });
 
-      startSession({
-        id: serverSession?.id,
-        routePoints: serverSession?.routePoints ?? initialRoutePoints,
-        startedAt: serverSession?.startedAt ?? startedAt,
-      });
-    } catch {
-      const startLocation = currentLocation ?? activeCurrentPlace?.location;
-      const startedAt = new Date().toISOString();
+      if (!serverSession?.id) {
+        throw new Error("travel_session_create_failed");
+      }
 
       startSession({
-        routePoints: startLocation
-          ? [createRoutePoint(startLocation, new Date(startedAt))]
-          : undefined,
-        startedAt,
+        id: serverSession.id,
+        routePoints: serverSession.routePoints ?? initialRoutePoints,
+        startedAt: serverSession.startedAt ?? startedAt,
       });
+    } catch {
       setMapMessage(
-        "서버 여행 세션 연결에 실패해서 로컬 여행모드로 먼저 시작했어요.",
+        "여행모드를 시작하지 못했어요. 네트워크를 확인한 뒤 다시 시도해주세요.",
       );
     } finally {
       setIsStartingTravel(false);
@@ -274,59 +270,63 @@ export default function MapHomeScreen() {
 
     const endingSession = session;
     const endedAt = new Date().toISOString();
-    const localRecapId = createSessionRecapId(endingSession.id);
 
     setIsEndingTravel(true);
     setMapMessage(undefined);
 
     try {
-      await flushPendingMomentActions();
+      const latestSessionLogs =
+        (await sessionMomentsQuery.refetch()).data ?? [];
 
-      const latestSessionLogs = useMomentLogStore
-        .getState()
-        .logs.filter((log) => log.sessionId === endingSession.id);
+      const endedServerSession = await travelSessionApi.endTravelSession(
+        endingSession.id,
+        {
+          endedAt,
+          location: currentLocation ?? activeCurrentPlace?.location,
+          routePoints: endingSession.routePoints,
+        },
+      );
 
-      endSession();
-      setIsEndConfirmVisible(false);
+      if (!endedServerSession) {
+        throw new Error("travel_session_end_failed");
+      }
 
       if (latestSessionLogs.length === 0) {
+        endSession();
         setSessionRecapId(undefined);
+        setIsEndConfirmVisible(false);
         setMapMessage(
           "여행을 종료했어요. 남긴 리캡이 없어 로그는 만들지 않았어요.",
         );
         return;
       }
 
-      useTravelLogSyncStore.getState().queueFinalization({
-        endedAt,
-        location: currentLocation ?? activeCurrentPlace?.location,
-        routePoints: endingSession.routePoints,
-        sessionId: endingSession.id,
-        templateId: "album",
-        title: `${latestSessionLogs[0]?.placeName ?? "여행"} 로그`,
-      });
-      const syncResult = await flushPendingTravelLogFinalizations();
-      const recapId =
-        syncResult.createdRecapIds[endingSession.id] ?? localRecapId;
+      const recap = await recapApi.createRecap(
+        {
+          momentLogIds: latestSessionLogs.map((log) => log.id),
+          routePoints: endingSession.routePoints,
+          sessionId: endingSession.id,
+          templateId: "album",
+          title: `${latestSessionLogs[0]?.placeName ?? "여행"} 로그`,
+          visibility: "private",
+        },
+        `travel-log:${endingSession.id}`,
+      );
 
-      setSessionRecapId(recapId);
-      await queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists });
-
-      if (recapId === localRecapId) {
-        setMapMessage(
-          "서버 동기화가 끝나면 여행 로그가 자동으로 완성돼요. 지금은 기기 기록을 보여드릴게요.",
-        );
+      if (!recap) {
+        throw new Error("travel_log_create_failed");
       }
 
-      router.push(`/recap-share/${recapId}`);
-    } catch {
       endSession();
-      setSessionRecapId(localRecapId);
+      setSessionRecapId(recap.id);
+      setIsEndConfirmVisible(false);
+      await queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists });
+      router.push(`/recap-share/${recap.id}`);
+    } catch {
       setIsEndConfirmVisible(false);
       setMapMessage(
-        "서버 로그 생성에 실패해 기기에 저장된 여행 로그를 먼저 보여드려요.",
+        "여행 로그를 서버에 저장하지 못했어요. 네트워크를 확인한 뒤 다시 종료해주세요.",
       );
-      router.push(`/recap-share/${localRecapId}`);
     } finally {
       setIsEndingTravel(false);
     }

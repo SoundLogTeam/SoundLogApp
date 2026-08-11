@@ -13,7 +13,7 @@
 - `playlistHandlers.ts`: 플레이리스트 상세
 - `recapHandlers.ts`: Recap 리스트, Recap 공유
 - `tourHandlers.ts`: TourAPI 실패 또는 미설정 시 주변 관광지 fallback
-- `authHandlers.ts`: 로그인, 토큰 갱신, 로그아웃, 로컬 데이터 이관 mock
+- `authHandlers.ts`: 로그인, 토큰 갱신, 로그아웃 mock
 
 ## 레거시 실패 상태 테스트
 
@@ -49,7 +49,6 @@ EXPO_PUBLIC_MOCK_API_DELAY_MS=1500 npm run web
 - `auth.refresh`
 - `auth.logout`
 - `auth.me`
-- `auth.migrateLocalData`
 - `playlist.detail`
 - `recap.list`
 - `recap.share`

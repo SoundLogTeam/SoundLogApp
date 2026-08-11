@@ -1,11 +1,4 @@
-import {
-  AuthMe,
-  AuthSession,
-  LoginRequest,
-  LocalDataMigrationPayload,
-  LocalDataMigrationResult,
-  RegisterRequest,
-} from '@/types/auth';
+import { AuthMe, AuthSession, LoginRequest, RegisterRequest } from '@/types/auth';
 import {
   FeaturedPlaylist,
   GeoPoint,
@@ -53,16 +46,11 @@ export type MockServer = {
     getMe: () => Promise<AuthMe>;
     login: (request: LoginRequest) => Promise<AuthSession>;
     logout: () => Promise<{ accepted: boolean }>;
-    migrateLocalData: (
-      payload: LocalDataMigrationPayload,
-    ) => Promise<LocalDataMigrationResult>;
     refresh: (refreshToken?: string) => Promise<AuthSession>;
     register: (request: RegisterRequest) => Promise<AuthSession>;
   };
   home: {
-    getFeaturedPlaylists: (
-      params?: FeaturedPlaylistMockParams,
-    ) => Promise<FeaturedPlaylist[]>;
+    getFeaturedPlaylists: (params?: FeaturedPlaylistMockParams) => Promise<FeaturedPlaylist[]>;
     getMoodRecommendations: (
       params?: MoodRecommendationMockParams,
     ) => Promise<MoodRecommendation[]>;
@@ -87,8 +75,6 @@ export type MockServer = {
     getRecapShare: (id?: string) => Promise<RecapShare | undefined>;
   };
   tour: {
-    getNearbyPlaces: (
-      params: NearbyPlacesMockParams,
-    ) => Promise<PlaceContext[]>;
+    getNearbyPlaces: (params: NearbyPlacesMockParams) => Promise<PlaceContext[]>;
   };
 };

@@ -3,18 +3,17 @@ import { PropsWithChildren, useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 
 import { queryClient } from '@/providers/queryClient';
-import { MomentLogSyncWorker } from '@/providers/MomentLogSyncWorker';
 import { useAuthStore } from '@/store/authStore';
-const DevTestManager = __DEV__ && Platform.OS !== 'web'
-  ? require('@/components/dev/DevTestManager').DevTestManager
-  : undefined;
+
+const DevTestManager =
+  __DEV__ && Platform.OS !== 'web'
+    ? require('@/components/dev/DevTestManager').DevTestManager
+    : undefined;
 
 function AuthScopedQueryCache({ children }: PropsWithChildren) {
   const scopedQueryClient = useQueryClient();
   const authScope = useAuthStore((state) =>
-    state.isHydrated
-      ? `${state.status}:${state.user?.id ?? 'anonymous'}`
-      : undefined,
+    state.isHydrated ? `${state.status}:${state.user?.id ?? 'anonymous'}` : undefined,
   );
   const previousAuthScope = useRef<string | undefined>(undefined);
 
@@ -38,7 +37,6 @@ export function AppProviders({ children }: PropsWithChildren) {
     <QueryClientProvider client={queryClient}>
       <AuthScopedQueryCache>
         {children}
-        <MomentLogSyncWorker />
         {DevTestManager ? <DevTestManager /> : null}
       </AuthScopedQueryCache>
     </QueryClientProvider>

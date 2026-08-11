@@ -6,7 +6,6 @@ export const mockEndpointIds = [
   'auth.refresh',
   'auth.logout',
   'auth.me',
-  'auth.migrateLocalData',
   'home.featuredPlaylists',
   'home.moodRecommendations',
   'home.recentMusicLogs',
