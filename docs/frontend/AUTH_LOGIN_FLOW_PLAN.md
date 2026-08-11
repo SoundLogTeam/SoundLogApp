@@ -1,6 +1,6 @@
 # Soundlog 로그인/소셜 로그인 구현 계획
 
-> **Superseded:** 이 문서의 소셜 로그인 설계는 과거 검토안이다. 현재 MVP 인증 기준은 Soundlog 자체 이메일/비밀번호이며, 실제 구현과 제품 명세는 `docs/implementation/2026-07-02-first-party-login-plan.md` 및 `docs/product/SOUNDLOG_PRODUCT_SPEC_V0_3_DETAILED.md`를 따른다.
+> **Superseded:** 이 문서의 소셜 로그인과 로컬 데이터 이관 설계는 과거 검토안이다. 현재 MVP 인증 기준은 Soundlog 자체 이메일과 비밀번호이며 사용자 기록은 로그인 상태에서 서버에 직접 저장한다. 실제 구현과 제품 명세는 `docs/implementation/2026-07-02-first-party-login-plan.md`, `docs/implementation/2026-08-11-server-first-recap-write-plan.md`, `docs/product/SOUNDLOG_PRODUCT_SPEC_V0_3_DETAILED.md`를 따른다.
 
 ## 1. 목표
 
@@ -10,7 +10,7 @@ Soundlog에 계정 로그인을 붙이는 인증 플로우를 설계한다. 현�
 
 - 소셜 로그인 제공자를 쉽게 추가할 수 있는 인증 레이어 구축
 - 앱 시작 시 세션 복구, 로그인 필요 여부, 온보딩 완료 여부를 안정적으로 분기
-- 기존 로컬 취향/여행 로그/좋아요 데이터를 로그인 후 서버 계정으로 이관할 수 있는 구조 마련
+- 로그인 이후 생성하는 기록을 서버 계정에 즉시 저장하는 구조 마련
 - 웹, iOS, Android에서 모두 테스트 가능한 mock auth 플로우 제공
 
 ## 2. 추천 UX 정책
@@ -23,7 +23,7 @@ Soundlog에 계정 로그인을 붙이는 인증 플로우를 설계한다. 현�
 
 - 여행 기록과 Recap은 계정에 보존되어야 사용자가 데이터 유실을 덜 걱정한다.
 - 공동 Recap, Live Sound Map, 음악 취향 매칭은 계정 식별과 신고/차단 정책이 필요하다.
-- 기존 기기에 남아 있는 로컬 기록은 로그인 후 서버 동기화를 시도한다.
+- 로그인 전에 사용자 기록을 만들지 않으므로 별도 이관 단계를 두지 않는다.
 
 권장 제한:
 
@@ -73,7 +73,7 @@ Soundlog에 계정 로그인을 붙이는 인증 플로우를 설계한다. 현�
 
 - `app/(tabs)/my.tsx`
   - 상단에 계정 카드 추가
-  - 로그인 상태: 이름/이메일/제공자/동기화 상태/로그아웃
+  - 로그인 상태: 이름/이메일/제공자/로그아웃
   - 로그아웃 상태: 로그인 유도 CTA
 
 ## 4. 상태 관리 설계
@@ -188,10 +188,6 @@ refresh token으로 access token을 갱신한다.
 ### `PATCH /v1/me/profile`
 
 온보딩/취향 정보를 서버에 저장한다.
-
-### `POST /v1/me/migrate-local-data`
-
-로그인 전 로컬로 만든 로그, 좋아요, Recap 초안을 로그인 계정으로 이관한다.
 
 ## 6. 소셜 로그인 제공자 전략
 
@@ -344,22 +340,10 @@ access token 만료 시 여러 query/mutation이 동시에 refresh를 호출할 
 - web MVP: mock auth 또는 memory session
 - web production: 백엔드 httpOnly secure cookie 기반 세션 검토
 
-### 10.4 로그인 전 로컬 데이터 이관
-
-로그인 전 로컬에 남은 데이터가 로그인 후 중복 생성될 수 있다.
-
-보강안:
-
-- 로컬 로그/좋아요/Recap에는 `localId`, `createdAt`, `syncedAt`을 둔다.
-- migration endpoint는 idempotency key를 받는다.
-- migration 성공 후 즉시 삭제하지 않고 `syncedAt` 표시로 남긴다.
-
 ## 11. 구현 전 확인 질문
 
 아래 항목은 제품 정책에 영향을 주므로 구현 전에 결정이 필요하다.
 
 1. MVP에서는 로그인을 필수로 막고, 온보딩 소개와 약관만 로그아웃 상태에서 접근할 수 있게 합니다.
 2. 1차 소셜 로그인 제공자는 무엇으로 갈까요? 권장안은 Apple, Google, Kakao입니다.
-3. 로그인 전 만든 여행 로그/좋아요/Recap은 로그인 후 자동 이관할까요, 사용자 확인 후 이관할까요?
-4. 로그아웃 시 로컬 여행 기록은 유지할까요, 모두 삭제할까요?
-5. 실제 소셜 OAuth는 이번 작업에서 붙일까요, 아니면 mock auth 골격과 API 계약까지만 먼저 갈까요?
+3. 실제 소셜 OAuth는 이번 작업에서 붙일까요, 아니면 mock auth 골격과 API 계약까지만 먼저 갈까요?

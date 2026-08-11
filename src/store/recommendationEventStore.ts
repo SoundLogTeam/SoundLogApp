@@ -13,7 +13,6 @@ export type RecommendationEventType =
   | 'track_save'
   | 'track_unsave'
   | 'moment_log_saved'
-  | 'moment_log_sync_failed'
   | 'playlist_open'
   | 'mood_adjusted'
   | 'mood_filter_change'

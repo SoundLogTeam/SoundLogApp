@@ -5,18 +5,8 @@ import { Pressable, View } from 'react-native';
 import { recapApi } from '@/api/recapApi';
 import { AppText } from '@/components/AppText';
 import { useAuthStore } from '@/store/authStore';
-import { useMomentLogStore } from '@/store/momentLogStore';
-import type {
-  GeoPoint,
-  MomentLog,
-  PlaceContext,
-  RecapMapMarker,
-  RecapMapScope,
-} from '@/types/domain';
-import {
-  clusterRecapMarkers,
-  type RecapMapClusteringViewport,
-} from '@/utils/recapMapClustering';
+import type { GeoPoint, PlaceContext, RecapMapMarker, RecapMapScope } from '@/types/domain';
+import { clusterRecapMarkers, type RecapMapClusteringViewport } from '@/utils/recapMapClustering';
 
 import { SoundMapView } from '../live-sound-map/SoundMapView';
 import { createSoundMapCenter } from '../live-sound-map/soundMapData';
@@ -33,13 +23,7 @@ type RecapMapPinGroup = {
   markers: RecapMapMarker[];
   pin: SoundMapPin;
 };
-type TourPlaceStatus =
-  | 'disabled'
-  | 'empty'
-  | 'error'
-  | 'loading'
-  | 'ready'
-  | 'unavailable';
+type TourPlaceStatus = 'disabled' | 'empty' | 'error' | 'loading' | 'ready' | 'unavailable';
 
 type RecapMapSectionProps = {
   currentLocation?: GeoPoint;
@@ -96,10 +80,7 @@ function createPlacePin(place: PlaceContext): SoundMapPin | undefined {
   };
 }
 
-function getTourPlaceLabel(
-  currentPlace: PlaceContext | undefined,
-  status: TourPlaceStatus,
-) {
+function getTourPlaceLabel(currentPlace: PlaceContext | undefined, status: TourPlaceStatus) {
   if (currentPlace?.title) {
     return currentPlace.title;
   }
@@ -123,27 +104,6 @@ function getTourPlaceLabel(
   return '현재 위치를 확인할 수 없어요';
 }
 
-function toMarkerFromLocalMoment(log: MomentLog): RecapMapMarker | undefined {
-  if (!log.location) {
-    return undefined;
-  }
-
-  return {
-    artistName: log.track?.artist ?? '음악 없음',
-    createdAt: log.createdAt,
-    id: `local-marker-${log.id}`,
-    imageUrl: log.photoUri,
-    location: log.location,
-    ownerAlias: '나',
-    placeName: log.placeName ?? '위치 없음',
-    recapId: log.id,
-    templateId: 'album',
-    title: log.note?.trim() || log.placeName || '내 리캡',
-    trackTitle: log.track?.title ?? '저장된 리캡',
-    visibility: 'private',
-  };
-}
-
 function toMapPin(marker: RecapMapMarker): SoundMapPin {
   const isMine = marker.ownerAlias === '나' || marker.visibility === 'private';
 
@@ -159,9 +119,7 @@ function toMapPin(marker: RecapMapMarker): SoundMapPin {
 }
 
 function getClusterPlaceSummary(markers: RecapMapMarker[]) {
-  const placeNames = Array.from(
-    new Set(markers.map((marker) => marker.placeName).filter(Boolean)),
-  );
+  const placeNames = Array.from(new Set(markers.map((marker) => marker.placeName).filter(Boolean)));
   const visiblePlaceNames = placeNames.slice(0, 2).join(' · ');
   const hiddenPlaceCount = Math.max(placeNames.length - 2, 0);
 
@@ -188,15 +146,13 @@ function toRecapMapPinGroups(
     return {
       markers: cluster.markers,
       pin: {
-        artistName:
-          filter === 'mine' ? '내 여행 지도' : '주변 공개 사운드 지도',
+        artistName: filter === 'mine' ? '내 여행 지도' : '주변 공개 사운드 지도',
         id: cluster.id,
         kind: 'cluster',
         label: `${cluster.markers.length}`,
         location: cluster.location,
         subtitle: getClusterPlaceSummary(cluster.markers),
-        trackTitle:
-          filter === 'mine' ? '이 지역의 내 리캡' : '이 지역의 공개 리캡',
+        trackTitle: filter === 'mine' ? '이 지역의 내 리캡' : '이 지역의 공개 리캡',
       },
     };
   });
@@ -266,7 +222,6 @@ export function RecapMapSection({
   const [serverMarkers, setServerMarkers] = useState<RecapMapMarker[]>([]);
   const mapViewRef = useRef<SoundMapViewHandle | null>(null);
   const authStatus = useAuthStore((state) => state.status);
-  const momentLogs = useMomentLogStore((state) => state.logs);
   const currentLocationCenter = useMemo(
     () => createSoundMapCenter(currentLocation, currentPlace),
     [currentLocation, currentPlace],
@@ -275,32 +230,7 @@ export function RecapMapSection({
   const center = filter === 'place' ? placeCenter : currentLocationCenter;
   const placeName = getTourPlaceLabel(currentPlace, tourPlaceStatus);
   const scope = getScope(filter);
-  const localMineMarkers = useMemo(
-    () =>
-      momentLogs
-        .map(toMarkerFromLocalMoment)
-        .filter((marker): marker is RecapMapMarker => Boolean(marker)),
-    [momentLogs],
-  );
-  const pendingLocalMineMarkers = useMemo(
-    () =>
-      momentLogs
-        .filter((log) => log.syncStatus !== 'synced')
-        .map(toMarkerFromLocalMoment)
-        .filter((marker): marker is RecapMapMarker => Boolean(marker)),
-    [momentLogs],
-  );
-  const visibleMarkers = useMemo(() => {
-    if (filter !== 'mine') {
-      return serverMarkers;
-    }
-
-    if (serverMarkers.length === 0) {
-      return localMineMarkers;
-    }
-
-    return [...pendingLocalMineMarkers, ...serverMarkers];
-  }, [filter, localMineMarkers, pendingLocalMineMarkers, serverMarkers]);
+  const visibleMarkers = serverMarkers;
   const placePin = useMemo(
     () => (currentPlace ? createPlacePin(currentPlace) : undefined),
     [currentPlace],
@@ -323,10 +253,7 @@ export function RecapMapSection({
 
     return toRecapMapPinGroups(visibleMarkers, filter, clusteringViewport);
   }, [clusteringViewport, filter, placePin, visibleMarkers]);
-  const mapPins = useMemo(
-    () => mapPinGroups.map((group) => group.pin),
-    [mapPinGroups],
-  );
+  const mapPins = useMemo(() => mapPinGroups.map((group) => group.pin), [mapPinGroups]);
   const selectedPinGroup = useMemo(
     () => mapPinGroups.find((group) => group.pin.id === selectedPinId),
     [mapPinGroups, selectedPinId],
@@ -353,15 +280,10 @@ export function RecapMapSection({
       : filter === 'public'
         ? '현재 위치 주변 공개 리캡'
         : placeName;
-  const selectedFilter = filterOptions.find(
-    (option) => option.value === filter,
-  );
-  const statusLabel =
-    filter === 'public' ? 'PUBLIC' : filter === 'mine' ? 'MINE' : 'PLACE';
-  const markerQueryLat =
-    scope === 'public' ? currentLocationCenter.lat : undefined;
-  const markerQueryLng =
-    scope === 'public' ? currentLocationCenter.lng : undefined;
+  const selectedFilter = filterOptions.find((option) => option.value === filter);
+  const statusLabel = filter === 'public' ? 'PUBLIC' : filter === 'mine' ? 'MINE' : 'PLACE';
+  const markerQueryLat = scope === 'public' ? currentLocationCenter.lat : undefined;
+  const markerQueryLng = scope === 'public' ? currentLocationCenter.lng : undefined;
   const mapPinStatus =
     isLoadingMarkers || (filter === 'place' && tourPlaceStatus === 'loading')
       ? 'SYNC'
@@ -371,16 +293,11 @@ export function RecapMapSection({
   const handleRegionChangeComplete = useCallback((region: SoundMapRegion) => {
     setMapRegion(region);
   }, []);
-  const handleViewportLayoutChange = useCallback(
-    (size: SoundMapViewportSize) => {
-      setMapViewportSize((currentSize) =>
-        currentSize.height === size.height && currentSize.width === size.width
-          ? currentSize
-          : size,
-      );
-    },
-    [],
-  );
+  const handleViewportLayoutChange = useCallback((size: SoundMapViewportSize) => {
+    setMapViewportSize((currentSize) =>
+      currentSize.height === size.height && currentSize.width === size.width ? currentSize : size,
+    );
+  }, []);
 
   useEffect(
     function fetchRecapMarkersForScope() {
@@ -392,9 +309,7 @@ export function RecapMapSection({
 
       if (authStatus !== 'authenticated') {
         setServerMarkers([]);
-        setMapMessage(
-          '로그인하면 주변 공개 리캡과 내 리캡을 지도에서 볼 수 있어요.',
-        );
+        setMapMessage('로그인하면 주변 공개 리캡과 내 리캡을 지도에서 볼 수 있어요.');
         return;
       }
 
@@ -423,7 +338,7 @@ export function RecapMapSection({
             setServerMarkers([]);
             setMapMessage(
               scope === 'mine'
-                ? '서버 내 리캡을 불러오지 못해 로컬 리캡을 먼저 보여드려요.'
+                ? '내 리캡을 불러오지 못했어요. 잠시 후 다시 확인해주세요.'
                 : '주변 공개 리캡을 불러오지 못했어요.',
             );
           }
@@ -443,10 +358,7 @@ export function RecapMapSection({
 
   useEffect(
     function clearUnavailablePinSelection() {
-      if (
-        selectedPinId &&
-        !mapPinGroups.some((group) => group.pin.id === selectedPinId)
-      ) {
+      if (selectedPinId && !mapPinGroups.some((group) => group.pin.id === selectedPinId)) {
         setSelectedPinId(undefined);
       }
     },
@@ -455,9 +367,7 @@ export function RecapMapSection({
 
   const isPageVariant = variant === 'page';
   const renderFilterChips = () => (
-    <View
-      className={isPageVariant ? 'flex-row gap-1.5' : 'mt-4 flex-row gap-1.5'}
-    >
+    <View className={isPageVariant ? 'flex-row gap-1.5' : 'mt-4 flex-row gap-1.5'}>
       {filterOptions.map((option) => {
         const selected = filter === option.value;
 
@@ -474,9 +384,7 @@ export function RecapMapSection({
           >
             <View
               className={`h-8 w-full items-center justify-center rounded-full border px-2 ${
-                selected
-                  ? 'border-soundlog-lime bg-soundlog-lime'
-                  : 'border-white/10 bg-white/10'
+                selected ? 'border-soundlog-lime bg-soundlog-lime' : 'border-white/10 bg-white/10'
               }`}
             >
               <AppText
@@ -494,9 +402,7 @@ export function RecapMapSection({
       {isPageVariant ? (
         <Pressable
           accessibilityHint="지도를 현재 위치로 이동합니다."
-          accessibilityLabel={
-            currentLocation ? '내 위치 보기' : '현재 위치를 확인할 수 없음'
-          }
+          accessibilityLabel={currentLocation ? '내 위치 보기' : '현재 위치를 확인할 수 없음'}
           accessibilityRole="button"
           accessibilityState={{ disabled: !currentLocation }}
           className="min-h-[44px] w-11 items-center justify-center"
@@ -527,9 +433,7 @@ export function RecapMapSection({
           legendItems={getMapLegendItems(filter)}
           onRegionChangeComplete={handleRegionChangeComplete}
           onViewportLayoutChange={handleViewportLayoutChange}
-          onPinPress={
-            filter === 'place' ? undefined : (pin) => setSelectedPinId(pin.id)
-          }
+          onPinPress={filter === 'place' ? undefined : (pin) => setSelectedPinId(pin.id)}
           pins={mapPins}
           ref={mapViewRef}
           selectedPinId={selectedPinId}
@@ -553,18 +457,12 @@ export function RecapMapSection({
                 <AppText className="text-[11px] font-semibold text-soundlog-lime">
                   지도 / 여행모드
                 </AppText>
-                <AppText
-                  className="mt-1 text-lg font-semibold text-white"
-                  numberOfLines={1}
-                >
+                <AppText className="mt-1 text-lg font-semibold text-white" numberOfLines={1}>
                   {mapTitle}
                 </AppText>
               </View>
               <View className="rounded-full bg-white/12 px-3 py-1.5">
-                <AppText
-                  className="text-[11px] font-semibold text-white/65"
-                  numberOfLines={1}
-                >
+                <AppText className="text-[11px] font-semibold text-white/65" numberOfLines={1}>
                   {mapPinStatus}
                 </AppText>
               </View>
@@ -575,32 +473,23 @@ export function RecapMapSection({
 
           {mapMessage ? (
             <View className="rounded-[16px] bg-black/52 px-4 py-3">
-              <AppText className="text-xs leading-5 text-white/70">
-                {mapMessage}
-              </AppText>
+              <AppText className="text-xs leading-5 text-white/70">{mapMessage}</AppText>
             </View>
           ) : null}
         </View>
 
-        <View
-          className="absolute left-4 right-4"
-          style={{ bottom: overlayBottomInset }}
-        >
+        <View className="absolute left-4 right-4" style={{ bottom: overlayBottomInset }}>
           {showTravelCta ? (
             <View className="gap-2">
               <Pressable
                 accessibilityRole="button"
                 className="rounded-[22px] border border-soundlog-lime/35 bg-black/58 p-4"
-                onPress={
-                  sessionStatus === 'active' ? onCreateMoment : onStartTravel
-                }
+                onPress={sessionStatus === 'active' ? onCreateMoment : onStartTravel}
               >
                 <View className="flex-row items-center justify-between gap-3">
                   <View className="min-w-0 flex-1">
                     <AppText className="text-sm font-semibold text-white">
-                      {sessionStatus === 'active'
-                        ? '기록 남기기'
-                        : '여행모드 시작'}
+                      {sessionStatus === 'active' ? '기록 남기기' : '여행모드 시작'}
                     </AppText>
                     <AppText className="mt-1 text-xs leading-5 text-white/65">
                       {sessionStatus === 'active'
@@ -611,9 +500,7 @@ export function RecapMapSection({
                   <View className="h-11 w-11 items-center justify-center rounded-full bg-soundlog-lime">
                     <Feather
                       color="#050916"
-                      name={
-                        sessionStatus === 'active' ? 'camera' : 'navigation'
-                      }
+                      name={sessionStatus === 'active' ? 'camera' : 'navigation'}
                       size={18}
                     />
                   </View>
@@ -642,9 +529,7 @@ export function RecapMapSection({
             />
           ) : visibleMarkers.length === 0 ? (
             <View className="rounded-[18px] border border-white/10 bg-black/58 px-4 py-3">
-              <AppText className="text-xs leading-5 text-white/65">
-                {getEmptyCopy(filter)}
-              </AppText>
+              <AppText className="text-xs leading-5 text-white/65">{getEmptyCopy(filter)}</AppText>
             </View>
           ) : null}
         </View>
@@ -673,9 +558,7 @@ export function RecapMapSection({
             </AppText>
           </View>
           <View className="rounded-full bg-white/10 px-3 py-1.5">
-            <AppText className="text-[11px] font-semibold text-white/55">
-              {mapPinStatus}
-            </AppText>
+            <AppText className="text-[11px] font-semibold text-white/55">{mapPinStatus}</AppText>
           </View>
         </View>
 
@@ -705,9 +588,7 @@ export function RecapMapSection({
 
       {mapMessage ? (
         <View className="mt-4 rounded-[16px] bg-black/20 px-4 py-3">
-          <AppText className="text-xs leading-5 text-white/60">
-            {mapMessage}
-          </AppText>
+          <AppText className="text-xs leading-5 text-white/60">{mapMessage}</AppText>
         </View>
       ) : null}
 
@@ -716,9 +597,7 @@ export function RecapMapSection({
           <Pressable
             accessibilityRole="button"
             className="mt-4 rounded-[18px] border border-soundlog-lime/35 bg-soundlog-lime/12 p-4"
-            onPress={
-              sessionStatus === 'active' ? onCreateMoment : onStartTravel
-            }
+            onPress={sessionStatus === 'active' ? onCreateMoment : onStartTravel}
           >
             <View className="flex-row items-center justify-between gap-3">
               <View className="min-w-0 flex-1">
@@ -765,18 +644,11 @@ export function RecapMapSection({
             >
               <View className="flex-row items-start justify-between gap-3">
                 <View className="min-w-0 flex-1">
-                  <AppText
-                    className="text-sm font-semibold text-white"
-                    numberOfLines={1}
-                  >
+                  <AppText className="text-sm font-semibold text-white" numberOfLines={1}>
                     {marker.title}
                   </AppText>
-                  <AppText
-                    className="mt-1 text-xs leading-5 text-white/55"
-                    numberOfLines={2}
-                  >
-                    {marker.placeName} · {marker.trackTitle} -{' '}
-                    {marker.artistName}
+                  <AppText className="mt-1 text-xs leading-5 text-white/55" numberOfLines={2}>
+                    {marker.placeName} · {marker.trackTitle} - {marker.artistName}
                   </AppText>
                 </View>
                 <View className="rounded-full bg-white/10 px-2.5 py-1">
@@ -790,9 +662,7 @@ export function RecapMapSection({
         </View>
       ) : (
         <View className="mt-4 rounded-[16px] border border-white/10 bg-black/20 px-4 py-3">
-          <AppText className="text-xs leading-5 text-white/55">
-            {getEmptyCopy(filter)}
-          </AppText>
+          <AppText className="text-xs leading-5 text-white/55">{getEmptyCopy(filter)}</AppText>
         </View>
       )}
     </View>

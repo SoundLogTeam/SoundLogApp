@@ -66,7 +66,6 @@ export const sampleMoments: MomentLog[] = [
     photoUri: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
     placeName: '광안리 해변',
     source: 'camera',
-    syncStatus: 'synced',
     track: {
       artist: 'NewJeans',
       fallbackColor: '#7DD3FC',
@@ -82,7 +81,6 @@ export const sampleMoments: MomentLog[] = [
     photoUri: 'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
     placeName: '성수 카페거리',
     source: 'camera',
-    syncStatus: 'synced',
     track: {
       artist: 'IU',
       fallbackColor: '#FBBF24',
@@ -98,7 +96,6 @@ export const sampleMoments: MomentLog[] = [
     photoUri: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
     placeName: '남산 산책로',
     source: 'camera',
-    syncStatus: 'synced',
     track: {
       artist: '10CM',
       fallbackColor: '#C084FC',

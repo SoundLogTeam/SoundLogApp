@@ -22,13 +22,7 @@ export type PlaceContext = {
   title: string;
 };
 
-export type TravelMode =
-  | 'walk'
-  | 'drive'
-  | 'cafe'
-  | 'ocean'
-  | 'festival'
-  | 'night';
+export type TravelMode = 'walk' | 'drive' | 'cafe' | 'ocean' | 'festival' | 'night';
 
 export type MusicRecommendationMode = 'everyday' | 'travel';
 
@@ -36,11 +30,7 @@ export type MoodTag = 'calm' | 'fresh' | 'emotional' | 'active' | 'local';
 
 export type MusicPlatformId = 'none' | 'spotify' | 'youtubeMusic' | 'youtube';
 
-export type ExternalMusicPlatformId =
-  | 'melon'
-  | 'spotify'
-  | 'youtube'
-  | 'youtubeMusic';
+export type ExternalMusicPlatformId = 'melon' | 'spotify' | 'youtube' | 'youtubeMusic';
 
 export type PlaylistRecommendationSource =
   | 'ml-recommendation'
@@ -143,8 +133,6 @@ export type MomentLog = {
   travelMode?: TravelMode;
   moodTags: MoodTag[];
   source: 'camera';
-  syncError?: string;
-  syncStatus: 'failed' | 'local' | 'pending' | 'synced';
   templateId?: RecapTemplateId;
 };
 
@@ -301,9 +289,7 @@ export type MusicMatch = {
   matchScore: number;
   safety: {
     exactLocationHidden: boolean;
-    firstMessageTemplates: Array<
-      'cafe_together' | 'liked_track' | 'walk_together'
-    >;
+    firstMessageTemplates: Array<'cafe_together' | 'liked_track' | 'walk_together'>;
     contactHiddenUntilAccepted: boolean;
   };
 };

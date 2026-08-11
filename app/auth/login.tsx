@@ -12,7 +12,6 @@ import { SectionTitle } from "@/components/SectionTitle";
 import { SettingsRow } from "@/components/SettingsRow";
 import { useAuthStore } from "@/store/authStore";
 import { useUserProfileStore } from "@/store/userProfileStore";
-import { migrateLocalDataToAccount } from "@/utils/localDataMigration";
 
 type AuthMode = "login" | "register";
 
@@ -100,7 +99,6 @@ export default function LoginScreen() {
       }
 
       finishLogin(session);
-      void migrateLocalDataToAccount();
       router.replace(getNextRoute(didCompleteOnboarding));
     } catch (error) {
       setStatus("unauthenticated");
@@ -137,8 +135,8 @@ export default function LoginScreen() {
             계정으로 계속하기
           </AppText>
           <AppText className="mt-4 text-sm leading-6 text-white/58">
-            이메일 계정으로 취향, 좋아요, 리캡, 여행 로그를 서버에 동기화할 수
-            있어요. Soundlog 이용은 로그인 후 시작할 수 있습니다.
+            이메일 계정에 취향, 좋아요, 리캡과 여행 로그를 바로 저장해요.
+            Soundlog 이용은 로그인 후 시작할 수 있습니다.
           </AppText>
 
           <View className="mt-8">

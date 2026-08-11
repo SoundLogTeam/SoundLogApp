@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,8 +31,6 @@ import { Screen } from "@/components/Screen";
 import { SectionTitle } from "@/components/SectionTitle";
 import { getTabBarHeight } from "@/constants/layout";
 import { useRecapShareActions } from "@/hooks/useRecapShareActions";
-import { useMomentLogStore } from "@/store/momentLogStore";
-import { useTravelSessionStore } from "@/store/travelSessionStore";
 import type {
   RecapItem,
   RecapShare,
@@ -40,12 +38,6 @@ import type {
   RecapVisibility,
 } from "@/types/domain";
 import { formatRecapRecordedAt } from "@/utils/dateFormat";
-import {
-  createMomentLogGroups,
-  extractSessionIdFromRecapId,
-  momentLogGroupToRecapShare,
-  momentLogToRecapShare,
-} from "@/utils/recapMappers";
 import { getRecapSoundLogs } from "@/utils/recapTravelSummary";
 
 type RecapShareScreenProps = {
@@ -75,65 +67,24 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
   const [visibility, setVisibility] = useState<RecapVisibility>("private");
   const [thumbnailMessage, setThumbnailMessage] = useState<string>();
   const [visibilityMessage, setVisibilityMessage] = useState<string>();
-  const momentLogs = useMomentLogStore((state) => state.logs);
-  const session = useTravelSessionStore((state) => state.session);
-  const sessionId = extractSessionIdFromRecapId(recapId);
-  const localMomentGroup = useMemo(
-    () =>
-      sessionId
-        ? createMomentLogGroups(momentLogs).find(
-            (group) => group.sessionId === sessionId,
-          )
-        : undefined,
-    [momentLogs, sessionId],
-  );
-  const localMomentLog = sessionId
-    ? undefined
-    : momentLogs.find((item) => item.id === recapId);
-  const localRecap = localMomentGroup
-    ? momentLogGroupToRecapShare(
-        localMomentGroup,
-        localMomentGroup.sessionId === session.id
-          ? {
-              endedAt: session.endedAt,
-              routePoints: session.routePoints,
-              startedAt: session.startedAt,
-            }
-          : {},
-      )
-    : localMomentLog
-      ? momentLogToRecapShare(localMomentLog)
-      : undefined;
-  const isLocalRecap = Boolean(localRecap);
   const {
-    data: remoteRecap,
+    data: recap,
     isError,
     isLoading,
     refetch,
-  } = useRecapShareQuery(recapId, { enabled: Boolean(recapId) && !localRecap });
-  const recap = localRecap ?? remoteRecap;
+  } = useRecapShareQuery(recapId, { enabled: Boolean(recapId) });
   const isTravelLog = isTravelLogRecap(recap);
   const soundLogs = recap ? getRecapSoundLogs(recap) : [];
   const shareMoment = soundLogs[soundLogs.length - 1];
-  const itemLabel = isTravelLog ? "로그" : "리캡";
-  const canManageVisibility = Boolean(isLocalRecap || recap?.isMine);
-  const canSelectThumbnail = Boolean(
-    !isLocalRecap && isTravelLog && recap?.isMine,
-  );
+  const canManageVisibility = Boolean(recap?.isMine);
+  const canSelectThumbnail = Boolean(isTravelLog && recap?.isMine);
   const shareActions = useRecapShareActions({
     capture: () =>
       captureFrameRef.current?.capture() ?? Promise.resolve(undefined),
-    recapId: isLocalRecap ? undefined : recap?.id,
+    recapId: recap?.id,
   });
   const handleChangeVisibility = async (nextVisibility: RecapVisibility) => {
     if (!recap || !canManageVisibility || isUpdatingVisibility) {
-      return;
-    }
-
-    if (isLocalRecap) {
-      setVisibilityMessage(
-        `서버에 저장된 ${itemLabel}만 공개 범위를 바꿀 수 있어요.`,
-      );
       return;
     }
 
@@ -254,7 +205,11 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
       >
         <PageHeader
           leftContent={
-            <IconButton label="이전 화면으로 돌아가기" name="arrow-left" onPress={() => router.back()} />
+            <IconButton
+              label="이전 화면으로 돌아가기"
+              name="arrow-left"
+              onPress={() => router.back()}
+            />
           }
           title={createRecapTitle(recap)}
         />
@@ -313,7 +268,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
         ) : null}
 
         <View className="mt-7 w-full">
-          {isLoading && !localRecap ? (
+          {isLoading ? (
             <RecapShareLoadingState />
           ) : isError ? (
             <RecapShareErrorState onRetry={() => refetch()} />
@@ -321,21 +276,14 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
             <RecapShareEmptyState />
           ) : (
             <>
-              {isLocalRecap ? (
-                <View className="mb-5 w-full py-2">
-                  <AppText className="text-xs leading-5 text-amber-100/80">
-                    서버 동기화 전 로컬 {itemLabel}이에요. 리캡 동기화 후 서버에
-                    저장할 수 있어요.
-                  </AppText>
-                </View>
-              ) : null}
-
               <View className="w-full">
                 <RecapSoundLogList
                   canSelectThumbnail={canSelectThumbnail}
                   isTravelLog={isTravelLog}
                   isUpdatingThumbnail={isUpdatingThumbnail}
-                  onSelectThumbnail={(moment) => void handleSelectThumbnail(moment)}
+                  onSelectThumbnail={(moment) =>
+                    void handleSelectThumbnail(moment)
+                  }
                   recap={recap}
                 />
                 {thumbnailMessage ? (

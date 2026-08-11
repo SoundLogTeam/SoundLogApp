@@ -25,13 +25,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { RecapEmptyState } from "@/components/recap/RecapEmptyState";
 import { Screen } from "@/components/Screen";
 import { getTabBarHeight } from "@/constants/layout";
-import { useMomentLogStore } from "@/store/momentLogStore";
-import type { MomentLog, RecapItem, RecapVisibility } from "@/types/domain";
-import {
-  createMomentLogGroups,
-  momentLogGroupToRecapItem,
-} from "@/utils/recapMappers";
-import { flushPendingMomentActions } from "@/utils/momentLogSync";
+import type { RecapItem, RecapVisibility } from "@/types/domain";
 
 type LogFeedTabId = "others" | "all";
 
@@ -40,8 +34,6 @@ type LogGridEntry = {
   item: RecapItem;
   owner: "mine" | "other";
   shareId: string;
-  source: "local" | "server";
-  syncStatus?: MomentLog["syncStatus"];
 };
 
 const logFeedTabs: Array<{
@@ -70,7 +62,7 @@ function dedupeEntries(entries: LogGridEntry[]) {
   const seenKeys = new Set<string>();
 
   return entries.filter((entry) => {
-    const key = `${entry.source}:${entry.shareId}`;
+    const key = entry.shareId;
 
     if (seenKeys.has(key)) {
       return false;
@@ -95,34 +87,6 @@ function getMomentCountLabel(item: RecapItem) {
   }
 
   return "1개";
-}
-
-function getGroupSyncStatus(logs: MomentLog[]): MomentLog["syncStatus"] {
-  if (logs.some((log) => log.syncStatus === "failed")) {
-    return "failed";
-  }
-
-  if (logs.some((log) => log.syncStatus === "pending")) {
-    return "pending";
-  }
-
-  if (logs.some((log) => log.syncStatus === "local")) {
-    return "local";
-  }
-
-  return "synced";
-}
-
-function getLocalSyncLabel(syncStatus?: MomentLog["syncStatus"]) {
-  if (syncStatus === "failed") {
-    return "재시도";
-  }
-
-  if (syncStatus === "pending") {
-    return "동기화 중";
-  }
-
-  return "기기 저장";
 }
 
 type LogGridCardProps = {
@@ -153,7 +117,6 @@ function LogGridCard({
   const visibility = entry.item.visibility ?? "private";
   const nextVisibility: RecapVisibility =
     visibility === "public" ? "private" : "public";
-  const canChangeVisibility = entry.source === "server";
 
   return (
     <View
@@ -231,11 +194,7 @@ function LogGridCard({
 
       {isMine ? (
         <Pressable
-          accessibilityLabel={
-            canChangeVisibility
-              ? `${entry.item.title} ${getVisibilityLabel(visibility)}, ${getVisibilityLabel(nextVisibility)}로 변경`
-              : `${entry.item.title} ${getLocalSyncLabel(entry.syncStatus)}`
-          }
+          accessibilityLabel={`${entry.item.title} ${getVisibilityLabel(visibility)}, ${getVisibilityLabel(nextVisibility)}로 변경`}
           accessibilityRole="button"
           accessibilityState={{ disabled: isUpdating }}
           className={`absolute right-2 top-2 rounded-full px-2 py-1 ${
@@ -243,7 +202,6 @@ function LogGridCard({
           }`}
           disabled={isUpdating}
           onPress={(event) => onChangeVisibility(entry, nextVisibility, event)}
-          style={{ opacity: canChangeVisibility ? 1 : 0.62 }}
         >
           <AppText
             className={`text-[10px] font-semibold ${
@@ -252,11 +210,7 @@ function LogGridCard({
                 : "text-white/80"
             }`}
           >
-            {isUpdating
-              ? "변경중"
-              : canChangeVisibility
-                ? getVisibilityLabel(visibility)
-                : getLocalSyncLabel(entry.syncStatus)}
+            {isUpdating ? "변경중" : getVisibilityLabel(visibility)}
           </AppText>
         </Pressable>
       ) : null}
@@ -354,7 +308,7 @@ function LogFeedPage({
               itemSize={itemSize}
               isMine={entry.owner === "mine"}
               isUpdating={updatingRecapId === entry.item.id}
-              key={`${tabId}-${entry.source}-${entry.item.id}`}
+              key={`${tabId}-${entry.item.id}`}
               onChangeVisibility={onChangeVisibility}
               onPress={() => onOpenEntry(entry)}
             />
@@ -377,7 +331,6 @@ export function RecapListScreen() {
   const params = useLocalSearchParams<{ view?: string | string[] }>();
   const initialView = Array.isArray(params.view) ? params.view[0] : params.view;
   const queryClient = useQueryClient();
-  const momentLogs = useMomentLogStore((state) => state.logs);
   const [selectedTab, setSelectedTab] = useState<LogFeedTabId>(
     initialView === "all" ? "all" : "others",
   );
@@ -402,39 +355,8 @@ export function RecapListScreen() {
           item,
           owner: "mine" as const,
           shareId: item.id,
-          source: "server",
         })),
     [mineRecapsQuery.data],
-  );
-  const serverSessionIds = useMemo(
-    () =>
-      new Set(
-        serverMineEntries.map(({ item }) => item.sessionId).filter(Boolean),
-      ),
-    [serverMineEntries],
-  );
-  const serverRecapIds = useMemo(
-    () => new Set(serverMineEntries.map(({ item }) => item.id)),
-    [serverMineEntries],
-  );
-  const localEntries: LogGridEntry[] = useMemo(
-    () =>
-      createMomentLogGroups(momentLogs)
-        .filter((group) => Boolean(group.sessionId))
-        .map((group) => ({
-          imageUrl: group.logs[0]?.photoUri,
-          item: momentLogGroupToRecapItem(group),
-          owner: "mine" as const,
-          shareId: group.id,
-          source: "local" as const,
-          syncStatus: getGroupSyncStatus(group.logs),
-        }))
-        .filter(
-          ({ item }) =>
-            !serverRecapIds.has(item.id) &&
-            (!item.sessionId || !serverSessionIds.has(item.sessionId)),
-        ),
-    [momentLogs, serverRecapIds, serverSessionIds],
   );
   const otherEntries = useMemo(
     () =>
@@ -446,14 +368,13 @@ export function RecapListScreen() {
             item,
             owner: "other" as const,
             shareId: item.id,
-            source: "server" as const,
           })),
       ),
     [otherRecapsQuery.data],
   );
   const myEntries = useMemo(
-    () => sortEntriesByCreatedAt([...localEntries, ...serverMineEntries]),
-    [localEntries, serverMineEntries],
+    () => sortEntriesByCreatedAt(serverMineEntries),
+    [serverMineEntries],
   );
   const allEntries = useMemo(
     () =>
@@ -523,34 +444,7 @@ export function RecapListScreen() {
       return;
     }
 
-    if (entry.owner !== "mine" || entry.source === "local") {
-      if (entry.source !== "local") {
-        return;
-      }
-
-      setUpdatingRecapId(entry.item.id);
-      setActionMessage("기기에 저장된 로그를 서버와 다시 동기화하고 있어요.");
-
-      try {
-        const result = await flushPendingMomentActions();
-
-        if (result.failureCount > 0) {
-          setActionMessage(
-            "동기화하지 못했어요. 네트워크를 확인한 뒤 다시 눌러주세요.",
-          );
-          return;
-        }
-
-        setActionMessage(
-          "서버 동기화를 마쳤어요. 로그 목록을 새로 불러올게요.",
-        );
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists }),
-          queryClient.invalidateQueries({ queryKey: ["moment-logs"] }),
-        ]);
-      } finally {
-        setUpdatingRecapId(undefined);
-      }
+    if (entry.owner !== "mine") {
       return;
     }
 
@@ -614,9 +508,7 @@ export function RecapListScreen() {
               >
                 <View className="flex-row items-center gap-1.5">
                   <AppText
-                    className={`text-sm font-semibold ${
-                      selected ? "text-white" : "text-white/45"
-                    }`}
+                    className={`text-sm font-semibold ${selected ? "text-white" : "text-white/45"}`}
                   >
                     {tab.label}
                   </AppText>
@@ -665,7 +557,9 @@ export function RecapListScreen() {
         onMomentumScrollEnd={handlePagerScrollEnd}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { useNativeDriver: true },
+          {
+            useNativeDriver: true,
+          },
         )}
         pagingEnabled
         ref={pagerRef}

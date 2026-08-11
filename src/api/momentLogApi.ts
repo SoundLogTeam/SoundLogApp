@@ -18,6 +18,7 @@ import { sanitizeTrack } from '@/utils/trackSanitizer';
 const RECAP_CAPTURE_API_PATH = '/v1/recap-captures';
 
 export type CreateMomentLogInput = {
+  createStandaloneRecap?: boolean;
   createdAt: string;
   idempotencyKey?: string;
   location?: GeoPoint;
@@ -93,6 +94,10 @@ function toCreateParameters(input: CreateMomentLogInput) {
     travelMode: input.travelMode,
     visibility: input.recapVisibility,
   };
+
+  if (input.createStandaloneRecap) {
+    parameters.createStandaloneRecap = 'true';
+  }
 
   Object.entries(optionalParameters).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== '') {
@@ -233,14 +238,10 @@ export const momentLogApi = {
       return Promise.resolve<MomentLog | undefined>(undefined);
     }
 
-    return uploadApiFile<MomentLog>(
-      `${RECAP_CAPTURE_API_PATH}/${momentLogId}/photo`,
-      photoUri,
-      {
-        httpMethod: 'PUT',
-        mimeType: getPhotoContentType(photoUri),
-      },
-    ).then(sanitizeMomentLog);
+    return uploadApiFile<MomentLog>(`${RECAP_CAPTURE_API_PATH}/${momentLogId}/photo`, photoUri, {
+      httpMethod: 'PUT',
+      mimeType: getPhotoContentType(photoUri),
+    }).then(sanitizeMomentLog);
   },
   deleteMomentLogPhoto: (momentLogId: string) => {
     if (!shouldAttemptAuthenticatedApi()) {

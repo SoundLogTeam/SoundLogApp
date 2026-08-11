@@ -1,11 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 
 import { authApi } from '@/api/authApi';
-import {
-  LocalDataMigrationPayload,
-  LoginRequest,
-  RegisterRequest,
-} from '@/types/auth';
+import { LoginRequest, RegisterRequest } from '@/types/auth';
 
 export function useLoginMutation() {
   return useMutation({
@@ -28,12 +24,5 @@ export function useRegisterMutation() {
 export function useLogoutMutation() {
   return useMutation({
     mutationFn: (refreshToken?: string) => authApi.logout(refreshToken),
-  });
-}
-
-export function useLocalDataMigrationMutation() {
-  return useMutation({
-    mutationFn: (payload: LocalDataMigrationPayload) =>
-      authApi.migrateLocalData(payload),
   });
 }

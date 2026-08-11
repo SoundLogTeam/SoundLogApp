@@ -16,12 +16,12 @@ MVP의 중심은 스트리밍이 아니라 `추천 -> 선택 -> 리캡 생성 ->
 
 초기 아이디어였던 스포티파이 조작형 앱은 매력은 있지만 MVP 리스크가 크다.
 
-| 문제 | 설명 | Soundlog의 선택 |
-| --- | --- | --- |
-| Spotify Premium 의존 | 재생 제어는 프리미엄, 활성 기기, 계정 상태에 크게 의존한다. | 재생 제어를 핵심 가치에서 제외한다. |
-| 심사/정책 리스크 | 인앱 스트리밍, 재생 제어, 음원 저작권 처리가 커진다. | 곡 메타데이터와 외부 링크만 다룬다. |
-| 사용 대상 축소 | Spotify를 쓰지 않는 사용자는 가치가 줄어든다. | 누구나 추천, 저장, 리캡을 쓸 수 있게 한다. |
-| 제품 정체성 약화 | 음악 플레이어 보조앱처럼 보일 수 있다. | 여행을 음악으로 기록하는 서비스로 정의한다. |
+| 문제                 | 설명                                                        | Soundlog의 선택                             |
+| -------------------- | ----------------------------------------------------------- | ------------------------------------------- |
+| Spotify Premium 의존 | 재생 제어는 프리미엄, 활성 기기, 계정 상태에 크게 의존한다. | 재생 제어를 핵심 가치에서 제외한다.         |
+| 심사/정책 리스크     | 인앱 스트리밍, 재생 제어, 음원 저작권 처리가 커진다.        | 곡 메타데이터와 외부 링크만 다룬다.         |
+| 사용 대상 축소       | Spotify를 쓰지 않는 사용자는 가치가 줄어든다.               | 누구나 추천, 저장, 리캡을 쓸 수 있게 한다.  |
+| 제품 정체성 약화     | 음악 플레이어 보조앱처럼 보일 수 있다.                      | 여행을 음악으로 기록하는 서비스로 정의한다. |
 
 따라서 Soundlog의 MVP 성공 기준은 “앱 안에서 음악을 틀 수 있는가”가 아니라 “내 여행을 음악과 장소가 붙은 콘텐츠로 남기고 다시 보고 싶어지는가”이다.
 
@@ -41,21 +41,21 @@ Recap은 가장 작은 제품 기록 단위다. 카메라 촬영, 갤러리 선�
 
 필드:
 
-| 필드 | 필수 | 설명 |
-| --- | --- | --- |
-| id | 필수 | Recap 식별자 |
-| userId | 필수 | 작성자 |
-| sessionId | 선택 | 여행모드에서 생성했을 때의 여행 세션 |
-| photoUrl | 선택 | 촬영 또는 업로드 이미지 |
-| lat/lng | 선택 | 내부 저장 GPS 위치. 좌표 문자열은 UI에 노출하지 않음 |
-| placeName | 선택 | 사용자가 입력한 장소명 |
-| recordedAt | 필수 | 저장 시각 |
-| track | 선택 | 선택한 곡 |
-| mood | 선택 | 잔잔한, 신나는 등 |
-| travelState | 선택 | 바다, 드라이브 등 |
-| caption | 선택 | 레거시 기록 호환용. 신규 작성 화면에서는 입력받지 않음 |
-| templateId | 필수 | 앨범, LP, 필름, 지도 |
-| visibility | 필수 | private 또는 public |
+| 필드        | 필수 | 설명                                                   |
+| ----------- | ---- | ------------------------------------------------------ |
+| id          | 필수 | Recap 식별자                                           |
+| userId      | 필수 | 작성자                                                 |
+| sessionId   | 선택 | 여행모드에서 생성했을 때의 여행 세션                   |
+| photoUrl    | 선택 | 촬영 또는 업로드 이미지                                |
+| lat/lng     | 선택 | 내부 저장 GPS 위치. 좌표 문자열은 UI에 노출하지 않음   |
+| placeName   | 선택 | 사용자가 입력한 장소명                                 |
+| recordedAt  | 필수 | 저장 시각                                              |
+| track       | 선택 | 선택한 곡                                              |
+| mood        | 선택 | 잔잔한, 신나는 등                                      |
+| travelState | 선택 | 바다, 드라이브 등                                      |
+| caption     | 선택 | 레거시 기록 호환용. 신규 작성 화면에서는 입력받지 않음 |
+| templateId  | 필수 | 앨범, LP, 필름, 지도                                   |
+| visibility  | 필수 | private 또는 public                                    |
 
 현재 코드의 `MomentLog`, `RecapShareMoment`, `/v1/recap-captures`는 이 제품 Recap을 가리키는 레거시 기술명이다. 사용자 화면에는 Moment라는 별도 개념을 노출하지 않는다.
 
@@ -96,12 +96,12 @@ Public Recap Marker는 공개 Recap이 지도에 남긴 핀이다.
 
 MVP 탭은 4개다.
 
-| 탭 | 화면명 | 역할 | 기본 질문 |
-| --- | --- | --- | --- |
-| 1 | 지도 / 여행모드 | 여행모드 진입, 주변 공개 리캡 탐색, 내 리캡 지도 확인 | 지금 이 장소에 어떤 사운드 로그가 남아 있나? |
-| 2 | 음악 추천 / 일상모드 | 현재 장소 기반 사운드트랙 추천 | 지금 여기서 뭘 들으면 좋을까? |
-| 3 | 로그 | 남의 공개 로그 탐색, 내 로그 공개 범위 관리 | 다른 사람과 내가 남긴 사운드로그는 어떻게 보이나? |
-| 4 | 마이페이지 | 계정, 권한, 취향, 공개 설정 관리 | 내 데이터와 취향을 어떻게 관리할까? |
+| 탭  | 화면명               | 역할                                                  | 기본 질문                                         |
+| --- | -------------------- | ----------------------------------------------------- | ------------------------------------------------- |
+| 1   | 지도 / 여행모드      | 여행모드 진입, 주변 공개 리캡 탐색, 내 리캡 지도 확인 | 지금 이 장소에 어떤 사운드 로그가 남아 있나?      |
+| 2   | 음악 추천 / 일상모드 | 현재 장소 기반 사운드트랙 추천                        | 지금 여기서 뭘 들으면 좋을까?                     |
+| 3   | 로그                 | 남의 공개 로그 탐색, 내 로그 공개 범위 관리           | 다른 사람과 내가 남긴 사운드로그는 어떻게 보이나? |
+| 4   | 마이페이지           | 계정, 권한, 취향, 공개 설정 관리                      | 내 데이터와 취향을 어떻게 관리할까?               |
 
 카메라는 독립 콘텐츠 탭이 아니라 하단 중앙의 Recap 작성 액션이다. 진입점은 하단 중앙 카메라 버튼과 여행모드의 `기록 남기기`처럼 기록 맥락이 있는 CTA다.
 
@@ -184,11 +184,11 @@ MVP 탭은 4개다.
 
 지도 필터:
 
-| 필터 | 보이는 것 | CTA |
-| --- | --- | --- |
-| 장소 보기 | 현재 위치, 주변 장소, 여행모드 진입 카드 | 여행모드 시작 또는 기록 남기기 |
-| 전체 리캡 | 300m 이내 공개 Recap 핀 | CTA 숨김 |
-| 내 리캡 | 내 전체 private/public Recap의 방문 좌표 클러스터 | CTA 숨김 |
+| 필터      | 보이는 것                                         | CTA                            |
+| --------- | ------------------------------------------------- | ------------------------------ |
+| 장소 보기 | 현재 위치, 주변 장소, 여행모드 진입 카드          | 여행모드 시작 또는 기록 남기기 |
+| 전체 리캡 | 300m 이내 공개 Recap 핀                           | CTA 숨김                       |
+| 내 리캡   | 내 전체 private/public Recap의 방문 좌표 클러스터 | CTA 숨김                       |
 
 CTA 정책:
 
@@ -234,14 +234,14 @@ CTA 정책:
 
 입력값:
 
-| 입력 | 예시 | 필수 여부 |
-| --- | --- | --- |
-| 위치 | lat/lng | 권장 |
-| 장소 | 성수동 카페거리 | 위치 없을 때 대체 |
-| 여행 상태 | 바다, 드라이브, 산책, 카페, 야경 | 필수 기본값 |
-| 무드 | 잔잔한, 신나는, 시원한, 설레는, 감성적인 | 필수 기본값 |
-| 취향 | 선호 장르, 저장 곡 | 선택 |
-| 시간대 | 오후, 밤 | 자동 |
+| 입력      | 예시                                     | 필수 여부         |
+| --------- | ---------------------------------------- | ----------------- |
+| 위치      | lat/lng                                  | 권장              |
+| 장소      | 성수동 카페거리                          | 위치 없을 때 대체 |
+| 여행 상태 | 바다, 드라이브, 산책, 카페, 야경         | 필수 기본값       |
+| 무드      | 잔잔한, 신나는, 시원한, 설레는, 감성적인 | 필수 기본값       |
+| 취향      | 선호 장르, 저장 곡                       | 선택              |
+| 시간대    | 오후, 밤                                 | 자동              |
 
 추천 결과:
 
@@ -282,22 +282,22 @@ CTA 정책:
 
 작성 필드:
 
-| 필드 | 기본값 |
-| --- | --- |
-| 사진 | 촬영 이미지 또는 없음 |
-| 위치 | 현재 GPS 위치를 내부 저장 |
-| 장소 | 빈 값에서 시작하며 사용자가 직접 입력 |
-| 시간 | 촬영 시각으로 고정, 사용자가 수정할 수 없음 |
-| 음악 | 현재 선택 곡 또는 없음 |
-| 무드 | 마지막 선택 무드 |
+| 필드        | 기본값                                          |
+| ----------- | ----------------------------------------------- |
+| 사진        | 촬영 이미지 또는 없음                           |
+| 위치        | 현재 GPS 위치를 내부 저장                       |
+| 장소        | 빈 값에서 시작하며 사용자가 직접 입력           |
+| 시간        | 촬영 시각으로 고정, 사용자가 수정할 수 없음     |
+| 음악        | 현재 선택 곡 또는 없음                          |
+| 무드        | 마지막 선택 무드                                |
 | 표현 템플릿 | 필름 기본값, 사용자가 앨범/LP/필름/지도 중 선택 |
-| 공개 범위 | 나만보기 기본값 |
+| 공개 범위   | 나만보기 기본값                                 |
 
 저장 정책:
 
 - 여행모드 ON이면 현재 `sessionId`를 가진 Recap으로 저장하고 활성 Log에 포함한다.
 - 여행모드 OFF이면 `sessionId`가 없는 독립 Recap으로 저장하며 Log를 만들지 않는다.
-- 업로드 실패 시 로컬 임시 저장 후 재시도할 수 있어야 한다.
+- 업로드 실패 시 현재 작성 화면을 유지하고 사용자가 다시 저장할 수 있어야 한다.
 - 사진이 없어도 음악/장소/무드 기반 Recap을 허용한다.
 
 ### 6.5 로그 탭
@@ -312,9 +312,9 @@ CTA 정책:
 
 섹션:
 
-| 섹션 | 설명 |
-| --- | --- |
-| 다른사람 보기 | visibility가 public인 다른 사용자의 Log |
+| 섹션           | 설명                                           |
+| -------------- | ---------------------------------------------- |
+| 다른사람 보기  | visibility가 public인 다른 사용자의 Log        |
 | 모든 사람 보기 | 내 계정에 저장된 private/public Log와 공개 Log |
 
 로그 판별 기준은 `sessionId` 존재 여부다. 같은 여행 세션에 Recap이 하나만 있어도 Log이며, `sessionId`가 없는 독립 Recap은 Log가 아니다.
@@ -340,7 +340,7 @@ CTA 정책:
 
 - `전체공개`: 다른사람 보기와 지도 공개 영역에 표시
 - `비공개`: 모든 사람 보기의 내 로그로만 표시
-- 서버에 저장되지 않은 로컬 로그는 상세 진입만 가능하고 공개 범위 변경은 비활성화
+- 서버 조회에 실패하면 로그를 대체 표시하지 않고 오류와 재시도 방법을 안내
 
 빈 상태:
 
@@ -357,12 +357,12 @@ CTA 정책:
 
 템플릿:
 
-| 템플릿 | 용도 | 주요 요소 |
-| --- | --- | --- |
-| 앨범 커버 | 대표 순간 강조 | 사진, 제목, 대표 곡, 장소 |
-| 필름 | 시간 흐름 강조 | 여러 Recap 컷, 촬영 시간, 장소 |
-| LP | 음악 정체성 강조 | LP 그래픽, 트랙리스트, 아티스트 |
-| 지도 엽서 | 장소성 강조 | 지도, 핀, 경로, 대표 곡 |
+| 템플릿    | 용도             | 주요 요소                       |
+| --------- | ---------------- | ------------------------------- |
+| 앨범 커버 | 대표 순간 강조   | 사진, 제목, 대표 곡, 장소       |
+| 필름      | 시간 흐름 강조   | 여러 Recap 컷, 촬영 시간, 장소  |
+| LP        | 음악 정체성 강조 | LP 그래픽, 트랙리스트, 아티스트 |
+| 지도 엽서 | 장소성 강조      | 지도, 핀, 경로, 대표 곡         |
 
 저장 전 설정 가능 요소:
 
@@ -402,9 +402,9 @@ CTA 정책:
 
 공개 범위:
 
-| 상태 | 설명 |
-| --- | --- |
-| 나만보기 | 내 계정에서만 확인 가능 |
+| 상태     | 설명                                |
+| -------- | ----------------------------------- |
+| 나만보기 | 내 계정에서만 확인 가능             |
 | 전체공개 | 주변 사용자 지도에 공개 핀으로 노출 |
 
 공개 전 확인 문구:
@@ -608,16 +608,16 @@ MVP 이후 흐름:
 
 ## 9. 데이터 모델 요약
 
-| 모델 | 핵심 필드 |
-| --- | --- |
-| User | id, provider, displayName, profileImage, tasteProfile |
-| TravelSession | id, userId, title, startedAt, endedAt, status, routePoints |
-| Recap 원본(legacy MomentLog) | id, userId, sessionId, photoUrl, lat, lng, placeName, recordedAt, trackId, mood, state, caption, templateId, visibility |
-| Track | id, title, artist, albumImageUrl, spotifyUrl, youtubeUrl |
-| Log 집계(legacy server Recap) | id, userId, sessionId, title, visibility, recapCount, routePoints, createdAt |
-| LogRecap 관계(legacy RecapMoment) | logId, recapId, order |
-| PublicMarker | recapId, lat, lng, placeName, distanceMeters |
-| Report | id, reporterId, targetType, targetId, reason |
+| 모델                              | 핵심 필드                                                                                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| User                              | id, provider, displayName, profileImage, tasteProfile                                                                   |
+| TravelSession                     | id, userId, title, startedAt, endedAt, status, routePoints                                                              |
+| Recap 원본(legacy MomentLog)      | id, userId, sessionId, photoUrl, lat, lng, placeName, recordedAt, trackId, mood, state, caption, templateId, visibility |
+| Track                             | id, title, artist, albumImageUrl, spotifyUrl, youtubeUrl                                                                |
+| Log 집계(legacy server Recap)     | id, userId, sessionId, title, visibility, recapCount, routePoints, createdAt                                            |
+| LogRecap 관계(legacy RecapMoment) | logId, recapId, order                                                                                                   |
+| PublicMarker                      | recapId, lat, lng, placeName, distanceMeters                                                                            |
+| Report                            | id, reporterId, targetType, targetId, reason                                                                            |
 
 ## 10. 권한과 개인정보
 
@@ -648,32 +648,32 @@ MVP 이후 흐름:
 
 ## 11. 상태와 예외
 
-| 상황 | 처리 |
-| --- | --- |
-| 위치 권한 거부 | 수동 장소 선택, 권한 설정 이동 제공 |
-| 지도 로딩 실패 | 기본 지도 영역 유지, 핀만 실패 상태 |
-| 추천 API 실패 | 이전 추천 또는 샘플 추천 fallback |
-| 외부 링크 실패 | YouTube 검색 링크 fallback |
-| 사진 업로드 실패 | 로컬 임시 저장 후 재시도 |
-| Recap 저장 실패 | 편집 초안 유지 |
-| 공개 Recap 위치 없음 | 공개 전환 차단 |
-| 로그인 만료 | 재로그인 유도, 작성 중 데이터 임시 보존 |
+| 상황                 | 처리                                    |
+| -------------------- | --------------------------------------- |
+| 위치 권한 거부       | 수동 장소 선택, 권한 설정 이동 제공     |
+| 지도 로딩 실패       | 기본 지도 영역 유지, 핀만 실패 상태     |
+| 추천 API 실패        | 이전 추천 또는 샘플 추천 fallback       |
+| 외부 링크 실패       | YouTube 검색 링크 fallback              |
+| 사진 업로드 실패     | 작성 화면 유지 후 명시적 재시도         |
+| Recap 저장 실패      | 편집 초안 유지                          |
+| 공개 Recap 위치 없음 | 공개 전환 차단                          |
+| 로그인 만료          | 재로그인 유도, 작성 중 데이터 임시 보존 |
 
 ## 12. 이벤트 설계
 
-| 이벤트 | 발생 시점 | 주요 속성 |
-| --- | --- | --- |
-| onboarding_completed | 온보딩 완료 | provider |
-| travel_mode_started | 여행모드 시작 | lat, lng, state, mood |
-| travel_mode_ended | 여행모드 종료 | duration, recapCount |
-| recommendation_requested | 추천 요청 | lat, lng, state, mood |
-| track_selected | 곡 선택 | trackId, source |
-| external_music_opened | 외부 링크 열기 | trackId, platform |
-| recap_saved | 단일 Recap 저장 | hasPhoto, hasTrack, hasLocation, templateId |
-| travel_log_created | 여행 Log 확정 | sessionId, recapCount, routePointCount |
-| recap_visibility_changed | 공개 범위 변경 | from, to |
-| recap_marker_opened | 지도 핀 열기 | recapId, distance |
-| recap_shared | 공유 실행 | method |
+| 이벤트                   | 발생 시점       | 주요 속성                                   |
+| ------------------------ | --------------- | ------------------------------------------- |
+| onboarding_completed     | 온보딩 완료     | provider                                    |
+| travel_mode_started      | 여행모드 시작   | lat, lng, state, mood                       |
+| travel_mode_ended        | 여행모드 종료   | duration, recapCount                        |
+| recommendation_requested | 추천 요청       | lat, lng, state, mood                       |
+| track_selected           | 곡 선택         | trackId, source                             |
+| external_music_opened    | 외부 링크 열기  | trackId, platform                           |
+| recap_saved              | 단일 Recap 저장 | hasPhoto, hasTrack, hasLocation, templateId |
+| travel_log_created       | 여행 Log 확정   | sessionId, recapCount, routePointCount      |
+| recap_visibility_changed | 공개 범위 변경  | from, to                                    |
+| recap_marker_opened      | 지도 핀 열기    | recapId, distance                           |
+| recap_shared             | 공유 실행       | method                                      |
 
 ## 13. 우선순위
 
@@ -698,7 +698,7 @@ MVP 이후 흐름:
 - 여러 템플릿
 - 공개 Recap 신고/숨김
 - 수동 장소 선택
-- 로컬 임시 저장/재시도
+- 작성 중 초안 복구 정책 검토
 - 추천 실패 fallback
 
 ### P2: 커뮤니티 확장

@@ -8,7 +8,6 @@ import { MySettingsRow } from '@/components/my/MySettingsRow';
 import { SectionTitle } from '@/components/SectionTitle';
 import { useAuthStore } from '@/store/authStore';
 import { clearAccountSession } from '@/utils/accountSession';
-import { migrateLocalDataToAccount } from '@/utils/localDataMigration';
 
 function getAccountInitial(displayName?: string, email?: string) {
   const source = displayName?.trim() || email?.trim() || 'S';
@@ -17,8 +16,7 @@ function getAccountInitial(displayName?: string, email?: string) {
 }
 
 export function AuthAccountCard() {
-  const [isMigratingLocalData, setIsMigratingLocalData] = useState(false);
-  const [migrationMessage, setMigrationMessage] = useState<string>();
+  const [accountMessage, setAccountMessage] = useState<string>();
   const deleteAccountMutation = useDeleteAccountMutation();
   const logoutMutation = useLogoutMutation();
   const { refreshToken, status, user } = useAuthStore();
@@ -29,29 +27,6 @@ export function AuthAccountCard() {
     } finally {
       clearAccountSession();
       router.replace('/auth/login' as never);
-    }
-  };
-
-  const handleMigrate = async () => {
-    setMigrationMessage(undefined);
-    setIsMigratingLocalData(true);
-
-    try {
-      const result = await migrateLocalDataToAccount();
-      const failedCount =
-        result.momentLogFailedCount + result.libraryFailedCount;
-
-      setMigrationMessage(
-        failedCount > 0
-          ? `리캡 ${result.momentLogSyncedCount}/${result.summary.momentLogCount}개, 보관함 ${result.librarySyncedCount}/${result.summary.libraryTrackCount}개를 동기화했어요. 실패한 항목은 다시 시도할 수 있어요.`
-          : `리캡 ${result.summary.momentLogCount}개, 보관함 ${result.summary.libraryTrackCount}개를 서버 동기화에 반영했어요.`,
-      );
-    } catch {
-      setMigrationMessage(
-        '동기화 요청에 실패했어요. 네트워크 상태를 확인해주세요.',
-      );
-    } finally {
-      setIsMigratingLocalData(false);
     }
   };
 
@@ -67,7 +42,7 @@ export function AuthAccountCard() {
         { style: 'cancel', text: '취소' },
         {
           onPress: () => {
-            setMigrationMessage(undefined);
+            setAccountMessage(undefined);
             void deleteAccountMutation
               .mutateAsync()
               .then(() => {
@@ -75,7 +50,7 @@ export function AuthAccountCard() {
                 router.replace('/auth/login' as never);
               })
               .catch(() => {
-                setMigrationMessage(
+                setAccountMessage(
                   '계정을 삭제하지 못했어요. 네트워크 상태를 확인한 뒤 다시 시도해주세요.',
                 );
               });
@@ -96,33 +71,19 @@ export function AuthAccountCard() {
 
         <View className="mt-2 min-h-[60px] flex-row items-center py-2">
           <View className="h-12 w-12 items-center justify-center rounded-full border border-white/12 bg-white/[0.06]">
-            <AppText className="text-xl font-semibold text-white">
-              {accountInitial}
-            </AppText>
+            <AppText className="text-xl font-semibold text-white">{accountInitial}</AppText>
           </View>
           <View className="ml-3 min-w-0 flex-1">
-            <AppText
-              className="text-lg font-semibold text-white"
-              numberOfLines={1}
-            >
+            <AppText className="text-lg font-semibold text-white" numberOfLines={1}>
               {user.displayName}
             </AppText>
             <AppText className="mt-1 text-sm text-white/45" numberOfLines={1}>
               {user.email ?? 'Soundlog 계정'}
             </AppText>
           </View>
-          <AppText className="ml-3 text-xs font-semibold text-soundlog-lime">
-            로그인됨
-          </AppText>
+          <AppText className="ml-3 text-xs font-semibold text-soundlog-lime">로그인됨</AppText>
         </View>
 
-        <MySettingsRow
-          disabled={isMigratingLocalData || deleteAccountMutation.isPending}
-          icon="refresh-cw"
-          label="로컬 기록 동기화"
-          onPress={() => void handleMigrate()}
-          rightText={isMigratingLocalData ? '동기화 중' : undefined}
-        />
         <MySettingsRow
           disabled={logoutMutation.isPending || deleteAccountMutation.isPending}
           icon="log-out"
@@ -139,9 +100,9 @@ export function AuthAccountCard() {
           tone="danger"
         />
 
-        {migrationMessage ? (
+        {accountMessage ? (
           <AppText className="ml-12 mt-1 text-xs leading-5 text-soundlog-lime/70">
-            {migrationMessage}
+            {accountMessage}
           </AppText>
         ) : null}
       </View>

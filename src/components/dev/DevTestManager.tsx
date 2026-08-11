@@ -20,13 +20,12 @@ import { playlistCurationById } from '@/mocks/playlistMocks';
 import { useAuthStore } from '@/store/authStore';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
 import { useLibraryStore } from '@/store/libraryStore';
-import { useMomentLogStore } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { AuthProvider, AuthSession } from '@/types/auth';
-import { GeoPoint, MomentLog, PlaceContext, Track, TravelMode } from '@/types/domain';
+import { GeoPoint, PlaceContext, Track, TravelMode } from '@/types/domain';
 
 const BUTTON_SIZE = 58;
 const samplePlaylist = playlistCurationById['busan-ocean'];
@@ -223,7 +222,6 @@ function DevTestManagerContent() {
   const startSession = useTravelSessionStore((state) => state.startSession);
   const { completeOnboarding, resetOnboarding, updateProfile } = useUserProfileStore();
   const { finishLogin, logoutLocal, status: authStatus, user: authUser } = useAuthStore();
-  const { logs, addLog, removeLog } = useMomentLogStore();
   const { likedTracks, savedTracks, removeLikedTrack, removeSavedTrack, toggleLike, toggleSave } =
     useLibraryStore();
   const { clearTrack, currentTrack, setTrack } = usePlayerStore();
@@ -322,61 +320,6 @@ function DevTestManagerContent() {
     setLocationStatus(status);
     invalidateRuntimeQueries();
   };
-  const addSampleMomentLogs = () => {
-    const baseTime = Date.now();
-    const sampleLogs: MomentLog[] = [
-      {
-        createdAt: new Date(baseTime - 1000 * 60 * 24).toISOString(),
-        id: `dev-moment-busan-${baseTime}`,
-        location: placePresets[0].location,
-        moodTags: ['fresh', 'local'],
-        photoUri: 'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
-        placeCategory: '해변',
-        placeId: placePresets[0].place.id,
-        placeName: '광안리 해수욕장',
-        sessionId: 'dev-session-busan',
-        source: 'camera',
-        syncStatus: 'local',
-        track: getSampleTrack(0),
-        travelMode: 'walk',
-      },
-      {
-        createdAt: new Date(baseTime - 1000 * 60 * 12).toISOString(),
-        id: `dev-moment-cafe-${baseTime}`,
-        location: placePresets[0].location,
-        moodTags: ['calm', 'emotional'],
-        photoUri: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
-        placeCategory: '카페거리',
-        placeId: 'dev-busan-cafe',
-        placeName: '민락동 카페거리',
-        sessionId: 'dev-session-busan',
-        source: 'camera',
-        syncStatus: 'local',
-        track: getSampleTrack(2),
-        travelMode: 'cafe',
-      },
-      {
-        createdAt: new Date(baseTime - 1000 * 60 * 4).toISOString(),
-        id: `dev-moment-seoul-${baseTime}`,
-        location: placePresets[1].location,
-        moodTags: ['emotional'],
-        photoUri: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
-        placeCategory: '야경',
-        placeId: placePresets[1].place.id,
-        placeName: '남산서울타워',
-        sessionId: 'dev-session-seoul',
-        source: 'camera',
-        syncStatus: 'local',
-        track: getSampleTrack(5),
-        travelMode: 'night',
-      },
-    ];
-
-    sampleLogs.forEach(addLog);
-  };
-  const clearMomentLogs = () => {
-    logs.forEach((log) => removeLog(log.id));
-  };
   const seedLibrary = () => {
     const libraryState = useLibraryStore.getState();
 
@@ -413,7 +356,12 @@ function DevTestManagerContent() {
         </Pressable>
       </Animated.View>
 
-      <Modal animationType="slide" onRequestClose={() => setIsOpen(false)} transparent visible={isOpen}>
+      <Modal
+        animationType="slide"
+        onRequestClose={() => setIsOpen(false)}
+        transparent
+        visible={isOpen}
+      >
         <View className="flex-1 justify-end bg-black/58">
           <Pressable className="flex-1" onPress={() => setIsOpen(false)} />
           <View
@@ -424,11 +372,9 @@ function DevTestManagerContent() {
               <View className="mx-auto mb-4 h-[5px] w-10 rounded-full bg-white/30" />
               <View className="flex-row items-start justify-between gap-3">
                 <View className="min-w-0 flex-1">
-                  <AppText className="text-[22px] font-semibold text-white">
-                    Test Manager
-                  </AppText>
+                  <AppText className="text-[22px] font-semibold text-white">Test Manager</AppText>
                   <AppText className="mt-2 text-xs leading-5 text-white/50">
-                    페이지 이동, 조건문, 로컬 데이터를 빠르게 검수해요.
+                    페이지 이동과 조건문을 빠르게 검수해요.
                   </AppText>
                 </View>
                 <Pressable
@@ -443,11 +389,15 @@ function DevTestManagerContent() {
             </View>
 
             <ScrollView
-              contentContainerStyle={{ gap: 12, paddingBottom: 18, paddingHorizontal: 20 }}
+              contentContainerStyle={{
+                gap: 12,
+                paddingBottom: 18,
+                paddingHorizontal: 20,
+              }}
               showsVerticalScrollIndicator={false}
             >
               <ManagerSection
-                subtitle={`세션 ${session.status} · 위치 ${locationStatus} · 로그 ${logs.length}개 · 이벤트 ${events.length}개`}
+                subtitle={`세션 ${session.status} · 위치 ${locationStatus} · 이벤트 ${events.length}개`}
                 title="현재 상태"
               >
                 <StatusPill label={`무드 ${selectedMoodFilter}`} />
@@ -476,7 +426,10 @@ function DevTestManagerContent() {
                 <ManagerButton label="카메라" onPress={() => navigate('/camera')} />
               </ManagerSection>
 
-              <ManagerSection subtitle="로그인 gate와 로그아웃 분기를 강제로 테스트합니다." title="인증">
+              <ManagerSection
+                subtitle="로그인 gate와 로그아웃 분기를 강제로 테스트합니다."
+                title="인증"
+              >
                 <ManagerButton
                   active={isServerAuthPending}
                   label={isServerAuthPending ? '서버 로그인 중' : '서버 테스트 로그인'}
@@ -494,7 +447,10 @@ function DevTestManagerContent() {
                 {serverAuthMessage ? <StatusPill label={serverAuthMessage} /> : null}
               </ManagerSection>
 
-              <ManagerSection subtitle="온보딩 gate와 홈 필터 기본값을 테스트합니다." title="프로필">
+              <ManagerSection
+                subtitle="온보딩 gate와 홈 필터 기본값을 테스트합니다."
+                title="프로필"
+              >
                 <ManagerButton label="온보딩 완료 seed" onPress={applyProfilePreset} />
                 <ManagerButton destructive label="온보딩 초기화" onPress={resetProfile} />
               </ManagerSection>
@@ -536,7 +492,7 @@ function DevTestManagerContent() {
                 <ManagerButton
                   active={session.status === 'active'}
                   label="여행 시작"
-                  onPress={startSession}
+                  onPress={() => startSession({ id: `dev-session-${Date.now()}` })}
                 />
                 <ManagerButton
                   active={session.status === 'ended'}
@@ -555,8 +511,6 @@ function DevTestManagerContent() {
               </ManagerSection>
 
               <ManagerSection title="데이터 seed / clear">
-                <ManagerButton label="샘플 순간 로그 추가" onPress={addSampleMomentLogs} />
-                <ManagerButton destructive label="순간 로그 비우기" onPress={clearMomentLogs} />
                 <ManagerButton label="보관함 seed" onPress={seedLibrary} />
                 <ManagerButton destructive label="보관함 비우기" onPress={clearLibrary} />
                 <ManagerButton
@@ -566,7 +520,6 @@ function DevTestManagerContent() {
                 <ManagerButton destructive label="플레이어 비우기" onPress={clearTrack} />
                 <ManagerButton destructive label="추천 이벤트 비우기" onPress={clearEvents} />
               </ManagerSection>
-
             </ScrollView>
           </View>
         </View>

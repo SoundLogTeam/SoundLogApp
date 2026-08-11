@@ -2,10 +2,7 @@ import { UserProfile } from '@/store/userProfileStore';
 
 export type AuthProvider = 'email';
 
-export type AuthStatus =
-  | 'authenticated'
-  | 'checking'
-  | 'unauthenticated';
+export type AuthStatus = 'authenticated' | 'checking' | 'unauthenticated';
 
 export type AuthUser = {
   id: string;
@@ -36,20 +33,4 @@ export type AuthSession = {
 export type AuthMe = {
   profile?: UserProfile;
   user: AuthUser;
-};
-
-export type LocalDataMigrationPayload = {
-  idempotencyKey: string;
-  libraryTrackCount: number;
-  momentLogCount: number;
-  recapDraftCount: number;
-};
-
-export type LocalDataMigrationResult = {
-  accepted: boolean;
-  migrated: {
-    libraryTrackCount: number;
-    momentLogCount: number;
-    recapDraftCount: number;
-  };
 };

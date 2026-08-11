@@ -346,25 +346,25 @@ sessionId가 있고 + 해당 세션의 리캡이 1개 이상인 경우
 - 로그 상세에서 개별 리캡의 표현 템플릿을 다시 고르지 않는다.
 - 세션이 다른 리캡을 임의로 옮기거나 합치는 기능은 별도 기획 없이는 제공하지 않는다.
 
-## 10. 오프라인과 동기화
+## 10. 서버 우선 저장과 실패 처리
 
-리캡은 네트워크가 없어도 로컬에 먼저 저장한다.
+리캡과 로그는 서버 저장이 끝난 데이터만 사용자 기록으로 취급한다.
 
 ```text
-local/pending -> synced
-             -> failed -> retry -> synced
+저장 요청 -> 서버 성공 -> 기록 완료
+         -> 서버 실패 -> 현재 화면 유지 -> 사용자가 재시도
 ```
 
-동기화 규칙:
+저장 규칙:
 
-1. 로컬 리캡 ID를 idempotency key로 사용해 중복 생성을 막는다.
-2. 여행모드 리캡의 `sessionId`를 재시도 과정에서도 잃지 않는다.
-3. 표현 템플릿과 공개 범위도 재시도 payload에 보존한다.
-4. 여행 종료 시 pending 리캡을 먼저 동기화하고 로그 생성을 시도한다.
-5. 일부 리캡 동기화가 실패하면 로컬 로그를 우선 보여주며 구성원을 버리지 않는다.
-6. 앱 재실행 후에도 활성 여행 세션과 GPS 경로를 복구한다.
-7. 여행 종료 로그 생성 요청도 별도 영속 큐에 저장하고, 리캡 업로드가 모두 끝난 뒤 자동 재시도한다.
-8. 오프라인 로컬 세션은 서버가 소유 리캡을 확인한 뒤 종료 세션으로 복구하므로 로컬 `sessionId`를 바꾸거나 버리지 않는다.
+1. 카메라 저장은 `POST /v1/recap-captures` 응답이 성공한 뒤 완료한다.
+2. 같은 저장 화면의 재시도는 같은 idempotency key를 사용해 중복 생성을 막는다.
+3. 여행모드는 서버 여행 세션이 생성된 뒤에만 시작한다.
+4. 여행 종료는 서버 세션 종료와 로그 생성이 끝난 뒤에만 완료한다.
+5. 서버 저장에 실패한 리캡과 로그를 기기 기록으로 대신 보여주지 않는다.
+6. 앱 재실행 복구가 필요한 활성 여행 세션과 GPS 경로는 센서 버퍼로 기기에 보관할 수 있다.
+7. GPS 경로 버퍼는 완성된 리캡이나 로그가 아니며 사용자 기록 목록에 표시하지 않는다.
+8. 백그라운드 저장 큐와 자동 업로드는 제공하지 않는다.
 
 ## 11. 제품 용어와 레거시 코드 매핑
 
@@ -400,8 +400,8 @@ type Recap = {
   track?: Track;
   moodTags: MoodTag[];
   note?: string;
-  templateId: "album" | "lp" | "film" | "map";
-  visibility: "private" | "public";
+  templateId: 'album' | 'lp' | 'film' | 'map';
+  visibility: 'private' | 'public';
 };
 
 type TravelLog = {
@@ -413,7 +413,7 @@ type TravelLog = {
   startedAt: string;
   endedAt: string;
   title?: string;
-  visibility: "private" | "public";
+  visibility: 'private' | 'public';
 };
 ```
 
@@ -474,12 +474,12 @@ type TravelLog = {
 - [ ] private 리캡의 위치와 존재가 공개 응답에 섞이지 않는가?
 - [ ] public 전환 전에 위치 존재 여부를 검증하는가?
 
-### 동기화
+### 서버 저장
 
-- [ ] 오프라인 재시도에서 `sessionId`, `templateId`, 공개 범위를 보존하는가?
-- [ ] 여행 종료 시 리캡과 경로를 잃지 않는가?
-- [ ] 중복 요청이 중복 리캡/로그를 만들지 않는가?
-- [ ] 앱 재실행 후 남은 여행 종료 로그 생성 큐가 자동 재시도되는가?
+- [ ] 서버 성공 응답 전에 저장 완료 화면으로 이동하지 않는가?
+- [ ] 저장 실패 시 현재 화면에서 오류와 재시도 방법을 안내하는가?
+- [ ] 여행 종료 시 서버의 리캡과 경로만으로 로그를 만드는가?
+- [ ] 같은 요청의 재시도가 중복 리캡과 로그를 만들지 않는가?
 
 ## 15. 대표 수용 시나리오
 
@@ -529,18 +529,16 @@ type TravelLog = {
 
 다른 작업 세션은 아래 파일에서 현재 구현을 확인한다.
 
-| 책임                                 | 프론트엔드 기준 파일                                        |
-| ------------------------------------ | ----------------------------------------------------------- |
-| 카메라 촬영과 Recap 로컬 저장        | `src/components/moment-capture/MomentCaptureScreen.tsx`     |
-| 촬영 후 템플릿/장소/공개 범위 설정   | `src/components/moment-capture/MomentReviewPanel.tsx`       |
-| Recap 오프라인 큐와 동기화           | `src/store/momentLogStore.ts`, `src/utils/momentLogSync.ts` |
-| 여행 종료 Log 생성 영속 큐           | `src/store/travelLogSyncStore.ts`, `src/utils/travelLogSync.ts` |
-| 여행 세션과 경로 로컬 영속화         | `src/store/travelSessionStore.ts`                           |
-| foreground GPS 경로 수집             | `src/hooks/useTravelRouteTracking.ts`                       |
-| `sessionId` 기반 Log 그룹 생성       | `src/utils/recapMappers.ts`                                 |
-| 여행 Log만 보여주는 격자 목록        | `src/components/recap/RecapListScreen.tsx`                  |
-| Log 상세과 독립 Recap 상세 분기      | `src/components/recap-share/RecapShareScreen.tsx`           |
-| 현재 Log Recap 핀과 세션 경로 렌더링 | `src/components/recap-share/RecapRouteMap.tsx`              |
+| 책임                                 | 프론트엔드 기준 파일                                     |
+| ------------------------------------ | -------------------------------------------------------- |
+| 카메라 촬영과 Recap 서버 저장        | `src/components/moment-capture/MomentCaptureScreen.tsx`  |
+| 촬영 후 템플릿/장소/공개 범위 설정   | `src/components/moment-capture/MomentReviewPanel.tsx`    |
+| 여행 세션과 경로 로컬 영속화         | `src/store/travelSessionStore.ts`                        |
+| foreground GPS 경로 수집             | `src/hooks/useTravelRouteTracking.ts`                    |
+| 서버 리캡과 로그 조회                | `src/api/momentLogQueries.ts`, `src/api/recapQueries.ts` |
+| 여행 Log만 보여주는 격자 목록        | `src/components/recap/RecapListScreen.tsx`               |
+| Log 상세과 독립 Recap 상세 분기      | `src/components/recap-share/RecapShareScreen.tsx`        |
+| 현재 Log Recap 핀과 세션 경로 렌더링 | `src/components/recap-share/RecapRouteMap.tsx`           |
 
 서버 기준점:
 

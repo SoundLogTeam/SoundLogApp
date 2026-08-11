@@ -2,25 +2,21 @@ import { queryClient } from '@/providers/queryClient';
 import { useAuthStore } from '@/store/authStore';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
 import { useLibraryStore } from '@/store/libraryStore';
-import { useMomentLogStore } from '@/store/momentLogStore';
 import { usePlayerStore } from '@/store/playerStore';
 import { useRecommendationCacheStore } from '@/store/recommendationCacheStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import { useTravelRoomStore } from '@/store/travelRoomStore';
-import { useTravelLogSyncStore } from '@/store/travelLogSyncStore';
 import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 
 export function clearAccountSession() {
   queryClient.clear();
-  useMomentLogStore.setState({ logs: [], pendingActions: [] });
   useLibraryStore.setState({
     likedTracks: [],
     savedTracks: [],
     seededPlaylistIds: [],
   });
   useTravelRoomStore.setState({ roomsById: {}, roomsBySessionId: {} });
-  useTravelLogSyncStore.setState({ pendingFinalizations: [] });
   useTravelSessionStore.setState({
     currentLocation: undefined,
     currentPlace: undefined,
@@ -29,7 +25,7 @@ export function clearAccountSession() {
     recommendationMode: 'everyday',
     selectedMode: undefined,
     session: {
-      id: 'local-session',
+      id: 'idle',
       routePoints: [],
       status: 'idle',
     },
