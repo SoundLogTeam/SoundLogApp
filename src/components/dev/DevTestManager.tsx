@@ -14,8 +14,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authApi } from '@/api/authApi';
 import { getApiBaseUrl } from '@/api/client';
-import { isScreenshotModeEnabled } from '@/components/dev/devTestManagerVisibility';
-import { applyScreenshotSeed } from '@/components/dev/screenshotSeedBootstrap';
 import { queryClient } from '@/providers/queryClient';
 import { AppText } from '@/components/AppText';
 import { playlistCurationById } from '@/mocks/playlistMocks';
@@ -161,7 +159,7 @@ function getSampleTrack(index = 0): Track {
 }
 
 export function DevTestManager() {
-  if (!__DEV__ || isScreenshotModeEnabled()) {
+  if (!__DEV__) {
     return null;
   }
 
@@ -308,11 +306,6 @@ function DevTestManagerContent() {
     setSelectedMoodFilter('시원한');
     router.replace('/' as never);
   };
-  const applyAppStoreScreenshotSeed = () => {
-    applyScreenshotSeed();
-    setIsOpen(false);
-    router.replace('/' as never);
-  };
   const resetProfile = () => {
     resetOnboarding();
     setSelectedMoodFilter('전체');
@@ -453,17 +446,6 @@ function DevTestManagerContent() {
               contentContainerStyle={{ gap: 12, paddingBottom: 18, paddingHorizontal: 20 }}
               showsVerticalScrollIndicator={false}
             >
-              <ManagerSection
-                subtitle="로그인부터 종료된 광안리 여행 로그까지 한 번에 준비하고 홈으로 이동합니다."
-                title="App Store 스크린샷"
-              >
-                <ManagerButton
-                  active
-                  label="App Store 스크린샷 seed"
-                  onPress={applyAppStoreScreenshotSeed}
-                />
-              </ManagerSection>
-
               <ManagerSection
                 subtitle={`세션 ${session.status} · 위치 ${locationStatus} · 로그 ${logs.length}개 · 이벤트 ${events.length}개`}
                 title="현재 상태"

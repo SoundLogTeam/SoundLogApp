@@ -5,21 +5,7 @@ import { Platform } from 'react-native';
 import { queryClient } from '@/providers/queryClient';
 import { MomentLogSyncWorker } from '@/providers/MomentLogSyncWorker';
 import { useAuthStore } from '@/store/authStore';
-import {
-  isScreenshotModeEnabled,
-  shouldRenderDevTestManager,
-} from '@/components/dev/devTestManagerVisibility';
-
-const shouldBootstrapScreenshotSeed = __DEV__ && isScreenshotModeEnabled();
-
-const ScreenshotSeedBootstrap = shouldBootstrapScreenshotSeed
-  ? require('@/components/dev/ScreenshotSeedBootstrap').ScreenshotSeedBootstrap
-  : undefined;
-
-const DevTestManager = shouldRenderDevTestManager({
-  isDev: __DEV__,
-  platform: Platform.OS,
-})
+const DevTestManager = __DEV__ && Platform.OS !== 'web'
   ? require('@/components/dev/DevTestManager').DevTestManager
   : undefined;
 
@@ -51,7 +37,6 @@ export function AppProviders({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthScopedQueryCache>
-        {ScreenshotSeedBootstrap ? <ScreenshotSeedBootstrap /> : null}
         {children}
         <MomentLogSyncWorker />
         {DevTestManager ? <DevTestManager /> : null}

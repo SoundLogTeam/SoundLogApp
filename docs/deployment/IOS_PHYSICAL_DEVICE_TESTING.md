@@ -179,12 +179,6 @@ TestFlight 빌드는 App Store Connect 처리와 내부 또는 외부 테스터 
 
 v1.0은 iPhone 전용으로 제출한다. iPad 스크린샷 자산과 iPad 실기기 QA가 완료되지 않았으므로 `ios.supportsTablet`은 `false`로 유지한다.
 
-### App Store 스크린샷 seed
-
-development build에서 Test Manager를 열고 맨 위의 `App Store 스크린샷 seed`를 누르면 mock 로그인, 온보딩 완료, 부산 광안리·시원한 무드, 선택 곡과 보관함, 리캡 3개, 이동 경로가 있는 종료 여행 세션을 준비한 뒤 홈으로 이동한다. 이 도구는 `__DEV__`에서만 존재하며 서버 동기화 큐를 비운다.
-
-캡처할 때는 `EXPO_PUBLIC_SOUNDLOG_SCREENSHOT_MODE=true`로 development build를 실행해 Test Manager 오버레이를 숨긴다. 이 값은 production 환경에 넣지 않으며, `npm run check:store-release`가 설정된 production build를 실패시킨다.
-
 스크린샷 모드에서는 AppProviders가 인증·온보딩 hydration 이후 seed를 한 번 자동 적용하고 홈으로 이동하므로 Test Manager 버튼을 누를 필요가 없다.
 
 ### 출시 권한 및 개인정보 선언

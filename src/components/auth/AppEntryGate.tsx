@@ -1,6 +1,5 @@
 import { Redirect, usePathname } from 'expo-router';
 
-import { isScreenshotModeEnabled } from '@/components/dev/devTestManagerVisibility';
 import { useAuthStore } from '@/store/authStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 
@@ -8,10 +7,6 @@ export function AppEntryGate() {
   const pathname = usePathname();
   const { isHydrated: authHydrated, status } = useAuthStore();
   const { isHydrated: profileHydrated, profile } = useUserProfileStore();
-
-  if (__DEV__ && isScreenshotModeEnabled()) {
-    return null;
-  }
 
   if (!authHydrated || !profileHydrated || status === 'checking') {
     return null;

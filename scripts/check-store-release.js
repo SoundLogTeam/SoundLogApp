@@ -86,10 +86,6 @@ function assertProductionEnv(productionEnv) {
   const supportEmail = productionEnv.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL;
   const uploadOrigin = productionEnv.EXPO_PUBLIC_SOUNDLOG_UPLOAD_ORIGIN;
 
-  if (productionEnv.EXPO_PUBLIC_SOUNDLOG_SCREENSHOT_MODE === 'true') {
-    addError('EAS production env must not enable EXPO_PUBLIC_SOUNDLOG_SCREENSHOT_MODE.');
-  }
-
   if (!apiBaseUrl?.startsWith('https://')) {
     addError('EAS production env must set EXPO_PUBLIC_SOUNDLOG_API_BASE_URL to an HTTPS URL.');
   }
