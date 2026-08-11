@@ -486,7 +486,7 @@ function DevTestManagerContent() {
                   <ManagerButton
                     key={provider}
                     active={authUser?.provider === provider}
-                    label="자체 로그인"
+                    label="이메일 로그인"
                     onPress={() => applyMockLogin(provider)}
                   />
                 ))}

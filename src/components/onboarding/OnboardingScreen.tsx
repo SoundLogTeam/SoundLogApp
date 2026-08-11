@@ -1,6 +1,15 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, Switch, View } from 'react-native';
+import { Image } from 'expo-image';
+import { useMemo, useRef, useState } from 'react';
+import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
+  Pressable,
+  ScrollView,
+  Switch,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 
 import { meApi } from '@/api/meApi';
 import { AppText } from '@/components/AppText';
@@ -23,6 +32,30 @@ type TravelOption = {
   profileValue: string;
 };
 
+const introSlides = [
+  {
+    cropImageBorder: false,
+    description: '지금 있는 장소와 취향을 바탕으로 오늘의 음악을 골라요.',
+    id: 'location',
+    image: require('../../../assets/onboarding/location-recommendation.png'),
+    title: '장소 기반 음악 추천',
+  },
+  {
+    cropImageBorder: true,
+    description: '사진과 장소, 음악을 한 장의 리캡으로 기록해요.',
+    id: 'recap',
+    image: require('../../../assets/onboarding/recap-memory.png'),
+    title: '순간을 리캡으로 기록',
+  },
+  {
+    cropImageBorder: false,
+    description: '여행 중 남긴 리캡을 이동 경로와 함께 하나의 로그로 모아요.',
+    id: 'travel-log',
+    image: require('../../../assets/onboarding/travel-log.png'),
+    title: '여행 로그로 회고',
+  },
+] as const;
+
 const travelOptions: TravelOption[] = [
   { label: '바다', profileValue: '바다 보기' },
   { label: '드라이브', profileValue: '드라이브' },
@@ -34,6 +67,7 @@ const travelOptions: TravelOption[] = [
 const moodOptions = ['잔잔한', '신나는', '시원한', '설레는', '감성적인'];
 const defaultTravelLabel = '산책';
 const defaultMood = '잔잔한';
+const embeddedImageBorderCrop = 4;
 
 function getTravelLabelFromProfile(profile: UserProfileInput) {
   const selectedTravel = travelOptions.find((option) =>
@@ -44,7 +78,10 @@ function getTravelLabelFromProfile(profile: UserProfileInput) {
 }
 
 function getMoodFromProfile(profile: UserProfileInput) {
-  return moodOptions.find((mood) => profile.preferredMoods.includes(mood)) ?? defaultMood;
+  return (
+    moodOptions.find((mood) => profile.preferredMoods.includes(mood)) ??
+    defaultMood
+  );
 }
 
 function buildProfileInput({
@@ -59,7 +96,8 @@ function buildProfileInput({
   selectedTravelLabel: string;
 }): UserProfileInput {
   const selectedTravel =
-    travelOptions.find((option) => option.label === selectedTravelLabel) ?? travelOptions[2];
+    travelOptions.find((option) => option.label === selectedTravelLabel) ??
+    travelOptions[2];
 
   return {
     companionType: baseProfile.companionType,
@@ -71,22 +109,30 @@ function buildProfileInput({
 }
 
 export function OnboardingScreen() {
+  const { height, width } = useWindowDimensions();
   const params = useLocalSearchParams<{ mode?: string | string[] }>();
   const mode = Array.isArray(params.mode) ? params.mode[0] : params.mode;
   const isEditMode = mode === 'edit';
+  const shouldStartWithSetup = isEditMode || mode === 'setup';
   const { completeOnboarding, profile, updateProfile } = useUserProfileStore();
   const { status } = useAuthStore();
   const { setSelectedMoodFilter } = useHomeFilterStore();
-  const [currentStep, setCurrentStep] = useState<IntroStep>(isEditMode ? 'setup' : 'intro');
+  const [currentStep, setCurrentStep] = useState<IntroStep>(
+    shouldStartWithSetup ? 'setup' : 'intro',
+  );
+  const [introIndex, setIntroIndex] = useState(0);
   const [selectedTravelLabel, setSelectedTravelLabel] = useState(() =>
     getTravelLabelFromProfile(profile),
   );
-  const [selectedMood, setSelectedMood] = useState(() => getMoodFromProfile(profile));
-  const [locationRecommendationEnabled, setLocationRecommendationEnabled] = useState(
-    profile.locationRecommendationEnabled,
+  const [selectedMood, setSelectedMood] = useState(() =>
+    getMoodFromProfile(profile),
   );
+  const [locationRecommendationEnabled, setLocationRecommendationEnabled] =
+    useState(profile.locationRecommendationEnabled);
   const [isSaving, setIsSaving] = useState(false);
   const [saveErrorMessage, setSaveErrorMessage] = useState<string>();
+  const introPagerRef = useRef<ScrollView>(null);
+  const introImageSize = Math.min(width - 48, Math.max(240, height * 0.4), 334);
 
   const draft = useMemo(
     () =>
@@ -111,7 +157,9 @@ export function OnboardingScreen() {
       await meApi.updateProfile(input);
       return true;
     } catch {
-      setSaveErrorMessage('프로필을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.');
+      setSaveErrorMessage(
+        '프로필을 서버에 저장하지 못했어요. 잠시 후 다시 시도해주세요.',
+      );
       return false;
     } finally {
       setIsSaving(false);
@@ -156,83 +204,130 @@ export function OnboardingScreen() {
     void enterHome(input);
   };
 
+  const handleIntroScrollEnd = (
+    event: NativeSyntheticEvent<NativeScrollEvent>,
+  ) => {
+    const nextIndex = Math.round(event.nativeEvent.contentOffset.x / width);
+    setIntroIndex(Math.max(0, Math.min(nextIndex, introSlides.length - 1)));
+  };
+
+  const handleIntroPrimaryAction = () => {
+    const isLastSlide = introIndex === introSlides.length - 1;
+
+    if (!isLastSlide) {
+      const nextIndex = introIndex + 1;
+      introPagerRef.current?.scrollTo({ animated: true, x: nextIndex * width });
+      return;
+    }
+
+    if (status !== 'authenticated') {
+      router.push('/auth/login' as never);
+      return;
+    }
+
+    setCurrentStep('setup');
+  };
+
   const renderIntro = () => (
-    <>
-      <PageHeader
-        rightContent={
-          status === 'authenticated' ? undefined : (
+    <Screen>
+      <View className="flex-1 pb-7 pt-3">
+        <View className="flex-row items-center justify-between px-6">
+          <AppText className="text-xl font-semibold text-white">
+            Soundlog
+          </AppText>
+          {status === 'authenticated' ? null : (
             <Pressable
               accessibilityRole="button"
-              disabled={isSaving}
+              className="min-h-11 justify-center px-2"
               onPress={() => router.push('/auth/login' as never)}
-              style={{ opacity: isSaving ? 0.45 : 1 }}
             >
-              <AppText className="text-sm font-semibold text-white/55">로그인</AppText>
+              <AppText className="text-sm font-semibold text-white/72">
+                로그인
+              </AppText>
             </Pressable>
-          )
-        }
-        title="Soundlog"
-      />
+          )}
+        </View>
 
-      <View>
-        <AppText className="text-[30px] font-semibold leading-9 text-white">
-          지금 장소의 음악을{'\n'}여행 앨범으로
-        </AppText>
-        <AppText className="mt-4 text-[15px] leading-7 text-white/54">
-          음악은 외부 앱에서 듣고, Soundlog에는 여행의 사운드트랙을 남겨요.
-        </AppText>
-      </View>
+        <ScrollView
+          bounces={false}
+          decelerationRate="fast"
+          horizontal
+          onMomentumScrollEnd={handleIntroScrollEnd}
+          pagingEnabled
+          ref={introPagerRef}
+          scrollEventThrottle={16}
+          showsHorizontalScrollIndicator={false}
+        >
+          {introSlides.map((slide, index) => (
+            <View
+              accessibilityElementsHidden={introIndex !== index}
+              className="items-center justify-center px-6"
+              importantForAccessibility={
+                introIndex === index ? 'auto' : 'no-hide-descendants'
+              }
+              key={slide.id}
+              style={{ width }}
+            >
+              <View
+                className="overflow-hidden"
+                style={{ height: introImageSize, width: introImageSize }}
+              >
+                <Image
+                  accessibilityLabel={`${slide.title} 온보딩 이미지`}
+                  contentFit="cover"
+                  source={slide.image}
+                  style={{
+                    height:
+                      introImageSize +
+                      (slide.cropImageBorder ? embeddedImageBorderCrop * 2 : 0),
+                    left: slide.cropImageBorder ? -embeddedImageBorderCrop : 0,
+                    position: 'absolute',
+                    top: slide.cropImageBorder ? -embeddedImageBorderCrop : 0,
+                    width:
+                      introImageSize +
+                      (slide.cropImageBorder ? embeddedImageBorderCrop * 2 : 0),
+                  }}
+                />
+              </View>
+              <AppText className="mt-7 text-center text-2xl font-semibold text-white">
+                {slide.title}
+              </AppText>
+              <AppText className="mt-3 max-w-[320px] text-center text-sm leading-6 text-white/65">
+                {slide.description}
+              </AppText>
+            </View>
+          ))}
+        </ScrollView>
 
-      <View>
-        <SectionTitle title="Soundlog에서 하는 일" />
-        <View className="mt-2">
-          <SettingsRow
-            description="현재 장소와 취향을 바탕으로 오늘의 음악을 골라요."
-            icon="map-pin"
-            label="장소 기반 음악 추천"
-          />
-          <SettingsRow
-            description="사진, 장소와 음악을 한 번의 리캡으로 저장해요."
-            icon="camera"
-            label="순간을 리캡으로 기록"
-          />
-          <SettingsRow
-            description="여행모드에서 만든 리캡을 이동 경로와 함께 모아봐요."
-            icon="map"
-            label="여행 로그로 회고"
-          />
+        <View className="px-6">
+          <View className="mb-5 flex-row items-center justify-center gap-2">
+            {introSlides.map((slide, index) => (
+              <View
+                className={`h-2 rounded-full ${
+                  introIndex === index
+                    ? 'w-6 bg-soundlog-lime'
+                    : 'w-2 bg-white/22'
+                }`}
+                key={slide.id}
+              />
+            ))}
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            className="h-14 items-center justify-center rounded-xl bg-soundlog-lime"
+            onPress={handleIntroPrimaryAction}
+          >
+            <AppText className="text-base font-semibold text-soundlog-inverse">
+              {introIndex < introSlides.length - 1
+                ? '다음'
+                : status === 'authenticated'
+                  ? '추천 취향 설정하기'
+                  : '로그인하고 시작하기'}
+            </AppText>
+          </Pressable>
         </View>
       </View>
-
-      <View className="mt-auto gap-2">
-        {saveErrorMessage ? (
-          <AppText className="text-xs leading-5 text-amber-100">
-            {saveErrorMessage}
-          </AppText>
-        ) : null}
-
-        <Pressable
-          accessibilityRole="button"
-          className="h-14 items-center justify-center rounded-xl bg-soundlog-lime"
-          disabled={isSaving}
-          onPress={() => {
-            if (status !== 'authenticated') {
-              router.push('/auth/login' as never);
-              return;
-            }
-
-            setCurrentStep('setup');
-          }}
-          style={{ opacity: isSaving ? 0.55 : 1 }}
-        >
-          <AppText className="text-base font-semibold text-soundlog-inverse">
-            {status === 'authenticated'
-              ? '추천 취향 설정하기'
-              : '계정 만들기 또는 로그인'}
-          </AppText>
-        </Pressable>
-      </View>
-    </>
+    </Screen>
   );
 
   const renderSetup = () => (
@@ -240,7 +335,9 @@ export function OnboardingScreen() {
       <PageHeader
         leftContent={
           <IconButton
-            label={isEditMode ? '마이페이지로 돌아가기' : '이전 단계로 돌아가기'}
+            label={
+              isEditMode ? '마이페이지로 돌아가기' : '이전 단계로 돌아가기'
+            }
             name="arrow-left"
             onPress={() =>
               isEditMode
@@ -387,7 +484,7 @@ export function OnboardingScreen() {
             onPress={() => handlePrimarySetup(false)}
             style={{ opacity: isSaving ? 0.55 : 1 }}
           >
-            <AppText className="text-sm font-semibold text-white/54">
+            <AppText className="text-sm font-semibold text-white/55">
               나중에 하기
             </AppText>
           </Pressable>
@@ -396,18 +493,22 @@ export function OnboardingScreen() {
     </>
   );
 
+  if (currentStep === 'intro') {
+    return renderIntro();
+  }
+
   return (
     <Screen>
       <ScrollView
         contentContainerStyle={{
           flexGrow: 1,
-          gap: currentStep === 'intro' ? 28 : 26,
+          gap: 26,
           padding: 24,
           paddingBottom: 40,
         }}
         showsVerticalScrollIndicator={false}
       >
-        {currentStep === 'intro' ? renderIntro() : renderSetup()}
+        {renderSetup()}
       </ScrollView>
     </Screen>
   );

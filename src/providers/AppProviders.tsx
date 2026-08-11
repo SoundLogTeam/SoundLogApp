@@ -5,7 +5,6 @@ import { Platform } from 'react-native';
 import { queryClient } from '@/providers/queryClient';
 import { MomentLogSyncWorker } from '@/providers/MomentLogSyncWorker';
 import { useAuthStore } from '@/store/authStore';
-
 const DevTestManager = __DEV__ && Platform.OS !== 'web'
   ? require('@/components/dev/DevTestManager').DevTestManager
   : undefined;

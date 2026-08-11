@@ -223,7 +223,7 @@ sessionId가 있고 + 해당 세션의 리캡이 1개 이상인 경우
 - 여행 날짜 또는 시작 시각
 - 공개/비공개 상태
 
-`다른사람 보기`는 다른 사용자가 공개한 여행 로그만 보여준다. `모든 사람 보기`는 내가 볼 권한이 있는 여행 로그를 합쳐 보여준다. 어떤 탭에서도 여행모드 밖의 독립 리캡을 로그 카드로 위장해서 보여주면 안 된다.
+`다른사람 보기`는 다른 사용자가 공개한 여행 로그만 보여준다. `내것만 보기`는 현재 계정의 공개·비공개 여행 로그만 보여준다. 어떤 탭에서도 여행모드 밖의 독립 리캡을 로그 카드로 위장해서 보여주면 안 된다.
 
 ### 5.2 로그 상세
 
@@ -529,18 +529,18 @@ type TravelLog = {
 
 다른 작업 세션은 아래 파일에서 현재 구현을 확인한다.
 
-| 책임                                 | 프론트엔드 기준 파일                                        |
-| ------------------------------------ | ----------------------------------------------------------- |
-| 카메라 촬영과 Recap 로컬 저장        | `src/components/moment-capture/MomentCaptureScreen.tsx`     |
-| 촬영 후 템플릿/장소/공개 범위 설정   | `src/components/moment-capture/MomentReviewPanel.tsx`       |
-| Recap 오프라인 큐와 동기화           | `src/store/momentLogStore.ts`, `src/utils/momentLogSync.ts` |
+| 책임                                 | 프론트엔드 기준 파일                                            |
+| ------------------------------------ | --------------------------------------------------------------- |
+| 카메라 촬영과 Recap 로컬 저장        | `src/components/moment-capture/MomentCaptureScreen.tsx`         |
+| 촬영 후 템플릿/장소/공개 범위 설정   | `src/components/moment-capture/MomentReviewPanel.tsx`           |
+| Recap 오프라인 큐와 동기화           | `src/store/momentLogStore.ts`, `src/utils/momentLogSync.ts`     |
 | 여행 종료 Log 생성 영속 큐           | `src/store/travelLogSyncStore.ts`, `src/utils/travelLogSync.ts` |
-| 여행 세션과 경로 로컬 영속화         | `src/store/travelSessionStore.ts`                           |
-| foreground GPS 경로 수집             | `src/hooks/useTravelRouteTracking.ts`                       |
-| `sessionId` 기반 Log 그룹 생성       | `src/utils/recapMappers.ts`                                 |
-| 여행 Log만 보여주는 격자 목록        | `src/components/recap/RecapListScreen.tsx`                  |
-| Log 상세과 독립 Recap 상세 분기      | `src/components/recap-share/RecapShareScreen.tsx`           |
-| 현재 Log Recap 핀과 세션 경로 렌더링 | `src/components/recap-share/RecapRouteMap.tsx`              |
+| 여행 세션과 경로 로컬 영속화         | `src/store/travelSessionStore.ts`                               |
+| foreground GPS 경로 수집             | `src/hooks/useTravelRouteTracking.ts`                           |
+| `sessionId` 기반 Log 그룹 생성       | `src/utils/recapMappers.ts`                                     |
+| 여행 Log만 보여주는 격자 목록        | `src/components/recap/RecapListScreen.tsx`                      |
+| Log 상세과 독립 Recap 상세 분기      | `src/components/recap-share/RecapShareScreen.tsx`               |
+| 현재 Log Recap 핀과 세션 경로 렌더링 | `src/components/recap-share/RecapRouteMap.tsx`                  |
 
 서버 기준점:
 

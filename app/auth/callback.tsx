@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { Pressable, View } from 'react-native';
 
@@ -5,8 +6,6 @@ import { AppText } from '@/components/AppText';
 import { IconButton } from '@/components/IconButton';
 import { PageHeader } from '@/components/PageHeader';
 import { Screen } from '@/components/Screen';
-import { SectionTitle } from '@/components/SectionTitle';
-import { SettingsRow } from '@/components/SettingsRow';
 
 export default function AuthCallbackScreen() {
   return (
@@ -20,21 +19,21 @@ export default function AuthCallbackScreen() {
               onPress={() => router.replace('/auth/login' as never)}
             />
           }
-          title="로그인 연결"
+          title="로그인"
         />
 
-        <View className="mt-10">
-          <SectionTitle title="계정 연결 상태" />
-          <SettingsRow
-            description="현재 앱은 이메일 계정 로그인을 사용합니다. 이전 로그인 링크는 다시 사용할 수 없어요."
-            icon="alert-circle"
-            label="연결 정보를 확인하지 못했어요"
-          />
+        <View className="mt-24 items-center px-5">
+          <View className="h-16 w-16 items-center justify-center rounded-full bg-white/10">
+            <Feather color="#FFFFFF" name="alert-circle" size={28} />
+          </View>
+          <AppText className="mt-6 text-center text-2xl font-semibold text-white">
+            로그인을 완료하지 못했어요
+          </AppText>
+          <AppText className="mt-3 text-center text-sm leading-6 text-white/65">
+            로그인 정보가 만료되었거나 올바르지 않습니다.{`\n`}이메일과
+            비밀번호를 다시 확인해주세요.
+          </AppText>
         </View>
-
-        <AppText className="mt-6 text-sm leading-6 text-white/52">
-          로그인 화면에서 이메일과 비밀번호를 입력해 다시 진행해주세요.
-        </AppText>
 
         <Pressable
           accessibilityRole="button"

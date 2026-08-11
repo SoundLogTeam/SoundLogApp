@@ -9,6 +9,7 @@ const baseConfig = {
   ios: {
     infoPlist: {
       CFBundleAllowMixedLocalizations: true,
+      ITSAppUsesNonExemptEncryption: false,
       NSCameraUsageDescription:
         'Soundlog가 여행 순간을 사진으로 기록하기 위해 카메라 권한이 필요합니다.',
       NSFaceIDUsageDescription:
@@ -20,8 +21,77 @@ const baseConfig = {
       NSPhotoLibraryUsageDescription:
         'Soundlog가 리캡 이미지를 저장하기 위해 사진 접근 권한이 필요합니다.',
     },
-    supportsTablet: true,
+    supportsTablet: false,
     bundleIdentifier: 'com.mannomi.soundlog',
+    // Declares data actually collected and linked to the account (name, email,
+    // account ID, precise location, photos, user-entered content, and in-app
+    // interactions). None of it is used for cross-app/company ad tracking, so
+    // NSPrivacyTracking stays false. The
+    // NSPrivacyAccessedAPITypes entries mirror the reasons already present in the
+    // generated ios/Soundlog/PrivacyInfo.xcprivacy (UserDefaults, FileTimestamp,
+    // SystemBootTime) so they survive `expo prebuild --clean`.
+    privacyManifests: {
+      NSPrivacyTracking: false,
+      NSPrivacyTrackingDomains: [],
+      NSPrivacyCollectedDataTypes: [
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeEmailAddress',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeName',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeUserID',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypePreciseLocation',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypePhotosorVideos',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeOtherUserContent',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAppFunctionality'],
+        },
+        {
+          NSPrivacyCollectedDataType: 'NSPrivacyCollectedDataTypeProductInteraction',
+          NSPrivacyCollectedDataTypeLinked: true,
+          NSPrivacyCollectedDataTypeTracking: false,
+          NSPrivacyCollectedDataTypePurposes: ['NSPrivacyCollectedDataTypePurposeAnalytics'],
+        },
+      ],
+      NSPrivacyAccessedAPITypes: [
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+          NSPrivacyAccessedAPITypeReasons: ['CA92.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+          NSPrivacyAccessedAPITypeReasons: ['C617.1'],
+        },
+        {
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+          NSPrivacyAccessedAPITypeReasons: ['35F9.1'],
+        },
+      ],
+    },
   },
   android: {
     package: 'com.mannomi.soundlog',
@@ -58,6 +128,8 @@ const baseConfig = {
       {
         cameraPermission:
           'Soundlog가 여행 순간을 사진으로 기록하기 위해 카메라 권한이 필요합니다.',
+        microphonePermission: false,
+        recordAudioAndroid: false,
       },
     ],
     [
@@ -65,6 +137,13 @@ const baseConfig = {
       {
         locationWhenInUsePermission:
           'Soundlog가 현재 장소에 맞는 음악을 추천하고 여행 순간의 위치를 기록하기 위해 위치 권한이 필요합니다.',
+        locationAlwaysAndWhenInUsePermission: false,
+        locationAlwaysPermission: false,
+        motionUsagePermission: false,
+        isIosBackgroundLocationEnabled: false,
+        isAndroidBackgroundLocationEnabled: false,
+        isAndroidForegroundServiceEnabled: false,
+        isAndroidMotionActivityEnabled: false,
       },
     ],
     'expo-sharing',
@@ -79,7 +158,20 @@ const baseConfig = {
     ],
     'expo-secure-store',
     'expo-image',
-    ['expo-build-properties', {}],
+    // Pin Android SDK versions explicitly instead of relying on the Expo SDK
+    // template default, so Play Store's targetSdk requirement doesn't silently
+    // drift on an SDK upgrade. Values match the current expo-modules-core
+    // default for Expo SDK 56 (confirmed in
+    // node_modules/expo-modules-core/expo-module-gradle-plugin/.../ProjectConfiguration.kt).
+    [
+      'expo-build-properties',
+      {
+        android: {
+          compileSdkVersion: 36,
+          targetSdkVersion: 36,
+        },
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,

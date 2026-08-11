@@ -19,6 +19,7 @@ import { RecapListCard } from '@/components/recap/RecapListCard';
 import { Screen } from '@/components/Screen';
 import { AppText } from '@/components/AppText';
 import { getHomeContentBottomPadding } from '@/constants/layout';
+import { useAuthenticatedImageSource } from '@/hooks/useAuthenticatedImageSource';
 import {
   createRoutePoint,
   useTravelRouteTracking,
@@ -141,6 +142,23 @@ function getMomentMoodLabel(log: MomentLog) {
       .map((tag) => moodLabelByValue[tag])
       .filter(Boolean)
       .join(', ') || '무드 없음'
+  );
+}
+
+// Extracted so `useAuthenticatedImageSource` can be called safely: it must run in a
+// component's own render body, not directly inside the `logs.slice(0, 3).map()` below (a
+// hook call site would otherwise vary per render as the log list's length changes).
+function EditPhotoPreview({ photoUri }: { photoUri?: string }) {
+  const photoSource = useAuthenticatedImageSource(photoUri);
+
+  if (!photoUri) {
+    return null;
+  }
+
+  return (
+    <View className="mt-2 h-28 overflow-hidden rounded-[14px] bg-black/20">
+      <Image contentFit="cover" source={photoSource} style={{ flex: 1 }} />
+    </View>
   );
 }
 
@@ -336,15 +354,7 @@ function TravelLogSummaryCard({
                       <AppText className="text-[11px] font-semibold text-white/45">
                         사진
                       </AppText>
-                      {editPhotoUriDraft ? (
-                        <View className="mt-2 h-28 overflow-hidden rounded-[14px] bg-black/20">
-                          <Image
-                            contentFit="cover"
-                            source={{ uri: editPhotoUriDraft }}
-                            style={{ flex: 1 }}
-                          />
-                        </View>
-                      ) : null}
+                      <EditPhotoPreview photoUri={editPhotoUriDraft} />
                       <AppText className="mt-1 text-sm font-semibold text-white">
                         {editPhotoUriDraft ? '사진 연결됨' : '사진 없음'}
                       </AppText>

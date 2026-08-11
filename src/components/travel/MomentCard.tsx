@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { useAuthenticatedImageSource } from '@/hooks/useAuthenticatedImageSource';
 import type { MomentLog } from '@/types/domain';
 
 import { formatKoreanDateTime } from './travelFormat';
@@ -15,6 +16,7 @@ type MomentCardProps = {
 };
 
 export function MomentCard({ item, onPress, onRetry }: MomentCardProps) {
+  const photoSource = useAuthenticatedImageSource(item.photoUri);
   const moodLabel = item.moodTags[0] ? moodLabelByValue[item.moodTags[0]] : '무드 기록';
   const isRetrying = item.syncStatus === 'pending';
   const showRetry = item.syncStatus === 'failed' && onRetry;
@@ -37,7 +39,7 @@ export function MomentCard({ item, onPress, onRetry }: MomentCardProps) {
         onPress={onPress}
       >
         {item.photoUri ? (
-          <Image contentFit="cover" source={{ uri: item.photoUri }} style={{ flex: 1 }} />
+          <Image contentFit="cover" source={photoSource} style={{ flex: 1 }} />
         ) : (
           <View className="flex-1 items-center justify-center">
             <Feather color="rgba(255,255,255,0.55)" name="camera" size={22} />

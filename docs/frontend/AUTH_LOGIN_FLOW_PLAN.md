@@ -1,6 +1,6 @@
 # Soundlog 로그인/소셜 로그인 구현 계획
 
-> **Superseded:** 이 문서의 소셜 로그인 설계는 과거 검토안이다. 현재 MVP 인증 기준은 Soundlog 자체 이메일/비밀번호이며, 실제 구현과 제품 명세는 `docs/implementation/2026-07-02-first-party-login-plan.md` 및 `docs/product/SOUNDLOG_PRODUCT_SPEC_V0_3_DETAILED.md`를 따른다.
+> **Superseded:** 이 문서의 소셜 로그인 설계는 과거 검토안이다. 현재 MVP 인증 기준은 이메일/비밀번호이며, 실제 구현과 제품 명세는 `docs/implementation/2026-07-02-first-party-login-plan.md` 및 `docs/product/SOUNDLOG_PRODUCT_SPEC_V0_3_DETAILED.md`를 따른다.
 
 ## 1. 목표
 

@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AppText } from '@/components/AppText';
 import { RecordDisc } from '@/components/recap-share/RecordDisc';
+import { useAuthenticatedImageSource } from '@/hooks/useAuthenticatedImageSource';
 import {
   GeoPoint,
   RecapShare,
@@ -62,6 +63,7 @@ function RecapBackground({
   const [failedImageUrl, setFailedImageUrl] = useState<string>();
   const visibleImageUrl =
     imageUrl && failedImageUrl !== imageUrl ? imageUrl : undefined;
+  const photoSource = useAuthenticatedImageSource(visibleImageUrl);
 
   return (
     <>
@@ -69,7 +71,7 @@ function RecapBackground({
         <Image
           contentFit="cover"
           onError={() => setFailedImageUrl(visibleImageUrl)}
-          source={{ uri: visibleImageUrl }}
+          source={photoSource}
           style={StyleSheet.absoluteFill}
           transition={300}
         />
@@ -321,6 +323,51 @@ function createRouteSegments(positions: Array<{ left: number; top: number }>) {
   });
 }
 
+// Extracted so `useAuthenticatedImageSource` can be called safely: it must run in a
+// component's own render body, not directly inside the `.map()` in RecapFilmTemplate below
+// (a hook call site would otherwise vary per render as the moment list's length changes).
+function RecapFilmMomentThumbnail({ moment, index }: { index: number; moment: RecapShareMoment }) {
+  const photoSource = useAuthenticatedImageSource(moment.imageUrl);
+
+  return (
+    <View className="h-[82px] overflow-hidden rounded-[14px] border border-white/12 bg-white/[0.06]">
+      {moment.imageUrl ? (
+        <Image
+          contentFit="cover"
+          source={photoSource}
+          style={StyleSheet.absoluteFill}
+          transition={250}
+        />
+      ) : (
+        <LinearGradient
+          colors={['#1F2A44', '#2B176C']}
+          end={{ x: 1, y: 1 }}
+          start={{ x: 0, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
+      )}
+      <View className="absolute inset-0 bg-black/34" />
+      <View className="absolute bottom-3 left-3 right-3">
+        <AppText className="text-[10px] font-semibold text-white/55">
+          {String(index + 1).padStart(2, '0')}
+        </AppText>
+        <AppText
+          className="mt-1 text-[13px] font-semibold text-white"
+          numberOfLines={1}
+        >
+          {moment.trackTitle}
+        </AppText>
+        <AppText
+          className="mt-1 text-[10px] text-white/68"
+          numberOfLines={1}
+        >
+          {moment.placeName}
+        </AppText>
+      </View>
+    </View>
+  );
+}
+
 function RecapFilmTemplate({ recap }: { recap: RecapShare }) {
   const moments = (
     recap.moments?.length ? recap.moments : [createFallbackMoment(recap)]
@@ -366,44 +413,7 @@ function RecapFilmTemplate({ recap }: { recap: RecapShare }) {
 
       <View className="absolute bottom-6 left-8 right-8 gap-3">
         {moments.map((moment, index) => (
-          <View
-            key={moment.id}
-            className="h-[82px] overflow-hidden rounded-[14px] border border-white/12 bg-white/[0.06]"
-          >
-            {moment.imageUrl ? (
-              <Image
-                contentFit="cover"
-                source={{ uri: moment.imageUrl }}
-                style={StyleSheet.absoluteFill}
-                transition={250}
-              />
-            ) : (
-              <LinearGradient
-                colors={['#1F2A44', '#2B176C']}
-                end={{ x: 1, y: 1 }}
-                start={{ x: 0, y: 0 }}
-                style={StyleSheet.absoluteFill}
-              />
-            )}
-            <View className="absolute inset-0 bg-black/34" />
-            <View className="absolute bottom-3 left-3 right-3">
-              <AppText className="text-[10px] font-semibold text-white/55">
-                {String(index + 1).padStart(2, '0')}
-              </AppText>
-              <AppText
-                className="mt-1 text-[13px] font-semibold text-white"
-                numberOfLines={1}
-              >
-                {moment.trackTitle}
-              </AppText>
-              <AppText
-                className="mt-1 text-[10px] text-white/68"
-                numberOfLines={1}
-              >
-                {moment.placeName}
-              </AppText>
-            </View>
-          </View>
+          <RecapFilmMomentThumbnail index={index} key={moment.id} moment={moment} />
         ))}
       </View>
     </>

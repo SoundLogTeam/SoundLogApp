@@ -12,6 +12,16 @@ import { flushPendingTravelLogFinalizations } from '@/utils/travelLogSync';
 
 const RETRY_INTERVAL_MS = 30_000;
 
+// Note: account-ownership reconciliation (quarantining/restoring drafts on
+// login/logout) is NOT handled here. A React `useEffect` runs after commit,
+// which left a one-frame window where a freshly-rendered screen could read
+// the previous account's `logs` before reconciliation caught up. Instead,
+// `src/store/momentLogStore.ts` subscribes to `useAuthStore` directly at
+// module scope, so reconciliation runs synchronously inside the same
+// `set()` call that logs a user in/out — before React has a chance to
+// render anything against the stale state. See `reconcileOwnership` and
+// the `useAuthStore.subscribe(...)` call there.
+
 export function MomentLogSyncWorker() {
   const queryClient = useQueryClient();
   const authStatus = useAuthStore((state) => state.status);
