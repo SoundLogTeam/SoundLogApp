@@ -11,6 +11,14 @@
 - When a feature depends on native capabilities such as camera, location, media library, sharing, secure storage, or app permissions, prioritize iOS/Android behavior and native Expo APIs.
 - Do not block mobile feature work just because the same flow cannot fully work on web. Provide a minimal web fallback only when it is needed for local development, type checking, preview safety, or export stability.
 
+## Mandatory Simulator Testing
+
+- Never use Expo web, a deployed web app, or a browser to test or validate Soundlog product behavior, UI, server integration, permissions, or regressions.
+- Run every product test and visual verification in the iOS Simulator. A browser result must never be treated as evidence that the app works correctly.
+- After a Soundlog app change, launch the app in the iOS Simulator and verify the affected flow there before reporting completion.
+- API health checks and command-line diagnostics may support investigation, but they do not replace simulator verification and must not be reported as completed app testing.
+- Use a web target only for explicit web build or export compatibility work. Even then, do not use it for product acceptance testing unless the user's latest message explicitly overrides this rule.
+
 ## Recap And Log Domain
 
 - Before changing Recap, Log, camera capture, travel mode, route tracking, map pins, visibility, or related API behavior, read `docs/product/RECAP_LOG_DOMAIN_MODEL.md`.

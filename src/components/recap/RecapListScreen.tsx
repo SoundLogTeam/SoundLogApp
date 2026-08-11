@@ -26,6 +26,7 @@ import { RecapEmptyState } from "@/components/recap/RecapEmptyState";
 import { Screen } from "@/components/Screen";
 import { getTabBarHeight } from "@/constants/layout";
 import { useAuthenticatedImageSource } from "@/hooks/useAuthenticatedImageSource";
+import { useTravelSessionStore } from "@/store/travelSessionStore";
 import type { RecapItem, RecapVisibility } from "@/types/domain";
 
 type LogFeedTabId = "others" | "mine";
@@ -318,6 +319,9 @@ export function RecapListScreen() {
   const params = useLocalSearchParams<{ view?: string | string[] }>();
   const initialView = Array.isArray(params.view) ? params.view[0] : params.view;
   const queryClient = useQueryClient();
+  const travelSessionStatus = useTravelSessionStore(
+    (state) => state.session.status,
+  );
   const [selectedTab, setSelectedTab] = useState<LogFeedTabId>(
     initialView === "mine" || initialView === "all" ? "mine" : "others",
   );
@@ -365,8 +369,13 @@ export function RecapListScreen() {
     [serverMineEntries],
   );
   const hasAnyLog = otherEntries.length > 0 || myEntries.length > 0;
+  const travelButtonLabel =
+    travelSessionStatus === "active" ? "여행 계속하기" : "여행 시작하기";
   const handleOpenEntry = useCallback((entry: LogGridEntry) => {
     router.push(`/recap-share/${entry.shareId}`);
+  }, []);
+  const handleOpenTravel = useCallback(() => {
+    router.navigate("/" as never);
   }, []);
 
   const handleSelectTab = useCallback(
@@ -470,7 +479,26 @@ export function RecapListScreen() {
   return (
     <Screen>
       <View className="px-5 pt-8">
-        <PageHeader title="로그" />
+        <PageHeader
+          rightContent={
+            <Pressable
+              accessibilityHint="지도에서 여행모드를 시작하거나 이어가요."
+              accessibilityLabel={travelButtonLabel}
+              accessibilityRole="button"
+              className="min-h-11 flex-row items-center justify-center gap-1.5 rounded-full border border-soundlog-lime/35 bg-soundlog-lime/10 px-3"
+              onPress={handleOpenTravel}
+            >
+              <Feather color="#B7E628" name="navigation" size={14} />
+              <AppText
+                className="text-xs font-semibold text-soundlog-lime"
+                numberOfLines={1}
+              >
+                {travelButtonLabel}
+              </AppText>
+            </Pressable>
+          }
+          title="로그"
+        />
       </View>
 
       <View className="mt-[14px] border-b border-white/10">

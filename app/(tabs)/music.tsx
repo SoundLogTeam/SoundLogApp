@@ -27,7 +27,6 @@ import { CurrentSoundtrackCard } from "@/components/home/CurrentSoundtrackCard";
 import { HomeSoundtrackBottomSheet } from "@/components/home/HomeSoundtrackBottomSheet";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { LocationContextCard } from "@/components/home/LocationContextCard";
-import { ManualPlacePickerModal } from "@/components/home/ManualPlacePickerModal";
 import {
   MoodRecommendationSection,
   isMoodRecommendationFilter,
@@ -142,7 +141,6 @@ function HomeContent() {
   const insets = useSafeAreaInsets();
   const authStatus = useAuthStore((state) => state.status);
   const [actionMessage, setActionMessage] = useState<string>();
-  const [isPlacePickerVisible, setIsPlacePickerVisible] = useState(false);
   const [isSoundtrackSheetVisible, setIsSoundtrackSheetVisible] =
     useState(false);
   const [selectedMusicPlaylistId, setSelectedMusicPlaylistId] =
@@ -306,18 +304,13 @@ function HomeContent() {
       recommendedPlaylist ? toFeaturedPlaylist(recommendedPlaylist) : undefined,
     [recommendedPlaylist],
   );
-  const displayedFeaturedPlaylists = useMemo(() => {
-    if (!currentSoundtrackPlaylist) {
-      return featuredPlaylistsQuery.data;
-    }
-
-    return [
-      currentSoundtrackPlaylist,
-      ...(featuredPlaylistsQuery.data ?? []).filter(
-        (playlist) => playlist.id !== currentSoundtrackPlaylist.id,
+  const displayedFeaturedPlaylists = useMemo(
+    () =>
+      featuredPlaylistsQuery.data?.filter(
+        (playlist) => playlist.id !== recommendedPlaylist?.id,
       ),
-    ];
-  }, [currentSoundtrackPlaylist, featuredPlaylistsQuery.data]);
+    [featuredPlaylistsQuery.data, recommendedPlaylist?.id],
+  );
   const currentSoundtrackSummary = useMemo(
     () =>
       recommendedPlaylist
@@ -419,6 +412,12 @@ function HomeContent() {
     setPlace,
     shouldReverseGeocode,
   ]);
+
+  useEffect(() => {
+    if (!currentLocation && currentPlace) {
+      setPlace(undefined);
+    }
+  }, [currentLocation, currentPlace, setPlace]);
 
   useEffect(() => {
     if (!recommendedPlaylist) {
@@ -587,17 +586,6 @@ function HomeContent() {
     setLocationStatus,
     setPlace,
   ]);
-  const handleSelectManualPlace = useCallback(
-    (place: PlaceContext) => {
-      clearLocation();
-      setPlace(place);
-      setIsPlacePickerVisible(false);
-      setActionMessage(
-        `${place.title} 기준으로 오늘의 사운드트랙을 준비할게요.`,
-      );
-    },
-    [clearLocation, setPlace],
-  );
   const handleSetCurrentLocation = useCallback(async () => {
     if (!profile.locationRecommendationEnabled) {
       const didEnable = await handleEnableLocationRecommendation();
@@ -971,7 +959,6 @@ function HomeContent() {
           location={currentLocation}
           onEnable={handleSetCurrentLocation}
           onRefresh={handleRefreshLocation}
-          onSelectPlace={() => setIsPlacePickerVisible(true)}
           place={currentPlace}
           placeCount={nearbyPlacesQuery.data?.length ?? 0}
           placeInfoMessage={placeInfoMessage}
@@ -1038,6 +1025,12 @@ function HomeContent() {
             {actionMessage}
           </AppText>
         ) : null}
+
+        {currentPlace?.attribution ? (
+          <AppText className="text-center text-[11px] leading-4 text-white/30">
+            {currentPlace.attribution}
+          </AppText>
+        ) : null}
       </ScrollView>
       <HomeSoundtrackBottomSheet
         actionMessage={isSoundtrackSheetVisible ? actionMessage : undefined}
@@ -1075,11 +1068,6 @@ function HomeContent() {
         playlist={selectedMusicPlaylist}
         savedTrackIds={selectedMusicPlaylistSavedTrackIds}
         visible={isMusicPlaylistSheetVisible}
-      />
-      <ManualPlacePickerModal
-        onClose={() => setIsPlacePickerVisible(false)}
-        onSelect={handleSelectManualPlace}
-        visible={isPlacePickerVisible}
       />
       {currentTrack ? <MiniPlayer /> : null}
     </Screen>

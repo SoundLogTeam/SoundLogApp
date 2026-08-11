@@ -156,6 +156,16 @@ export const MomentReviewPanel = forwardRef<
           사진과 장소, 음악을 확인하고 저장하세요.
         </AppText>
 
+        <View className="mt-7">
+          <SectionTitle title="표현 템플릿" />
+          <View className="mt-3">
+            <RecapTemplateSelector
+              onSelect={onChangeTemplate}
+              selectedTemplate={selectedTemplate}
+            />
+          </View>
+        </View>
+
         {photoUri ? (
           <MomentPhotoCanvas
             ref={photoCanvasRef}
@@ -184,16 +194,6 @@ export const MomentReviewPanel = forwardRef<
             </AppText>
           </View>
         )}
-
-        <View className="mt-7">
-          <SectionTitle title="표현 템플릿" />
-          <View className="mt-3">
-            <RecapTemplateSelector
-              onSelect={onChangeTemplate}
-              selectedTemplate={selectedTemplate}
-            />
-          </View>
-        </View>
 
         <View className="mt-7">
           <SectionTitle title="기록 정보" />
