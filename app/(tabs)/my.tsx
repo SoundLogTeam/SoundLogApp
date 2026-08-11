@@ -8,6 +8,7 @@ import { AppText } from '@/components/AppText';
 import { AuthAccountCard } from '@/components/my/AuthAccountCard';
 import { MySettingsRow } from '@/components/my/MySettingsRow';
 import { PermissionSettingsCard } from '@/components/my/PermissionSettingsCard';
+import { RecapLogGuide } from '@/components/my/RecapLogGuide';
 import { PageHeader } from '@/components/PageHeader';
 import { Screen } from '@/components/Screen';
 import { SectionTitle } from '@/components/SectionTitle';
@@ -125,6 +126,8 @@ export default function MyScreen() {
         <PageHeader title="마이" />
 
         <AuthAccountCard />
+
+        <RecapLogGuide />
 
         <View className="mt-7">
           <SectionTitle title="Soundlog 설정" />

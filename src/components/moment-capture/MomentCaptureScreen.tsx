@@ -329,7 +329,11 @@ export function MomentCaptureScreen() {
         queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists }),
       ]);
 
-      router.replace(resolveReturnPath(returnTo) as never);
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace(resolveReturnPath(returnTo) as never);
+      }
     } catch {
       setErrorMessage("이 리캡을 저장하지 못했어요. 다시 시도해주세요.");
     } finally {

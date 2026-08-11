@@ -16,7 +16,6 @@ type LocationContextCardProps = {
   onDismiss?: () => void;
   onEnable: () => void;
   onRefresh: () => void;
-  onSelectPlace?: () => void;
   place?: PlaceContext;
   placeCount?: number;
   placeInfoMessage?: string;
@@ -60,7 +59,6 @@ export function LocationContextCard({
   onDismiss,
   onEnable,
   onRefresh,
-  onSelectPlace,
   place,
   placeCount = 0,
   placeInfoMessage,
@@ -92,8 +90,6 @@ export function LocationContextCard({
     ? '주변 관광지를 확인 중이에요'
     : placeCount > 0
       ? `주변 장소 ${placeCount}곳 반영`
-      : place && !location
-        ? '직접 선택한 장소로 추천 중'
       : location
         ? updatedAt
           ? `${formatRecapRecordedAt(updatedAt)} 갱신`
@@ -105,14 +101,14 @@ export function LocationContextCard({
       <SectionTitle
         rightContent={
           onDismiss ? (
-          <Pressable
-            accessibilityLabel="추천 장소 정보 닫기"
-            accessibilityRole="button"
-            className="h-11 w-11 items-center justify-center"
-            onPress={onDismiss}
-          >
-            <Feather color="rgba(255,255,255,0.72)" name="x" size={18} />
-          </Pressable>
+            <Pressable
+              accessibilityLabel="추천 장소 정보 닫기"
+              accessibilityRole="button"
+              className="h-11 w-11 items-center justify-center"
+              onPress={onDismiss}
+            >
+              <Feather color="rgba(255,255,255,0.72)" name="x" size={18} />
+            </Pressable>
           ) : undefined
         }
         title="장소 기반 추천"
@@ -128,23 +124,6 @@ export function LocationContextCard({
         onPress={enabled ? onRefresh : onEnable}
         rightText={isLoading ? '확인 중' : buttonLabel}
       />
-      {place?.attribution ? (
-        <SettingsRow
-          description={place.attribution}
-          icon="info"
-          label="위치 정보 출처"
-          rightText="OpenStreetMap"
-        />
-      ) : null}
-      {onSelectPlace ? (
-        <SettingsRow
-          description="검색한 장소를 추천 기준으로 사용해요."
-          disabled={isLoading}
-          icon="search"
-          label="추천 장소 직접 선택"
-          onPress={onSelectPlace}
-        />
-      ) : null}
     </View>
   );
 }

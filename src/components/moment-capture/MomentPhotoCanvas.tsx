@@ -33,7 +33,7 @@ type NativeMapsModule = typeof import('react-native-maps');
 type StickerTheme = 'glass' | 'lime' | 'mono';
 type TimestampStickerTemplate = 'card' | 'stamp' | 'type';
 type MusicStickerTemplate = 'player' | 'label' | 'vinyl';
-type StickerKind = 'music';
+type StickerKind = 'music' | 'timestamp';
 type FeatherIconName = ComponentProps<typeof Feather>['name'];
 
 export type MomentPhotoCanvasHandle = {
@@ -237,6 +237,7 @@ export const MomentPhotoCanvas = forwardRef<
   const musicStickerSize = musicStickerSizes[musicTemplate];
   const timestampThemeStyle = getStickerThemeStyle(timestampTheme);
   const musicThemeStyle = getStickerThemeStyle(musicTheme);
+  const isDraggingTimestamp = activeSticker === 'timestamp';
   const isDraggingMusic = activeSticker === 'music';
   const isMapTemplate = selectedTemplate === 'map';
 
@@ -274,6 +275,25 @@ export const MomentPhotoCanvas = forwardRef<
         size: musicStickerSize,
       }),
     [canvasSize, handleDragEnd, handleDragStart, musicPan, musicStickerSize],
+  );
+
+  const timestampPanResponder = useMemo(
+    () =>
+      createStickerPanResponder({
+        canvasSize,
+        onDragEnd: handleDragEnd,
+        onDragStart: () => handleDragStart('timestamp'),
+        pan: timestampPan,
+        positionRef: timestampPositionRef,
+        size: timestampStickerSize,
+      }),
+    [
+      canvasSize,
+      handleDragEnd,
+      handleDragStart,
+      timestampPan,
+      timestampStickerSize,
+    ],
   );
 
   useImperativeHandle(
@@ -393,15 +413,22 @@ export const MomentPhotoCanvas = forwardRef<
           )}
 
           <Animated.View
-            accessibilityLabel={`${stickerDateTime.time} 고정 촬영 시간`}
-            accessibilityRole="image"
+            {...(!isSaving ? timestampPanResponder.panHandlers : {})}
+            accessibilityHint="손가락으로 끌어서 사진 안의 원하는 위치로 옮기세요."
+            accessibilityLabel={`${stickerDateTime.time} 촬영 시간 스티커. 드래그해서 위치 이동`}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: isSaving }}
             style={[
               styles.timestampSticker,
               timestampThemeStyle.container,
               getTimestampTemplateStyle(timestampTemplate),
+              isDraggingTimestamp ? styles.stickerDragging : null,
               {
                 minHeight: timestampStickerSize.height,
-                transform: timestampPan.getTranslateTransform(),
+                transform: [
+                  ...timestampPan.getTranslateTransform(),
+                  ...(isDraggingTimestamp ? [{ scale: 1.02 }] : []),
+                ],
                 width: timestampStickerSize.width,
               },
             ]}
@@ -417,9 +444,11 @@ export const MomentPhotoCanvas = forwardRef<
 
           {!isMapTemplate && musicVisible && track ? (
             <Animated.View
-              {...musicPanResponder.panHandlers}
+              {...(!isSaving ? musicPanResponder.panHandlers : {})}
+              accessibilityHint="손가락으로 끌어서 사진 안의 원하는 위치로 옮기세요."
               accessibilityLabel={`${track.title} 음악 스티커`}
               accessibilityRole="button"
+              accessibilityState={{ disabled: isSaving }}
               style={[
                 styles.musicSticker,
                 musicThemeStyle.container,
@@ -459,7 +488,7 @@ export const MomentPhotoCanvas = forwardRef<
                   촬영 시간
                 </AppText>
                 <AppText className="mt-0.5 text-[11px] text-white/45">
-                  촬영 시각으로 고정되며 이동할 수 없어요.
+                  촬영 시각을 표시하며 드래그해 옮길 수 있어요.
                 </AppText>
               </View>
             </View>
