@@ -204,10 +204,21 @@ function assertRuntimePermissionPlugins(config) {
     addError('expo-location must retain an iOS When In Use location permission message.');
   }
 
+  if (!config.ios?.infoPlist?.NSMotionUsageDescription?.trim()) {
+    addError(
+      'Expo config must include NSMotionUsageDescription because ExpoLocation links CoreMotion APIs.',
+    );
+  }
+
+  if (location.motionUsagePermission !== config.ios?.infoPlist?.NSMotionUsageDescription) {
+    addError(
+      'expo-location motionUsagePermission must match the iOS NSMotionUsageDescription.',
+    );
+  }
+
   [
     'locationAlwaysAndWhenInUsePermission',
     'locationAlwaysPermission',
-    'motionUsagePermission',
     'isIosBackgroundLocationEnabled',
     'isAndroidBackgroundLocationEnabled',
     'isAndroidForegroundServiceEnabled',
@@ -297,7 +308,6 @@ function assertNativeIosPlist() {
     'NSLocationAlwaysUsageDescription',
     'NSLocationAlwaysAndWhenInUseUsageDescription',
     'NSMicrophoneUsageDescription',
-    'NSMotionUsageDescription',
   ];
 
   forbiddenKeys.forEach((key) => {
@@ -305,6 +315,12 @@ function assertNativeIosPlist() {
       addError(`iOS native Info.plist still contains unused/release-risk key: ${key}`);
     }
   });
+
+  if (!/<key>NSMotionUsageDescription<\/key>\s*<string>[^<]+<\/string>/.test(plist)) {
+    addError(
+      'iOS native Info.plist must include a non-empty NSMotionUsageDescription because ExpoLocation links CoreMotion APIs.',
+    );
+  }
 
   if (plist.includes('Expo Dev Launcher')) {
     const projectPath = path.join(

@@ -1,3 +1,6 @@
+const motionUsageDescription =
+  'Soundlog가 이동 중인 여행의 위치 기록을 안정적으로 제공하기 위해 기기의 동작 상태에 접근할 수 있습니다.';
+
 const baseConfig = {
   name: 'Soundlog',
   slug: 'soundlog',
@@ -16,6 +19,7 @@ const baseConfig = {
         'Soundlog가 저장된 로그인 정보를 안전하게 보호하기 위해 Face ID를 사용할 수 있습니다.',
       NSLocationWhenInUseUsageDescription:
         'Soundlog가 현재 장소에 맞는 음악을 추천하고 여행 순간의 위치를 기록하기 위해 위치 권한이 필요합니다.',
+      NSMotionUsageDescription: motionUsageDescription,
       NSPhotoLibraryAddUsageDescription:
         'Soundlog가 리캡 이미지를 사진 보관함에 저장하기 위해 권한이 필요합니다.',
       NSPhotoLibraryUsageDescription:
@@ -139,7 +143,7 @@ const baseConfig = {
           'Soundlog가 현재 장소에 맞는 음악을 추천하고 여행 순간의 위치를 기록하기 위해 위치 권한이 필요합니다.',
         locationAlwaysAndWhenInUsePermission: false,
         locationAlwaysPermission: false,
-        motionUsagePermission: false,
+        motionUsagePermission: motionUsageDescription,
         isIosBackgroundLocationEnabled: false,
         isAndroidBackgroundLocationEnabled: false,
         isAndroidForegroundServiceEnabled: false,

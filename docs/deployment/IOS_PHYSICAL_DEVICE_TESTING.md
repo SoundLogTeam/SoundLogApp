@@ -183,7 +183,7 @@ v1.0은 iPhone 전용으로 제출한다. iPad 스크린샷 자산과 iPad 실�
 
 ### 출시 권한 및 개인정보 선언
 
-production 설정은 사진 기록에 필요한 카메라와 사진 보관함, 현재 장소와 여행 기록에 필요한 `When In Use` 위치 권한만 요청한다. 녹음, 항상 위치, 모션 활동, iOS/Android 백그라운드 위치 권한은 사용하지 않는다.
+production 설정은 사진 기록에 필요한 카메라와 사진 보관함, 현재 장소와 여행 기록에 필요한 `When In Use` 위치 권한만 직접 요청한다. 녹음, 항상 위치, 모션 활동, iOS와 Android의 백그라운드 위치 권한은 앱 기능에서 사용하지 않는다. 다만 ExpoLocation 바이너리가 CoreMotion API를 포함하므로 Apple 업로드 검사를 통과하기 위한 `NSMotionUsageDescription` 문구는 `Info.plist`에 유지한다. 이 문구만으로 사용자에게 모션 권한을 요청하지는 않는다.
 
 `ios.privacyManifests`에는 계정 이름·이메일·사용자 ID, 정확한 위치, 사진 또는 비디오, 사용자 콘텐츠를 앱 기능 목적으로 선언하고, 추천·저장·공유 등 앱 내 상호작용은 분석 목적으로 선언한다. 모든 선언은 계정과 연결되지만 추적에는 사용하지 않는다. App Store Connect의 App Privacy 응답도 이 설정 및 실제 서버 처리와 동일하게 입력한다.
 
