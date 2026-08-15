@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { authApi } from '@/api/authApi';
+import { SOUNDLOG_TERMS_VERSION } from '@/constants/legal';
 import { getApiBaseUrl } from '@/api/client';
 import { queryClient } from '@/providers/queryClient';
 import { AppText } from '@/components/AppText';
@@ -268,9 +269,15 @@ function DevTestManagerContent() {
         session = await authApi.register({
           ...credentials,
           displayName: '로컬데모',
+          termsAccepted: true,
+          termsVersion: SOUNDLOG_TERMS_VERSION,
         });
       } catch {
-        session = await authApi.login(credentials);
+        session = await authApi.login({
+          ...credentials,
+          termsAccepted: true,
+          termsVersion: SOUNDLOG_TERMS_VERSION,
+        });
       }
 
       finishLogin(session);

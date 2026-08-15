@@ -8,6 +8,7 @@ import { syncRecommendationEvent } from "@/api/recommendationEventApi";
 import { momentLogApi } from "@/api/momentLogApi";
 import { momentLogQueryKeys } from "@/api/momentLogQueries";
 import { recapApi } from "@/api/recapApi";
+import { ApiError } from "@/api/client";
 import { recapQueryKeys } from "@/api/recapQueries";
 import { AppText } from "@/components/AppText";
 import { PageHeader } from "@/components/PageHeader";
@@ -334,8 +335,12 @@ export function MomentCaptureScreen() {
       } else {
         router.replace(resolveReturnPath(returnTo) as never);
       }
-    } catch {
-      setErrorMessage("이 리캡을 저장하지 못했어요. 다시 시도해주세요.");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof ApiError
+          ? error.message
+          : "이 리캡을 저장하지 못했어요. 다시 시도해주세요.",
+      );
     } finally {
       isSavingRef.current = false;
       setIsSaving(false);

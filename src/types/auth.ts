@@ -10,11 +10,15 @@ export type AuthUser = {
   email?: string;
   profileImageUrl?: string;
   provider: AuthProvider;
+  termsAcceptedAt?: string;
+  termsVersion?: string;
 };
 
 export type LoginRequest = {
   email: string;
   password: string;
+  termsAccepted: true;
+  termsVersion: string;
 };
 
 export type RegisterRequest = LoginRequest & {

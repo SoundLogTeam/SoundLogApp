@@ -1,16 +1,18 @@
 import { Feather } from '@expo/vector-icons';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import { ApiError } from '@/api/client';
 import { communityApi } from '@/api/communityApi';
 import { syncRecommendationEvent } from '@/api/recommendationEventApi';
 import { AppText } from '@/components/AppText';
+import { ReportContentSheet } from '@/components/moderation/ReportContentSheet';
 import { useAuthStore } from '@/store/authStore';
 import { useRecommendationEventStore } from '@/store/recommendationEventStore';
 import type {
   GeoPoint,
   MusicMatch,
+  ModerationTarget,
   PlaceContext,
   SoundMapPin as ServerSoundMapPin,
   Track,
@@ -103,6 +105,7 @@ export function LiveSoundMapSection({
   const [pendingMatchId, setPendingMatchId] = useState<string>();
   const [pendingMateRequestActionId, setPendingMateRequestActionId] = useState<string>();
   const [publishState, setPublishState] = useState<SoundMapPublishState>('idle');
+  const [reportTarget, setReportTarget] = useState<ModerationTarget>();
   const authStatus = useAuthStore((state) => state.status);
   const currentUserId = useAuthStore((state) => state.user?.id);
   const addEvent = useRecommendationEventStore((state) => state.addEvent);
@@ -462,20 +465,79 @@ export function LiveSoundMapSection({
       setPendingMatchId(undefined);
     }
   };
-  const handleReportAndBlockMatch = async (match: MusicMatch) => {
-    try {
-      await communityApi.reportTarget({
-        reason: 'safety',
-        targetPinId: match.targetPinId,
-      });
-      await communityApi.blockUser({ targetPinId: match.targetPinId });
-      setHiddenMatchIds((state) => ({ ...state, [match.id]: true }));
-      setMatches((items) => items.filter((item) => item.id !== match.id));
-      setServerPins((items) => items.filter((item) => item.id !== match.targetPinId));
-      setMapMessage('차단/신고를 접수했어요. 해당 여행자의 공개 음악은 더 이상 추천에 보이지 않아요.');
-    } catch {
-      setMapMessage('차단/신고를 접수하지 못했어요. 잠시 후 다시 시도해주세요.');
-    }
+  const hideMatch = (match: MusicMatch) => {
+    setHiddenMatchIds((state) => ({ ...state, [match.id]: true }));
+    setMatches((items) => items.filter((item) => item.id !== match.id));
+    setServerPins((items) => items.filter((item) => item.id !== match.targetPinId));
+  };
+  const handleBlockMatch = (match: MusicMatch) => {
+    Alert.alert(
+      '이 사용자를 차단할까요?',
+      '차단하면 이 사용자의 공개 음악과 콘텐츠가 즉시 숨겨지고 운영자에게 전달됩니다.',
+      [
+        { style: 'cancel', text: '취소' },
+        {
+          style: 'destructive',
+          text: '차단',
+          onPress: () => {
+            void communityApi
+              .blockUser({ targetPinId: match.targetPinId, targetType: 'sound_pin' })
+              .then(() => {
+                hideMatch(match);
+                setMapMessage('사용자를 차단했어요. 해당 사용자의 콘텐츠는 더 이상 보이지 않아요.');
+              })
+              .catch(() => {
+                setMapMessage('사용자를 차단하지 못했어요. 잠시 후 다시 시도해주세요.');
+              });
+          },
+        },
+      ],
+    );
+  };
+  const handleBlockRequest = (request: TravelMateRequest) => {
+    const targetUserId = request.requesterId === currentUserId
+      ? request.targetUserId
+      : request.requesterId;
+
+    Alert.alert(
+      '요청을 보낸 사용자를 차단할까요?',
+      '요청이 취소되고 이 사용자의 콘텐츠가 즉시 숨겨집니다.',
+      [
+        { style: 'cancel', text: '취소' },
+        {
+          style: 'destructive',
+          text: '차단',
+          onPress: () => {
+            void communityApi
+              .blockUser({
+                requestId: request.id,
+                targetContentId: request.id,
+                targetType: 'mate_request',
+                targetUserId,
+              })
+              .then(() => {
+                setMateRequests((items) => items.filter((item) => item.id !== request.id));
+                setMapMessage('사용자를 차단하고 요청을 숨겼어요.');
+              })
+              .catch(() => setMapMessage('사용자를 차단하지 못했어요. 잠시 후 다시 시도해주세요.'));
+          },
+        },
+      ],
+    );
+  };
+  const handleReportMatch = (match: MusicMatch) => {
+    setReportTarget({ targetPinId: match.targetPinId, targetType: 'sound_pin' });
+  };
+  const handleReportRequest = (request: TravelMateRequest) => {
+    setReportTarget({
+      requestId: request.id,
+      targetContentId: request.id,
+      targetType: 'mate_request',
+      targetUserId: request.requesterId,
+    });
+  };
+  const handleReportSubmitted = () => {
+    setMapMessage('신고를 접수했어요. 운영자가 24시간 안에 확인합니다.');
   };
   const handleUpdateMateRequest = async (
     request: TravelMateRequest,
@@ -707,6 +769,24 @@ export function LiveSoundMapSection({
                       </Pressable>
                     )}
                   </View>
+                  {isIncoming ? (
+                    <View className="mt-2 flex-row gap-2">
+                      <Pressable
+                        accessibilityRole="button"
+                        className="min-h-[38px] flex-1 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-3"
+                        onPress={() => handleReportRequest(request)}
+                      >
+                        <AppText className="text-xs font-semibold text-amber-100">신고</AppText>
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        className="min-h-[38px] flex-1 items-center justify-center rounded-full border border-red-300/25 bg-red-300/10 px-3"
+                        onPress={() => handleBlockRequest(request)}
+                      >
+                        <AppText className="text-xs font-semibold text-red-100">사용자 차단</AppText>
+                      </Pressable>
+                    </View>
+                  ) : null}
                 </View>
               );
             })}
@@ -816,10 +896,10 @@ export function LiveSoundMapSection({
                     </AppText>
                   </View>
 
-                  <View className="mt-3 flex-row gap-2">
+                  <View className="mt-3 gap-2">
                     <Pressable
                       accessibilityRole="button"
-                      className={`min-h-[44px] flex-1 items-center justify-center rounded-full px-3 ${
+                      className={`min-h-[44px] items-center justify-center rounded-full px-3 ${
                         disabled ? 'bg-white/10' : 'bg-soundlog-lime'
                       }`}
                       disabled={disabled}
@@ -833,13 +913,22 @@ export function LiveSoundMapSection({
                         {requested ? '요청됨' : pendingMatchId === match.id ? '전송 중' : '취향으로 인사'}
                       </AppText>
                     </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
-                      className="min-h-[44px] flex-1 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-3"
-                      onPress={() => void handleReportAndBlockMatch(match)}
-                    >
-                      <AppText className="text-xs font-semibold text-amber-100">차단/신고</AppText>
-                    </Pressable>
+                    <View className="flex-row gap-2">
+                      <Pressable
+                        accessibilityRole="button"
+                        className="min-h-[44px] flex-1 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-3"
+                        onPress={() => handleReportMatch(match)}
+                      >
+                        <AppText className="text-xs font-semibold text-amber-100">신고</AppText>
+                      </Pressable>
+                      <Pressable
+                        accessibilityRole="button"
+                        className="min-h-[44px] flex-1 items-center justify-center rounded-full border border-red-300/25 bg-red-300/10 px-3"
+                        onPress={() => handleBlockMatch(match)}
+                      >
+                        <AppText className="text-xs font-semibold text-red-100">사용자 차단</AppText>
+                      </Pressable>
+                    </View>
                   </View>
                 </View>
               );
@@ -856,6 +945,12 @@ export function LiveSoundMapSection({
           )}
         </View>
       )}
+      <ReportContentSheet
+        onClose={() => setReportTarget(undefined)}
+        onReported={handleReportSubmitted}
+        target={reportTarget}
+        visible={Boolean(reportTarget)}
+      />
     </View>
   );
 }

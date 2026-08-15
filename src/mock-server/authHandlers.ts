@@ -62,6 +62,11 @@ export const authMockHandlers = {
   },
 
   async register(request: RegisterRequest) {
+    if (!request.termsAccepted || !request.termsVersion) {
+      return mockServerDelay<AuthSession>('auth.register', undefined as never, {
+        shouldFail: true,
+      });
+    }
     const email = normalizeEmail(request.email);
 
     if (passwordUsers.has(email)) {

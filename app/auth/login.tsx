@@ -10,6 +10,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { Screen } from "@/components/Screen";
 import { useAuthStore } from "@/store/authStore";
 import { useUserProfileStore } from "@/store/userProfileStore";
+import { SOUNDLOG_TERMS_VERSION } from "@/constants/legal";
 
 type AuthMode = "login" | "register";
 
@@ -42,6 +43,7 @@ export default function LoginScreen() {
 
   const handleModePress = (nextMode: AuthMode) => {
     setMode(nextMode);
+    setHasAcceptedRequiredTerms(false);
     clearAuthError();
   };
 
@@ -63,9 +65,11 @@ export default function LoginScreen() {
       return;
     }
 
-    if (mode === "register" && !hasAcceptedRequiredTerms) {
+    if (!hasAcceptedRequiredTerms) {
       setAuthError(
-        "계정을 만들려면 이용약관과 개인정보 처리방침에 동의해주세요.",
+        mode === "register"
+          ? "계정을 만들려면 이용약관과 개인정보 처리방침에 동의해주세요."
+          : "로그인하려면 최신 이용약관과 개인정보 처리방침에 동의해주세요.",
       );
       return;
     }
@@ -79,11 +83,15 @@ export default function LoginScreen() {
           ? await loginMutation.mutateAsync({
               email: normalizedEmail,
               password,
+              termsAccepted: true,
+              termsVersion: SOUNDLOG_TERMS_VERSION,
             })
           : await registerMutation.mutateAsync({
               displayName: trimmedDisplayName || undefined,
               email: normalizedEmail,
               password,
+              termsAccepted: true,
+              termsVersion: SOUNDLOG_TERMS_VERSION,
             });
 
       const didCompleteOnboarding =
@@ -227,34 +235,32 @@ export default function LoginScreen() {
             ) : null}
           </View>
 
-          {mode === "register" ? (
-            <Pressable
-              accessibilityLabel="필수 이용약관과 개인정보 처리방침 동의"
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: hasAcceptedRequiredTerms }}
-              className="min-h-12 flex-row items-center gap-3 py-1"
-              disabled={isPending}
-              onPress={() => {
-                setHasAcceptedRequiredTerms((accepted) => !accepted);
-                clearAuthError();
-              }}
+          <Pressable
+            accessibilityLabel="필수 이용약관과 개인정보 처리방침 동의"
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: hasAcceptedRequiredTerms }}
+            className="min-h-12 flex-row items-center gap-3 py-1"
+            disabled={isPending}
+            onPress={() => {
+              setHasAcceptedRequiredTerms((accepted) => !accepted);
+              clearAuthError();
+            }}
+          >
+            <View
+              className={`h-6 w-6 items-center justify-center rounded-md border ${
+                hasAcceptedRequiredTerms
+                  ? "border-soundlog-lime bg-soundlog-lime"
+                  : "border-white/25 bg-transparent"
+              }`}
             >
-              <View
-                className={`h-6 w-6 items-center justify-center rounded-md border ${
-                  hasAcceptedRequiredTerms
-                    ? "border-soundlog-lime bg-soundlog-lime"
-                    : "border-white/25 bg-transparent"
-                }`}
-              >
-                {hasAcceptedRequiredTerms ? (
-                  <Feather color="#4A1D96" name="check" size={15} />
-                ) : null}
-              </View>
-              <AppText className="min-w-0 flex-1 text-xs leading-5 text-white/65">
-                이용약관과 개인정보 처리방침에 동의합니다. (필수)
-              </AppText>
-            </Pressable>
-          ) : null}
+              {hasAcceptedRequiredTerms ? (
+                <Feather color="#4A1D96" name="check" size={15} />
+              ) : null}
+            </View>
+            <AppText className="min-w-0 flex-1 text-xs leading-5 text-white/65">
+              최신 이용약관과 개인정보 처리방침에 동의합니다. (필수)
+            </AppText>
+          </Pressable>
 
           {errorMessage ? (
             <View className="flex-row items-start gap-3 py-2">
