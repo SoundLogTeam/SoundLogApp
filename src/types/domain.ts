@@ -135,6 +135,7 @@ export type MomentLog = {
   travelMode?: TravelMode;
   moodTags: MoodTag[];
   source: 'camera';
+  moderationStatus?: 'approved' | 'pending' | 'rejected';
   templateId?: RecapTemplateId;
 };
 
@@ -149,6 +150,7 @@ export type RecapItem = {
   sessionId?: string;
   thumbnailMomentId?: string;
   visibility?: RecapVisibility;
+  moderationStatus?: 'approved' | 'pending' | 'rejected';
 };
 
 export type RecapTemplateId = 'album' | 'film' | 'lp' | 'map';
@@ -163,6 +165,7 @@ export type RecapMapMarker = {
   distanceMeters?: number;
   id: string;
   imageUrl?: string;
+  isMine: boolean;
   location: GeoPoint;
   ownerAlias: string;
   placeName: string;
@@ -217,9 +220,26 @@ export type RecapShare = {
   thumbnailMomentId?: string;
   travelSummary?: RecapTravelSummary;
   visibility?: RecapVisibility;
+  moderationStatus?: 'approved' | 'pending' | 'rejected';
 };
 
 export type CommunityVisibility = 'companions' | 'nearby' | 'private';
+
+export type ModerationTargetType =
+  | 'user'
+  | 'sound_pin'
+  | 'recap'
+  | 'travel_room_moment'
+  | 'travel_room_comment'
+  | 'mate_request';
+
+export type ModerationTarget = {
+  requestId?: string;
+  targetContentId?: string;
+  targetPinId?: string;
+  targetType: ModerationTargetType;
+  targetUserId?: string;
+};
 
 export type TravelRoomMember = {
   id: string;
@@ -239,10 +259,11 @@ export type TravelRoomMoment = {
   track?: Track;
   commentCount?: number;
   comments?: Array<{
-    id: string;
-    userId: string;
     body: string;
     createdAt: string;
+    displayName?: string;
+    id: string;
+    userId: string;
   }>;
   createdAt: string;
 };

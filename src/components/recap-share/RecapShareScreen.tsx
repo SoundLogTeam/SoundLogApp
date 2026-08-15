@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { Pressable, ScrollView, View } from "react-native";
+import { Alert, Pressable, ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 
 import { ApiError } from "@/api/client";
+import { communityApi } from "@/api/communityApi";
 import { recapApi } from "@/api/recapApi";
 import { recapQueryKeys, useRecapShareQuery } from "@/api/recapQueries";
 import { AppText } from "@/components/AppText";
+import { ReportContentSheet } from "@/components/moderation/ReportContentSheet";
 import { IconButton } from "@/components/IconButton";
 import { PageHeader } from "@/components/PageHeader";
 import {
@@ -67,6 +69,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
   const [visibility, setVisibility] = useState<RecapVisibility>("private");
   const [thumbnailMessage, setThumbnailMessage] = useState<string>();
   const [visibilityMessage, setVisibilityMessage] = useState<string>();
+  const [isReportOpen, setIsReportOpen] = useState(false);
   const {
     data: recap,
     isError,
@@ -83,6 +86,34 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
       captureFrameRef.current?.capture() ?? Promise.resolve(undefined),
     recapId: recap?.id,
   });
+  const handleBlockAuthor = () => {
+    if (!recap || recap.isMine) return;
+    Alert.alert(
+      '이 사용자를 차단할까요?',
+      '이 사용자의 공개 리캡과 로그가 피드와 지도에서 즉시 숨겨집니다.',
+      [
+        { style: 'cancel', text: '취소' },
+        {
+          style: 'destructive',
+          text: '차단',
+          onPress: () => {
+            void communityApi
+              .blockUser({ targetContentId: recap.id, targetType: 'recap' })
+              .then(() => {
+                void queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists });
+                Alert.alert('차단 완료', '해당 사용자의 공개 콘텐츠를 숨겼어요.', [
+                  { text: '확인', onPress: () => router.back() },
+                ]);
+              })
+              .catch((error) => Alert.alert(
+                '차단 실패',
+                error instanceof ApiError ? error.message : '잠시 후 다시 시도해주세요.',
+              ));
+          },
+        },
+      ],
+    );
+  };
   const handleChangeVisibility = async (nextVisibility: RecapVisibility) => {
     if (!recap || !canManageVisibility || isUpdatingVisibility) {
       return;
@@ -114,7 +145,9 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
       }
       setVisibilityMessage(
         nextVisibility === "public"
-          ? "전체공개로 바꿨어요. 현재 위치 300m 이내 지도에 리캡 핀이 남아요."
+          ? updatedRecap?.moderationStatus === "pending"
+            ? "공개 검토를 요청했어요. 승인되면 다른 사람의 피드와 지도에 표시돼요."
+            : "전체공개로 바꿨어요. 현재 위치 300m 이내 지도에 리캡 핀이 남아요."
           : "나만보기로 바꿨어요. 다른 사람의 지도에는 보이지 않아요.",
       );
       void refetch();
@@ -257,7 +290,24 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
                   );
                 })}
               </View>
-            ) : null}
+            ) : (
+              <View className="mt-4 flex-row gap-2">
+                <Pressable
+                  accessibilityRole="button"
+                  className="min-h-[42px] items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4"
+                  onPress={() => setIsReportOpen(true)}
+                >
+                  <AppText className="text-xs font-semibold text-amber-100">신고</AppText>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  className="min-h-[42px] items-center justify-center rounded-full border border-red-300/25 bg-red-300/10 px-4"
+                  onPress={handleBlockAuthor}
+                >
+                  <AppText className="text-xs font-semibold text-red-100">사용자 차단</AppText>
+                </Pressable>
+              </View>
+            )}
 
             {visibilityMessage ? (
               <AppText className="mt-3 text-xs leading-5 text-white/55">
@@ -363,6 +413,13 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
           )}
         </View>
       </ScrollView>
+      <ReportContentSheet
+        onClose={() => setIsReportOpen(false)}
+        onReported={() => Alert.alert('신고 접수', '운영자가 24시간 안에 확인합니다.')}
+        target={recap && !recap.isMine ? { targetContentId: recap.id, targetType: 'recap' } : undefined}
+        title="공개 리캡 신고"
+        visible={isReportOpen}
+      />
     </Screen>
   );
 }

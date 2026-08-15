@@ -105,7 +105,7 @@ function getTourPlaceLabel(currentPlace: PlaceContext | undefined, status: TourP
 }
 
 function toMapPin(marker: RecapMapMarker): SoundMapPin {
-  const isMine = marker.ownerAlias === '나' || marker.visibility === 'private';
+  const isMine = marker.isMine;
 
   return {
     artistName: marker.artistName,
@@ -214,6 +214,7 @@ export function RecapMapSection({
   const [isLoadingMarkers, setIsLoadingMarkers] = useState(false);
   const [mapRegion, setMapRegion] = useState<SoundMapRegion>();
   const [mapMessage, setMapMessage] = useState<string>();
+  const [markerRefreshVersion, setMarkerRefreshVersion] = useState(0);
   const [mapViewportSize, setMapViewportSize] = useState<SoundMapViewportSize>({
     height: 0,
     width: 0,
@@ -353,7 +354,7 @@ export function RecapMapSection({
         ignore = true;
       };
     },
-    [authStatus, markerQueryLat, markerQueryLng, scope],
+    [authStatus, markerQueryLat, markerQueryLng, markerRefreshVersion, scope],
   );
 
   useEffect(
@@ -536,6 +537,7 @@ export function RecapMapSection({
             <SelectedRecapPinPanel
               markers={selectedPinGroup.markers}
               onClose={() => setSelectedPinId(undefined)}
+              onBlocked={() => setMarkerRefreshVersion((version) => version + 1)}
               onOpenRecap={onOpenRecap}
               pin={selectedPinGroup.pin}
             />

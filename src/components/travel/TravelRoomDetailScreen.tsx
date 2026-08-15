@@ -1,10 +1,13 @@
 import { router } from "expo-router";
+import { Feather } from "@expo/vector-icons";
 import { useEffect, useMemo, useState } from "react";
-import { ScrollView, TextInput, View } from "react-native";
+import { Alert, Pressable, ScrollView, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { communityApi } from "@/api/communityApi";
+import { ApiError } from "@/api/client";
 import { AppText } from "@/components/AppText";
+import { ReportContentSheet } from "@/components/moderation/ReportContentSheet";
 import { IconButton } from "@/components/IconButton";
 import { PageHeader } from "@/components/PageHeader";
 import { Screen } from "@/components/Screen";
@@ -16,7 +19,7 @@ import { useAuthStore } from "@/store/authStore";
 import { usePlayerStore } from "@/store/playerStore";
 import { useTravelRoomStore } from "@/store/travelRoomStore";
 import { useTravelSessionStore } from "@/store/travelSessionStore";
-import type { TravelRoom, TravelRoomMoment } from "@/types/domain";
+import type { ModerationTarget, TravelRoom, TravelRoomMoment } from "@/types/domain";
 import { shareTravelRoomInvite } from "@/utils/travelRoomInvite";
 
 type TravelRoomDetailScreenProps = {
@@ -59,6 +62,18 @@ function appendRoomMomentComment(
         comments,
       };
     }),
+  };
+}
+
+function hideBlockedUserContent(room: TravelRoom, blockedUserId: string): TravelRoom {
+  return {
+    ...room,
+    moments: room.moments
+      .filter((moment) => moment.userId !== blockedUserId)
+      .map((moment) => ({
+        ...moment,
+        comments: moment.comments?.filter((comment) => comment.userId !== blockedUserId),
+      })),
   };
 }
 
@@ -127,6 +142,7 @@ export function TravelRoomDetailScreen({
   const [pendingCommentMomentId, setPendingCommentMomentId] =
     useState<string>();
   const [pendingStatusMomentId, setPendingStatusMomentId] = useState<string>();
+  const [reportTarget, setReportTarget] = useState<ModerationTarget>();
   const room = cachedRoom;
   const hasCachedRoom = Boolean(cachedRoom);
   const sortedMoments = useMemo(
@@ -141,6 +157,30 @@ export function TravelRoomDetailScreen({
   )?.role;
   const canModerate = myMemberRole === "owner";
   const canUseServerRoom = authStatus === "authenticated";
+
+  const handleBlockUser = (target: ModerationTarget, targetUserId: string) => {
+    if (!room) return;
+    Alert.alert(
+      "이 사용자를 차단할까요?",
+      "공동 여행방에서 이 사용자가 작성한 후보와 댓글이 즉시 숨겨집니다.",
+      [
+        { style: "cancel", text: "취소" },
+        {
+          style: "destructive",
+          text: "차단",
+          onPress: () => {
+            void communityApi
+              .blockUser({ ...target, targetUserId })
+              .then(() => {
+                setRoomById(hideBlockedUserContent(room, targetUserId));
+                setMessage("사용자를 차단했어요. 해당 사용자의 콘텐츠를 숨겼습니다.");
+              })
+              .catch(() => setMessage("사용자를 차단하지 못했어요. 잠시 후 다시 시도해주세요."));
+          },
+        },
+      ],
+    );
+  };
 
   useEffect(() => {
     if (!canUseServerRoom || !roomId) {
@@ -302,9 +342,11 @@ export function TravelRoomDetailScreen({
       setRoomById(appendRoomMomentComment(room, moment.id, comment));
       setCommentDrafts((drafts) => ({ ...drafts, [moment.id]: "" }));
       setMessage("후보 리캡에 댓글을 남겼어요.");
-    } catch {
+    } catch (error) {
       setMessage(
-        "댓글을 저장하지 못했어요. 여행방 참여 상태나 네트워크를 확인해주세요.",
+        error instanceof ApiError
+          ? error.message
+          : "댓글을 저장하지 못했어요. 여행방 참여 상태나 네트워크를 확인해주세요.",
       );
     } finally {
       setPendingCommentMomentId(undefined);
@@ -528,15 +570,67 @@ export function TravelRoomDetailScreen({
                           </View>
                         </View>
 
+                        {moment.userId !== currentUserId ? (
+                          <View className="mt-3 flex-row gap-2">
+                            <Pressable
+                              accessibilityRole="button"
+                              className="min-h-[36px] flex-1 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-3"
+                              onPress={() => setReportTarget({
+                                targetContentId: moment.id,
+                                targetType: "travel_room_moment",
+                                targetUserId: moment.userId,
+                              })}
+                            >
+                              <AppText className="text-xs font-semibold text-amber-100">후보 신고</AppText>
+                            </Pressable>
+                            <Pressable
+                              accessibilityRole="button"
+                              className="min-h-[36px] flex-1 items-center justify-center rounded-full border border-red-300/25 bg-red-300/10 px-3"
+                              onPress={() => handleBlockUser({
+                                targetContentId: moment.id,
+                                targetType: "travel_room_moment",
+                              }, moment.userId)}
+                            >
+                              <AppText className="text-xs font-semibold text-red-100">사용자 차단</AppText>
+                            </Pressable>
+                          </View>
+                        ) : null}
+
                         {moment.comments?.length ? (
                           <View className="mt-3 gap-2 border-t border-white/10 pt-3">
                             {moment.comments.map((comment) => (
-                              <AppText
-                                className="text-xs leading-5 text-white/55"
-                                key={comment.id}
-                              >
-                                {comment.userId} · {comment.body}
-                              </AppText>
+                              <View className="flex-row items-start gap-2" key={comment.id}>
+                                <AppText className="min-w-0 flex-1 text-xs leading-5 text-white/55">
+                                  {comment.displayName ?? comment.userId} · {comment.body}
+                                </AppText>
+                                {comment.userId !== currentUserId ? (
+                                  <View className="flex-row">
+                                    <Pressable
+                                      accessibilityLabel="댓글 신고"
+                                      accessibilityRole="button"
+                                      className="h-9 w-9 items-center justify-center"
+                                      onPress={() => setReportTarget({
+                                        targetContentId: comment.id,
+                                        targetType: "travel_room_comment",
+                                        targetUserId: comment.userId,
+                                      })}
+                                    >
+                                      <Feather color="#FDE68A" name="flag" size={13} />
+                                    </Pressable>
+                                    <Pressable
+                                      accessibilityLabel="댓글 작성자 차단"
+                                      accessibilityRole="button"
+                                      className="h-9 w-9 items-center justify-center"
+                                      onPress={() => handleBlockUser({
+                                        targetContentId: comment.id,
+                                        targetType: "travel_room_comment",
+                                      }, comment.userId)}
+                                    >
+                                      <Feather color="#FCA5A5" name="slash" size={13} />
+                                    </Pressable>
+                                  </View>
+                                ) : null}
+                              </View>
                             ))}
                           </View>
                         ) : null}
@@ -605,6 +699,13 @@ export function TravelRoomDetailScreen({
           </>
         )}
       </ScrollView>
+      <ReportContentSheet
+        onClose={() => setReportTarget(undefined)}
+        onReported={() => setMessage("신고를 접수했어요. 운영자가 24시간 안에 확인합니다.")}
+        target={reportTarget}
+        title="공동 여행 콘텐츠 신고"
+        visible={Boolean(reportTarget)}
+      />
     </Screen>
   );
 }

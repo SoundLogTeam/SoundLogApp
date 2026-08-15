@@ -1,10 +1,12 @@
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Pressable, TextInput, View } from "react-native";
+import { Alert, Pressable, TextInput, View } from "react-native";
 
 import { communityApi } from "@/api/communityApi";
+import { ApiError } from "@/api/client";
 import { AppText } from "@/components/AppText";
+import { ReportContentSheet } from "@/components/moderation/ReportContentSheet";
 import {
   SoundlogButton,
   SoundlogMetric,
@@ -14,6 +16,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useTravelRoomStore } from "@/store/travelRoomStore";
 import type {
   PlaceContext,
+  ModerationTarget,
   RecapItem,
   Track,
   TravelRoom,
@@ -120,8 +123,11 @@ function CandidateMomentRow({
   commentsExpanded,
   index,
   moment,
+  currentUserId,
+  onBlock,
   onChangeComment,
   onSubmitComment,
+  onReport,
   onToggleComments,
   onToggleStatus,
   pendingComment,
@@ -133,8 +139,11 @@ function CandidateMomentRow({
   commentsExpanded: boolean;
   index: number;
   moment: TravelRoomMoment;
+  currentUserId?: string;
+  onBlock: (target: ModerationTarget, userId: string) => void;
   onChangeComment: (value: string) => void;
   onSubmitComment: () => void;
+  onReport: (target: ModerationTarget) => void;
   onToggleComments: () => void;
   onToggleStatus: () => void;
   pendingComment: boolean;
@@ -205,6 +214,32 @@ function CandidateMomentRow({
         </View>
       </View>
 
+      {moment.userId !== currentUserId && !moment.id.startsWith("preview-") ? (
+        <View className="mt-3 flex-row gap-2">
+          <Pressable
+            accessibilityRole="button"
+            className="min-h-[36px] flex-1 items-center justify-center rounded-full border border-amber-300/30 bg-amber-300/10 px-3"
+            onPress={() => onReport({
+              targetContentId: moment.id,
+              targetType: "travel_room_moment",
+              targetUserId: moment.userId,
+            })}
+          >
+            <AppText className="text-xs font-semibold text-amber-100">후보 신고</AppText>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            className="min-h-[36px] flex-1 items-center justify-center rounded-full border border-red-300/25 bg-red-300/10 px-3"
+            onPress={() => onBlock({
+              targetContentId: moment.id,
+              targetType: "travel_room_moment",
+            }, moment.userId)}
+          >
+            <AppText className="text-xs font-semibold text-red-100">사용자 차단</AppText>
+          </Pressable>
+        </View>
+      ) : null}
+
       {commentCount > 0 ? (
         <View className="mt-3 gap-2 rounded-[12px] bg-white/5 px-3 py-2">
           <Pressable accessibilityRole="button" onPress={onToggleComments}>
@@ -214,13 +249,41 @@ function CandidateMomentRow({
           </Pressable>
           {visibleComments.length > 0 ? (
             visibleComments.map((comment) => (
-              <AppText
-                className="text-[11px] leading-5 text-white/55"
-                key={comment.id}
-                numberOfLines={commentsExpanded ? undefined : 2}
-              >
-                {comment.userId} · {comment.body}
-              </AppText>
+              <View className="flex-row items-start gap-2" key={comment.id}>
+                <AppText
+                  className="min-w-0 flex-1 text-[11px] leading-5 text-white/55"
+                  numberOfLines={commentsExpanded ? undefined : 2}
+                >
+                  {comment.displayName ?? comment.userId} · {comment.body}
+                </AppText>
+                {comment.userId !== currentUserId ? (
+                  <View className="flex-row">
+                    <Pressable
+                      accessibilityLabel="댓글 신고"
+                      accessibilityRole="button"
+                      className="h-8 w-8 items-center justify-center"
+                      onPress={() => onReport({
+                        targetContentId: comment.id,
+                        targetType: "travel_room_comment",
+                        targetUserId: comment.userId,
+                      })}
+                    >
+                      <Feather color="#FDE68A" name="flag" size={12} />
+                    </Pressable>
+                    <Pressable
+                      accessibilityLabel="댓글 작성자 차단"
+                      accessibilityRole="button"
+                      className="h-8 w-8 items-center justify-center"
+                      onPress={() => onBlock({
+                        targetContentId: comment.id,
+                        targetType: "travel_room_comment",
+                      }, comment.userId)}
+                    >
+                      <Feather color="#FCA5A5" name="slash" size={12} />
+                    </Pressable>
+                  </View>
+                ) : null}
+              </View>
             ))
           ) : (
             <AppText className="text-[11px] leading-5 text-white/45">
@@ -322,11 +385,46 @@ export function CommunityRecapCard({
   const [pendingCommentMomentId, setPendingCommentMomentId] =
     useState<string>();
   const [pendingStatusMomentId, setPendingStatusMomentId] = useState<string>();
+  const [reportTarget, setReportTarget] = useState<ModerationTarget>();
   const [showAllMoments, setShowAllMoments] = useState(false);
   const authStatus = useAuthStore((state) => state.status);
   const currentUserId = useAuthStore((state) => state.user?.id);
   const room = useTravelRoomStore((state) => state.roomsBySessionId[sessionId]);
   const setTravelRoom = useTravelRoomStore((state) => state.setRoom);
+
+  const handleBlockUser = (target: ModerationTarget, targetUserId: string) => {
+    if (!room) return;
+    Alert.alert(
+      "이 사용자를 차단할까요?",
+      "이 사용자가 작성한 공동 리캡 후보와 댓글이 즉시 숨겨집니다.",
+      [
+        { style: "cancel", text: "취소" },
+        {
+          style: "destructive",
+          text: "차단",
+          onPress: () => {
+            void communityApi
+              .blockUser({ ...target, targetUserId })
+              .then(() => {
+                setTravelRoom(sessionId, {
+                  ...room,
+                  moments: room.moments
+                    .filter((moment) => moment.userId !== targetUserId)
+                    .map((moment) => ({
+                      ...moment,
+                      comments: moment.comments?.filter(
+                        (comment) => comment.userId !== targetUserId,
+                      ),
+                    })),
+                });
+                setMessage("사용자를 차단했어요. 해당 사용자의 콘텐츠를 숨겼습니다.");
+              })
+              .catch(() => setMessage("사용자를 차단하지 못했어요. 잠시 후 다시 시도해주세요."));
+          },
+        },
+      ],
+    );
+  };
 
   const placeName = currentPlace?.title ?? "이번 여행";
   const canUseRoom = sessionStatus !== "idle";
@@ -556,9 +654,11 @@ export function CommunityRecapCard({
       setMessage(
         "공동 여행방에 참여했어요. 이제 현재 곡을 Recap 후보로 올릴 수 있어요.",
       );
-    } catch {
+    } catch (error) {
       setMessage(
-        "초대 코드로 여행방에 참여하지 못했어요. 코드를 다시 확인해주세요.",
+        error instanceof ApiError
+          ? error.message
+          : "초대 코드로 여행방에 참여하지 못했어요. 코드를 다시 확인해주세요.",
       );
     } finally {
       setIsJoiningRoom(false);
@@ -632,9 +732,11 @@ export function CommunityRecapCard({
       );
       setCommentDrafts((drafts) => ({ ...drafts, [moment.id]: "" }));
       setMessage("후보 리캡에 댓글을 남겼어요.");
-    } catch {
+    } catch (error) {
       setMessage(
-        "댓글을 저장하지 못했어요. 여행방 참여 상태나 네트워크를 확인해주세요.",
+        error instanceof ApiError
+          ? error.message
+          : "댓글을 저장하지 못했어요. 여행방 참여 상태나 네트워크를 확인해주세요.",
       );
     } finally {
       setPendingCommentMomentId(undefined);
@@ -772,9 +874,11 @@ export function CommunityRecapCard({
               canComment={canCommentRoom}
               canModerate={canModerateRoom}
               commentDraft={commentDrafts[moment.id] ?? ""}
+              currentUserId={currentUserId}
               index={index}
               key={moment.id}
               moment={moment}
+              onBlock={handleBlockUser}
               onChangeComment={(value) =>
                 setCommentDrafts((drafts) => ({
                   ...drafts,
@@ -782,6 +886,7 @@ export function CommunityRecapCard({
                 }))
               }
               onSubmitComment={() => void handleSubmitMomentComment(moment)}
+              onReport={setReportTarget}
               onToggleComments={() =>
                 setExpandedCommentIds((state) => {
                   if (state[moment.id]) {
@@ -901,6 +1006,13 @@ export function CommunityRecapCard({
           </View>
         )}
       </View>
+      <ReportContentSheet
+        onClose={() => setReportTarget(undefined)}
+        onReported={() => setMessage("신고를 접수했어요. 운영자가 24시간 안에 확인합니다.")}
+        target={reportTarget}
+        title="공동 여행 콘텐츠 신고"
+        visible={Boolean(reportTarget)}
+      />
     </SoundlogSurface>
   );
 }

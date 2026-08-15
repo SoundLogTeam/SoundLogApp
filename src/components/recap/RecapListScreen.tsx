@@ -6,6 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
   Animated,
+  Alert,
   GestureResponderEvent,
   NativeScrollEvent,
   NativeSyntheticEvent,
@@ -18,9 +19,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ApiError } from "@/api/client";
+import { communityApi } from "@/api/communityApi";
 import { recapApi } from "@/api/recapApi";
 import { recapQueryKeys, useRecapListQuery } from "@/api/recapQueries";
 import { AppText } from "@/components/AppText";
+import { ReportContentSheet } from "@/components/moderation/ReportContentSheet";
 import { PageHeader } from "@/components/PageHeader";
 import { RecapEmptyState } from "@/components/recap/RecapEmptyState";
 import { Screen } from "@/components/Screen";
@@ -87,6 +90,8 @@ type LogGridCardProps = {
     event: GestureResponderEvent,
   ) => void;
   onPress: () => void;
+  onBlock: (entry: LogGridEntry) => void;
+  onReport: (entry: LogGridEntry) => void;
 };
 
 function LogGridCard({
@@ -95,7 +100,9 @@ function LogGridCard({
   isMine,
   isUpdating,
   onChangeVisibility,
+  onBlock,
   onPress,
+  onReport,
 }: LogGridCardProps) {
   const imageUrl = getEntryImageUrl(entry);
   const [failedImageUrl, setFailedImageUrl] = useState<string>();
@@ -201,7 +208,26 @@ function LogGridCard({
             {isUpdating ? "변경중" : getVisibilityLabel(visibility)}
           </AppText>
         </Pressable>
-      ) : null}
+      ) : (
+        <View className="absolute right-2 top-2 flex-row gap-1">
+          <Pressable
+            accessibilityLabel={`${entry.item.title} 신고`}
+            accessibilityRole="button"
+            className="h-8 w-8 items-center justify-center rounded-full bg-black/65"
+            onPress={() => onReport(entry)}
+          >
+            <Feather color="#FDE68A" name="flag" size={14} />
+          </Pressable>
+          <Pressable
+            accessibilityLabel={`${entry.item.title} 작성자 차단`}
+            accessibilityRole="button"
+            className="h-8 w-8 items-center justify-center rounded-full bg-black/65"
+            onPress={() => onBlock(entry)}
+          >
+            <Feather color="#FCA5A5" name="slash" size={14} />
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -222,6 +248,8 @@ type LogFeedPageProps = {
     event: GestureResponderEvent,
   ) => void;
   onOpenEntry: (entry: LogGridEntry) => void;
+  onBlockEntry: (entry: LogGridEntry) => void;
+  onReportEntry: (entry: LogGridEntry) => void;
   tabId: LogFeedTabId;
   updatingRecapId?: string;
   width: number;
@@ -238,7 +266,9 @@ function LogFeedPage({
   isLoading,
   itemSize,
   onChangeVisibility,
+  onBlockEntry,
   onOpenEntry,
+  onReportEntry,
   tabId,
   updatingRecapId,
   width,
@@ -298,7 +328,9 @@ function LogFeedPage({
               isUpdating={updatingRecapId === entry.item.id}
               key={`${tabId}-${entry.item.id}`}
               onChangeVisibility={onChangeVisibility}
+              onBlock={onBlockEntry}
               onPress={() => onOpenEntry(entry)}
+              onReport={onReportEntry}
             />
           ))}
         </View>
@@ -327,6 +359,7 @@ export function RecapListScreen() {
   );
   const [updatingRecapId, setUpdatingRecapId] = useState<string>();
   const [actionMessage, setActionMessage] = useState<string>();
+  const [reportEntry, setReportEntry] = useState<LogGridEntry>();
   const pagerRef = useRef<ScrollView>(null);
   const initialTabIndex =
     initialView === "mine" || initialView === "all" ? 1 : 0;
@@ -377,6 +410,37 @@ export function RecapListScreen() {
   const handleOpenTravel = useCallback(() => {
     router.navigate("/" as never);
   }, []);
+  const handleReportEntry = useCallback((entry: LogGridEntry) => {
+    setReportEntry(entry);
+  }, []);
+  const handleBlockEntry = useCallback((entry: LogGridEntry) => {
+    Alert.alert(
+      '이 사용자를 차단할까요?',
+      '이 사용자가 공개한 로그와 리캡이 즉시 숨겨지고 운영자에게 전달됩니다.',
+      [
+        { style: 'cancel', text: '취소' },
+        {
+          style: 'destructive',
+          text: '차단',
+          onPress: () => {
+            void communityApi
+              .blockUser({ targetContentId: entry.item.id, targetType: 'recap' })
+              .then(() => {
+                queryClient.setQueryData<RecapItem[]>(
+                  recapQueryKeys.list('others'),
+                  (previous = []) => previous.filter((item) => item.id !== entry.item.id),
+                );
+                setActionMessage('사용자를 차단했어요. 해당 사용자의 공개 콘텐츠는 더 이상 보이지 않아요.');
+                void queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists });
+              })
+              .catch((error) => {
+                setActionMessage(error instanceof ApiError ? error.message : '사용자를 차단하지 못했어요.');
+              });
+          },
+        },
+      ],
+    );
+  }, [queryClient]);
 
   const handleSelectTab = useCallback(
     (tab: LogFeedTabId) => {
@@ -460,7 +524,9 @@ export function RecapListScreen() {
 
       setActionMessage(
         nextVisibility === "public"
-          ? "전체공개로 바꿨어요. 다른 사람의 공개 피드와 지도에 표시돼요."
+          ? updatedRecap?.moderationStatus === "pending"
+            ? "공개 검토를 요청했어요. 승인되면 다른 사람의 피드와 지도에 표시돼요."
+            : "전체공개로 바꿨어요. 다른 사람의 공개 피드와 지도에 표시돼요."
           : "비공개로 바꿨어요. 내 로그에서만 확인할 수 있어요.",
       );
       void queryClient.invalidateQueries({ queryKey: recapQueryKeys.lists });
@@ -579,7 +645,7 @@ export function RecapListScreen() {
         style={styles.pager}
       >
         <LogFeedPage
-          actionMessage={undefined}
+          actionMessage={selectedTab === "others" ? actionMessage : undefined}
           contentBottomPadding={contentBottomPadding}
           emptyMessage="아직 다른 사람이 공개한 로그가 없어요."
           entries={otherEntries}
@@ -589,7 +655,9 @@ export function RecapListScreen() {
           isLoading={isLoading}
           itemSize={gridItemSize}
           onChangeVisibility={handleChangeVisibility}
+          onBlockEntry={handleBlockEntry}
           onOpenEntry={handleOpenEntry}
+          onReportEntry={handleReportEntry}
           tabId="others"
           updatingRecapId={updatingRecapId}
           width={width}
@@ -605,12 +673,21 @@ export function RecapListScreen() {
           isLoading={isLoading}
           itemSize={gridItemSize}
           onChangeVisibility={handleChangeVisibility}
+          onBlockEntry={handleBlockEntry}
           onOpenEntry={handleOpenEntry}
+          onReportEntry={handleReportEntry}
           tabId="mine"
           updatingRecapId={updatingRecapId}
           width={width}
         />
       </Animated.ScrollView>
+      <ReportContentSheet
+        onClose={() => setReportEntry(undefined)}
+        onReported={() => setActionMessage('신고를 접수했어요. 운영자가 24시간 안에 확인합니다.')}
+        target={reportEntry ? { targetContentId: reportEntry.item.id, targetType: 'recap' } : undefined}
+        title="공개 로그 신고"
+        visible={Boolean(reportEntry)}
+      />
     </Screen>
   );
 }

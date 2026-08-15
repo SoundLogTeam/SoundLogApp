@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
+const crypto = require('crypto');
 const path = require('path');
 
 const projectRoot = path.resolve(__dirname, '..');
 const errors = [];
 const warnings = [];
+const forbiddenIconHashes = new Set([
+  // Expo SDK starter icon. Shipping this hash caused App Store metadata rejection.
+  '119462bb78eb240a65c869fc067ee599639b3cb5a41953f25c07b17d2a8c7e0f',
+]);
 
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -79,6 +84,15 @@ function hasPngAlpha(filePath) {
   return colorType === 4 || colorType === 6 || hasTransparencyChunk;
 }
 
+function getPngDimensions(filePath) {
+  const buffer = fs.readFileSync(filePath);
+  return { height: buffer.readUInt32BE(20), width: buffer.readUInt32BE(16) };
+}
+
+function sha256(filePath) {
+  return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+}
+
 function assertProductionEnv(productionEnv) {
   const apiBaseUrl = productionEnv.EXPO_PUBLIC_SOUNDLOG_API_BASE_URL;
   const privacyUrl = productionEnv.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL;
@@ -143,6 +157,24 @@ function assertAppIcon(config) {
 
   if (hasPngAlpha(iconPath)) {
     addError(`App icon must not have alpha transparency: ${config.icon}`);
+  }
+
+  const iconDimensions = getPngDimensions(iconPath);
+  if (iconDimensions.width !== 1024 || iconDimensions.height !== 1024) {
+    addError(`App icon must be exactly 1024x1024: ${config.icon}`);
+  }
+
+  const iconHash = sha256(iconPath);
+  if (forbiddenIconHashes.has(iconHash)) {
+    addError('App icon is still the Expo starter icon. Replace it with the Soundlog brand icon.');
+  }
+
+  const nativeIconPath = path.join(
+    projectRoot,
+    'ios/Soundlog/Images.xcassets/AppIcon.appiconset/App-Icon-1024x1024@1x.png',
+  );
+  if (fs.existsSync(nativeIconPath) && sha256(nativeIconPath) !== iconHash) {
+    addError('The generated iOS AppIcon does not match the Expo config icon. Run Expo prebuild.');
   }
 }
 

@@ -7,6 +7,8 @@ import type {
   CommunityVisibility,
   GeoPoint,
   MoodTag,
+  ModerationTarget,
+  ModerationTargetType,
   MusicMatch,
   RecapItem,
   SoundMapPin,
@@ -302,7 +304,7 @@ export const communityApi = {
       },
     );
   },
-  blockUser: async (input: { targetPinId?: string; targetUserId?: string }) => {
+  blockUser: async (input: ModerationTarget) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return { accepted: false };
     }
@@ -316,14 +318,16 @@ export const communityApi = {
     details?: string;
     reason: 'inappropriate' | 'other' | 'safety' | 'spam';
     requestId?: string;
+    targetContentId?: string;
     targetPinId?: string;
+    targetType: ModerationTargetType;
     targetUserId?: string;
   }) => {
     if (!shouldAttemptAuthenticatedApi()) {
       return { accepted: false };
     }
 
-    return requestApi<{ accepted: boolean }>('/v1/community/reports', {
+    return requestApi<{ dueAt: string; id: string; notified: boolean }>('/v1/community/reports', {
       body: input,
       method: 'POST',
     });
