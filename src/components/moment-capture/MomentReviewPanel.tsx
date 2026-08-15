@@ -343,7 +343,7 @@ export const MomentReviewPanel = forwardRef<
             style={{ opacity: isSaving ? 0.72 : 1 }}
           >
             {isSaving ? (
-              <ActivityIndicator color="#050916" />
+              <ActivityIndicator color="#4A1D96" />
             ) : (
               <AppText className="font-semibold text-soundlog-inverse">
                 이 리캡 저장하기

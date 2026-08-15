@@ -120,7 +120,7 @@ export function TravelStatusCard({
             className="h-11 flex-1 items-center justify-center rounded-full bg-soundlog-warning"
             onPress={onEndTravel}
           >
-            <AppText className="text-sm font-semibold text-black">여행 종료</AppText>
+            <AppText className="text-sm font-semibold text-soundlog-inverse">여행 종료</AppText>
           </Pressable>
           <Pressable
             accessibilityRole="button"
@@ -179,7 +179,7 @@ export function TravelStatusCard({
   return (
     <View className="rounded-[30px] border border-white/10 bg-white/10 p-6">
       <View className="h-14 w-14 items-center justify-center rounded-full bg-soundlog-lime">
-        <Feather color="#090515" name="navigation" size={24} />
+        <Feather color="#4A1D96" name="navigation" size={24} />
       </View>
       <AppText className="mt-6 text-[30px] font-semibold leading-9 text-white">
         여행을 시작해보세요

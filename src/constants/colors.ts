@@ -40,6 +40,6 @@ export const colors = {
     primary: '#FFFFFF',
     secondary: '#ACACAC',
     muted: 'rgba(255,255,255,0.58)',
-    inverse: '#090515',
+    inverse: '#4A1D96',
   },
 } as const;

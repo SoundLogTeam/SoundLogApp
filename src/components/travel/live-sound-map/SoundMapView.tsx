@@ -65,10 +65,10 @@ const markerPalette: Record<
   },
   me: {
     background: '#B7E628',
-    border: '#090515',
-    icon: '#090515',
+    border: '#4A1D96',
+    icon: '#4A1D96',
     labelBackground: 'rgba(9,5,21,0.18)',
-    labelText: '#090515',
+    labelText: '#4A1D96',
   },
   nearby: {
     background: '#2A1A15',

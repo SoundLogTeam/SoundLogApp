@@ -54,7 +54,7 @@ export function TravelModeSuggestionSheet({
             onPress={onStartTravelMode}
             style={{ backgroundColor: '#F5A451' }}
           >
-            <AppText className="text-sm font-semibold" style={{ color: '#07101E' }}>
+            <AppText className="text-sm font-semibold" style={{ color: '#4A1D96' }}>
               Travel Mode 시작
             </AppText>
           </Pressable>

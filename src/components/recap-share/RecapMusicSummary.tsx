@@ -131,7 +131,7 @@ export function RecapMusicSummary({
               className="h-10 w-10 items-center justify-center rounded-full bg-soundlog-lime"
               onPress={onOpenMap}
             >
-              <Feather color="#050916" name="map" size={17} />
+              <Feather color="#4A1D96" name="map" size={17} />
             </Pressable>
           ) : null
         }

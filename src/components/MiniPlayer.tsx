@@ -500,8 +500,8 @@ export function MiniPlayer() {
                 className="h-12 flex-row items-center justify-center gap-2 rounded-full bg-white"
                 onPress={handleCaptureMoment}
               >
-                <Feather color="#050916" name="camera" size={17} />
-                <AppText className="text-sm font-semibold text-[#050916]">
+                <Feather color="#4A1D96" name="camera" size={17} />
+                <AppText className="text-sm font-semibold text-soundlog-inverse">
                   이 곡으로 기록
                 </AppText>
               </Pressable>
