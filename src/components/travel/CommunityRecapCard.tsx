@@ -860,7 +860,7 @@ export function CommunityRecapCard({
               onPress={() => void handleCreateRoom()}
               style={{ opacity: !canUseRoom || isCreatingRoom ? 0.55 : 1 }}
             >
-              <Feather color="#050916" name="plus" size={16} />
+              <Feather color="#4A1D96" name="plus" size={16} />
               <AppText className="text-sm font-semibold text-soundlog-inverse">
                 {isCreatingRoom ? "여행방 생성 중" : "새 여행방 만들기"}
               </AppText>

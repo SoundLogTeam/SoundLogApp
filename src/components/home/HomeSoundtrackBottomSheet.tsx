@@ -309,7 +309,7 @@ export function HomeSoundtrackBottomSheet({
                 className="mt-4 min-h-11 items-center justify-center rounded-full bg-[#B7E628] px-6"
                 onPress={onRetry}
               >
-                <AppText className="text-sm font-semibold text-[#07101E]">
+                <AppText className="text-sm font-semibold text-soundlog-inverse">
                   다시 시도
                 </AppText>
               </Pressable>

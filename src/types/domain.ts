@@ -61,6 +61,8 @@ export type Track = {
 };
 
 export type FeaturedPlaylist = {
+  backgroundImageUrl?: string;
+  coverImageUrl?: string;
   id: string;
   regionName: string;
   description: string;

@@ -1,4 +1,6 @@
-import { Pressable, View } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { Chip } from '@/components/Chip';
@@ -17,7 +19,21 @@ export function FeaturedPlaylistCard({ onPress, playlist }: FeaturedPlaylistCard
       className="mr-4 h-[260px] w-[180px] justify-end overflow-hidden rounded-[8px] border border-white/10 bg-soundlog-card p-4"
       onPress={() => onPress(playlist)}
     >
-      <View className="absolute inset-0 bg-black/10" />
+      {playlist.coverImageUrl ? (
+        <Image
+          accessibilityIgnoresInvertColors
+          contentFit="cover"
+          source={{ uri: playlist.coverImageUrl }}
+          style={StyleSheet.absoluteFill}
+          transition={250}
+        />
+      ) : null}
+      <LinearGradient
+        colors={['rgba(5,9,22,0.04)', 'rgba(5,9,22,0.88)']}
+        end={{ x: 0.5, y: 1 }}
+        start={{ x: 0.5, y: 0.2 }}
+        style={StyleSheet.absoluteFill}
+      />
       <View className="absolute left-3 top-4 flex-row gap-2">
         <Chip label={`${playlist.trackCount}곡`} size="small" />
         <Chip label={playlist.durationText} size="small" />

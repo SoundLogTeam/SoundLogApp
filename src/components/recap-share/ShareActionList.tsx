@@ -14,11 +14,11 @@ const actions: Array<{
   {
     backgroundColor: '#B7E628',
     icon: 'download',
-    iconColor: '#050916',
+    iconColor: '#4A1D96',
     id: 'save',
     label: '이미지 저장',
     loadingLabel: '저장 중',
-    textColor: '#050916',
+    textColor: '#4A1D96',
   },
   {
     backgroundColor: 'rgba(255,255,255,0.1)',

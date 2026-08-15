@@ -48,7 +48,7 @@ export function PlaylistMusicFilter({
             />
             <AppText
               className={`text-xs font-semibold ${
-                isSelected ? 'text-[#050916]' : 'text-white/85'
+                isSelected ? 'text-soundlog-inverse' : 'text-white/85'
               }`}
               numberOfLines={1}
             >

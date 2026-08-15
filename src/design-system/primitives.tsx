@@ -42,14 +42,14 @@ const buttonVariantClass: Record<SoundlogButtonVariant, string> = {
 };
 
 const buttonTextClass: Record<SoundlogButtonVariant, string> = {
-  danger: 'text-black',
+  danger: 'text-soundlog-inverse',
   ghost: 'text-white',
   primary: 'text-soundlog-inverse',
   secondary: 'text-white',
 };
 
 function getButtonIconColor(variant: SoundlogButtonVariant) {
-  return variant === 'primary' || variant === 'danger' ? '#090515' : '#FFFFFF';
+  return variant === 'primary' || variant === 'danger' ? '#4A1D96' : '#FFFFFF';
 }
 
 export function SoundlogButton({

@@ -511,7 +511,7 @@ export function RecapMapSection({
                   </View>
                   <View className="h-11 w-11 items-center justify-center rounded-full bg-soundlog-lime">
                     <Feather
-                      color="#050916"
+                      color="#4A1D96"
                       name={sessionStatus === 'active' ? 'camera' : 'navigation'}
                       size={18}
                     />
@@ -626,7 +626,7 @@ export function RecapMapSection({
               </View>
               <View className="h-10 w-10 items-center justify-center rounded-full bg-soundlog-lime">
                 <Feather
-                  color="#050916"
+                  color="#4A1D96"
                   name={sessionStatus === 'active' ? 'camera' : 'navigation'}
                   size={17}
                 />

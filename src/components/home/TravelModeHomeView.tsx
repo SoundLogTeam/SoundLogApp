@@ -309,8 +309,8 @@ function TravelStartPanel({
           className="mt-5 h-[132px] w-[132px] self-center items-center justify-center rounded-full bg-soundlog-lime"
           onPress={onStartTravel}
         >
-          <Feather color="#050916" name="navigation" size={24} />
-          <AppText className="mt-2 text-[24px] font-semibold text-[#050916]">
+          <Feather color="#4A1D96" name="navigation" size={24} />
+          <AppText className="mt-2 text-[24px] font-semibold text-soundlog-inverse">
             여행 시작
           </AppText>
         </Pressable>
@@ -384,7 +384,7 @@ function ActiveRecommendationPanel({
         <View className="min-w-0 flex-1">
           <View className="flex-row flex-wrap gap-2">
             <View className="rounded-full bg-soundlog-lime px-3 py-1.5">
-              <AppText className="text-[11px] font-semibold text-[#050916]">
+              <AppText className="text-[11px] font-semibold text-soundlog-inverse">
                 여행 기록 중
               </AppText>
             </View>
@@ -444,13 +444,13 @@ function ActiveRecommendationPanel({
           onPress={needsLocation && !playlist ? onRefreshLocation : onOpenPlaylist}
         >
           <Feather
-            color={playlistButtonDisabled ? 'rgba(255,255,255,0.42)' : '#050916'}
+            color={playlistButtonDisabled ? 'rgba(255,255,255,0.42)' : '#4A1D96'}
             name={needsLocation && !playlist ? 'crosshair' : 'disc'}
             size={16}
           />
           <AppText
             className={`text-xs font-semibold ${
-              playlistButtonDisabled ? 'text-white/40' : 'text-[#050916]'
+              playlistButtonDisabled ? 'text-white/40' : 'text-soundlog-inverse'
             }`}
           >
             {isOpeningPlaylist ? '여는 중' : needsLocation && !playlist ? '위치 잡기' : '곡 보기'}
@@ -493,8 +493,8 @@ function ActiveRecommendationPanel({
           className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-full bg-soundlog-warning"
           onPress={onEndTravel}
         >
-          <Feather color="#050916" name="stop-circle" size={14} />
-          <AppText className="text-sm font-semibold text-[#050916]">여행 종료</AppText>
+          <Feather color="#4A1D96" name="stop-circle" size={14} />
+          <AppText className="text-sm font-semibold text-soundlog-inverse">여행 종료</AppText>
         </Pressable>
       </View>
     </View>

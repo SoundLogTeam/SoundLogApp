@@ -40,7 +40,7 @@ export function RecapTemplateSelector({
           >
             <AppText
               className={`text-xs font-semibold ${
-                isSelected ? 'text-soundlog-bg' : 'text-white/65'
+                isSelected ? 'text-soundlog-inverse' : 'text-white/65'
               }`}
             >
               {option.label}

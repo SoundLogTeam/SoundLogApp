@@ -517,7 +517,7 @@ export const MomentPhotoCanvas = forwardRef<
           {isMapTemplate ? (
             <View className="flex-row items-center gap-3">
               <View className="h-8 w-8 items-center justify-center rounded-full bg-soundlog-lime">
-                <Feather color="#050916" name="map-pin" size={15} />
+                <Feather color="#4A1D96" name="map-pin" size={15} />
               </View>
               <View className="min-w-0 flex-1">
                 <AppText className="text-sm font-semibold text-white">
@@ -651,7 +651,7 @@ function MapMusicPin({ track }: { track?: Track }) {
               { backgroundColor: track?.fallbackColor ?? '#B7E628' },
             ]}
           >
-            <Feather color="#050916" name="music" size={16} />
+            <Feather color="#4A1D96" name="music" size={16} />
           </View>
         )}
         <View style={styles.mapMusicText}>
@@ -665,7 +665,7 @@ function MapMusicPin({ track }: { track?: Track }) {
       </View>
       <View style={styles.mapPinConnector} />
       <View style={styles.mapPinHead}>
-        <Feather color="#050916" name="music" size={15} />
+        <Feather color="#4A1D96" name="music" size={15} />
       </View>
       <View style={styles.mapPinPoint} />
     </View>
@@ -977,7 +977,7 @@ function StickerSegment<T extends string,>({
             <AppText
               className="text-xs font-semibold"
               style={{
-                color: selected ? '#050916' : 'rgba(255,255,255,0.6)',
+                color: selected ? '#4A1D96' : 'rgba(255,255,255,0.6)',
               }}
             >
               {option.label}
@@ -1065,12 +1065,12 @@ function getStickerThemeStyle(theme: StickerTheme) {
         backgroundColor: 'rgba(183,230,40,0.94)',
         borderColor: 'rgba(255,255,255,0.42)',
       },
-      dateText: { color: 'rgba(5,9,22,0.72)' },
+      dateText: { color: 'rgba(74,29,150,0.82)' },
       divider: { backgroundColor: 'rgba(5,9,22,0.28)' },
       iconBubble: { backgroundColor: 'rgba(5,9,22,0.13)' },
-      iconColor: 'rgba(5,9,22,0.78)',
-      metaText: { color: 'rgba(5,9,22,0.66)' },
-      timeText: { color: '#050916' },
+      iconColor: 'rgba(74,29,150,0.9)',
+      metaText: { color: 'rgba(74,29,150,0.78)' },
+      timeText: { color: '#4A1D96' },
     };
   }
 
@@ -1080,12 +1080,12 @@ function getStickerThemeStyle(theme: StickerTheme) {
         backgroundColor: 'rgba(255,255,255,0.92)',
         borderColor: 'rgba(255,255,255,0.66)',
       },
-      dateText: { color: 'rgba(5,9,22,0.6)' },
+      dateText: { color: 'rgba(74,29,150,0.76)' },
       divider: { backgroundColor: 'rgba(5,9,22,0.22)' },
       iconBubble: { backgroundColor: 'rgba(5,9,22,0.08)' },
-      iconColor: 'rgba(5,9,22,0.64)',
-      metaText: { color: 'rgba(5,9,22,0.5)' },
-      timeText: { color: '#050916' },
+      iconColor: 'rgba(74,29,150,0.82)',
+      metaText: { color: 'rgba(74,29,150,0.68)' },
+      timeText: { color: '#4A1D96' },
     };
   }
 

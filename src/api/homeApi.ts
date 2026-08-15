@@ -39,7 +39,7 @@ export const homeApi = {
       const playlists = await requestApi<FeaturedPlaylist[]>('/v1/home/featured-playlists', {
         query: {
           lat: params?.location?.lat,
-          limit: 10,
+          limit: 20,
           lng: params?.location?.lng,
           locationRecommendationEnabled: params?.locationRecommendationEnabled ?? false,
           placeId: params?.place?.id,

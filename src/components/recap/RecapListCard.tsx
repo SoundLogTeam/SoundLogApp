@@ -59,7 +59,7 @@ export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
             </AppText>
           </View>
           <View className="h-10 w-10 items-center justify-center rounded-full bg-white/90">
-            <Feather color="#050916" name="arrow-up-right" size={18} />
+            <Feather color="#4A1D96" name="arrow-up-right" size={18} />
           </View>
         </View>
 

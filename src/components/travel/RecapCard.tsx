@@ -55,7 +55,7 @@ export function RecapCard({ item, onPress }: RecapCardProps) {
         </View>
 
         <View className="h-9 w-9 items-center justify-center rounded-full bg-soundlog-lime">
-          <Feather color="#090515" name="arrow-up-right" size={16} />
+          <Feather color="#4A1D96" name="arrow-up-right" size={16} />
         </View>
       </View>
     </Pressable>

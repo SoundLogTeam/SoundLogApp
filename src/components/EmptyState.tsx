@@ -22,7 +22,7 @@ export function EmptyState({ action, description, title }: EmptyStateProps) {
       ) : null}
       {action ? (
         <Pressable className="mt-6 rounded-full bg-white px-5 py-3" onPress={action.onPress}>
-          <AppText className="font-semibold text-[#050916]">{action.label}</AppText>
+          <AppText className="font-semibold text-soundlog-inverse">{action.label}</AppText>
         </Pressable>
       ) : null}
     </View>

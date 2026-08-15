@@ -69,13 +69,13 @@ export function MusicLogCard({
         </View>
 
         <AppText
-          className={`text-[12px] font-semibold ${hasImage ? 'text-white' : 'text-[#111827]'}`}
+          className={`text-[12px] font-semibold ${hasImage ? 'text-white' : 'text-soundlog-inverse'}`}
           numberOfLines={1}
         >
           {item.placeName}
         </AppText>
         <AppText
-          className={`text-[10px] ${hasImage ? 'text-white/70' : 'text-[#4b5563]'}`}
+          className={`text-[10px] ${hasImage ? 'text-white/70' : 'text-[#6D42B8]'}`}
           numberOfLines={1}
         >
           {item.trackTitle}

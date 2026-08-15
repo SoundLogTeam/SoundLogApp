@@ -21,7 +21,7 @@ module.exports = {
           lime: '#B7E628',
           player: '#45343D',
           warning: '#FF8A3D',
-          inverse: '#090515',
+          inverse: '#4A1D96',
         },
       },
       opacity: {

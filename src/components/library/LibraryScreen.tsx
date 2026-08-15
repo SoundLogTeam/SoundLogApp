@@ -278,7 +278,7 @@ export function LibraryScreen() {
                 <AppText
                   className="text-sm font-semibold"
                   style={{
-                    color: isSelected ? "#050916" : "rgba(255,255,255,0.65)",
+                    color: isSelected ? "#4A1D96" : "rgba(255,255,255,0.65)",
                   }}
                 >
                   {tab.label}

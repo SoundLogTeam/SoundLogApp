@@ -535,7 +535,7 @@ function RecapMapTemplate({ recap }: { recap: RecapShare }) {
           style={pinPositions[index % pinPositions.length]}
         >
           <View className="h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-[#B7E628]">
-            <AppText className="text-[11px] font-semibold text-[#050916]">
+            <AppText className="text-[11px] font-semibold text-soundlog-inverse">
               {index + 1}
             </AppText>
           </View>
@@ -620,10 +620,10 @@ function getRecapMusicStickerThemeStyle(theme: RecapMusicStickerTheme) {
         borderColor: 'rgba(255,255,255,0.42)',
       },
       iconBubble: { backgroundColor: 'rgba(5,9,22,0.14)' },
-      iconColor: '#050916',
-      metaText: { color: 'rgba(5,9,22,0.62)' },
-      primaryText: { color: '#050916' },
-      secondaryText: { color: 'rgba(5,9,22,0.68)' },
+      iconColor: '#4A1D96',
+      metaText: { color: 'rgba(74,29,150,0.76)' },
+      primaryText: { color: '#4A1D96' },
+      secondaryText: { color: 'rgba(74,29,150,0.82)' },
     };
   }
 
@@ -634,10 +634,10 @@ function getRecapMusicStickerThemeStyle(theme: RecapMusicStickerTheme) {
         borderColor: 'rgba(255,255,255,0.66)',
       },
       iconBubble: { backgroundColor: 'rgba(5,9,22,0.08)' },
-      iconColor: 'rgba(5,9,22,0.72)',
-      metaText: { color: 'rgba(5,9,22,0.52)' },
-      primaryText: { color: '#050916' },
-      secondaryText: { color: 'rgba(5,9,22,0.62)' },
+      iconColor: 'rgba(74,29,150,0.84)',
+      metaText: { color: 'rgba(74,29,150,0.7)' },
+      primaryText: { color: '#4A1D96' },
+      secondaryText: { color: 'rgba(74,29,150,0.76)' },
     };
   }
 
