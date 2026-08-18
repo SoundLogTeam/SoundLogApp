@@ -3,11 +3,12 @@
 const apiOrigin = process.env.SOUNDLOG_API_ORIGIN?.replace(/\/+$/, '');
 const staleOrigins = new Set([
   'http://52.79.185.121:4000',
+  'https://api.soundlog.shop',
 ]);
 
 if (!apiOrigin) {
   console.error(
-    'SOUNDLOG_API_ORIGIN is required for Vercel builds. Set it to the current SoundLogServer origin, for example https://api.soundlog.shop.',
+    'SOUNDLOG_API_ORIGIN is required for Vercel builds. Set it to the current SoundLogServer origin, for example https://api.soundlog.p-e.kr.',
   );
   process.exit(1);
 }

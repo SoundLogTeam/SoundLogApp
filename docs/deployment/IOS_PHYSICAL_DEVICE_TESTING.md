@@ -67,7 +67,7 @@ xcrun devicectl list devices
 
 ### `127.0.0.1`을 사용하면 안 되는 이유
 
-iPhone에서 `127.0.0.1`은 Mac이 아니라 **iPhone 자신**입니다. `.env.local`의 아래 값은 시뮬레이터용이며 실기기에서는 서버에 도달하지 못합니다.
+iPhone에서 `127.0.0.1`은 Mac이 아니라 **iPhone 자신**입니다. 로컬 서버를 직접 테스트하려고 아래 값을 임시로 사용하면 실기기에서는 서버에 도달하지 못합니다.
 
 ```env
 EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=http://127.0.0.1:4000
@@ -84,6 +84,8 @@ ipconfig getifaddr en0
 ```text
 http://172.30.1.99:4000
 ```
+
+Expo SDK 56 개발 실행에서는 `.env.local`이 셸에 입력한 같은 이름의 환경변수보다 우선합니다. 로컬 서버를 테스트할 때는 `.env.local`의 API와 업로드 주소를 Mac의 LAN 주소로 임시 변경해야 합니다. 테스트가 끝나면 두 값을 `https://api.soundlog.p-e.kr`로 복구합니다.
 
 ### 서버 실행 및 확인
 
@@ -109,13 +111,17 @@ iPhone Safari에서도 같은 헬스 체크 URL을 열 수 있어야 합니다. 
 
 ## 5. iPhone에 앱 설치
 
-앱 디렉터리에서 Mac의 LAN IP를 주입해 개발 빌드를 설치합니다.
+앱 디렉터리의 `.env.local`에 Mac의 LAN IP를 임시로 설정합니다.
+
+```dotenv
+EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=http://<MAC_LAN_IP>:4000
+EXPO_PUBLIC_SOUNDLOG_UPLOAD_ORIGIN=http://<MAC_LAN_IP>:4000
+```
+
+그다음 개발 빌드를 설치합니다.
 
 ```bash
 cd /Users/manwook-han/Desktop/hmw/code/apps/soundlog/soundlog
-
-EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server \
-EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=http://<MAC_LAN_IP>:4000 \
 npx expo run:ios --device
 ```
 
@@ -124,8 +130,6 @@ npx expo run:ios --device
 앱이 한 번 설치된 뒤 JavaScript 코드만 수정할 때는 네이티브 재빌드 없이 Metro를 다시 연결할 수 있습니다.
 
 ```bash
-EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server \
-EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=http://<MAC_LAN_IP>:4000 \
 npx expo start --dev-client --lan
 ```
 
@@ -136,16 +140,16 @@ LAN 연결이 불안정하면 Metro에만 `--tunnel`을 사용할 수 있습니�
 배포 API가 정상일 때는 다음 주소를 사용합니다.
 
 ```text
-https://api.soundlog.shop
+https://api.soundlog.p-e.kr
 ```
 
 앱 실행 전에 먼저 상태를 확인합니다.
 
 ```bash
-curl https://api.soundlog.shop/v1/health
+curl https://api.soundlog.p-e.kr/v1/health
 ```
 
-DNS 오류나 타임아웃이 발생하면 배포 API 테스트를 중단하고 로컬 LAN API를 사용하거나 도메인과 GCP API 상태를 먼저 복구합니다. 도메인 장애 중에 GCP IP를 앱에 임시 하드코딩하지 않습니다.
+DNS 오류나 타임아웃이 발생하면 배포 API 테스트를 중단하고 로컬 LAN API를 사용하거나 운영 API 상태를 먼저 복구합니다. 도메인 장애 중에 서버 IP를 앱에 임시 하드코딩하지 않습니다.
 
 ## 7. EAS 내부 배포
 
@@ -158,7 +162,7 @@ npx eas-cli device:create
 npm run build:dev:ios
 ```
 
-빌드가 완료되면 표시되는 링크나 QR 코드로 iPhone에 설치합니다. 현재 `development` profile은 `https://api.soundlog.shop`을 직접 사용하므로 도메인 상태가 정상이어야 전체 기능을 테스트할 수 있습니다.
+빌드가 완료되면 표시되는 링크나 QR 코드로 iPhone에 설치합니다. 현재 `development` profile은 `https://api.soundlog.p-e.kr`을 직접 사용하므로 도메인 상태가 정상이어야 전체 기능을 테스트할 수 있습니다.
 
 설치 후 로컬 코드를 연결하려면 다음을 실행합니다.
 
