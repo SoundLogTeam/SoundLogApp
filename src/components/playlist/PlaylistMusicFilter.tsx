@@ -34,7 +34,7 @@ export function PlaylistMusicFilter({
             key={filter}
             onPress={() => onSelectMoodFilter(filter)}
             style={{
-              backgroundColor: isSelected ? '#B7E628' : 'rgba(255, 255, 255, 0.09)',
+              backgroundColor: isSelected ? '#4A1D96' : 'rgba(255, 255, 255, 0.09)',
               borderColor: isSelected ? '#B7E628' : 'rgba(255, 255, 255, 0.22)',
             }}
           >

@@ -32,7 +32,7 @@ export function RecapShareErrorState({ onRetry }: RecapShareErrorStateProps) {
       {onRetry ? (
         <Pressable
           accessibilityRole="button"
-          className="mt-4 h-12 items-center justify-center rounded-xl bg-soundlog-lime px-5"
+          className="mt-4 h-12 items-center justify-center rounded-xl border border-soundlog-lime/45 bg-soundlog-action px-5"
           onPress={onRetry}
         >
           <AppText className="font-semibold text-soundlog-inverse">다시 시도</AppText>

@@ -35,7 +35,7 @@ export function PlaylistErrorState({ onRetry }: PlaylistErrorStateProps) {
       {onRetry ? (
         <Pressable
           accessibilityRole="button"
-          className="mt-6 min-h-12 justify-center rounded-xl bg-soundlog-lime px-5"
+          className="mt-6 min-h-12 justify-center rounded-xl border border-soundlog-lime/45 bg-soundlog-action px-5"
           onPress={onRetry}
         >
           <AppText className="text-center font-semibold text-soundlog-inverse">

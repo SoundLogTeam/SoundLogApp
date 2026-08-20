@@ -273,7 +273,7 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
                         selected,
                       }}
                       className={`min-h-[38px] min-w-[92px] items-center justify-center rounded-full px-4 ${
-                        selected ? "bg-soundlog-lime" : "bg-transparent"
+                        selected ? "bg-soundlog-selected" : "bg-transparent"
                       }`}
                       disabled={isUpdatingVisibility}
                       key={option}

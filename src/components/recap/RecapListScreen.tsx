@@ -193,7 +193,7 @@ function LogGridCard({
           accessibilityRole="button"
           accessibilityState={{ disabled: isUpdating }}
           className={`absolute right-2 top-2 rounded-full px-2 py-1 ${
-            visibility === "public" ? "bg-soundlog-lime" : "bg-black/48"
+            visibility === "public" ? "bg-soundlog-selected" : "bg-black/48"
           }`}
           disabled={isUpdating}
           onPress={(event) => onChangeVisibility(entry, nextVisibility, event)}

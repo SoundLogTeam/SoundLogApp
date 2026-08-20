@@ -37,7 +37,7 @@ export default function AuthCallbackScreen() {
 
         <Pressable
           accessibilityRole="button"
-          className="mt-auto h-14 items-center justify-center rounded-xl bg-soundlog-lime"
+          className="mt-auto h-14 items-center justify-center rounded-xl border border-soundlog-lime/45 bg-soundlog-action"
           onPress={() => router.replace('/auth/login' as never)}
         >
           <AppText className="text-sm font-semibold text-soundlog-inverse">

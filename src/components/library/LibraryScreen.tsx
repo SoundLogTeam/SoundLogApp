@@ -272,13 +272,13 @@ export function LibraryScreen() {
                 className="h-10 flex-1 items-center justify-center rounded-full"
                 onPress={() => selectTab(tab.id)}
                 style={{
-                  backgroundColor: isSelected ? "#ffffff" : "transparent",
+                  backgroundColor: isSelected ? "#4A1D96" : "transparent",
                 }}
               >
                 <AppText
                   className="text-sm font-semibold"
                   style={{
-                    color: isSelected ? "#4A1D96" : "rgba(255,255,255,0.65)",
+                    color: isSelected ? "#FFFFFF" : "rgba(255,255,255,0.65)",
                   }}
                 >
                   {tab.label}

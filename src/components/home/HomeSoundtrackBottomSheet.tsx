@@ -306,7 +306,7 @@ export function HomeSoundtrackBottomSheet({
               </AppText>
               <Pressable
                 accessibilityRole="button"
-                className="mt-4 min-h-11 items-center justify-center rounded-full bg-[#B7E628] px-6"
+                className="mt-4 min-h-11 items-center justify-center rounded-full border border-soundlog-lime/45 bg-soundlog-action px-6"
                 onPress={onRetry}
               >
                 <AppText className="text-sm font-semibold text-soundlog-inverse">

@@ -52,9 +52,9 @@ export function TravelModeSuggestionSheet({
             accessibilityRole="button"
             className="h-12 flex-1 items-center justify-center rounded-full"
             onPress={onStartTravelMode}
-            style={{ backgroundColor: '#F5A451' }}
+            style={{ backgroundColor: '#4A1D96' }}
           >
-            <AppText className="text-sm font-semibold" style={{ color: '#4A1D96' }}>
+            <AppText className="text-sm font-semibold text-white">
               Travel Mode 시작
             </AppText>
           </Pressable>

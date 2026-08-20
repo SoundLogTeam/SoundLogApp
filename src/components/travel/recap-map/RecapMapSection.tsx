@@ -386,7 +386,7 @@ export function RecapMapSection({
             <View
               className={`h-8 w-full items-center justify-center rounded-full border px-2 ${
                 selected
-                  ? 'border-soundlog-lime bg-soundlog-lime'
+                  ? 'border-soundlog-lime bg-soundlog-selected'
                   : 'border-white/22 bg-black/68'
               }`}
             >

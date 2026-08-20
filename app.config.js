@@ -182,9 +182,13 @@ const baseConfig = {
   },
   extra: {
     legal: {
-      privacyPolicyUrl: process.env.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL,
+      privacyPolicyUrl:
+        process.env.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL ??
+        'https://api.soundlog.p-e.kr/legal/privacy',
       supportEmail: process.env.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL ?? 'support@soundlog.shop',
-      termsUrl: process.env.EXPO_PUBLIC_SOUNDLOG_TERMS_URL,
+      termsUrl:
+        process.env.EXPO_PUBLIC_SOUNDLOG_TERMS_URL ??
+        'https://api.soundlog.p-e.kr/legal/terms',
     },
     eas: {
       projectId: '4b07627b-36bf-463d-a15e-b4839022ecbb',

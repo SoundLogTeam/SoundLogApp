@@ -61,7 +61,7 @@ export function RecapTravelSummaryCard({ recap }: { recap: RecapShare }) {
   return (
     <View className="w-full">
       <SectionTitle title="여행 이동 기록" />
-      <AppText className="mt-2 text-sm leading-6 text-white/52" numberOfLines={2}>
+      <AppText className="mt-2 text-sm leading-6 text-white/50" numberOfLines={2}>
         {summary.startPlaceName}에서 {summary.endPlaceName}까지
       </AppText>
       <SettingsRow icon="clock" label="총 여행 시간" rightText={durationLabel} />

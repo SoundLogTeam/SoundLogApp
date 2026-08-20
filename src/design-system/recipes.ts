@@ -27,10 +27,10 @@ export const soundlogRecipes = {
     small: 'min-h-[28px] px-3',
   },
   button: {
-    primary: 'h-14 items-center justify-center rounded-full bg-soundlog-lime',
+    primary: 'h-14 items-center justify-center rounded-full border border-soundlog-lime/45 bg-soundlog-action',
     secondary: 'h-14 items-center justify-center rounded-full border border-white/15',
-    compactPrimary: 'h-11 items-center justify-center rounded-full bg-soundlog-lime',
-    compactDanger: 'h-11 items-center justify-center rounded-full bg-soundlog-warning',
+    compactPrimary: 'h-11 items-center justify-center rounded-full border border-soundlog-lime/45 bg-soundlog-action',
+    compactDanger: 'h-11 items-center justify-center rounded-full bg-soundlog-danger',
     icon: 'h-11 w-11 items-center justify-center rounded-full bg-white/10',
   },
   control: {

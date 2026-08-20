@@ -273,7 +273,7 @@ export default function LoginScreen() {
 
           <Pressable
             accessibilityRole="button"
-            className="mt-2 min-h-[56px] items-center justify-center rounded-xl bg-soundlog-lime px-5"
+            className="mt-2 min-h-[56px] items-center justify-center rounded-xl border border-soundlog-lime/45 bg-soundlog-action px-5"
             disabled={isPending}
             onPress={() => {
               void handleSubmit();

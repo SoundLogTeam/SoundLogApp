@@ -55,9 +55,9 @@ Soundlog는 웹 서비스를 배포하지 않습니다. 운영 배포 대상은 
 본인 iPhone을 USB로 연결해 최신 코드를 직접 테스트할 때는 [iPhone 실기기 테스트 가이드](docs/deployment/IOS_PHYSICAL_DEVICE_TESTING.md)를 먼저 확인합니다. 실기기에서 `127.0.0.1`은 Mac이 아니라 iPhone 자신이므로, 로컬 서버를 사용할 때는 Mac의 LAN IP를 앱 빌드 환경변수로 지정해야 합니다.
 
 - API 및 ML: `https://api.soundlog.p-e.kr`
-- 개인정보 처리방침: `https://api.soundlog.shop/legal/privacy`
-- 서비스 이용약관: `https://api.soundlog.shop/legal/terms`
-- 고객지원: `support@soundlog.shop`
+- 개인정보 처리방침: `https://api.soundlog.p-e.kr/legal/privacy`
+- 서비스 이용약관: `https://api.soundlog.p-e.kr/legal/terms`
+- 고객지원: 실제 수신과 답장이 확인된 메일을 production EAS 환경에 설정
 - API source: `server`
 - auth: Soundlog 자체 이메일/비밀번호 로그인
 - iOS/Android: HTTPS API만 사용
@@ -80,7 +80,7 @@ Android 지인 테스트용 내부 배포 빌드는 아래 명령으로 생성�
 npx eas build --profile preview --platform android
 ```
 
-iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/TestFlight에 올릴 production profile도 현재는 `https://api.soundlog.p-e.kr`을 사용합니다. 개인정보 처리방침과 이용약관은 EAS 설정에서 기존 `api.soundlog.shop` 주소를 유지하지만 현재 기존 도메인은 DNS가 해석되지 않고 새 도메인의 공개 문서 경로도 404입니다. 심사 전에는 새 서버에 공개 문서를 배포하거나 기존 도메인의 DNS를 복구해야 합니다.
+iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/TestFlight에 올릴 production profile은 API와 개인정보 처리방침과 이용약관에 `https://api.soundlog.p-e.kr`을 사용합니다. 새 서버에 공개 문서 경로를 배포하고 실제 수신 가능한 고객지원 메일을 설정한 뒤 릴리스 검사를 통과해야 합니다.
 
 ## 문서
 

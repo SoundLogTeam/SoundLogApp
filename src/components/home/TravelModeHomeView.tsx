@@ -306,10 +306,10 @@ function TravelStartPanel({
 
         <Pressable
           accessibilityRole="button"
-          className="mt-5 h-[132px] w-[132px] self-center items-center justify-center rounded-full bg-soundlog-lime"
+          className="mt-5 h-[132px] w-[132px] self-center items-center justify-center rounded-full border border-soundlog-lime/50 bg-soundlog-action"
           onPress={onStartTravel}
         >
-          <Feather color="#4A1D96" name="navigation" size={24} />
+          <Feather color="#FFFFFF" name="navigation" size={24} />
           <AppText className="mt-2 text-[24px] font-semibold text-soundlog-inverse">
             여행 시작
           </AppText>
@@ -383,7 +383,7 @@ function ActiveRecommendationPanel({
       <View className="flex-row items-center justify-between gap-3">
         <View className="min-w-0 flex-1">
           <View className="flex-row flex-wrap gap-2">
-            <View className="rounded-full bg-soundlog-lime px-3 py-1.5">
+            <View className="rounded-full bg-soundlog-selected px-3 py-1.5">
               <AppText className="text-[11px] font-semibold text-soundlog-inverse">
                 여행 기록 중
               </AppText>
@@ -438,13 +438,13 @@ function ActiveRecommendationPanel({
         <Pressable
           accessibilityRole="button"
           className={`h-11 flex-row items-center justify-center gap-2 rounded-full px-4 ${
-            playlistButtonDisabled ? 'bg-white/10' : 'bg-soundlog-lime'
+            playlistButtonDisabled ? 'bg-white/10' : 'border border-soundlog-lime/45 bg-soundlog-action'
           }`}
           disabled={playlistButtonDisabled}
           onPress={needsLocation && !playlist ? onRefreshLocation : onOpenPlaylist}
         >
           <Feather
-            color={playlistButtonDisabled ? 'rgba(255,255,255,0.42)' : '#4A1D96'}
+            color={playlistButtonDisabled ? 'rgba(255,255,255,0.42)' : '#FFFFFF'}
             name={needsLocation && !playlist ? 'crosshair' : 'disc'}
             size={16}
           />
@@ -490,10 +490,10 @@ function ActiveRecommendationPanel({
         <Pressable
           accessibilityLabel="여행 모드 종료"
           accessibilityRole="button"
-          className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-full bg-soundlog-warning"
+          className="h-11 flex-1 flex-row items-center justify-center gap-2 rounded-full bg-soundlog-danger"
           onPress={onEndTravel}
         >
-          <Feather color="#4A1D96" name="stop-circle" size={14} />
+          <Feather color="#FFFFFF" name="stop-circle" size={14} />
           <AppText className="text-sm font-semibold text-soundlog-inverse">여행 종료</AppText>
         </Pressable>
       </View>
