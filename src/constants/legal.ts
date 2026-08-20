@@ -1,5 +1,5 @@
 export const SOUNDLOG_SUPPORT_EMAIL =
-  process.env.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL ?? 'support@soundlog.shop';
+  process.env.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL ?? 'hcy032020@gmail.com';
 
 export const SOUNDLOG_PRIVACY_URL =
   process.env.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL ??

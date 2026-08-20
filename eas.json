@@ -27,7 +27,7 @@
         "EXPO_PUBLIC_SOUNDLOG_API_BASE_URL": "https://api.soundlog.p-e.kr",
         "EXPO_PUBLIC_SOUNDLOG_API_SOURCE": "server",
         "EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL": "https://api.soundlog.p-e.kr/legal/privacy",
-        "EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL": "support@soundlog.shop",
+        "EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL": "hcy032020@gmail.com",
         "EXPO_PUBLIC_SOUNDLOG_TERMS_URL": "https://api.soundlog.p-e.kr/legal/terms",
         "EXPO_PUBLIC_SOUNDLOG_UPLOAD_ORIGIN": "https://api.soundlog.p-e.kr"
       }

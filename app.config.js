@@ -185,7 +185,7 @@ const baseConfig = {
       privacyPolicyUrl:
         process.env.EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL ??
         'https://api.soundlog.p-e.kr/legal/privacy',
-      supportEmail: process.env.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL ?? 'support@soundlog.shop',
+      supportEmail: process.env.EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL ?? 'hcy032020@gmail.com',
       termsUrl:
         process.env.EXPO_PUBLIC_SOUNDLOG_TERMS_URL ??
         'https://api.soundlog.p-e.kr/legal/terms',
