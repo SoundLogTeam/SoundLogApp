@@ -52,7 +52,7 @@ export function EndTravelConfirmModal({
             </Pressable>
             <Pressable
               accessibilityRole="button"
-              className="h-12 flex-1 items-center justify-center rounded-full bg-soundlog-lime"
+              className="h-12 flex-1 items-center justify-center rounded-full border border-soundlog-lime/45 bg-soundlog-action"
               disabled={isConfirming}
               onPress={onConfirm}
               style={{ opacity: isConfirming ? 0.7 : 1 }}

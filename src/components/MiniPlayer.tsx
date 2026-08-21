@@ -497,10 +497,10 @@ export function MiniPlayer() {
             <View className="mt-6">
               <Pressable
                 accessibilityRole="button"
-                className="h-12 flex-row items-center justify-center gap-2 rounded-full bg-white"
+                className="h-12 flex-row items-center justify-center gap-2 rounded-full border border-soundlog-lime/45 bg-soundlog-action"
                 onPress={handleCaptureMoment}
               >
-                <Feather color="#4A1D96" name="camera" size={17} />
+                <Feather color="#FFFFFF" name="camera" size={17} />
                 <AppText className="text-sm font-semibold text-soundlog-inverse">
                   이 곡으로 기록
                 </AppText>

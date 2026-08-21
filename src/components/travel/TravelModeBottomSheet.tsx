@@ -63,7 +63,7 @@ export function TravelModeBottomSheet({
                   accessibilityRole="button"
                   className={`min-h-[46px] flex-row items-center rounded-full border px-4 ${
                     selected
-                      ? 'border-soundlog-lime bg-soundlog-lime'
+                      ? 'border-soundlog-lime bg-soundlog-selected'
                       : 'border-white/10 bg-white/10'
                   }`}
                   onPress={() => onSelectMode(mode.value)}
@@ -84,7 +84,7 @@ export function TravelModeBottomSheet({
           <Pressable
             accessibilityRole="button"
             className={`mt-7 h-14 items-center justify-center rounded-full ${
-              selectedMode ? 'bg-soundlog-lime' : 'bg-white/12'
+              selectedMode ? 'border border-soundlog-lime/45 bg-soundlog-action' : 'bg-white/12'
             }`}
             disabled={!selectedMode}
             onPress={onStart}

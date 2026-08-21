@@ -12,13 +12,13 @@ const actions: Array<{
   textColor: string;
 }> = [
   {
-    backgroundColor: '#B7E628',
+    backgroundColor: '#4A1D96',
     icon: 'download',
-    iconColor: '#4A1D96',
+    iconColor: '#FFFFFF',
     id: 'save',
     label: '이미지 저장',
     loadingLabel: '저장 중',
-    textColor: '#4A1D96',
+    textColor: '#FFFFFF',
   },
   {
     backgroundColor: 'rgba(255,255,255,0.1)',

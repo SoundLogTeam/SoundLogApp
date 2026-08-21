@@ -358,7 +358,7 @@ export function RecapRouteMap({ recap }: { recap: RecapShare }) {
                 key={group.moments.map((moment) => moment.id).join(":")}
                 onPress={() => setSelectedMoments(group.moments)}
               >
-                <View className="h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-soundlog-lime">
+                <View className="h-9 w-9 items-center justify-center rounded-full border-2 border-soundlog-lime bg-soundlog-selected">
                   <AppText className="text-[11px] font-semibold text-soundlog-inverse">
                     {group.moments.length > 1 ? group.moments.length : index + 1}
                   </AppText>

@@ -38,7 +38,7 @@ export function MusicLogCard({
         accessibilityLabel={`${item.placeName}에서 들은 ${item.trackTitle} 리캡 열기`}
         accessibilityRole={onPress ? 'button' : undefined}
         className={`justify-end overflow-hidden rounded-[18px] p-3 ${
-          hasImage ? 'bg-black/40' : 'bg-[#f4f4f4]'
+          hasImage ? 'bg-black/40' : 'bg-[#251A4A]'
         }`}
         disabled={!onPress}
         onPress={onPress}
@@ -69,13 +69,13 @@ export function MusicLogCard({
         </View>
 
         <AppText
-          className={`text-[12px] font-semibold ${hasImage ? 'text-white' : 'text-soundlog-inverse'}`}
+          className="text-[12px] font-semibold text-white"
           numberOfLines={1}
         >
           {item.placeName}
         </AppText>
         <AppText
-          className={`text-[10px] ${hasImage ? 'text-white/70' : 'text-[#6D42B8]'}`}
+          className="text-[10px] text-white/70"
           numberOfLines={1}
         >
           {item.trackTitle}

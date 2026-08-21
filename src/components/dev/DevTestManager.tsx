@@ -121,16 +121,16 @@ function ManagerButton({
   onPress,
 }: ManagerButtonProps) {
   const backgroundColor = active
-    ? '#ffffff'
+    ? '#4A1D96'
     : destructive
       ? 'rgba(248,113,113,0.16)'
       : 'rgba(255,255,255,0.1)';
   const borderColor = active
-    ? '#ffffff'
+    ? '#8B72FF'
     : destructive
       ? 'rgba(248,113,113,0.28)'
       : 'rgba(255,255,255,0.12)';
-  const color = active ? '#4A1D96' : destructive ? '#fecaca' : 'rgba(255,255,255,0.78)';
+  const color = active ? '#FFFFFF' : destructive ? '#fecaca' : 'rgba(255,255,255,0.78)';
 
   return (
     <Pressable

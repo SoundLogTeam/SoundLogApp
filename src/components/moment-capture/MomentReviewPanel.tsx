@@ -189,7 +189,7 @@ export const MomentReviewPanel = forwardRef<
             <AppText className="mt-5 text-center text-[22px] font-semibold text-white">
               사진 없이 리캡을 만들어요
             </AppText>
-            <AppText className="mt-3 text-center text-sm leading-6 text-white/52">
+            <AppText className="mt-3 text-center text-sm leading-6 text-white/50">
               장소, 음악과 무드만으로도 저장할 수 있어요.
             </AppText>
           </View>
@@ -232,7 +232,7 @@ export const MomentReviewPanel = forwardRef<
                     accessibilityRole="button"
                     accessibilityState={{ disabled, selected }}
                     className={`min-h-11 flex-1 items-center justify-center rounded-full ${
-                      selected ? "bg-soundlog-lime" : "bg-transparent"
+                      selected ? "bg-soundlog-selected" : "bg-transparent"
                     }`}
                     disabled={disabled || isSaving}
                     key={option.value}
@@ -310,7 +310,7 @@ export const MomentReviewPanel = forwardRef<
                   accessibilityState={{ selected }}
                   className={`min-h-11 justify-center rounded-full border px-4 ${
                     selected
-                      ? "border-soundlog-lime bg-soundlog-lime"
+                      ? "border-soundlog-lime bg-soundlog-selected"
                       : "border-white/10 bg-white/[0.06]"
                   }`}
                   disabled={isSaving}
@@ -337,13 +337,13 @@ export const MomentReviewPanel = forwardRef<
             accessibilityLabel="이 리캡 저장하기"
             accessibilityRole="button"
             accessibilityState={{ busy: isSaving, disabled: isSaving }}
-            className="h-14 items-center justify-center rounded-xl bg-soundlog-lime"
+            className="h-14 items-center justify-center rounded-xl border border-soundlog-lime/45 bg-soundlog-action"
             disabled={isSaving}
             onPress={onSave}
             style={{ opacity: isSaving ? 0.72 : 1 }}
           >
             {isSaving ? (
-              <ActivityIndicator color="#4A1D96" />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <AppText className="font-semibold text-soundlog-inverse">
                 이 리캡 저장하기

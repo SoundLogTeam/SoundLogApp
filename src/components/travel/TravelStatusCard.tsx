@@ -117,7 +117,7 @@ export function TravelStatusCard({
         <View className="mt-3 flex-row gap-2">
           <Pressable
             accessibilityRole="button"
-            className="h-11 flex-1 items-center justify-center rounded-full bg-soundlog-warning"
+            className="h-11 flex-1 items-center justify-center rounded-full bg-soundlog-danger"
             onPress={onEndTravel}
           >
             <AppText className="text-sm font-semibold text-soundlog-inverse">여행 종료</AppText>
@@ -155,7 +155,7 @@ export function TravelStatusCard({
         <View className="mt-5 flex-row gap-3">
           <Pressable
             accessibilityRole="button"
-            className="h-14 flex-1 items-center justify-center rounded-full bg-soundlog-lime"
+            className="h-14 flex-1 items-center justify-center rounded-full border border-soundlog-lime/45 bg-soundlog-action"
             disabled={isCreatingRecap || momentCount === 0}
             onPress={onOpenRecap}
             style={{ opacity: isCreatingRecap || momentCount === 0 ? 0.62 : 1 }}
@@ -189,7 +189,7 @@ export function TravelStatusCard({
       </AppText>
       <Pressable
         accessibilityRole="button"
-        className="mt-7 h-14 items-center justify-center rounded-full bg-soundlog-lime"
+        className="mt-7 h-14 items-center justify-center rounded-full border border-soundlog-lime/45 bg-soundlog-action"
         onPress={onStartTravel}
       >
         <AppText className="text-base font-semibold text-soundlog-inverse">새 여행 시작</AppText>

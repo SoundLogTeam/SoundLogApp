@@ -68,7 +68,7 @@ const markerPalette: Record<
     border: '#4A1D96',
     icon: '#4A1D96',
     labelBackground: 'rgba(9,5,21,0.18)',
-    labelText: '#4A1D96',
+    labelText: '#FFFFFF',
   },
   nearby: {
     background: '#2A1A15',

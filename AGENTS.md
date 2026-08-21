@@ -19,6 +19,17 @@
 - API health checks and command-line diagnostics may support investigation, but they do not replace simulator verification and must not be reported as completed app testing.
 - Use a web target only for explicit web build or export compatibility work. Even then, do not use it for product acceptance testing unless the user's latest message explicitly overrides this rule.
 
+## Text Color
+
+- 기본 사용자 노출 텍스트와 버튼, 탭, 칩의 인터랙션 라벨은 흰색 또는 흰색 투명도 계열을 사용한다. 상태를 구분하는 의미 색상과 브랜드 강조 색상은 예외로 둔다.
+- `text-black`, 검정색, 진한 보라색 텍스트 값을 새로 추가하지 않는다.
+- 기본, 보조, 비활성 텍스트의 명도 차이는 검정색이나 회색 고정값이 아니라 `#FFFFFF` 또는 `rgba(255,255,255,alpha)`로 표현한다.
+- 밝은 강조 배경에서 검정색 텍스트로 대비를 해결하지 않는다. 흰색 텍스트가 읽히도록 배경과 테두리 대비를 조정한다.
+- `colors.text.inverse`와 `text-soundlog-inverse`는 흰색 의미를 유지한다.
+- 사용자에게 보이는 문자열은 React Native의 `Text`를 직접 사용하지 않고 기본 글자색이 흰색인 `AppText`를 사용한다.
+- `text-white/52`처럼 기본 Tailwind에 없는 투명도를 사용하면 `tailwind.config.js`의 opacity에도 같은 값을 선언해 검정색 기본값으로 떨어지지 않게 한다.
+- UI 변경 후 `text-black`, `color: 'black'`, `#000000`, `#4A1D96`가 텍스트 색상으로 추가되지 않았는지 검색한다. 그림자, 배경, 아이콘, 지도 스타일은 이 검사 대상이 아니다.
+
 ## Recap And Log Domain
 
 - Before changing Recap, Log, camera capture, travel mode, route tracking, map pins, visibility, or related API behavior, read `docs/product/RECAP_LOG_DOMAIN_MODEL.md`.

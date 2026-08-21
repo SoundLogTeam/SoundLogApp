@@ -33,7 +33,7 @@ export function RecapTemplateSelector({
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
             className={`min-h-[44px] flex-1 items-center justify-center rounded-full px-1 ${
-              isSelected ? 'bg-white' : 'bg-transparent'
+              isSelected ? 'bg-soundlog-selected' : 'bg-transparent'
             }`}
             key={option.id}
             onPress={() => onSelect(option.id)}

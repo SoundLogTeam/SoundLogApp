@@ -444,7 +444,7 @@ export function TravelRoomDetailScreen({
                 }
                 title={room.title}
               />
-              <AppText className="mt-2 text-sm leading-6 text-white/52">
+              <AppText className="mt-2 text-sm leading-6 text-white/50">
                 동행자의 사진, 곡과 메모를 모아 하나의 공동 리캡으로 정리해요.
               </AppText>
               <SettingsRow
@@ -471,7 +471,7 @@ export function TravelRoomDetailScreen({
               />
 
               {message ? (
-                <AppText className="ml-12 mt-2 text-xs leading-5 text-white/56">
+                <AppText className="ml-12 mt-2 text-xs leading-5 text-white/55">
                   {message}
                 </AppText>
               ) : null}
@@ -554,7 +554,7 @@ export function TravelRoomDetailScreen({
                           <View
                             className={`rounded px-2.5 py-1 ${
                               moment.status === "accepted"
-                                ? "bg-soundlog-lime"
+                                ? "bg-soundlog-selected"
                                 : "bg-white/10"
                             }`}
                           >

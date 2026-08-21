@@ -29,9 +29,9 @@ async function main() {
     addError('Missing vercel.mjs.');
   }
 
-  ['52.79.185.121', '54.226.62.131', 'api.soundlog.shop'].forEach((marker) => {
+  ['52.79.185.121', '54.226.62.131', 'api.soundlog.shop', 'api.soundlog.p-e.kr'].forEach((marker) => {
     if (configText.includes(marker)) {
-      addError(`vercel.mjs must not hard-code stale API origin ${marker}.`);
+      addError(`vercel.mjs must not hard-code API origin ${marker}.`);
     }
   });
 

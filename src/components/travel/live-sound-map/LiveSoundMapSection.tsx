@@ -190,7 +190,7 @@ export function LiveSoundMapSection({
     },
   }[liveStatus];
   const statusBadgeClassName = isLive
-    ? 'bg-soundlog-lime'
+    ? 'bg-soundlog-selected'
     : liveStatus === 'failed'
       ? 'bg-amber-300/15'
       : 'bg-white/10';
@@ -644,7 +644,7 @@ export function LiveSoundMapSection({
           {statusPillLabel ? (
             <View
               className={`rounded-full px-2.5 py-1 ${
-                isLive ? 'bg-soundlog-lime' : 'bg-white/10'
+                isLive ? 'bg-soundlog-selected' : 'bg-white/10'
               }`}
             >
               <AppText
@@ -669,7 +669,7 @@ export function LiveSoundMapSection({
               accessibilityState={{ selected }}
               className={`min-h-[44px] flex-1 basis-[92px] items-center justify-center rounded-full border px-3 ${
                 selected
-                  ? 'border-soundlog-lime bg-soundlog-lime'
+                  ? 'border-soundlog-lime bg-soundlog-selected'
                   : 'border-white/10 bg-white/10'
               }`}
               key={option.value}
@@ -734,7 +734,7 @@ export function LiveSoundMapSection({
                       <>
                         <Pressable
                           accessibilityRole="button"
-                          className="min-h-[38px] flex-1 items-center justify-center rounded-full bg-soundlog-lime px-3"
+                          className="min-h-[38px] flex-1 items-center justify-center rounded-full border border-soundlog-lime/45 bg-soundlog-action px-3"
                           disabled={isBusy}
                           onPress={() => void handleUpdateMateRequest(request, 'accept')}
                           style={{ opacity: isBusy ? 0.55 : 1 }}
@@ -825,7 +825,7 @@ export function LiveSoundMapSection({
             {matchModeTabs.map((label, index) => (
               <View
                 className={`rounded-full px-3 py-1.5 ${
-                  index === 0 ? 'bg-soundlog-lime' : 'bg-white/10'
+                  index === 0 ? 'bg-soundlog-selected' : 'bg-white/10'
                 }`}
                 key={label}
               >
@@ -868,7 +868,7 @@ export function LiveSoundMapSection({
                         {createProfileSummary(match)} · {match.pin.placeName ?? '대략 위치'} · 정확한 좌표 숨김
                       </AppText>
                     </View>
-                    <View className="rounded-full bg-soundlog-lime px-3 py-1.5">
+                    <View className="rounded-full bg-soundlog-selected px-3 py-1.5">
                       <AppText className="text-xs font-semibold text-soundlog-inverse">
                         {match.matchScore}%
                       </AppText>
@@ -900,7 +900,7 @@ export function LiveSoundMapSection({
                     <Pressable
                       accessibilityRole="button"
                       className={`min-h-[44px] items-center justify-center rounded-full px-3 ${
-                        disabled ? 'bg-white/10' : 'bg-soundlog-lime'
+                        disabled ? 'bg-white/10' : 'border border-soundlog-lime/45 bg-soundlog-action'
                       }`}
                       disabled={disabled}
                       onPress={() => void handleMateRequest(match)}

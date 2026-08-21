@@ -314,7 +314,7 @@ export function OnboardingScreen() {
           </View>
           <Pressable
             accessibilityRole="button"
-            className="h-14 items-center justify-center rounded-xl bg-soundlog-lime"
+            className="h-14 items-center justify-center rounded-xl border border-soundlog-lime/45 bg-soundlog-action"
             onPress={handleIntroPrimaryAction}
           >
             <AppText className="text-base font-semibold text-soundlog-inverse">
@@ -384,7 +384,7 @@ export function OnboardingScreen() {
                 accessibilityState={{ selected }}
                 className={`min-h-11 justify-center rounded-full border px-5 ${
                   selected
-                    ? 'border-soundlog-lime bg-soundlog-lime'
+                    ? 'border-soundlog-lime bg-soundlog-selected'
                     : 'border-white/10 bg-white/[0.06]'
                 }`}
                 key={option.label}
@@ -415,7 +415,7 @@ export function OnboardingScreen() {
                 accessibilityState={{ selected }}
                 className={`min-h-11 justify-center rounded-full border px-5 ${
                   selected
-                    ? 'border-soundlog-lime bg-soundlog-lime'
+                    ? 'border-soundlog-lime bg-soundlog-selected'
                     : 'border-white/10 bg-white/[0.06]'
                 }`}
                 key={mood}
@@ -463,7 +463,7 @@ export function OnboardingScreen() {
 
         <Pressable
           accessibilityRole="button"
-          className="h-14 items-center justify-center rounded-xl bg-soundlog-lime"
+          className="h-14 items-center justify-center rounded-xl border border-soundlog-lime/45 bg-soundlog-action"
           disabled={isSaving}
           onPress={() => handlePrimarySetup(locationRecommendationEnabled)}
           style={{ opacity: isSaving ? 0.55 : 1 }}

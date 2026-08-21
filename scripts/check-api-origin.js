@@ -3,9 +3,11 @@
 const errors = [];
 const apiOrigin = (process.argv[2] || process.env.SOUNDLOG_API_ORIGIN || '').replace(/\/+$/, '');
 let authHeaderPromise;
+let disposableAuthHeader;
+let shouldDeleteSmokeAccount = false;
 
 if (!apiOrigin) {
-  console.error('Usage: npm run check:api-origin -- https://api.soundlog.shop');
+  console.error('Usage: npm run check:api-origin -- https://api.soundlog.p-e.kr');
   process.exit(1);
 }
 
@@ -56,8 +58,11 @@ async function postJson(path, body) {
 
 async function createAuthHeader() {
   const { email, password } = createSmokeCredentials();
+  const usesConfiguredCredentials = Boolean(
+    process.env.SOUNDLOG_CHECK_EMAIL && process.env.SOUNDLOG_CHECK_PASSWORD,
+  );
 
-  if (process.env.SOUNDLOG_CHECK_EMAIL && process.env.SOUNDLOG_CHECK_PASSWORD) {
+  if (usesConfiguredCredentials) {
     try {
       const login = await postJson('/v1/auth/login', { email, password });
       return `Bearer ${login.data.accessToken}`;
@@ -70,9 +75,18 @@ async function createAuthHeader() {
     displayName: 'Soundlog API Check',
     email,
     password,
+    termsAccepted: true,
+    termsVersion: '2026-08-15',
   });
 
-  return `Bearer ${register.data.accessToken}`;
+  const authHeader = `Bearer ${register.data.accessToken}`;
+
+  if (!usesConfiguredCredentials) {
+    disposableAuthHeader = authHeader;
+    shouldDeleteSmokeAccount = true;
+  }
+
+  return authHeader;
 }
 
 async function getAuthHeader() {
@@ -162,6 +176,60 @@ async function verifyMusicMetadata() {
   }
 }
 
+async function verifyMlRecommendation() {
+  try {
+    const payload = await fetchAuthenticatedJson(
+      '/v1/recommendations/playlists?mood=%EC%9E%94%EC%9E%94%ED%95%9C&state=%EB%B0%94%EB%8B%A4&x=129.1186&y=35.1532',
+    );
+    const recommendation = payload?.data;
+
+    if (recommendation?.context?.source !== 'ml-recommendation') {
+      addError(
+        `/v1/recommendations/playlists did not return the ML source: ${JSON.stringify(
+          recommendation?.context ?? null,
+        )}`,
+      );
+    }
+
+    if (!Array.isArray(recommendation?.tracks) || recommendation.tracks.length === 0) {
+      addError('/v1/recommendations/playlists returned no recommended tracks.');
+    }
+
+    if (!recommendation?.coverImageUrl?.startsWith('https://')) {
+      addError('/v1/recommendations/playlists returned no HTTPS playlist cover image.');
+    }
+  } catch (error) {
+    addError(error instanceof Error ? error.message : String(error));
+  }
+}
+
+async function deleteDisposableSmokeAccount() {
+  if (!shouldDeleteSmokeAccount || !disposableAuthHeader) {
+    return;
+  }
+
+  try {
+    const { response, text, url } = await fetchText('/v1/me', {
+      headers: {
+        Authorization: disposableAuthHeader,
+      },
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      addError(
+        `${url} failed to delete the disposable smoke account: HTTP ${response.status}: ${text.slice(0, 180)}`,
+      );
+    }
+  } catch (error) {
+    addError(
+      `Failed to delete the disposable smoke account: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
+
 async function verifyLegacyMusicPlatformRouteRemoved() {
   try {
     const { response, text, url } = await fetchText('/v1/me/music-platform');
@@ -180,11 +248,16 @@ async function verifyLegacyMusicPlatformRouteRemoved() {
 }
 
 async function main() {
-  await verifyHealth();
-  await verifyOpenApi();
-  await verifyNearbyPlaces();
-  await verifyMusicMetadata();
-  await verifyLegacyMusicPlatformRouteRemoved();
+  try {
+    await verifyHealth();
+    await verifyOpenApi();
+    await verifyNearbyPlaces();
+    await verifyMusicMetadata();
+    await verifyMlRecommendation();
+    await verifyLegacyMusicPlatformRouteRemoved();
+  } finally {
+    await deleteDisposableSmokeAccount();
+  }
 
   if (errors.length > 0) {
     console.error('SoundLog API origin check failed:');

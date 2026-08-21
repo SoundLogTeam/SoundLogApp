@@ -35,9 +35,9 @@ const buttonSizeClass: Record<SoundlogButtonSize, string> = {
 };
 
 const buttonVariantClass: Record<SoundlogButtonVariant, string> = {
-  danger: 'bg-soundlog-warning',
+  danger: 'bg-soundlog-danger',
   ghost: 'border border-white/10 bg-white/10',
-  primary: 'bg-soundlog-lime',
+  primary: 'border border-soundlog-lime/45 bg-soundlog-action',
   secondary: 'border border-white/15 bg-transparent',
 };
 
@@ -48,8 +48,8 @@ const buttonTextClass: Record<SoundlogButtonVariant, string> = {
   secondary: 'text-white',
 };
 
-function getButtonIconColor(variant: SoundlogButtonVariant) {
-  return variant === 'primary' || variant === 'danger' ? '#4A1D96' : '#FFFFFF';
+function getButtonIconColor() {
+  return '#FFFFFF';
 }
 
 export function SoundlogButton({
@@ -84,7 +84,7 @@ export function SoundlogButton({
     >
       {iconName ? (
         <Feather
-          color={getButtonIconColor(variant)}
+          color={getButtonIconColor()}
           name={iconName}
           size={size === 'compact' ? 16 : 18}
         />

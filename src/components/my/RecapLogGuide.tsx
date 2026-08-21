@@ -31,7 +31,7 @@ function GuideRow({ description, icon, label, title }: GuideRowProps) {
         <AppText className="mt-1 text-[15px] font-semibold leading-5 text-white">
           {title}
         </AppText>
-        <AppText className="mt-1.5 text-sm leading-6 text-white/52">
+        <AppText className="mt-1.5 text-sm leading-6 text-white/50">
           {description}
         </AppText>
       </View>

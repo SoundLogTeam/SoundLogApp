@@ -970,14 +970,14 @@ function StickerSegment<T extends string,>({
             key={option.value}
             onPress={() => onChange(option.value)}
             style={{
-              backgroundColor: selected ? '#fff' : 'transparent',
+              backgroundColor: selected ? '#4A1D96' : 'transparent',
               opacity: disabled ? 0.5 : 1,
             }}
           >
             <AppText
               className="text-xs font-semibold"
               style={{
-                color: selected ? '#4A1D96' : 'rgba(255,255,255,0.6)',
+                color: selected ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
               }}
             >
               {option.label}
@@ -1062,30 +1062,30 @@ function getStickerThemeStyle(theme: StickerTheme) {
   if (theme === 'lime') {
     return {
       container: {
-        backgroundColor: 'rgba(183,230,40,0.94)',
-        borderColor: 'rgba(255,255,255,0.42)',
+        backgroundColor: 'rgba(45,56,12,0.94)',
+        borderColor: 'rgba(183,230,40,0.72)',
       },
-      dateText: { color: 'rgba(74,29,150,0.82)' },
-      divider: { backgroundColor: 'rgba(5,9,22,0.28)' },
-      iconBubble: { backgroundColor: 'rgba(5,9,22,0.13)' },
-      iconColor: 'rgba(74,29,150,0.9)',
-      metaText: { color: 'rgba(74,29,150,0.78)' },
-      timeText: { color: '#4A1D96' },
+      dateText: { color: 'rgba(255,255,255,0.82)' },
+      divider: { backgroundColor: 'rgba(255,255,255,0.28)' },
+      iconBubble: { backgroundColor: 'rgba(255,255,255,0.13)' },
+      iconColor: 'rgba(255,255,255,0.9)',
+      metaText: { color: 'rgba(255,255,255,0.78)' },
+      timeText: { color: '#FFFFFF' },
     };
   }
 
   if (theme === 'mono') {
     return {
       container: {
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: 'rgba(5,9,22,0.92)',
         borderColor: 'rgba(255,255,255,0.66)',
       },
-      dateText: { color: 'rgba(74,29,150,0.76)' },
-      divider: { backgroundColor: 'rgba(5,9,22,0.22)' },
-      iconBubble: { backgroundColor: 'rgba(5,9,22,0.08)' },
-      iconColor: 'rgba(74,29,150,0.82)',
-      metaText: { color: 'rgba(74,29,150,0.68)' },
-      timeText: { color: '#4A1D96' },
+      dateText: { color: 'rgba(255,255,255,0.76)' },
+      divider: { backgroundColor: 'rgba(255,255,255,0.22)' },
+      iconBubble: { backgroundColor: 'rgba(255,255,255,0.08)' },
+      iconColor: 'rgba(255,255,255,0.82)',
+      metaText: { color: 'rgba(255,255,255,0.68)' },
+      timeText: { color: '#FFFFFF' },
     };
   }
 

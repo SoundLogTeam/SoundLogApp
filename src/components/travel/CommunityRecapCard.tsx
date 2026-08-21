@@ -184,7 +184,7 @@ function CandidateMomentRow({
             accessibilityRole="button"
             className={`
               rounded-full px-2.5 py-1
-              ${moment.status === "accepted" ? "bg-white/10" : "bg-soundlog-lime"}
+              ${moment.status === "accepted" ? "bg-white/10" : "bg-soundlog-selected"}
             `}
             disabled={pendingStatus}
             onPress={onToggleStatus}
@@ -768,7 +768,7 @@ export function CommunityRecapCard({
               <View
                 className={`h-9 w-9 items-center justify-center rounded-full border border-white/15 ${
                   member.userId === currentUserId
-                    ? "bg-soundlog-lime"
+                    ? "bg-soundlog-selected"
                     : "bg-white/10"
                 }`}
                 key={member.id}
@@ -787,7 +787,7 @@ export function CommunityRecapCard({
           : previewMembers.slice(0, displayMemberCount).map((member, index) => (
               <View
                 className={`h-9 w-9 items-center justify-center rounded-full border border-white/15 ${
-                  index === 0 ? "bg-soundlog-lime" : "bg-white/10"
+                  index === 0 ? "bg-soundlog-selected" : "bg-white/10"
                 }`}
                 key={`${member}-${index}`}
               >
@@ -960,12 +960,12 @@ export function CommunityRecapCard({
             </View>
             <Pressable
               accessibilityRole="button"
-              className="min-h-[52px] flex-row items-center justify-center gap-2 rounded-full bg-soundlog-lime px-4"
+              className="min-h-[52px] flex-row items-center justify-center gap-2 rounded-full border border-soundlog-lime/45 bg-soundlog-action px-4"
               disabled={!canUseRoom || isCreatingRoom}
               onPress={() => void handleCreateRoom()}
               style={{ opacity: !canUseRoom || isCreatingRoom ? 0.55 : 1 }}
             >
-              <Feather color="#4A1D96" name="plus" size={16} />
+              <Feather color="#FFFFFF" name="plus" size={16} />
               <AppText className="text-sm font-semibold text-soundlog-inverse">
                 {isCreatingRoom ? "여행방 생성 중" : "새 여행방 만들기"}
               </AppText>

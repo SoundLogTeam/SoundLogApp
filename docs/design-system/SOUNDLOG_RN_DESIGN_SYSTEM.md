@@ -72,7 +72,9 @@ import {
 | Accent purple     | `#7A2CFF` | `text-soundlog-purple`                     |
 | Accent gold       | `#B1913A` | `text-soundlog-gold`                       |
 | Warning action    | `#FF8A3D` | `bg-soundlog-warning`                      |
-| Inverse text      | `#090515` | `text-soundlog-inverse`                    |
+| Primary action    | `#4A1D96` | `bg-soundlog-action`                       |
+| Danger action     | `#8E310D` | `bg-soundlog-danger`                       |
+| Inverse text      | `#FFFFFF` | `text-soundlog-inverse`                    |
 
 ## Typography
 
@@ -300,8 +302,10 @@ import { AppText, soundlogRecipes } from '@/design-system';
 홈의 `HomeHeader` 패턴을 재사용합니다.
 
 - 바깥 트랙: `rounded-full border border-white/10 bg-white/[0.06] p-1`
-- 선택 탭: 라임 또는 흰색 배경
+- 선택 탭: 흰색 글자가 읽히는 어두운 강조 배경
 - 선택 탭 text: `text-soundlog-inverse`
+
+기본 사용자 노출 텍스트와 인터랙션 라벨은 `AppText`를 사용하고 흰색 또는 흰색 투명도 계열을 적용합니다. 상태를 구분하는 의미 색상과 브랜드 강조 색상은 유지할 수 있습니다. 선택 상태와 CTA는 검정색이나 진한 보라색 글자를 사용하지 않고 `bg-soundlog-selected`, `bg-soundlog-action`, `bg-soundlog-danger`처럼 흰색이 읽히는 배경과 테두리로 대비를 조정합니다.
 
 ### Filter Bar
 

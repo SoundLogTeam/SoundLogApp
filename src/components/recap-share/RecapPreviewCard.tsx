@@ -518,7 +518,7 @@ function RecapMapTemplate({ recap }: { recap: RecapShare }) {
           {recap.placeName}
         </AppText>
         <View className="mt-3 self-start rounded-full border border-white/12 bg-black/35 px-3 py-1.5">
-          <AppText className="text-[10px] font-semibold text-white/66">
+          <AppText className="text-[10px] font-semibold text-white/65">
             {hasRecordedLocations
               ? routeSegments.length && recap.routePoints?.length
                 ? `${recap.routePoints.length}개 이동 좌표 저장됨`
@@ -534,7 +534,7 @@ function RecapMapTemplate({ recap }: { recap: RecapShare }) {
           key={moment.id}
           style={pinPositions[index % pinPositions.length]}
         >
-          <View className="h-9 w-9 items-center justify-center rounded-full border border-white/35 bg-[#B7E628]">
+          <View className="h-9 w-9 items-center justify-center rounded-full border border-soundlog-lime/70 bg-soundlog-selected">
             <AppText className="text-[11px] font-semibold text-soundlog-inverse">
               {index + 1}
             </AppText>
@@ -616,28 +616,28 @@ function getRecapMusicStickerThemeStyle(theme: RecapMusicStickerTheme) {
   if (theme === 'lime') {
     return {
       container: {
-        backgroundColor: 'rgba(183,230,40,0.94)',
-        borderColor: 'rgba(255,255,255,0.42)',
+        backgroundColor: 'rgba(45,56,12,0.94)',
+        borderColor: 'rgba(183,230,40,0.72)',
       },
-      iconBubble: { backgroundColor: 'rgba(5,9,22,0.14)' },
-      iconColor: '#4A1D96',
-      metaText: { color: 'rgba(74,29,150,0.76)' },
-      primaryText: { color: '#4A1D96' },
-      secondaryText: { color: 'rgba(74,29,150,0.82)' },
+      iconBubble: { backgroundColor: 'rgba(255,255,255,0.14)' },
+      iconColor: '#FFFFFF',
+      metaText: { color: 'rgba(255,255,255,0.76)' },
+      primaryText: { color: '#FFFFFF' },
+      secondaryText: { color: 'rgba(255,255,255,0.82)' },
     };
   }
 
   if (theme === 'mono') {
     return {
       container: {
-        backgroundColor: 'rgba(255,255,255,0.92)',
+        backgroundColor: 'rgba(5,9,22,0.92)',
         borderColor: 'rgba(255,255,255,0.66)',
       },
-      iconBubble: { backgroundColor: 'rgba(5,9,22,0.08)' },
-      iconColor: 'rgba(74,29,150,0.84)',
-      metaText: { color: 'rgba(74,29,150,0.7)' },
-      primaryText: { color: '#4A1D96' },
-      secondaryText: { color: 'rgba(74,29,150,0.76)' },
+      iconBubble: { backgroundColor: 'rgba(255,255,255,0.08)' },
+      iconColor: 'rgba(255,255,255,0.84)',
+      metaText: { color: 'rgba(255,255,255,0.7)' },
+      primaryText: { color: '#FFFFFF' },
+      secondaryText: { color: 'rgba(255,255,255,0.76)' },
     };
   }
 

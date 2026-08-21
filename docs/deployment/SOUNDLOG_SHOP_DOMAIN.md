@@ -1,66 +1,44 @@
-# Soundlog app deployment domain
+# Soundlog 앱 배포 도메인
 
-Soundlog는 웹 서비스를 운영하거나 배포하지 않습니다. 출시 대상은 Expo/EAS로 빌드한 iOS·Android 네이티브 앱이며, 앱은 GCP API를 직접 호출합니다. Vercel은 운영 배포 경로에 포함하지 않습니다.
+Soundlog는 웹 서비스를 운영하지 않습니다. 출시 대상은 Expo와 EAS로 빌드한 iOS 및 Android 네이티브 앱입니다. Vercel은 운영 앱의 네트워크 경로에 포함하지 않습니다.
 
-## Production architecture
+## 운영 주소
 
-| Host | Target | Purpose |
+| 주소 | 용도 | 현재 상태 |
 | --- | --- | --- |
-| `api.soundlog.shop` | GCP Compute Engine | 앱 API, 업로드, 개인정보 처리방침, 이용약관, 고객지원 |
+| `https://api.soundlog.p-e.kr` | 앱 API, 파일 업로드, ML 음악 추천 | 운영 앱이 직접 호출 |
+| `https://api.soundlog.p-e.kr/legal/privacy` | 개인정보 처리방침 | 최신 서버 배포 후 사용하는 공개 문서 |
+| `https://api.soundlog.p-e.kr/legal/terms` | 서비스 이용약관 | 최신 서버 배포 후 사용하는 공개 문서 |
+| production EAS 지원 메일 | 고객지원 | 실제 수신과 답장이 확인된 주소를 설정 |
 
-앱의 모든 네트워크 요청은 `https://api.soundlog.shop`으로 전송됩니다. GCP VM의 Caddy가 HTTPS를 종료하고 Express API로 reverse proxy합니다.
+새 API 도메인의 `/v1/health`와 `/openapi.yaml`은 정상 응답합니다. `/v1/recommendations/playlists`는 인증된 요청에 ML 추천을 반환합니다. 새 API 도메인의 `/legal/privacy`, `/legal/terms`, `/support`는 최신 서버 배포 후 사용합니다. 심사 전에는 세 경로의 200 응답과 고객지원 메일 수신을 확인해야 합니다.
 
-## GCP Cloud DNS
+## EAS 앱 환경변수
 
-GCP project `nomi-app-deploy-2026`의 `soundlog-shop` public zone을 사용합니다. 도메인 등록기관에서 `soundlog.shop`의 네임서버를 아래 값으로 위임합니다.
-
-- `ns-cloud-d1.googledomains.com`
-- `ns-cloud-d2.googledomains.com`
-- `ns-cloud-d3.googledomains.com`
-- `ns-cloud-d4.googledomains.com`
-
-Cloud DNS에는 아래 운영 레코드가 등록되어 있습니다.
-
-| Type | Host | TTL | Value |
-| --- | --- | --- | --- |
-| `A` | `api` | `300` | `34.64.116.40` |
-
-기존 AWS Route 53 또는 Vercel 네임서버는 사용하지 않습니다. 등록기관의 네임서버 위임이 Cloud DNS로 바뀐 뒤 Caddy가 `api.soundlog.shop`의 인증서를 자동 발급합니다.
-
-## EAS app env
-
-`development`, `preview`, `production` profile은 모두 GCP API를 직접 호출합니다.
+`development`, `preview`, `production` profile은 모두 새 API와 ML 서버를 직접 호출합니다.
 
 ```dotenv
 EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server
-EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.soundlog.shop
-EXPO_PUBLIC_SOUNDLOG_UPLOAD_ORIGIN=https://api.soundlog.shop
+EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.soundlog.p-e.kr
+EXPO_PUBLIC_SOUNDLOG_UPLOAD_ORIGIN=https://api.soundlog.p-e.kr
 ```
 
-Production profile은 App Store와 앱 설정에 사용할 공개 법적 문서 URL을 같은 GCP 서버로 지정합니다.
+Production profile은 공개 법적 문서와 고객지원 정보를 기존 주소로 유지합니다.
 
 ```dotenv
-EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL=https://api.soundlog.shop/legal/privacy
-EXPO_PUBLIC_SOUNDLOG_TERMS_URL=https://api.soundlog.shop/legal/terms
-EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL=support@soundlog.shop
+EXPO_PUBLIC_SOUNDLOG_PRIVACY_URL=https://api.soundlog.p-e.kr/legal/privacy
+EXPO_PUBLIC_SOUNDLOG_TERMS_URL=https://api.soundlog.p-e.kr/legal/terms
+EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL=실제_수신_가능한_메일
 ```
 
-## Public pages
-
-- 개인정보 처리방침: `https://api.soundlog.shop/legal/privacy`
-- 서비스 이용약관: `https://api.soundlog.shop/legal/terms`
-- 고객지원: `https://api.soundlog.shop/support`
-
-세 페이지는 로그인 없이 접근할 수 있어야 하며 SoundLogServer가 직접 HTML로 제공합니다.
-
-## Verification
+## 검증
 
 ```bash
-dig +short soundlog.shop NS
-dig +short api.soundlog.shop A
-curl https://api.soundlog.shop/v1/health
-curl -I https://api.soundlog.shop/legal/privacy
-curl -I https://api.soundlog.shop/legal/terms
-curl -I https://api.soundlog.shop/support
-SOUNDLOG_API_ORIGIN=https://api.soundlog.shop npm run check:api-origin
+curl https://api.soundlog.p-e.kr/v1/health
+curl -I https://api.soundlog.p-e.kr/openapi.yaml
+SOUNDLOG_API_ORIGIN=https://api.soundlog.p-e.kr npm run check:api-origin
+curl -I https://api.soundlog.p-e.kr/legal/privacy
+curl -I https://api.soundlog.p-e.kr/legal/terms
 ```
+
+`check:api-origin`은 임시 계정을 생성해 인증 API와 ML 음악 추천을 확인한 뒤 계정을 즉시 삭제합니다.

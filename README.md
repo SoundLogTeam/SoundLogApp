@@ -41,23 +41,23 @@ EXPO_PUBLIC_MOCK_API_FAIL_ENDPOINTS=playlist.detail npm run web
 실제 서버와 연동할 때는 Expo 환경변수로 API base URL을 지정합니다. 이 값이 없으면 mock으로 돌아가지 않고 API URL 누락 오류를 표시합니다.
 
 ```bash
-EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.soundlog.shop npm run ios
+EXPO_PUBLIC_SOUNDLOG_API_SOURCE=server EXPO_PUBLIC_SOUNDLOG_API_BASE_URL=https://api.soundlog.p-e.kr npm run ios
 ```
 
-Soundlog는 웹 서비스를 배포하지 않습니다. 운영 배포 대상은 Expo/EAS로 빌드한 iOS·Android 네이티브 앱이며, 앱은 Vercel 프록시 없이 GCP의 `https://api.soundlog.shop`을 직접 호출합니다. 저장소의 web·Vercel 관련 설정은 로컬 호환성 확인과 과거 실험용 자료일 뿐 운영 배포 경로에 포함하지 않습니다.
+Soundlog는 웹 서비스를 배포하지 않습니다. 운영 배포 대상은 Expo/EAS로 빌드한 iOS·Android 네이티브 앱이며, 앱은 Vercel 프록시 없이 API와 ML이 함께 배포된 `https://api.soundlog.p-e.kr`을 직접 호출합니다. 저장소의 web·Vercel 관련 설정은 로컬 호환성 확인과 과거 실험용 자료일 뿐 운영 배포 경로에 포함하지 않습니다.
 
-네이티브 실배포 빌드는 `api.soundlog.shop` 서브도메인을 직접 호출합니다(GCP VM 위 Caddy가 HTTPS를 종료). 로그인은 Soundlog 자체 이메일/비밀번호 계정으로 처리합니다.
+네이티브 실배포 빌드는 `api.soundlog.p-e.kr` 서브도메인을 직접 호출합니다. 로그인은 Soundlog 자체 이메일/비밀번호 계정으로 처리합니다.
 
 ## 테스트 설치 빌드
 
-`development`, `preview` EAS profile은 `api.soundlog.shop`을 직접 바라보도록 설정되어 있습니다.
+`development`, `preview` EAS profile은 `api.soundlog.p-e.kr`을 직접 바라보도록 설정되어 있습니다.
 
 본인 iPhone을 USB로 연결해 최신 코드를 직접 테스트할 때는 [iPhone 실기기 테스트 가이드](docs/deployment/IOS_PHYSICAL_DEVICE_TESTING.md)를 먼저 확인합니다. 실기기에서 `127.0.0.1`은 Mac이 아니라 iPhone 자신이므로, 로컬 서버를 사용할 때는 Mac의 LAN IP를 앱 빌드 환경변수로 지정해야 합니다.
 
-- API: `https://api.soundlog.shop`
-- 개인정보 처리방침: `https://api.soundlog.shop/legal/privacy`
-- 서비스 이용약관: `https://api.soundlog.shop/legal/terms`
-- 고객지원: `https://api.soundlog.shop/support`
+- API 및 ML: `https://api.soundlog.p-e.kr`
+- 개인정보 처리방침: `https://api.soundlog.p-e.kr/legal/privacy`
+- 서비스 이용약관: `https://api.soundlog.p-e.kr/legal/terms`
+- 고객지원: 실제 수신과 답장이 확인된 메일을 production EAS 환경에 설정
 - API source: `server`
 - auth: Soundlog 자체 이메일/비밀번호 로그인
 - iOS/Android: HTTPS API만 사용
@@ -67,12 +67,12 @@ Mock API로 되돌리는 런타임 경로는 제거했습니다. 화면 상태 �
 API origin이 최신 서버인지 확인하려면 아래처럼 실행합니다.
 
 ```bash
-SOUNDLOG_API_ORIGIN=https://api.soundlog.shop npm run check:api-origin
+SOUNDLOG_API_ORIGIN=https://api.soundlog.p-e.kr npm run check:api-origin
 ```
 
 이 검사는 로그인 필수 API도 함께 확인하므로 `SOUNDLOG_CHECK_EMAIL`,
 `SOUNDLOG_CHECK_PASSWORD`를 지정하면 해당 smoke 계정으로 로그인합니다. 값을
-지정하지 않으면 `@soundlog.test` 임시 계정을 생성해 검증합니다.
+지정하지 않으면 `@soundlog.test` 임시 계정을 생성해 API와 ML 추천을 검증한 뒤 즉시 삭제합니다.
 
 Android 지인 테스트용 내부 배포 빌드는 아래 명령으로 생성합니다.
 
@@ -80,7 +80,7 @@ Android 지인 테스트용 내부 배포 빌드는 아래 명령으로 생성�
 npx eas build --profile preview --platform android
 ```
 
-iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/TestFlight에 올릴 production profile도 현재는 `https://api.soundlog.shop`을 사용합니다.
+iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/TestFlight에 올릴 production profile은 API와 개인정보 처리방침과 이용약관에 `https://api.soundlog.p-e.kr`을 사용합니다. 새 서버에 공개 문서 경로를 배포하고 실제 수신 가능한 고객지원 메일을 설정한 뒤 릴리스 검사를 통과해야 합니다.
 
 ## 문서
 

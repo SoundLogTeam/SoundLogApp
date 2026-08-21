@@ -112,24 +112,28 @@ function assertProductionEnv(productionEnv) {
     addError('EAS production env must set EXPO_PUBLIC_SOUNDLOG_TERMS_URL to an HTTPS URL.');
   }
 
-  if (!supportEmail || supportEmail.endsWith('@example.com')) {
+  if (
+    !/^\S+@\S+\.\S+$/.test(supportEmail ?? '') ||
+    supportEmail.endsWith('@example.com') ||
+    supportEmail.endsWith('@soundlog.shop')
+  ) {
     addError('EAS production env must set EXPO_PUBLIC_SOUNDLOG_SUPPORT_EMAIL to a real mailbox.');
   }
 
-  if (apiBaseUrl !== 'https://api.soundlog.shop') {
-    addError('EAS production API must call the GCP api.soundlog.shop origin directly.');
+  if (apiBaseUrl !== 'https://api.soundlog.p-e.kr') {
+    addError('EAS production API must call the current Soundlog API and ML origin directly.');
   }
 
-  if (uploadOrigin !== 'https://api.soundlog.shop') {
-    addError('EAS production uploads must use the GCP api.soundlog.shop origin directly.');
+  if (uploadOrigin !== 'https://api.soundlog.p-e.kr') {
+    addError('EAS production uploads must use the current Soundlog API origin directly.');
   }
 
-  if (privacyUrl !== 'https://api.soundlog.shop/legal/privacy') {
-    addError('EAS production privacy URL must be hosted by the GCP API server.');
+  if (privacyUrl !== 'https://api.soundlog.p-e.kr/legal/privacy') {
+    addError('EAS production privacy URL must use the current Soundlog API origin.');
   }
 
-  if (termsUrl !== 'https://api.soundlog.shop/legal/terms') {
-    addError('EAS production terms URL must be hosted by the GCP API server.');
+  if (termsUrl !== 'https://api.soundlog.p-e.kr/legal/terms') {
+    addError('EAS production terms URL must use the current Soundlog API origin.');
   }
 }
 

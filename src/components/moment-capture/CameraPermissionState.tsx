@@ -40,7 +40,7 @@ export function CameraPermissionState({
 
       <Pressable
         accessibilityRole="button"
-        className="mt-auto h-14 items-center justify-center rounded-xl bg-soundlog-lime px-5"
+        className="mt-auto h-14 items-center justify-center rounded-xl border border-soundlog-lime/45 bg-soundlog-action px-5"
         onPress={isDenied && !canAskAgain ? () => void Linking.openSettings() : onRequest}
       >
         <AppText className="font-semibold text-soundlog-inverse">
