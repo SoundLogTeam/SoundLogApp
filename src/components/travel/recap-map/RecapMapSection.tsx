@@ -17,6 +17,7 @@ import type {
   SoundMapViewportSize,
 } from '../live-sound-map/types';
 import { SelectedRecapPinPanel } from './SelectedRecapPinPanel';
+import { SelectedTourPlacePanel } from './SelectedTourPlacePanel';
 
 type RecapMapFilter = 'mine' | 'place' | 'public';
 type RecapMapPinGroup = {
@@ -36,6 +37,7 @@ type RecapMapSectionProps = {
   overlayBottomInset?: number;
   overlayTopInset?: number;
   sessionStatus: 'active' | 'ended' | 'idle';
+  tourPlaces?: PlaceContext[];
   tourPlaceStatus?: TourPlaceStatus;
   variant?: 'page' | 'section';
 };
@@ -207,6 +209,7 @@ export function RecapMapSection({
   overlayBottomInset = 112,
   overlayTopInset = 12,
   sessionStatus,
+  tourPlaces = [],
   tourPlaceStatus = currentPlace ? 'ready' : 'unavailable',
   variant = 'section',
 }: RecapMapSectionProps) {
@@ -232,9 +235,23 @@ export function RecapMapSection({
   const placeName = getTourPlaceLabel(currentPlace, tourPlaceStatus);
   const scope = getScope(filter);
   const visibleMarkers = serverMarkers;
-  const placePin = useMemo(
-    () => (currentPlace ? createPlacePin(currentPlace) : undefined),
-    [currentPlace],
+  const visibleTourPlaces = useMemo(() => {
+    const placesById = new Map<string, PlaceContext>();
+
+    [currentPlace, ...tourPlaces].forEach((place) => {
+      if (place?.location) {
+        placesById.set(place.id, place);
+      }
+    });
+
+    return Array.from(placesById.values());
+  }, [currentPlace, tourPlaces]);
+  const placePins = useMemo(
+    () =>
+      visibleTourPlaces
+        .map(createPlacePin)
+        .filter((pin): pin is SoundMapPin => Boolean(pin)),
+    [visibleTourPlaces],
   );
   const clusteringViewport = useMemo<RecapMapClusteringViewport | undefined>(
     () =>
@@ -249,19 +266,33 @@ export function RecapMapSection({
   );
   const mapPinGroups = useMemo<RecapMapPinGroup[]>(() => {
     if (filter === 'place') {
-      return placePin ? [{ markers: [], pin: placePin }] : [];
+      return placePins.map((pin) => ({ markers: [], pin }));
     }
 
     return toRecapMapPinGroups(visibleMarkers, filter, clusteringViewport);
-  }, [clusteringViewport, filter, placePin, visibleMarkers]);
+  }, [clusteringViewport, filter, placePins, visibleMarkers]);
   const mapPins = useMemo(() => mapPinGroups.map((group) => group.pin), [mapPinGroups]);
   const selectedPinGroup = useMemo(
     () => mapPinGroups.find((group) => group.pin.id === selectedPinId),
     [mapPinGroups, selectedPinId],
   );
+  const selectedTourPlace = useMemo(
+    () =>
+      visibleTourPlaces.find(
+        (place) => `tour-place-${place.id}` === selectedPinId,
+      ),
+    [selectedPinId, visibleTourPlaces],
+  );
   const viewportKey = useMemo(() => {
     if (filter === 'place') {
-      return `${filter}:${placePin?.id ?? 'empty'}`;
+      const placeKey = placePins
+        .map(
+          (pin) =>
+            `${pin.id}:${pin.location.lat.toFixed(6)}:${pin.location.lng.toFixed(6)}`,
+        )
+        .join('|');
+
+      return `${filter}:${placeKey || 'empty'}`;
     }
 
     const markerKey = visibleMarkers
@@ -273,7 +304,7 @@ export function RecapMapSection({
       .join('|');
 
     return `${filter}:${markerKey}`;
-  }, [filter, placePin?.id, visibleMarkers]);
+  }, [filter, placePins, visibleMarkers]);
   const showTravelCta = filter === 'place';
   const mapTitle =
     filter === 'mine'
@@ -436,7 +467,7 @@ export function RecapMapSection({
           legendItems={getMapLegendItems(filter)}
           onRegionChangeComplete={handleRegionChangeComplete}
           onViewportLayoutChange={handleViewportLayoutChange}
-          onPinPress={filter === 'place' ? undefined : (pin) => setSelectedPinId(pin.id)}
+          onPinPress={(pin) => setSelectedPinId(pin.id)}
           pins={mapPins}
           ref={mapViewRef}
           selectedPinId={selectedPinId}
@@ -490,7 +521,12 @@ export function RecapMapSection({
         </View>
 
         <View className="absolute left-4 right-4" style={{ bottom: overlayBottomInset }}>
-          {showTravelCta ? (
+          {selectedTourPlace ? (
+            <SelectedTourPlacePanel
+              onClose={() => setSelectedPinId(undefined)}
+              place={selectedTourPlace}
+            />
+          ) : showTravelCta ? (
             <View className="gap-2">
               <Pressable
                 accessibilityRole="button"

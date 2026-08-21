@@ -1,5 +1,5 @@
 import { Redirect, router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -77,14 +77,24 @@ export default function MapHomeScreen() {
     { enabled: status === "authenticated" && session.status === "active" },
   );
   const nearestTourPlace = currentLocation
-    ? nearbyPlacesQuery.data?.find(
-        (place) => place.source === "tour-api" && Boolean(place.location),
-      )
+    ? nearbyPlacesQuery.data?.find((place) => Boolean(place.location))
     : undefined;
   const cachedTourPlace =
-    currentPlace?.source === "tour-api" && currentPlace.location
+    currentPlace?.location &&
+    (currentPlace.source === "tour-api" || currentPlace.source === "seed")
       ? currentPlace
       : undefined;
+  const nearbyTourPlaces = useMemo(() => {
+    const places = (nearbyPlacesQuery.data ?? []).filter((place) =>
+      Boolean(place.location),
+    );
+
+    if (places.length > 0) {
+      return places;
+    }
+
+    return cachedTourPlace ? [cachedTourPlace] : [];
+  }, [cachedTourPlace, nearbyPlacesQuery.data]);
   const activeCurrentPlace = currentLocation
     ? nearestTourPlace
     : cachedTourPlace;
@@ -366,6 +376,7 @@ export default function MapHomeScreen() {
           overlayBottomInset={mapOverlayBottomInset}
           overlayTopInset={mapOverlayTopInset}
           sessionStatus={session.status}
+          tourPlaces={nearbyTourPlaces}
           tourPlaceStatus={tourPlaceStatus}
           variant="page"
         />
