@@ -34,6 +34,20 @@ export function AuthAccountCard() {
     router.push('/auth/login' as never);
   };
 
+  const handleLogoutPress = () => {
+    Alert.alert(
+      '로그아웃할까요?',
+      '이 기기에서 Soundlog 계정 연결을 종료합니다. 저장된 리캡과 로그는 삭제되지 않아요.',
+      [
+        { style: 'cancel', text: '취소' },
+        {
+          onPress: () => void handleLogout(),
+          text: '로그아웃',
+        },
+      ],
+    );
+  };
+
   const handleDeleteAccount = () => {
     Alert.alert(
       'Soundlog 계정을 삭제할까요?',
@@ -88,7 +102,7 @@ export function AuthAccountCard() {
           disabled={logoutMutation.isPending || deleteAccountMutation.isPending}
           icon="log-out"
           label="로그아웃"
-          onPress={() => void handleLogout()}
+          onPress={handleLogoutPress}
           rightText={logoutMutation.isPending ? '정리 중' : undefined}
         />
         <MySettingsRow

@@ -1,4 +1,5 @@
 import { PlaceContext } from '@/types/domain';
+import { getTourCategoryLabel } from '@/utils/tourCategory';
 
 type TourLocationItem = Record<string, unknown>;
 
@@ -40,11 +41,12 @@ export function mapTourLocationItem(item: TourLocationItem): PlaceContext | unde
   const mapx = getNumber(item.mapx);
   const mapy = getNumber(item.mapy);
   const address = [getString(item.addr1), getString(item.addr2)].filter(Boolean).join(' ');
+  const contentType = getString(item.contenttypeid);
 
   return {
     address: address || undefined,
-    category: getCategory(item),
-    contentType: getString(item.contenttypeid),
+    category: getTourCategoryLabel(getCategory(item), contentType),
+    contentType,
     distanceMeters: getNumber(item.dist),
     id: getString(item.contentid) ?? title,
     imageUrl: getString(item.firstimage) ?? getString(item.firstimage2),

@@ -23,7 +23,7 @@ const baseConfig = {
       NSPhotoLibraryAddUsageDescription:
         'Soundlog가 리캡 이미지를 사진 보관함에 저장하기 위해 권한이 필요합니다.',
       NSPhotoLibraryUsageDescription:
-        'Soundlog가 리캡 이미지를 저장하기 위해 사진 접근 권한이 필요합니다.',
+        'Soundlog가 갤러리 사진을 선택해 리캡에 사용하기 위해 사진 접근 권한이 필요합니다.',
     },
     supportsTablet: false,
     bundleIdentifier: 'com.mannomi.soundlog',
@@ -155,7 +155,7 @@ const baseConfig = {
       'expo-media-library',
       {
         photosPermission:
-          'Soundlog가 리캡 이미지를 저장하기 위해 사진 접근 권한이 필요합니다.',
+          'Soundlog가 갤러리 사진을 선택해 리캡에 사용하기 위해 사진 접근 권한이 필요합니다.',
         savePhotosPermission:
           'Soundlog가 리캡 이미지를 사진 보관함에 저장하기 위해 권한이 필요합니다.',
       },

@@ -251,7 +251,11 @@ export function RecapShareScreen({ recapId }: RecapShareScreenProps) {
             ? isTravelLog
               ? "여행모드에서 남긴 기록들이 하나의 로그로 묶였어요."
               : "여행모드 밖에서 만든 독립 리캡이에요."
-            : "리캡과 로그를 불러오고 있어요."}
+            : isError
+              ? "요청한 음악 기록을 확인할 수 없어요."
+              : isLoading
+                ? "리캡과 로그를 불러오고 있어요."
+                : "공유할 음악 기록이 없어요."}
         </AppText>
 
         {recap ? (

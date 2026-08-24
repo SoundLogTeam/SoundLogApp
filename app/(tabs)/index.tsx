@@ -4,7 +4,7 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { travelSessionApi } from "@/api/travelSessionApi";
-import { useMomentLogListQuery } from "@/api/momentLogQueries";
+import { useAllMomentLogListQuery } from "@/api/momentLogQueries";
 import { recapApi } from "@/api/recapApi";
 import { recapQueryKeys } from "@/api/recapQueries";
 import { useNearbyPlacesQuery } from "@/api/tourQueries";
@@ -69,9 +69,8 @@ export default function MapHomeScreen() {
     location: currentLocation,
     radiusMeters: NEARBY_TOUR_RADIUS_METERS,
   });
-  const sessionMomentsQuery = useMomentLogListQuery(
+  const sessionMomentsQuery = useAllMomentLogListQuery(
     {
-      limit: 100,
       sessionId: session.status === "active" ? session.id : undefined,
     },
     { enabled: status === "authenticated" && session.status === "active" },

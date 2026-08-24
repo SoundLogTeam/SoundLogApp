@@ -229,6 +229,7 @@ export const MomentPhotoCanvas = forwardRef<
   const [musicTemplate, setMusicTemplate] =
     useState<MusicStickerTemplate>(initialPreset.musicTemplate);
   const [musicVisible, setMusicVisible] = useState(Boolean(track));
+  const [hasPhotoError, setHasPhotoError] = useState(false);
   const stickerDateTime = useMemo(
     () => formatStickerDateTime(capturedAt),
     [capturedAt],
@@ -306,6 +307,7 @@ export const MomentPhotoCanvas = forwardRef<
   );
 
   useEffect(() => {
+    setHasPhotoError(false);
     didPlaceTimestampRef.current = false;
     didPlaceMusicRef.current = false;
   }, [photoUri]);
@@ -397,11 +399,23 @@ export const MomentPhotoCanvas = forwardRef<
             />
           ) : (
             <>
-              <Image
-                contentFit="cover"
-                source={{ uri: photoUri }}
-                style={StyleSheet.absoluteFill}
-              />
+              <LinearGradient
+                colors={['#24345C', '#0A1020']}
+                style={[StyleSheet.absoluteFill, styles.photoFallback]}
+              >
+                <Feather color="rgba(255,255,255,0.78)" name="image" size={34} />
+                <AppText className="mt-3 text-xs font-semibold text-white/58">
+                  {hasPhotoError ? '사진을 불러오지 못했어요' : '관광지 사진을 준비 중이에요'}
+                </AppText>
+              </LinearGradient>
+              {!hasPhotoError ? (
+                <Image
+                  contentFit="cover"
+                  onError={() => setHasPhotoError(true)}
+                  source={{ uri: photoUri }}
+                  style={StyleSheet.absoluteFill}
+                />
+              ) : null}
               <View pointerEvents="none" style={styles.photoCanvasShade} />
               <LinearGradient
                 colors={['rgba(5,9,22,0)', 'rgba(5,9,22,0.98)']}
@@ -1384,6 +1398,10 @@ const styles = StyleSheet.create({
     left: 0,
     position: 'absolute',
     right: 0,
+  },
+  photoFallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   photoCanvasShade: {
     backgroundColor: 'rgba(0,0,0,0.06)',

@@ -190,6 +190,7 @@ export function PlaylistCurationScreen({ playlistId }: PlaylistCurationScreenPro
     <TrackList
       bottomPadding={listBottomPadding}
       currentTrackId={currentTrack?.id}
+      fallbackImageUrl={playlist.coverImageUrl ?? playlist.backgroundImageUrl}
       likedTrackIds={likedTrackIds}
       onSelectTrack={selectTrackForSoundlog}
       onToggleLike={toggleLikedTrack}

@@ -24,6 +24,10 @@ export function LibraryTrackRow({
   record,
 }: LibraryTrackRowProps) {
   const { track } = record;
+  const artworkUrl =
+    track.albumImageUrl ??
+    record.playlist?.coverImageUrl ??
+    record.playlist?.backgroundImageUrl;
   const revealProgress = useRef(new Animated.Value(0)).current;
   const actionTranslateX = revealProgress.interpolate({
     inputRange: [0, 1],
@@ -113,13 +117,17 @@ export function LibraryTrackRow({
             className="h-[52px] w-[52px] overflow-hidden rounded-lg"
             style={{ backgroundColor: track.fallbackColor ?? "#2B176C" }}
           >
-            {track.albumImageUrl ? (
+            {artworkUrl ? (
               <Image
                 className="h-full w-full"
                 contentFit="cover"
-                source={{ uri: track.albumImageUrl }}
+                source={{ uri: artworkUrl }}
               />
-            ) : null}
+            ) : (
+              <View className="h-full w-full items-center justify-center">
+                <Feather color="rgba(255,255,255,0.72)" name="disc" size={22} />
+              </View>
+            )}
           </View>
 
           <View className="ml-3 min-w-0 flex-1">

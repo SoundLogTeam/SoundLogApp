@@ -129,6 +129,8 @@ function resolvePlaceLabel(place?: PlaceContext) {
 
 function toFeaturedPlaylist(playlist: PlaylistCuration): FeaturedPlaylist {
   return {
+    backgroundImageUrl: playlist.backgroundImageUrl,
+    coverImageUrl: playlist.coverImageUrl,
     id: playlist.id,
     regionName: playlist.regionName,
     description: playlist.reason,
@@ -610,7 +612,13 @@ function HomeContent() {
       return;
     }
 
-    void refetchRecommendedPlaylist();
+    void refetchRecommendedPlaylist().then((result) => {
+      setActionMessage(
+        result.isError
+          ? "추천을 새로 확인하지 못했어요. 잠시 후 다시 시도해주세요."
+          : "현재 장소와 무드를 기준으로 추천을 다시 확인했어요.",
+      );
+    });
   }, [
     handleSetCurrentLocation,
     recommendedPlaylistInput.location,

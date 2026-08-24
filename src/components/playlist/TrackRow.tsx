@@ -7,6 +7,7 @@ import { Track } from '@/types/domain';
 import { getTrackKeyColor, hexToRgba } from '@/utils/trackVisuals';
 
 type TrackRowProps = {
+  fallbackImageUrl?: string;
   isActive: boolean;
   isLiked: boolean;
   isSaved: boolean;
@@ -17,6 +18,7 @@ type TrackRowProps = {
 };
 
 export function TrackRow({
+  fallbackImageUrl,
   isActive,
   isLiked,
   isSaved,
@@ -27,6 +29,7 @@ export function TrackRow({
 }: TrackRowProps) {
   const keyColor = getTrackKeyColor(track);
   const activeBackground = hexToRgba(keyColor, 0.16);
+  const artworkUrl = track.albumImageUrl ?? fallbackImageUrl;
 
   return (
     <View
@@ -48,10 +51,15 @@ export function TrackRow({
             backgroundColor: hexToRgba(keyColor, 0.24),
           }}
         >
-          {track.albumImageUrl ? (
-            <Image contentFit="cover" source={{ uri: track.albumImageUrl }} style={{ flex: 1 }} />
+          {artworkUrl ? (
+            <Image contentFit="cover" source={{ uri: artworkUrl }} style={{ flex: 1 }} />
           ) : (
-            <View className="flex-1" style={{ backgroundColor: hexToRgba(keyColor, 0.32) }} />
+            <View
+              className="flex-1 items-center justify-center"
+              style={{ backgroundColor: hexToRgba(keyColor, 0.32) }}
+            >
+              <Feather color="rgba(255,255,255,0.72)" name="disc" size={22} />
+            </View>
           )}
         </View>
 
