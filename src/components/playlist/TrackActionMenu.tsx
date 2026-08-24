@@ -7,6 +7,7 @@ import { Track } from '@/types/domain';
 
 type TrackActionMenuProps = {
   actionMessage?: string;
+  fallbackImageUrl?: string;
   isLiked: boolean;
   isSaved: boolean;
   onClose: () => void;
@@ -43,6 +44,7 @@ function MenuAction({ disabled = false, icon, label, onPress }: MenuActionProps)
 
 export function TrackActionMenu({
   actionMessage,
+  fallbackImageUrl,
   isLiked,
   isSaved,
   onClose,
@@ -51,6 +53,7 @@ export function TrackActionMenu({
   track,
   visible,
 }: TrackActionMenuProps) {
+  const artworkUrl = track?.albumImageUrl ?? fallbackImageUrl;
   const handleClose = () => {
     onClose();
   };
@@ -67,13 +70,17 @@ export function TrackActionMenu({
                 className="h-[42px] w-[42px] overflow-hidden rounded-[10px]"
                 style={{ backgroundColor: track.fallbackColor ?? '#fff' }}
               >
-                {track.albumImageUrl ? (
+                {artworkUrl ? (
                   <Image
                     className="h-full w-full"
                     contentFit="cover"
-                    source={{ uri: track.albumImageUrl }}
+                    source={{ uri: artworkUrl }}
                   />
-                ) : null}
+                ) : (
+                  <View className="h-full w-full items-center justify-center">
+                    <Feather color="rgba(255,255,255,0.72)" name="disc" size={20} />
+                  </View>
+                )}
               </View>
               <View className="ml-3 flex-1">
                 <AppText className="text-base font-semibold text-white" numberOfLines={1}>

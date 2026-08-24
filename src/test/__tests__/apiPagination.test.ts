@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { getPageMeta, requestApi } from '@/api/client';
 import { libraryApi } from '@/api/libraryApi';
+import { momentLogApi, RECAP_CAPTURE_PAGE_LIMIT } from '@/api/momentLogApi';
 import { useAuthStore } from '@/store/authStore';
 
 // P2-2: the server's pagedResponse() shape is `{ data, page: { limit,
@@ -120,5 +121,46 @@ describe('libraryApi.getTracks pagination (P2-2)', () => {
 
     expect(result).toEqual({ records: [] });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('momentLogApi.getAllMomentLogs', () => {
+  it('uses the server page limit and follows every cursor for one travel session', async () => {
+    seedAuthenticated();
+
+    const fetchMock = vi.fn(async (input: unknown) => {
+      const url = new URL(String(input));
+      const cursor = url.searchParams.get('cursor');
+
+      expect(url.searchParams.get('limit')).toBe(String(RECAP_CAPTURE_PAGE_LIMIT));
+      expect(url.searchParams.get('sessionId')).toBe('session-a');
+
+      if (!cursor) {
+        return new Response(
+          JSON.stringify({
+            data: [{ createdAt: '2026-08-24T00:00:00.000Z', id: 'moment-1', moodTags: [] }],
+            page: { limit: RECAP_CAPTURE_PAGE_LIMIT, nextCursor: 'page-2' },
+          }),
+          { status: 200 },
+        );
+      }
+
+      expect(cursor).toBe('page-2');
+
+      return new Response(
+        JSON.stringify({
+          data: [{ createdAt: '2026-08-24T00:01:00.000Z', id: 'moment-2', moodTags: [] }],
+          page: { limit: RECAP_CAPTURE_PAGE_LIMIT, nextCursor: null },
+        }),
+        { status: 200 },
+      );
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await momentLogApi.getAllMomentLogs({ sessionId: 'session-a' });
+
+    expect(result.map((moment) => moment.id)).toEqual(['moment-1', 'moment-2']);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });

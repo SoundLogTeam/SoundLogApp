@@ -1,5 +1,6 @@
 import { requestApi } from '@/api/client';
 import type { GeoPoint, PlaceContext } from '@/types/domain';
+import { getTourCategoryLabel } from '@/utils/tourCategory';
 
 type NearbyPlacesParams = {
   location: GeoPoint;
@@ -17,27 +18,38 @@ type ReverseGeocodeParams = {
 
 const DEFAULT_RADIUS_METERS = 2000;
 
+function normalizePlace(place: PlaceContext): PlaceContext {
+  return {
+    ...place,
+    category: getTourCategoryLabel(place.category, place.contentType),
+  };
+}
+
 export const tourApi = {
   async reverseGeocodeLocation(
     params: ReverseGeocodeParams,
   ): Promise<PlaceContext | null> {
-    return requestApi<PlaceContext | null>('/v1/tour/reverse-geocode', {
+    const place = await requestApi<PlaceContext | null>('/v1/tour/reverse-geocode', {
       query: {
         lat: params.location.lat,
         lng: params.location.lng,
       },
     });
+
+    return place ? normalizePlace(place) : null;
   },
   async searchPlaces(params: SearchPlacesParams): Promise<PlaceContext[]> {
-    return requestApi<PlaceContext[]>('/v1/tour/places', {
+    const places = await requestApi<PlaceContext[]>('/v1/tour/places', {
       query: {
         limit: params.limit ?? 10,
         query: params.query.trim(),
       },
     });
+
+    return places.map(normalizePlace);
   },
   async getNearbyPlaces(params: NearbyPlacesParams): Promise<PlaceContext[]> {
-    return requestApi<PlaceContext[]>('/v1/tour/nearby-places', {
+    const places = await requestApi<PlaceContext[]>('/v1/tour/nearby-places', {
       query: {
         lat: params.location.lat,
         limit: 10,
@@ -45,5 +57,7 @@ export const tourApi = {
         radiusMeters: params.radiusMeters ?? DEFAULT_RADIUS_METERS,
       },
     });
+
+    return places.map(normalizePlace);
   },
 };

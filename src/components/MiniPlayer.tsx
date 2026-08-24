@@ -47,6 +47,10 @@ export function MiniPlayer() {
   const liked = isLiked(currentTrack.id);
   const saved = isSaved(currentTrack.id);
   const keyColor = getTrackKeyColor(currentTrack);
+  const artworkUrl =
+    currentTrack.albumImageUrl ??
+    playlist?.coverImageUrl ??
+    playlist?.backgroundImageUrl;
   const playerGlow = hexToRgba(keyColor, 0.72);
   const playerSoftGlow = hexToRgba(keyColor, 0.24);
   const canSkip = queue.length > 1;
@@ -162,17 +166,19 @@ export function MiniPlayer() {
         borderColor: "rgba(255,255,255,0.24)",
       }}
     >
-      {currentTrack.albumImageUrl ? (
+      {artworkUrl ? (
         <Image
           contentFit="cover"
-          source={{ uri: currentTrack.albumImageUrl }}
+          source={{ uri: artworkUrl }}
           style={{ flex: 1 }}
         />
       ) : (
         <View
-          className="flex-1"
+          className="flex-1 items-center justify-center"
           style={{ backgroundColor: hexToRgba(keyColor, 0.32) }}
-        />
+        >
+          <Feather color="rgba(255,255,255,0.72)" name="disc" size={20} />
+        </View>
       )}
     </View>
   );
@@ -213,17 +219,19 @@ export function MiniPlayer() {
           borderColor: "rgba(255,255,255,0.22)",
         }}
       >
-        {currentTrack.albumImageUrl ? (
+        {artworkUrl ? (
           <Image
             contentFit="cover"
-            source={{ uri: currentTrack.albumImageUrl }}
+            source={{ uri: artworkUrl }}
             style={{ flex: 1 }}
           />
         ) : (
           <View
-            className="flex-1"
+            className="flex-1 items-center justify-center"
             style={{ backgroundColor: hexToRgba(keyColor, 0.32) }}
-          />
+          >
+            <Feather color="rgba(255,255,255,0.72)" name="disc" size={36} />
+          </View>
         )}
       </View>
       <View className="absolute h-[18px] w-[18px] rounded-full border border-white/25 bg-black/80" />
@@ -553,6 +561,7 @@ export function MiniPlayer() {
 
       <TrackActionMenu
         actionMessage={actionMessage}
+        fallbackImageUrl={artworkUrl}
         isLiked={liked}
         isSaved={saved}
         onClose={() => setIsActionMenuVisible(false)}

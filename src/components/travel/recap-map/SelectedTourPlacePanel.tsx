@@ -1,5 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
@@ -31,24 +33,37 @@ export function SelectedTourPlacePanel({
   onClose,
   place,
 }: SelectedTourPlacePanelProps) {
+  const [hasImageError, setHasImageError] = useState(false);
   const placeMeta = getPlaceMeta(place);
+  const shouldShowImage = Boolean(place.imageUrl && !hasImageError);
+
+  useEffect(() => {
+    setHasImageError(false);
+  }, [place.id, place.imageUrl]);
 
   return (
     <View className="overflow-hidden rounded-[22px] border border-white/14 bg-[#090D19]/95 p-4">
       <View className="flex-row items-start gap-3">
         <View className="h-[84px] w-[84px] shrink-0 overflow-hidden rounded-[14px] border border-white/10 bg-white/10">
-          {place.imageUrl ? (
+          {shouldShowImage ? (
             <Image
               accessibilityIgnoresInvertColors
               className="h-full w-full"
               contentFit="cover"
+              onError={() => setHasImageError(true)}
               source={{ uri: place.imageUrl }}
               transition={180}
             />
           ) : (
-            <View className="h-full w-full items-center justify-center">
-              <Feather color="rgba(255,255,255,0.52)" name="map-pin" size={24} />
-            </View>
+            <LinearGradient
+              className="h-full w-full items-center justify-center"
+              colors={['#27345B', '#11172B']}
+            >
+              <Feather color="rgba(255,255,255,0.76)" name="map-pin" size={24} />
+              <AppText className="mt-1 text-[9px] font-semibold text-white/55">
+                관광지
+              </AppText>
+            </LinearGradient>
           )}
         </View>
 

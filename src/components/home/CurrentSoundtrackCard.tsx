@@ -1,5 +1,7 @@
 import { Feather } from '@expo/vector-icons';
-import { Pressable, View } from 'react-native';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { IconButton } from '@/components/IconButton';
@@ -128,6 +130,21 @@ export function CurrentSoundtrackCard({
           opacity: isLoading || isOpeningPlaylist ? 0.52 : pressed ? 0.72 : 1,
         })}
       >
+        {currentPlace?.imageUrl ? (
+          <Image
+            accessibilityIgnoresInvertColors
+            contentFit="cover"
+            source={{ uri: currentPlace.imageUrl }}
+            style={StyleSheet.absoluteFill}
+            transition={220}
+          />
+        ) : null}
+        <LinearGradient
+          colors={['rgba(5,9,22,0.18)', 'rgba(5,9,22,0.94)']}
+          end={{ x: 0.5, y: 1 }}
+          start={{ x: 0.5, y: 0.1 }}
+          style={StyleSheet.absoluteFill}
+        />
         <View className="absolute -right-8 -top-10 h-40 w-40 rounded-full bg-soundlog-lime/10" />
         <View className="absolute -bottom-16 -left-8 h-44 w-44 rounded-full bg-white/[0.03]" />
 

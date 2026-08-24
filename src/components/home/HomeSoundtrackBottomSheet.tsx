@@ -291,6 +291,7 @@ export function HomeSoundtrackBottomSheet({
               <TrackList
                 bottomPadding={listBottomPadding}
                 currentTrackId={currentTrackId}
+                fallbackImageUrl={playlist.coverImageUrl ?? playlist.backgroundImageUrl}
                 likedTrackIds={likedTrackIds}
                 onSelectTrack={onSelectTrack}
                 onToggleLike={onToggleLike}

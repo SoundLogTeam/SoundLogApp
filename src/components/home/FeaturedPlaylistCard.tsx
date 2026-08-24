@@ -1,3 +1,4 @@
+import { Feather } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -27,7 +28,19 @@ export function FeaturedPlaylistCard({ onPress, playlist }: FeaturedPlaylistCard
           style={StyleSheet.absoluteFill}
           transition={250}
         />
-      ) : null}
+      ) : (
+        <LinearGradient
+          className="absolute inset-0 items-center justify-center"
+          colors={['#31426E', '#12182B']}
+        >
+          <View className="h-24 w-24 items-center justify-center rounded-full border border-white/20 bg-white/10">
+            <Feather color="rgba(255,255,255,0.8)" name="disc" size={42} />
+            <View className="absolute h-7 w-7 items-center justify-center rounded-full bg-[#12182B]">
+              <Feather color="#B7E628" name="map-pin" size={14} />
+            </View>
+          </View>
+        </LinearGradient>
+      )}
       <LinearGradient
         colors={['rgba(5,9,22,0.04)', 'rgba(5,9,22,0.88)']}
         end={{ x: 0.5, y: 1 }}

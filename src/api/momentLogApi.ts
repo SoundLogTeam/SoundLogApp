@@ -1,5 +1,6 @@
 import {
   createIdempotencyKey,
+  getPageMeta,
   requestApi,
   shouldAttemptAuthenticatedApi,
   uploadApiFile,
@@ -16,6 +17,7 @@ import {
 import { sanitizeTrack } from '@/utils/trackSanitizer';
 
 const RECAP_CAPTURE_API_PATH = '/v1/recap-captures';
+export const RECAP_CAPTURE_PAGE_LIMIT = 50;
 
 export type CreateMomentLogInput = {
   createStandaloneRecap?: boolean;
@@ -182,6 +184,17 @@ function sanitizeMomentLog(log: MomentLog) {
   };
 }
 
+async function getMomentLogPage(params: MomentLogListParams = {}) {
+  const logs = await requestApi<MomentLog[]>(RECAP_CAPTURE_API_PATH, {
+    query: params,
+  });
+
+  return {
+    logs: logs.map(sanitizeMomentLog),
+    page: getPageMeta(logs),
+  };
+}
+
 export const momentLogApi = {
   createMomentLog: async (input: CreateMomentLogInput) => {
     if (!shouldAttemptAuthenticatedApi()) {
@@ -208,11 +221,35 @@ export const momentLogApi = {
       return Promise.resolve<MomentLog[]>([]);
     }
 
-    const logs = await requestApi<MomentLog[]>(RECAP_CAPTURE_API_PATH, {
-      query: params,
-    });
+    return (await getMomentLogPage(params)).logs;
+  },
+  getAllMomentLogs: async (params: Omit<MomentLogListParams, 'cursor' | 'limit'> = {}) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return Promise.resolve<MomentLog[]>([]);
+    }
 
-    return logs.map(sanitizeMomentLog);
+    const logs: MomentLog[] = [];
+    const seenCursors = new Set<string>();
+    let cursor: string | undefined;
+
+    do {
+      const page = await getMomentLogPage({
+        ...params,
+        cursor,
+        limit: RECAP_CAPTURE_PAGE_LIMIT,
+      });
+      logs.push(...page.logs);
+
+      const nextCursor = page.page?.nextCursor ?? undefined;
+      if (!nextCursor || seenCursors.has(nextCursor)) {
+        break;
+      }
+
+      seenCursors.add(nextCursor);
+      cursor = nextCursor;
+    } while (cursor);
+
+    return logs;
   },
   deleteMomentLog: (momentLogId: string) => {
     if (!shouldAttemptAuthenticatedApi()) {

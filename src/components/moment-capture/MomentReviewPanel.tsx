@@ -204,6 +204,8 @@ export const MomentReviewPanel = forwardRef<
             </View>
             <TextInput
               accessibilityLabel="장소명 입력"
+              autoCapitalize="words"
+              autoComplete="off"
               className="ml-3 h-12 min-w-0 flex-1 text-[15px] font-medium text-white"
               editable={!isSaving}
               maxLength={60}
@@ -211,6 +213,8 @@ export const MomentReviewPanel = forwardRef<
               placeholder="장소 이름을 입력해주세요"
               placeholderTextColor="rgba(255,255,255,0.32)"
               returnKeyType="done"
+              secureTextEntry={false}
+              textContentType="none"
               value={placeName}
             />
           </View>

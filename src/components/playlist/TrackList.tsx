@@ -7,6 +7,7 @@ import { Track } from '@/types/domain';
 type TrackListProps = {
   bottomPadding: number;
   currentTrackId?: string;
+  fallbackImageUrl?: string;
   likedTrackIds: Set<string>;
   onSelectTrack: (track: Track) => void;
   onToggleLike: (track: Track) => void;
@@ -18,6 +19,7 @@ type TrackListProps = {
 export function TrackList({
   bottomPadding,
   currentTrackId,
+  fallbackImageUrl,
   likedTrackIds,
   onSelectTrack,
   onToggleLike,
@@ -49,6 +51,7 @@ export function TrackList({
       {tracks.map((item) => (
         <TrackRow
           key={item.id}
+          fallbackImageUrl={fallbackImageUrl}
           isActive={currentTrackId === item.id}
           isLiked={likedTrackIds.has(item.id)}
           isSaved={savedTrackIds.has(item.id)}
