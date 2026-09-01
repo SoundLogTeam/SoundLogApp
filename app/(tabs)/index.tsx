@@ -24,12 +24,14 @@ import {
   useTravelRouteTracking,
 } from "@/hooks/useTravelRouteTracking";
 import { useAuthStore } from "@/store/authStore";
+import { useHomeFilterStore } from "@/store/homeFilterStore";
 import { usePlayerStore } from "@/store/playerStore";
 import { queryClient } from "@/providers/queryClient";
 import { useTravelSessionStore } from "@/store/travelSessionStore";
 import { useUserProfileStore } from "@/store/userProfileStore";
 import type { TravelMode } from "@/types/domain";
 import { requestForegroundLocationWithStatus } from "@/utils/location";
+import { getMoodTagsFromFilter } from "@/utils/moodTags";
 
 const NEARBY_TOUR_RADIUS_METERS = 2000;
 
@@ -39,6 +41,7 @@ export default function MapHomeScreen() {
   const { isHydrated: authHydrated, status } = useAuthStore();
   const { isHydrated, profile } = useUserProfileStore();
   const { currentTrack } = usePlayerStore();
+  const { selectedMoodFilter } = useHomeFilterStore();
   const [isModeSheetVisible, setIsModeSheetVisible] = useState(false);
   const [isStartingTravel, setIsStartingTravel] = useState(false);
   const [isEndConfirmVisible, setIsEndConfirmVisible] = useState(false);
@@ -109,6 +112,10 @@ export default function MapHomeScreen() {
             ? "error"
             : "empty";
   const sessionMomentCount = sessionMomentsQuery.data?.length ?? 0;
+  const selectedMoodTags = useMemo(
+    () => getMoodTagsFromFilter(selectedMoodFilter),
+    [selectedMoodFilter],
+  );
 
   useEffect(
     function synchronizeRecommendationMode() {
@@ -310,8 +317,22 @@ export default function MapHomeScreen() {
         return;
       }
 
+      const backgroundLocation =
+        latestSessionLogs[0]?.location ??
+        currentLocation ??
+        activeCurrentPlace?.location;
+      const backgroundSuggestion = backgroundLocation
+        ? await recapApi.getBackgroundSuggestion({
+            location: backgroundLocation,
+            moodTags: selectedMoodTags,
+            travelMode: selectedMode,
+          })
+        : undefined;
+
       const recap = await recapApi.createRecap(
         {
+          backgroundImageUrl:
+            backgroundSuggestion?.backgroundImageUrl ?? undefined,
           momentLogIds: latestSessionLogs.map((log) => log.id),
           routePoints: endingSession.routePoints,
           sessionId: endingSession.id,
