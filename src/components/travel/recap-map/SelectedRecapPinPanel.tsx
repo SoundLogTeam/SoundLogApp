@@ -1,10 +1,10 @@
 import { Feather } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 
 import { communityApi } from '@/api/communityApi';
 import { AppText } from '@/components/AppText';
+import { ResilientImage } from '@/components/media/ResilientImage';
 import { ReportContentSheet } from '@/components/moderation/ReportContentSheet';
 import { useAuthenticatedImageSource } from '@/hooks/useAuthenticatedImageSource';
 import type { RecapMapMarker } from '@/types/domain';
@@ -29,9 +29,10 @@ function MarkerThumbnail({ imageUrl }: { imageUrl?: string }) {
   return (
     <View className="h-14 w-14 shrink-0 overflow-hidden rounded-[8px] bg-white/10">
       {imageUrl ? (
-        <Image
+        <ResilientImage
           className="h-full w-full"
           contentFit="cover"
+          fallbackVariant="recap"
           source={photoSource}
           transition={180}
         />

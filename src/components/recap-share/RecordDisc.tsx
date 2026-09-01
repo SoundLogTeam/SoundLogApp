@@ -1,6 +1,6 @@
-import { Image } from 'expo-image';
 import { View } from 'react-native';
 
+import { ResilientImage } from '@/components/media/ResilientImage';
 import { useAuthenticatedImageSource } from '@/hooks/useAuthenticatedImageSource';
 
 type RecordDiscProps = {
@@ -13,8 +13,9 @@ export function RecordDisc({ imageUrl }: RecordDiscProps) {
   return (
     <View className="h-[210px] w-[210px] items-center justify-center overflow-hidden rounded-full border border-white/30 bg-[#060810]">
       {imageUrl ? (
-        <Image
+        <ResilientImage
           contentFit="cover"
+          fallbackVariant="music"
           source={photoSource}
           style={{ height: '100%', position: 'absolute', width: '100%' }}
           transition={300}

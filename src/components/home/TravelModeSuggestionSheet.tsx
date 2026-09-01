@@ -1,7 +1,8 @@
 import { Feather } from '@expo/vector-icons';
-import { Pressable, View } from 'react-native';
+import { Animated, Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { useDismissibleBottomSheetGesture } from '@/hooks/useBottomSheetGesture';
 import type { PlaceContext } from '@/types/domain';
 
 type TravelModeSuggestionSheetProps = {
@@ -15,10 +16,25 @@ export function TravelModeSuggestionSheet({
   onStartTravelMode,
   place,
 }: TravelModeSuggestionSheetProps) {
+  const { panHandlers, translateY } = useDismissibleBottomSheetGesture({
+    onDismiss,
+  });
+
   return (
     <View className="absolute inset-x-0 bottom-0 px-4 pb-4">
-      <View className="rounded-t-[28px] border border-white/15 bg-[#111827] p-5 shadow-2xl">
-        <View className="mx-auto mb-5 h-[5px] w-10 rounded-full bg-white/35" />
+      <Animated.View
+        className="rounded-t-[28px] border border-white/15 bg-[#111827] px-5 pb-5 pt-3 shadow-2xl"
+        style={{ transform: [{ translateY }] }}
+      >
+        <View
+          {...panHandlers}
+          accessible
+          accessibilityHint="아래로 드래그해 닫을 수 있습니다."
+          accessibilityLabel="여행 모드 추천 시트 핸들"
+          className="mb-3 min-h-9 items-center justify-center"
+        >
+          <View className="h-[5px] w-10 rounded-full bg-white/35" />
+        </View>
 
         <View className="flex-row items-start gap-3">
           <View
@@ -54,9 +70,7 @@ export function TravelModeSuggestionSheet({
             onPress={onStartTravelMode}
             style={{ backgroundColor: '#4A1D96' }}
           >
-            <AppText className="text-sm font-semibold text-white">
-              Travel Mode 시작
-            </AppText>
+            <AppText className="text-sm font-semibold text-white">Travel Mode 시작</AppText>
           </Pressable>
 
           <Pressable
@@ -67,7 +81,7 @@ export function TravelModeSuggestionSheet({
             <AppText className="text-sm font-semibold text-white/72">나중에</AppText>
           </Pressable>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }

@@ -1,7 +1,6 @@
 import { Feather } from "@expo/vector-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
@@ -23,6 +22,7 @@ import { communityApi } from "@/api/communityApi";
 import { recapApi } from "@/api/recapApi";
 import { recapQueryKeys, useRecapListQuery } from "@/api/recapQueries";
 import { AppText } from "@/components/AppText";
+import { ResilientImage } from "@/components/media/ResilientImage";
 import { ReportContentSheet } from "@/components/moderation/ReportContentSheet";
 import { PageHeader } from "@/components/PageHeader";
 import { RecapEmptyState } from "@/components/recap/RecapEmptyState";
@@ -130,8 +130,9 @@ function LogGridCard({
 
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         {visibleImageUrl ? (
-          <Image
+          <ResilientImage
             contentFit="cover"
+            fallbackVariant="recap"
             onError={() => setFailedImageUrl(visibleImageUrl)}
             source={photoSource}
             style={StyleSheet.absoluteFill}

@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Animated,
@@ -10,6 +9,7 @@ import {
 } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { ResilientImage } from '@/components/media/ResilientImage';
 import { MusicLogItem } from '@/types/domain';
 
 type MusicLogCardProps = {
@@ -47,22 +47,20 @@ export function MusicLogCard({
           width: cardWidth,
         }}
       >
-        {item.imageUrl ? (
-          <>
-            <Image
-              contentFit="cover"
-              source={{ uri: item.imageUrl }}
-              style={StyleSheet.absoluteFill}
-              transition={250}
-            />
-            <LinearGradient
-              colors={['rgba(0,0,0,0.08)', 'rgba(0,0,0,0.68)']}
-              end={{ x: 0.5, y: 1 }}
-              start={{ x: 0.5, y: 0 }}
-              style={StyleSheet.absoluteFill}
-            />
-          </>
-        ) : null}
+        <ResilientImage
+          accessibilityLabel={`${item.placeName} 리캡 이미지`}
+          contentFit="cover"
+          fallbackVariant="recap"
+          style={StyleSheet.absoluteFill}
+          transition={250}
+          uri={item.imageUrl}
+        />
+        <LinearGradient
+          colors={['rgba(0,0,0,0.08)', 'rgba(0,0,0,0.68)']}
+          end={{ x: 0.5, y: 1 }}
+          start={{ x: 0.5, y: 0 }}
+          style={StyleSheet.absoluteFill}
+        />
 
         <View className="absolute left-3 top-3 rounded-full bg-black/25 px-2 py-1">
           <AppText className="text-[9px] font-semibold text-white/80">LOG</AppText>

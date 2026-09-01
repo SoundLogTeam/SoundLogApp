@@ -1,6 +1,7 @@
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { StyleSheet, View } from "react-native";
+
+import { ResilientImage } from "@/components/media/ResilientImage";
 
 type PlaylistBackgroundProps = {
   accentColor?: string;
@@ -13,21 +14,14 @@ export function PlaylistBackground({
 }: PlaylistBackgroundProps) {
   return (
     <View style={StyleSheet.absoluteFill}>
-      {imageUrl ? (
-        <Image
-          contentFit="cover"
-          source={{ uri: imageUrl }}
-          style={StyleSheet.absoluteFill}
-          transition={300}
-        />
-      ) : (
-        <LinearGradient
-          colors={["#050916", "#0C1531", "#211337"]}
-          end={{ x: 1, y: 1 }}
-          start={{ x: 0, y: 0 }}
-          style={StyleSheet.absoluteFill}
-        />
-      )}
+      <ResilientImage
+        accessibilityLabel="플레이리스트 배경 이미지"
+        contentFit="cover"
+        fallbackVariant="playlist"
+        style={StyleSheet.absoluteFill}
+        transition={300}
+        uri={imageUrl}
+      />
       <View className="absolute inset-0 bg-black/28" />
       <LinearGradient
         colors={["rgba(5,9,22,0.04)", "rgba(5,9,22,0.62)"]}

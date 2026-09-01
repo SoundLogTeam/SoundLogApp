@@ -1,10 +1,10 @@
 import { Feather } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
 import { IconButton } from '@/components/IconButton';
+import { ResilientImage } from '@/components/media/ResilientImage';
 import { SectionTitle } from '@/components/SectionTitle';
 import type { FeaturedPlaylist, PlaceContext } from '@/types/domain';
 import { getPlaceDisplayTitle } from '@/utils/placeLabel';
@@ -81,6 +81,8 @@ export function CurrentSoundtrackCard({
       })}`
     : '최근 추천';
   const sectionStatus = sourceLabel ?? (isCached ? cacheLabel : undefined);
+  const heroImageUrl =
+    currentPlace?.imageUrl ?? playlist?.coverImageUrl ?? playlist?.backgroundImageUrl;
 
   const handleOpenPlaylist = () => {
     if (playlist) {
@@ -130,15 +132,15 @@ export function CurrentSoundtrackCard({
           opacity: isLoading || isOpeningPlaylist ? 0.52 : pressed ? 0.72 : 1,
         })}
       >
-        {currentPlace?.imageUrl ? (
-          <Image
-            accessibilityIgnoresInvertColors
-            contentFit="cover"
-            source={{ uri: currentPlace.imageUrl }}
-            style={StyleSheet.absoluteFill}
-            transition={220}
-          />
-        ) : null}
+        <ResilientImage
+          accessibilityIgnoresInvertColors
+          accessibilityLabel={`${placeTitle} 추천 이미지`}
+          contentFit="cover"
+          fallbackVariant={currentPlace ? 'place' : 'playlist'}
+          style={StyleSheet.absoluteFill}
+          transition={220}
+          uri={heroImageUrl}
+        />
         <LinearGradient
           colors={['rgba(5,9,22,0.18)', 'rgba(5,9,22,0.94)']}
           end={{ x: 0.5, y: 1 }}

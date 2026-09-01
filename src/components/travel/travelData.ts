@@ -1,4 +1,5 @@
 import type { MomentLog, MoodTag, TravelMode } from '@/types/domain';
+import { getMockImageUrl } from '@/mocks/imageAssets';
 
 export type TravelModeOption = {
   icon: string;
@@ -63,7 +64,7 @@ export const sampleMoments: MomentLog[] = [
     createdAt: '2026-06-06T17:21:00.000+09:00',
     id: 'sample-gwangalli',
     moodTags: ['fresh'],
-    photoUri: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
+    photoUri: getMockImageUrl('busan'),
     placeName: '광안리 해변',
     source: 'camera',
     track: {
@@ -78,7 +79,7 @@ export const sampleMoments: MomentLog[] = [
     createdAt: '2026-06-06T15:42:00.000+09:00',
     id: 'sample-seongsu',
     moodTags: ['calm', 'local'],
-    photoUri: 'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
+    photoUri: getMockImageUrl('seoul'),
     placeName: '성수 카페거리',
     source: 'camera',
     track: {
@@ -93,7 +94,7 @@ export const sampleMoments: MomentLog[] = [
     createdAt: '2026-06-06T13:18:00.000+09:00',
     id: 'sample-night',
     moodTags: ['emotional'],
-    photoUri: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+    photoUri: getMockImageUrl('seoul'),
     placeName: '남산 산책로',
     source: 'camera',
     track: {

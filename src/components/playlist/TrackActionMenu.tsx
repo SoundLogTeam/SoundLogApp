@@ -1,8 +1,9 @@
 import { Feather } from '@expo/vector-icons';
-import { Image } from 'expo-image';
-import { Modal, Pressable, View } from 'react-native';
+import { Animated, Modal, Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { ResilientImage } from '@/components/media/ResilientImage';
+import { useDismissibleBottomSheetGesture } from '@/hooks/useBottomSheetGesture';
 import { Track } from '@/types/domain';
 
 type TrackActionMenuProps = {
@@ -57,30 +58,41 @@ export function TrackActionMenu({
   const handleClose = () => {
     onClose();
   };
+  const { panHandlers, translateY } = useDismissibleBottomSheetGesture({
+    onDismiss: handleClose,
+    visible,
+  });
 
   return (
     <Modal animationType="fade" onRequestClose={handleClose} transparent visible={visible}>
       <View className="flex-1 justify-end">
         <Pressable className="absolute inset-0 bg-black/60" onPress={handleClose} />
-        <View className="rounded-t-[24px] border border-white/10 bg-[#121827] px-5 pb-10 pt-5">
-          <View className="mx-auto mb-5 h-[5px] w-9 rounded-full bg-white/35" />
+        <Animated.View
+          className="rounded-t-[24px] border border-white/10 bg-[#121827] px-5 pb-10 pt-3"
+          style={{ transform: [{ translateY }] }}
+        >
+          <View
+            {...panHandlers}
+            accessible
+            accessibilityHint="아래로 드래그해 닫을 수 있습니다."
+            accessibilityLabel="곡 메뉴 시트 핸들"
+            className="mb-3 min-h-9 items-center justify-center"
+          >
+            <View className="h-[5px] w-9 rounded-full bg-white/35" />
+          </View>
           {track ? (
             <View className="mb-4 flex-row items-center">
               <View
                 className="h-[42px] w-[42px] overflow-hidden rounded-[10px]"
                 style={{ backgroundColor: track.fallbackColor ?? '#fff' }}
               >
-                {artworkUrl ? (
-                  <Image
-                    className="h-full w-full"
-                    contentFit="cover"
-                    source={{ uri: artworkUrl }}
-                  />
-                ) : (
-                  <View className="h-full w-full items-center justify-center">
-                    <Feather color="rgba(255,255,255,0.72)" name="disc" size={20} />
-                  </View>
-                )}
+                <ResilientImage
+                  accessibilityLabel={`${track.title} 앨범 이미지`}
+                  contentFit="cover"
+                  fallbackVariant="music"
+                  style={{ height: '100%', width: '100%' }}
+                  uri={artworkUrl}
+                />
               </View>
               <View className="ml-3 flex-1">
                 <AppText className="text-base font-semibold text-white" numberOfLines={1}>
@@ -109,11 +121,9 @@ export function TrackActionMenu({
             </AppText>
           ) : null}
           {actionMessage ? (
-            <AppText className="mt-2 text-xs leading-5 text-amber-100">
-              {actionMessage}
-            </AppText>
+            <AppText className="mt-2 text-xs leading-5 text-amber-100">{actionMessage}</AppText>
           ) : null}
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );

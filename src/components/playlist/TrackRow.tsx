@@ -1,8 +1,8 @@
 import { Feather } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { ResilientImage } from '@/components/media/ResilientImage';
 import { Track } from '@/types/domain';
 import { getTrackKeyColor, hexToRgba } from '@/utils/trackVisuals';
 
@@ -51,16 +51,13 @@ export function TrackRow({
             backgroundColor: hexToRgba(keyColor, 0.24),
           }}
         >
-          {artworkUrl ? (
-            <Image contentFit="cover" source={{ uri: artworkUrl }} style={{ flex: 1 }} />
-          ) : (
-            <View
-              className="flex-1 items-center justify-center"
-              style={{ backgroundColor: hexToRgba(keyColor, 0.32) }}
-            >
-              <Feather color="rgba(255,255,255,0.72)" name="disc" size={22} />
-            </View>
-          )}
+          <ResilientImage
+            accessibilityLabel={`${track.title} 앨범 이미지`}
+            contentFit="cover"
+            fallbackVariant="music"
+            style={{ flex: 1 }}
+            uri={artworkUrl}
+          />
         </View>
 
         <View className="ml-3 min-w-0 flex-1">

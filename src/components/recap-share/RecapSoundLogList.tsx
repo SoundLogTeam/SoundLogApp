@@ -1,5 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
 import {
@@ -13,6 +12,7 @@ import {
 } from "react-native";
 
 import { AppText } from "@/components/AppText";
+import { ResilientImage } from "@/components/media/ResilientImage";
 import { SectionTitle } from "@/components/SectionTitle";
 import { useAuthenticatedImageSource } from "@/hooks/useAuthenticatedImageSource";
 import type { RecapShare, RecapShareMoment } from "@/types/domain";
@@ -54,8 +54,9 @@ function SoundLogBackground({ imageUrl }: { imageUrl?: string }) {
   return (
     <>
       {visibleImageUrl ? (
-        <Image
+        <ResilientImage
           contentFit="cover"
+          fallbackVariant="recap"
           onError={() => setFailedImageUrl(visibleImageUrl)}
           source={photoSource}
           style={StyleSheet.absoluteFill}

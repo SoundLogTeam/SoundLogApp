@@ -26,6 +26,7 @@ type HomeSoundtrackBottomSheetProps = {
   isLoading?: boolean;
   likedTrackIds: Set<string>;
   onClose: () => void;
+  onDismissed?: () => void;
   onSelectTrack: (track: Track) => void;
   onToggleLike: (track: Track) => void;
   onToggleSave: (track: Track) => void;
@@ -67,6 +68,7 @@ export function HomeSoundtrackBottomSheet({
   isLoading = false,
   likedTrackIds,
   onClose,
+  onDismissed,
   onSelectTrack,
   onToggleLike,
   onToggleSave,
@@ -145,20 +147,32 @@ export function HomeSoundtrackBottomSheet({
     ]).start(({ finished }) => {
       if (finished) {
         setIsMounted(false);
+        onDismissed?.();
       }
     });
-  }, [backdropOpacity, isMounted, restingOffset, sheetHiddenOffset, translateY, visible]);
+  }, [
+    backdropOpacity,
+    isMounted,
+    onDismissed,
+    restingOffset,
+    sheetHiddenOffset,
+    translateY,
+    visible,
+  ]);
 
-  const snapTo = useCallback((offset: number) => {
-    currentSnapOffset.current = offset;
-    Animated.spring(translateY, {
-      damping: 24,
-      mass: 0.82,
-      stiffness: 230,
-      toValue: offset,
-      useNativeDriver: true,
-    }).start();
-  }, [translateY]);
+  const snapTo = useCallback(
+    (offset: number) => {
+      currentSnapOffset.current = offset;
+      Animated.spring(translateY, {
+        damping: 24,
+        mass: 0.82,
+        stiffness: 230,
+        toValue: offset,
+        useNativeDriver: true,
+      }).start();
+    },
+    [translateY],
+  );
 
   const panResponder = useMemo(
     () =>
@@ -168,6 +182,8 @@ export function HomeSoundtrackBottomSheet({
           dragStartOffset.current = currentSnapOffset.current;
         },
         onMoveShouldSetPanResponder: (_, gesture) =>
+          Math.abs(gesture.dy) > 4 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
+        onMoveShouldSetPanResponderCapture: (_, gesture) =>
           Math.abs(gesture.dy) > 4 && Math.abs(gesture.dy) > Math.abs(gesture.dx),
         onPanResponderMove: (_, gesture) => {
           const nextOffset = dragStartOffset.current + gesture.dy;
@@ -194,6 +210,7 @@ export function HomeSoundtrackBottomSheet({
         onPanResponderTerminate: () => {
           snapTo(currentSnapOffset.current);
         },
+        onPanResponderTerminationRequest: () => false,
       }),
     [onClose, restingOffset, snapTo, translateY],
   );
@@ -227,20 +244,25 @@ export function HomeSoundtrackBottomSheet({
             },
           ]}
         >
-          <View
-            {...panResponder.panHandlers}
-            accessible
-            accessibilityHint="위아래로 드래그해 펼치거나 닫을 수 있습니다."
-            accessibilityLabel={`${eyebrowLabel} 핸들`}
-            style={styles.dragRegion}
-          >
-            <View style={styles.dragHandle} />
+          <View style={styles.dragRegion}>
+            <View
+              {...panResponder.panHandlers}
+              accessible
+              accessibilityHint="위아래로 드래그해 펼치거나 닫을 수 있습니다."
+              accessibilityLabel={`${eyebrowLabel} 핸들`}
+              style={styles.dragHandleRegion}
+            >
+              <View style={styles.dragHandle} />
+            </View>
             <View className="flex-row items-start justify-between gap-4">
               <View className="min-w-0 flex-1">
                 <AppText className="text-[11px] font-semibold text-[#B7E628]">
                   {eyebrowLabel}
                 </AppText>
-                <AppText className="mt-1 text-[24px] font-semibold leading-8 text-white" numberOfLines={1}>
+                <AppText
+                  className="mt-1 text-[24px] font-semibold leading-8 text-white"
+                  numberOfLines={1}
+                >
                   {playlist?.regionName ?? '추천 곡'}
                 </AppText>
                 {playlist ? (
@@ -310,9 +332,7 @@ export function HomeSoundtrackBottomSheet({
                 className="mt-4 min-h-11 items-center justify-center rounded-full border border-soundlog-lime/45 bg-soundlog-action px-6"
                 onPress={onRetry}
               >
-                <AppText className="text-sm font-semibold text-soundlog-inverse">
-                  다시 시도
-                </AppText>
+                <AppText className="text-sm font-semibold text-soundlog-inverse">다시 시도</AppText>
               </Pressable>
             </View>
           ) : (
@@ -342,8 +362,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.72)',
     borderRadius: 999,
     height: 5,
-    marginBottom: 18,
     width: 54,
+  },
+  dragHandleRegion: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 32,
+    marginBottom: 2,
   },
   dragRegion: {
     paddingBottom: 10,

@@ -19,6 +19,7 @@ export type RecommendationEventType =
   | 'live_track_shared'
   | 'nearby_sound_opened'
   | 'recommendation_mode_change'
+  | 'recommendation_feedback'
   | 'recap_representative_track_select';
 
 export type RecommendationEventContext = {

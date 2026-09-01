@@ -26,6 +26,7 @@ import ViewShot from 'react-native-view-shot';
 import type { MapStyleElement } from 'react-native-maps';
 
 import { AppText } from '@/components/AppText';
+import { ResilientImage } from '@/components/media/ResilientImage';
 import type { GeoPoint, RecapTemplateId, Track } from '@/types/domain';
 
 type NativeMapsModule = typeof import('react-native-maps');
@@ -653,8 +654,9 @@ function MapMusicPin({ track }: { track?: Track }) {
     >
       <View style={styles.mapMusicBubble}>
         {track?.albumImageUrl ? (
-          <Image
+          <ResilientImage
             contentFit="cover"
+            fallbackVariant="music"
             source={{ uri: track.albumImageUrl }}
             style={styles.mapMusicArtwork}
           />

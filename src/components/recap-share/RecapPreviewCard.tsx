@@ -1,5 +1,4 @@
 import { Feather } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   Animated,
@@ -11,6 +10,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AppText } from '@/components/AppText';
+import { ResilientImage } from '@/components/media/ResilientImage';
 import { RecordDisc } from '@/components/recap-share/RecordDisc';
 import { useAuthenticatedImageSource } from '@/hooks/useAuthenticatedImageSource';
 import {
@@ -68,8 +68,9 @@ function RecapBackground({
   return (
     <>
       {visibleImageUrl ? (
-        <Image
+        <ResilientImage
           contentFit="cover"
+          fallbackVariant="recap"
           onError={() => setFailedImageUrl(visibleImageUrl)}
           source={photoSource}
           style={StyleSheet.absoluteFill}
@@ -332,8 +333,9 @@ function RecapFilmMomentThumbnail({ moment, index }: { index: number; moment: Re
   return (
     <View className="h-[82px] overflow-hidden rounded-[14px] border border-white/12 bg-white/[0.06]">
       {moment.imageUrl ? (
-        <Image
+        <ResilientImage
           contentFit="cover"
+          fallbackVariant="recap"
           source={photoSource}
           style={StyleSheet.absoluteFill}
           transition={250}

@@ -1,10 +1,10 @@
 import { Feather } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { ResilientImage } from '@/components/media/ResilientImage';
 import type { PlaceContext } from '@/types/domain';
 
 type SelectedTourPlacePanelProps = {
@@ -46,10 +46,11 @@ export function SelectedTourPlacePanel({
       <View className="flex-row items-start gap-3">
         <View className="h-[84px] w-[84px] shrink-0 overflow-hidden rounded-[14px] border border-white/10 bg-white/10">
           {shouldShowImage ? (
-            <Image
+            <ResilientImage
               accessibilityIgnoresInvertColors
               className="h-full w-full"
               contentFit="cover"
+              fallbackVariant="place"
               onError={() => setHasImageError(true)}
               source={{ uri: place.imageUrl }}
               transition={180}

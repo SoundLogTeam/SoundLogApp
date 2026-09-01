@@ -1,8 +1,9 @@
 import { Feather } from '@expo/vector-icons';
-import { Modal, Pressable, View } from 'react-native';
+import { Animated, Modal, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
+import { useDismissibleBottomSheetGesture } from '@/hooks/useBottomSheetGesture';
 import type { TravelMode } from '@/types/domain';
 
 import { travelModeOptions } from './travelData';
@@ -25,16 +26,31 @@ export function TravelModeBottomSheet({
   visible,
 }: TravelModeBottomSheetProps) {
   const insets = useSafeAreaInsets();
+  const { panHandlers, translateY } = useDismissibleBottomSheetGesture({
+    onDismiss: onClose,
+    visible,
+  });
 
   return (
-    <Modal animationType="slide" onRequestClose={onClose} transparent visible={visible}>
+    <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
       <View className="flex-1 justify-end bg-black/55">
         <Pressable accessibilityRole="button" className="flex-1" onPress={onClose} />
-        <View
+        <Animated.View
           className="rounded-t-[30px] border border-white/10 bg-[#0B1020] px-5 pt-4"
-          style={{ paddingBottom: Math.max(insets.bottom, 18) }}
+          style={{
+            paddingBottom: Math.max(insets.bottom, 18),
+            transform: [{ translateY }],
+          }}
         >
-          <View className="mx-auto h-1.5 w-11 rounded-full bg-white/25" />
+          <View
+            {...panHandlers}
+            accessible
+            accessibilityHint="아래로 드래그해 닫을 수 있습니다."
+            accessibilityLabel="여행 모드 선택 시트 핸들"
+            className="min-h-9 items-center justify-center"
+          >
+            <View className="h-1.5 w-11 rounded-full bg-white/25" />
+          </View>
 
           <View className="mt-5 flex-row items-start justify-between gap-4">
             <View className="min-w-0 flex-1">
@@ -97,7 +113,7 @@ export function TravelModeBottomSheet({
               {submitLabel}
             </AppText>
           </Pressable>
-        </View>
+        </Animated.View>
       </View>
     </Modal>
   );
