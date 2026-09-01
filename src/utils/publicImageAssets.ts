@@ -1,6 +1,6 @@
 import { getApiBaseUrl } from '@/api/client';
 
-export type MockImageRegion =
+export type PublicImageRegion =
   | 'busan'
   | 'chuncheon'
   | 'daegu'
@@ -10,7 +10,7 @@ export type MockImageRegion =
   | 'jeonju'
   | 'seoul';
 
-export function getMockImageUrl(region: MockImageRegion) {
+export function getPublicImageUrl(region: PublicImageRegion) {
   const apiBaseUrl = getApiBaseUrl();
 
   if (!apiBaseUrl) {

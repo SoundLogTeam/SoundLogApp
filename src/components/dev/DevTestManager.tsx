@@ -17,7 +17,7 @@ import { SOUNDLOG_TERMS_VERSION } from '@/constants/legal';
 import { getApiBaseUrl } from '@/api/client';
 import { queryClient } from '@/providers/queryClient';
 import { AppText } from '@/components/AppText';
-import { getMockImageUrl } from '@/mocks/imageAssets';
+import { getPublicImageUrl } from '@/utils/publicImageAssets';
 import { playlistCurationById } from '@/mocks/playlistMocks';
 import { useAuthStore } from '@/store/authStore';
 import { useHomeFilterStore } from '@/store/homeFilterStore';
@@ -45,7 +45,7 @@ const placePresets: Array<{
       category: '해변',
       contentType: '관광지',
       id: 'dev-busan-gwangalli',
-      imageUrl: getMockImageUrl('busan'),
+      imageUrl: getPublicImageUrl('busan'),
       location: { lat: 35.1532, lng: 129.1186 },
       overview: '바다와 야경, 산책 맥락을 테스트하는 개발용 장소입니다.',
       source: 'seed',
@@ -59,7 +59,7 @@ const placePresets: Array<{
       category: '야경',
       contentType: '문화시설',
       id: 'dev-seoul-night',
-      imageUrl: getMockImageUrl('seoul'),
+      imageUrl: getPublicImageUrl('seoul'),
       location: { lat: 37.5512, lng: 126.9882 },
       overview: '도시 야경과 감성 음악 추천을 테스트하는 개발용 장소입니다.',
       source: 'seed',

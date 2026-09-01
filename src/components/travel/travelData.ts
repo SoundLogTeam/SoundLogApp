@@ -1,5 +1,5 @@
 import type { MomentLog, MoodTag, TravelMode } from '@/types/domain';
-import { getMockImageUrl } from '@/mocks/imageAssets';
+import { getPublicImageUrl } from '@/utils/publicImageAssets';
 
 export type TravelModeOption = {
   icon: string;
@@ -64,7 +64,7 @@ export const sampleMoments: MomentLog[] = [
     createdAt: '2026-06-06T17:21:00.000+09:00',
     id: 'sample-gwangalli',
     moodTags: ['fresh'],
-    photoUri: getMockImageUrl('busan'),
+    photoUri: getPublicImageUrl('busan'),
     placeName: '광안리 해변',
     source: 'camera',
     track: {
@@ -79,7 +79,7 @@ export const sampleMoments: MomentLog[] = [
     createdAt: '2026-06-06T15:42:00.000+09:00',
     id: 'sample-seongsu',
     moodTags: ['calm', 'local'],
-    photoUri: getMockImageUrl('seoul'),
+    photoUri: getPublicImageUrl('seoul'),
     placeName: '성수 카페거리',
     source: 'camera',
     track: {
@@ -94,7 +94,7 @@ export const sampleMoments: MomentLog[] = [
     createdAt: '2026-06-06T13:18:00.000+09:00',
     id: 'sample-night',
     moodTags: ['emotional'],
-    photoUri: getMockImageUrl('seoul'),
+    photoUri: getPublicImageUrl('seoul'),
     placeName: '남산 산책로',
     source: 'camera',
     track: {

@@ -1,19 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getMockImageUrl } from '@/mocks/imageAssets';
+import { getPublicImageUrl } from '@/utils/publicImageAssets';
 
-describe('getMockImageUrl', () => {
+describe('getPublicImageUrl', () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it('uses the API origin for public regional assets', () => {
+  it('uses the configured API origin without inheriting its path', () => {
     vi.stubEnv(
       'EXPO_PUBLIC_SOUNDLOG_API_BASE_URL',
       'https://soundlog.example.com/api/soundlog',
     );
 
-    expect(getMockImageUrl('busan')).toBe(
+    expect(getPublicImageUrl('busan')).toBe(
       'https://soundlog.example.com/assets/playlists/busan.webp',
     );
   });
@@ -21,6 +21,6 @@ describe('getMockImageUrl', () => {
   it('lets the UI render a semantic fallback when no API origin exists', () => {
     vi.stubEnv('EXPO_PUBLIC_SOUNDLOG_API_BASE_URL', '');
 
-    expect(getMockImageUrl('seoul')).toBeUndefined();
+    expect(getPublicImageUrl('seoul')).toBeUndefined();
   });
 });

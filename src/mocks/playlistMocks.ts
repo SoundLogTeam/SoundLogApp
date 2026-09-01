@@ -1,6 +1,6 @@
 import { PlaylistCuration, Track } from '@/types/domain';
 
-import { getMockImageUrl } from './imageAssets';
+import { getPublicImageUrl } from '@/utils/publicImageAssets';
 
 const tracks: Track[] = [
   {
@@ -224,8 +224,8 @@ const festivalKpopTracks = createMoodPlaylistTracks('festival-kpop', [
 ], ['#9A3E62', '#D70D31', '#E66A73', '#29376B']);
 
 export const playlistDetail: PlaylistCuration = {
-  backgroundImageUrl: getMockImageUrl('seoul'),
-  coverImageUrl: getMockImageUrl('seoul'),
+  backgroundImageUrl: getPublicImageUrl('seoul'),
+  coverImageUrl: getPublicImageUrl('seoul'),
   durationText: '36:00분',
   id: 'seoul-night',
   placeName: '서울 야경',
@@ -238,7 +238,7 @@ export const playlistDetail: PlaylistCuration = {
 export const playlistCurationById: Record<string, PlaylistCuration> = {
   'calm-walk': {
     accentColor: '#2B176C',
-    coverImageUrl: getMockImageUrl('chuncheon'),
+    coverImageUrl: getPublicImageUrl('chuncheon'),
     durationText: '28:00분',
     id: 'calm-walk',
     placeName: '느린 걸음의 산책길',
@@ -249,7 +249,7 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   drive: {
     accentColor: '#B1913A',
-    coverImageUrl: getMockImageUrl('geoje'),
+    coverImageUrl: getPublicImageUrl('geoje'),
     durationText: '34:00분',
     id: 'drive',
     placeName: '해안도로 드라이브',
@@ -260,7 +260,7 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   'city-night': {
     accentColor: '#1F2937',
-    coverImageUrl: getMockImageUrl('seoul'),
+    coverImageUrl: getPublicImageUrl('seoul'),
     durationText: '31:00분',
     id: 'city-night',
     placeName: '도시 야경 산책',
@@ -271,7 +271,7 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   'cafe-indie': {
     accentColor: '#3F2C6B',
-    coverImageUrl: getMockImageUrl('jeonju'),
+    coverImageUrl: getPublicImageUrl('jeonju'),
     durationText: '29:00분',
     id: 'cafe-indie',
     placeName: '창가 자리와 오후 산책',
@@ -282,7 +282,7 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   'festival-kpop': {
     accentColor: '#9A3E62',
-    coverImageUrl: getMockImageUrl('daegu'),
+    coverImageUrl: getPublicImageUrl('daegu'),
     durationText: '33:00분',
     id: 'festival-kpop',
     placeName: '페스티벌 광장',
@@ -292,8 +292,8 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
     tracks: festivalKpopTracks,
   },
   'geoje-ocean': {
-    backgroundImageUrl: getMockImageUrl('geoje'),
-    coverImageUrl: getMockImageUrl('geoje'),
+    backgroundImageUrl: getPublicImageUrl('geoje'),
+    coverImageUrl: getPublicImageUrl('geoje'),
     durationText: '32:00분',
     id: 'geoje-ocean',
     placeName: '바람의 언덕과 해안도로',
@@ -304,8 +304,8 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   'busan-ocean': {
     ...playlistDetail,
-    backgroundImageUrl: getMockImageUrl('busan'),
-    coverImageUrl: getMockImageUrl('busan'),
+    backgroundImageUrl: getPublicImageUrl('busan'),
+    coverImageUrl: getPublicImageUrl('busan'),
     durationText: '40:00분',
     id: 'busan-ocean',
     placeName: '광안리 해변',
