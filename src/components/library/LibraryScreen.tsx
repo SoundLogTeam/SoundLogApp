@@ -1,6 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, View } from "react-native";
@@ -13,6 +12,7 @@ import {
 import { syncRecommendationEvent } from "@/api/recommendationEventApi";
 import { AppText } from "@/components/AppText";
 import { IconButton } from "@/components/IconButton";
+import { ResilientImage } from "@/components/media/ResilientImage";
 import { LibraryEmptyState } from "@/components/library/LibraryEmptyState";
 import { LibraryTrackRow } from "@/components/library/LibraryTrackRow";
 import { PageHeader } from "@/components/PageHeader";
@@ -368,13 +368,13 @@ export function LibraryScreen() {
                           "#2B176C",
                       }}
                     >
-                      {imageUrl ? (
-                        <Image
-                          className="h-full w-full"
-                          contentFit="cover"
-                          source={{ uri: imageUrl }}
-                        />
-                      ) : null}
+                      <ResilientImage
+                        accessibilityLabel={`${title} 플레이리스트 이미지`}
+                        contentFit="cover"
+                        fallbackVariant="playlist"
+                        style={{ height: "100%", width: "100%" }}
+                        uri={imageUrl}
+                      />
                     </View>
                     <View className="ml-3 min-w-0 flex-1">
                       <AppText

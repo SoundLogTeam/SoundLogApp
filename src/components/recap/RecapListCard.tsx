@@ -1,9 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/AppText";
+import { ResilientImage } from "@/components/media/ResilientImage";
 import { useAuthenticatedImageSource } from "@/hooks/useAuthenticatedImageSource";
 import { RecapItem } from "@/types/domain";
 import { formatRecapRecordedAt } from "@/utils/dateFormat";
@@ -29,8 +29,9 @@ export function RecapListCard({ imageUrl, item, onPress }: RecapListCardProps) {
       onPress={onPress}
     >
       {imageUrl ? (
-        <Image
+        <ResilientImage
           contentFit="cover"
+          fallbackVariant="recap"
           source={photoSource}
           style={StyleSheet.absoluteFill}
           transition={250}

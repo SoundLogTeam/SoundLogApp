@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
 import { Modal, Platform, Pressable, ScrollView, View } from "react-native";
@@ -9,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { libraryApi } from "@/api/libraryApi";
 import { syncRecommendationEvent } from "@/api/recommendationEventApi";
 import { AppText } from "@/components/AppText";
+import { ResilientImage } from "@/components/media/ResilientImage";
 import { TrackActionMenu } from "@/components/playlist/TrackActionMenu";
 import { getMiniPlayerBottom } from "@/constants/layout";
 import { useLibraryStore } from "@/store/libraryStore";
@@ -166,20 +166,13 @@ export function MiniPlayer() {
         borderColor: "rgba(255,255,255,0.24)",
       }}
     >
-      {artworkUrl ? (
-        <Image
-          contentFit="cover"
-          source={{ uri: artworkUrl }}
-          style={{ flex: 1 }}
-        />
-      ) : (
-        <View
-          className="flex-1 items-center justify-center"
-          style={{ backgroundColor: hexToRgba(keyColor, 0.32) }}
-        >
-          <Feather color="rgba(255,255,255,0.72)" name="disc" size={20} />
-        </View>
-      )}
+      <ResilientImage
+        accessibilityLabel={`${currentTrack.title} 앨범 이미지`}
+        contentFit="cover"
+        fallbackVariant="music"
+        style={{ flex: 1 }}
+        uri={artworkUrl}
+      />
     </View>
   );
   const renderLpCover = () => (
@@ -219,20 +212,13 @@ export function MiniPlayer() {
           borderColor: "rgba(255,255,255,0.22)",
         }}
       >
-        {artworkUrl ? (
-          <Image
-            contentFit="cover"
-            source={{ uri: artworkUrl }}
-            style={{ flex: 1 }}
-          />
-        ) : (
-          <View
-            className="flex-1 items-center justify-center"
-            style={{ backgroundColor: hexToRgba(keyColor, 0.32) }}
-          >
-            <Feather color="rgba(255,255,255,0.72)" name="disc" size={36} />
-          </View>
-        )}
+        <ResilientImage
+          accessibilityLabel={`${currentTrack.title} 앨범 이미지`}
+          contentFit="cover"
+          fallbackVariant="music"
+          style={{ flex: 1 }}
+          uri={artworkUrl}
+        />
       </View>
       <View className="absolute h-[18px] w-[18px] rounded-full border border-white/25 bg-black/80" />
       <View

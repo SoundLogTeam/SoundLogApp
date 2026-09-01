@@ -1,9 +1,9 @@
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { useEffect, useRef } from "react";
 import { Animated, Easing, Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/AppText";
+import { ResilientImage } from "@/components/media/ResilientImage";
 import { LibraryTrackRecord } from "@/store/libraryStore";
 import { formatRecapRecordedAt } from "@/utils/dateFormat";
 
@@ -117,17 +117,13 @@ export function LibraryTrackRow({
             className="h-[52px] w-[52px] overflow-hidden rounded-lg"
             style={{ backgroundColor: track.fallbackColor ?? "#2B176C" }}
           >
-            {artworkUrl ? (
-              <Image
-                className="h-full w-full"
-                contentFit="cover"
-                source={{ uri: artworkUrl }}
-              />
-            ) : (
-              <View className="h-full w-full items-center justify-center">
-                <Feather color="rgba(255,255,255,0.72)" name="disc" size={22} />
-              </View>
-            )}
+            <ResilientImage
+              accessibilityLabel={`${track.title} 앨범 이미지`}
+              contentFit="cover"
+              fallbackVariant="music"
+              style={{ height: "100%", width: "100%" }}
+              uri={artworkUrl}
+            />
           </View>
 
           <View className="ml-3 min-w-0 flex-1">

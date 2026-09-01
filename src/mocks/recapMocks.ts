@@ -1,5 +1,7 @@
 import { RecapItem, RecapShare } from '@/types/domain';
 
+import { getPublicImageUrl } from '@/utils/publicImageAssets';
+
 export const recapItems: RecapItem[] = [
   {
     createdAt: '2026-05-25T00:00:00.000Z',
@@ -18,14 +20,14 @@ export const recapItems: RecapItem[] = [
 
 export const recapShare: RecapShare = {
   artistName: 'JENNIE',
-  backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
-  discImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
+  backgroundImageUrl: getPublicImageUrl('seoul'),
+  discImageUrl: getPublicImageUrl('seoul'),
   id: 'seoul-night',
   moments: [
     {
       artistName: 'JENNIE',
       id: 'log-1',
-      imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+      imageUrl: getPublicImageUrl('busan'),
       location: { lat: 35.1532, lng: 129.1187 },
       placeName: '광안리',
       recordedAt: '2026-05-25T00:00:00.000Z',
@@ -34,7 +36,7 @@ export const recapShare: RecapShare = {
     {
       artistName: '아이유',
       id: 'log-2',
-      imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
+      imageUrl: getPublicImageUrl('seoul'),
       location: { lat: 37.5294, lng: 126.9348 },
       placeName: '한강',
       recordedAt: '2026-05-25T00:10:00.000Z',
@@ -43,7 +45,7 @@ export const recapShare: RecapShare = {
     {
       artistName: '10cm',
       id: 'log-3',
-      imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
+      imageUrl: getPublicImageUrl('busan'),
       location: { lat: 35.1796, lng: 129.0756 },
       placeName: '부산',
       recordedAt: '2026-05-25T00:20:00.000Z',
@@ -59,14 +61,14 @@ export const recapShare: RecapShare = {
 export const recapShareById: Record<string, RecapShare> = {
   'log-1': {
     artistName: 'JENNIE',
-    backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
-    discImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
+    backgroundImageUrl: getPublicImageUrl('busan'),
+    discImageUrl: getPublicImageUrl('busan'),
     id: 'log-1',
     moments: [
       {
         artistName: 'JENNIE',
         id: 'log-1',
-        imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+        imageUrl: getPublicImageUrl('busan'),
         location: { lat: 35.1532, lng: 129.1187 },
         placeName: '광안리',
         recordedAt: '2026-05-25T00:00:00.000Z',
@@ -80,14 +82,14 @@ export const recapShareById: Record<string, RecapShare> = {
   },
   'log-2': {
     artistName: '아이유',
-    backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
-    discImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+    backgroundImageUrl: getPublicImageUrl('seoul'),
+    discImageUrl: getPublicImageUrl('seoul'),
     id: 'log-2',
     moments: [
       {
         artistName: '아이유',
         id: 'log-2',
-        imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
+        imageUrl: getPublicImageUrl('seoul'),
         location: { lat: 37.5294, lng: 126.9348 },
         placeName: '한강',
         recordedAt: '2026-05-25T00:10:00.000Z',
@@ -101,14 +103,14 @@ export const recapShareById: Record<string, RecapShare> = {
   },
   'log-3': {
     artistName: '10cm',
-    backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
-    discImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/84/1870084.jpg',
+    backgroundImageUrl: getPublicImageUrl('busan'),
+    discImageUrl: getPublicImageUrl('busan'),
     id: 'log-3',
     moments: [
       {
         artistName: '10cm',
         id: 'log-3',
-        imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
+        imageUrl: getPublicImageUrl('busan'),
         location: { lat: 35.1796, lng: 129.0756 },
         placeName: '부산',
         recordedAt: '2026-05-25T00:20:00.000Z',

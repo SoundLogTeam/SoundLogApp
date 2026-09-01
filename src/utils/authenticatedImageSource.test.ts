@@ -212,7 +212,7 @@ describe('toAuthenticatedImageSource', () => {
     });
 
     it('leaves external tourism API photo URLs completely unchanged', () => {
-      const uri = 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg';
+      const uri = 'https://images.example.com/tour/place.jpg';
       const result = toAuthenticatedImageSource(uri, TOKEN);
 
       expect(result).toEqual({ uri });

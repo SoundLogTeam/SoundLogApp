@@ -1,5 +1,5 @@
 import { Redirect, router } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollView, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -27,6 +27,10 @@ import { CurrentSoundtrackCard } from "@/components/home/CurrentSoundtrackCard";
 import { HomeSoundtrackBottomSheet } from "@/components/home/HomeSoundtrackBottomSheet";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { LocationContextCard } from "@/components/home/LocationContextCard";
+import {
+  RecommendationFeedbackSheet,
+  type RecommendationFeedbackRating,
+} from "@/components/home/RecommendationFeedbackSheet";
 import {
   MoodRecommendationSection,
   isMoodRecommendationFilter,
@@ -145,16 +149,18 @@ function HomeContent() {
   const [actionMessage, setActionMessage] = useState<string>();
   const [isSoundtrackSheetVisible, setIsSoundtrackSheetVisible] =
     useState(false);
+  const [feedbackPlaylist, setFeedbackPlaylist] = useState<PlaylistCuration>();
+  const feedbackPromptTimerRef = useRef<
+    ReturnType<typeof setTimeout> | undefined
+  >(undefined);
+  const promptedFeedbackPlaylistIdsRef = useRef(new Set<string>());
   const [selectedMusicPlaylistId, setSelectedMusicPlaylistId] =
     useState<string>();
   const [
     selectedMusicPlaylistEyebrowLabel,
     setSelectedMusicPlaylistEyebrowLabel,
   ] = useState("Music Playlist");
-  const {
-    selectedMoodFilter,
-    setSelectedMoodFilter,
-  } = useHomeFilterStore();
+  const { selectedMoodFilter, setSelectedMoodFilter } = useHomeFilterStore();
   const { currentTrack, setTrack } = usePlayerStore();
   const {
     isLiked,
@@ -386,6 +392,14 @@ function HomeContent() {
     }
   }, [selectedMoodFilter, setSelectedMoodFilter]);
 
+  useEffect(function clearFeedbackPromptTimerOnUnmount() {
+    return () => {
+      if (feedbackPromptTimerRef.current) {
+        clearTimeout(feedbackPromptTimerRef.current);
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (!currentLocation) {
       return;
@@ -399,7 +413,9 @@ function HomeContent() {
     }
 
     const nextPlace =
-      nearbyPlacesQuery.data?.[0] ?? reverseGeocodedPlaceQuery.data ?? undefined;
+      nearbyPlacesQuery.data?.[0] ??
+      reverseGeocodedPlaceQuery.data ??
+      undefined;
 
     if (nextPlace?.id !== currentPlace?.id) {
       setPlace(nextPlace);
@@ -536,6 +552,28 @@ function HomeContent() {
     },
     [addRecommendationEvent, selectedMoodFilter, setSelectedMoodFilter],
   );
+  const queueRecommendationFeedback = useCallback(
+    (playlist?: PlaylistCuration) => {
+      if (
+        !playlist ||
+        promptedFeedbackPlaylistIdsRef.current.has(playlist.id)
+      ) {
+        return;
+      }
+
+      promptedFeedbackPlaylistIdsRef.current.add(playlist.id);
+
+      if (feedbackPromptTimerRef.current) {
+        clearTimeout(feedbackPromptTimerRef.current);
+      }
+
+      feedbackPromptTimerRef.current = setTimeout(() => {
+        setFeedbackPlaylist(playlist);
+        feedbackPromptTimerRef.current = undefined;
+      }, 220);
+    },
+    [],
+  );
   const handleEnableLocationRecommendation = useCallback(async () => {
     const nextProfile = {
       companionType: profile.companionType,
@@ -581,13 +619,7 @@ function HomeContent() {
     } catch {
       setLocationStatus("unavailable");
     }
-  }, [
-    clearLocation,
-    locationStatus,
-    setLocation,
-    setLocationStatus,
-    setPlace,
-  ]);
+  }, [clearLocation, locationStatus, setLocation, setLocationStatus, setPlace]);
   const handleSetCurrentLocation = useCallback(async () => {
     if (!profile.locationRecommendationEnabled) {
       const didEnable = await handleEnableLocationRecommendation();
@@ -666,6 +698,9 @@ function HomeContent() {
   const handleCloseCurrentSoundtrack = useCallback(() => {
     setIsSoundtrackSheetVisible(false);
   }, []);
+  const handleDismissCurrentSoundtrack = useCallback(() => {
+    queueRecommendationFeedback(recommendedPlaylist);
+  }, [queueRecommendationFeedback, recommendedPlaylist]);
   const handleSelectCurrentSoundtrackTrack = useCallback(
     (track: Track) => {
       if (!recommendedPlaylist) {
@@ -803,7 +838,61 @@ function HomeContent() {
   );
   const handleCloseMusicPlaylistSheet = useCallback(() => {
     setSelectedMusicPlaylistId(undefined);
+    queueRecommendationFeedback(selectedMusicPlaylist);
+  }, [queueRecommendationFeedback, selectedMusicPlaylist]);
+  const handleCloseRecommendationFeedback = useCallback(() => {
+    setFeedbackPlaylist(undefined);
   }, []);
+  const handleSubmitRecommendationFeedback = useCallback(
+    (rating: RecommendationFeedbackRating, moodFilter?: string) => {
+      if (!feedbackPlaylist) {
+        return;
+      }
+
+      const context = createRecommendationEventContext({
+        moodFilter: moodFilter ?? selectedMoodFilter,
+        source: feedbackPlaylist.context?.source,
+      });
+
+      syncRecommendationEvent(
+        addRecommendationEvent({
+          context,
+          playlistId: feedbackPlaylist.id,
+          type: "recommendation_feedback",
+          value: moodFilter ? `${rating}:${moodFilter}` : rating,
+        }),
+      );
+
+      if (moodFilter) {
+        setSelectedMoodFilter(moodFilter);
+        syncRecommendationEvent(
+          addRecommendationEvent({
+            context,
+            playlistId: feedbackPlaylist.id,
+            type: "mood_adjusted",
+            value: moodFilter,
+          }),
+        );
+        setActionMessage(
+          `${moodFilter} 무드로 바꿨어요. 다음 추천에 바로 반영할게요.`,
+        );
+      } else if (rating === "great") {
+        setActionMessage("좋아요. 비슷한 장소와 무드 추천에 반영할게요.");
+      } else if (rating === "okay") {
+        setActionMessage("피드백을 저장했어요. 다음 추천을 더 잘 맞춰볼게요.");
+      } else {
+        setActionMessage("다음 추천에서는 다른 느낌을 더 살펴볼게요.");
+      }
+
+      setFeedbackPlaylist(undefined);
+    },
+    [
+      addRecommendationEvent,
+      feedbackPlaylist,
+      selectedMoodFilter,
+      setSelectedMoodFilter,
+    ],
+  );
   const handleSelectMusicPlaylistTrack = useCallback(
     (track: Track) => {
       if (!selectedMusicPlaylist) {
@@ -961,8 +1050,7 @@ function HomeContent() {
           enabled={profile.locationRecommendationEnabled}
           isLoading={locationStatus === "loading"}
           isPlaceLoading={
-            nearbyPlacesQuery.isFetching ||
-            reverseGeocodedPlaceQuery.isFetching
+            nearbyPlacesQuery.isFetching || reverseGeocodedPlaceQuery.isFetching
           }
           location={currentLocation}
           onEnable={handleSetCurrentLocation}
@@ -1050,6 +1138,7 @@ function HomeContent() {
         }
         likedTrackIds={currentSoundtrackLikedTrackIds}
         onClose={handleCloseCurrentSoundtrack}
+        onDismissed={handleDismissCurrentSoundtrack}
         onRetry={() => void refetchRecommendedPlaylist()}
         onSelectTrack={handleSelectCurrentSoundtrackTrack}
         onToggleLike={handleToggleCurrentSoundtrackLike}
@@ -1076,6 +1165,13 @@ function HomeContent() {
         playlist={selectedMusicPlaylist}
         savedTrackIds={selectedMusicPlaylistSavedTrackIds}
         visible={isMusicPlaylistSheetVisible}
+      />
+      <RecommendationFeedbackSheet
+        onClose={handleCloseRecommendationFeedback}
+        onSubmit={handleSubmitRecommendationFeedback}
+        playlistReason={feedbackPlaylist?.reason}
+        regionName={feedbackPlaylist?.regionName}
+        visible={Boolean(feedbackPlaylist)}
       />
       {currentTrack ? <MiniPlayer /> : null}
     </Screen>

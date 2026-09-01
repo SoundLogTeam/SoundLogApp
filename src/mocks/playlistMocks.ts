@@ -1,5 +1,7 @@
 import { PlaylistCuration, Track } from '@/types/domain';
 
+import { getPublicImageUrl } from '@/utils/publicImageAssets';
+
 const tracks: Track[] = [
   {
     artist: 'JENNIE',
@@ -222,8 +224,8 @@ const festivalKpopTracks = createMoodPlaylistTracks('festival-kpop', [
 ], ['#9A3E62', '#D70D31', '#E66A73', '#29376B']);
 
 export const playlistDetail: PlaylistCuration = {
-  backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
-  coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
+  backgroundImageUrl: getPublicImageUrl('seoul'),
+  coverImageUrl: getPublicImageUrl('seoul'),
   durationText: '36:00분',
   id: 'seoul-night',
   placeName: '서울 야경',
@@ -236,7 +238,7 @@ export const playlistDetail: PlaylistCuration = {
 export const playlistCurationById: Record<string, PlaylistCuration> = {
   'calm-walk': {
     accentColor: '#2B176C',
-    coverImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/85/2613985_image2_1.jpg',
+    coverImageUrl: getPublicImageUrl('chuncheon'),
     durationText: '28:00분',
     id: 'calm-walk',
     placeName: '느린 걸음의 산책길',
@@ -247,7 +249,7 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   drive: {
     accentColor: '#B1913A',
-    coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
+    coverImageUrl: getPublicImageUrl('geoje'),
     durationText: '34:00분',
     id: 'drive',
     placeName: '해안도로 드라이브',
@@ -258,7 +260,7 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   'city-night': {
     accentColor: '#1F2937',
-    coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
+    coverImageUrl: getPublicImageUrl('seoul'),
     durationText: '31:00분',
     id: 'city-night',
     placeName: '도시 야경 산책',
@@ -269,7 +271,7 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   'cafe-indie': {
     accentColor: '#3F2C6B',
-    coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+    coverImageUrl: getPublicImageUrl('jeonju'),
     durationText: '29:00분',
     id: 'cafe-indie',
     placeName: '창가 자리와 오후 산책',
@@ -280,7 +282,7 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   'festival-kpop': {
     accentColor: '#9A3E62',
-    coverImageUrl: 'https://tong.visitkorea.or.kr/cms/resource_photo/33/3010733_image2_1.jpg',
+    coverImageUrl: getPublicImageUrl('daegu'),
     durationText: '33:00분',
     id: 'festival-kpop',
     placeName: '페스티벌 광장',
@@ -290,8 +292,8 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
     tracks: festivalKpopTracks,
   },
   'geoje-ocean': {
-    backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
-    coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+    backgroundImageUrl: getPublicImageUrl('geoje'),
+    coverImageUrl: getPublicImageUrl('geoje'),
     durationText: '32:00분',
     id: 'geoje-ocean',
     placeName: '바람의 언덕과 해안도로',
@@ -302,8 +304,8 @@ export const playlistCurationById: Record<string, PlaylistCuration> = {
   },
   'busan-ocean': {
     ...playlistDetail,
-    backgroundImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
-    coverImageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+    backgroundImageUrl: getPublicImageUrl('busan'),
+    coverImageUrl: getPublicImageUrl('busan'),
     durationText: '40:00분',
     id: 'busan-ocean',
     placeName: '광안리 해변',

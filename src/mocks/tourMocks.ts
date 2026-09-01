@@ -1,5 +1,7 @@
 import { GeoPoint, PlaceContext } from '@/types/domain';
 
+import { getPublicImageUrl } from '@/utils/publicImageAssets';
+
 const seoulPlaces: PlaceContext[] = [
   {
     address: '서울특별시 용산구 남산공원길 105',
@@ -7,7 +9,7 @@ const seoulPlaces: PlaceContext[] = [
     contentType: '관광지',
     distanceMeters: 620,
     id: 'seed-namsan',
-    imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+    imageUrl: getPublicImageUrl('seoul'),
     location: { lat: 37.5512, lng: 126.9882 },
     overview: '서울의 야경과 도심 산책을 함께 즐길 수 있는 대표 관광지입니다.',
     source: 'seed',
@@ -19,7 +21,7 @@ const seoulPlaces: PlaceContext[] = [
     contentType: '관광지',
     distanceMeters: 940,
     id: 'seed-gwanghwamun',
-    imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/82/1870082.jpg',
+    imageUrl: getPublicImageUrl('seoul'),
     location: { lat: 37.5759, lng: 126.9768 },
     overview: '도시 산책과 역사 관광 맥락을 함께 제공하는 서울 중심 관광지입니다.',
     source: 'seed',
@@ -34,7 +36,7 @@ const busanPlaces: PlaceContext[] = [
     contentType: '관광지',
     distanceMeters: 360,
     id: 'seed-gwangalli',
-    imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/76/2012176.jpg',
+    imageUrl: getPublicImageUrl('busan'),
     location: { lat: 35.1532, lng: 129.1186 },
     overview: '바다 산책과 야경을 함께 즐길 수 있는 부산 대표 해변입니다.',
     source: 'seed',
@@ -46,7 +48,7 @@ const busanPlaces: PlaceContext[] = [
     contentType: '관광지',
     distanceMeters: 1280,
     id: 'seed-haeundae',
-    imageUrl: 'https://tong.visitkorea.or.kr/cms2/website/75/2012175.jpg',
+    imageUrl: getPublicImageUrl('busan'),
     location: { lat: 35.1587, lng: 129.1604 },
     overview: '해변과 드라이브 맥락에 어울리는 부산 대표 관광지입니다.',
     source: 'seed',

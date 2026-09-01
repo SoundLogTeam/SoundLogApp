@@ -1,7 +1,7 @@
-import { Image } from 'expo-image';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { AppText } from '@/components/AppText';
+import { ResilientImage } from '@/components/media/ResilientImage';
 import { MoodRecommendation } from '@/types/domain';
 
 type MoodRecommendationCardProps = {
@@ -21,14 +21,14 @@ export function MoodRecommendationCard({ item, onPress }: MoodRecommendationCard
       onPress={() => onPress(item)}
       style={{ backgroundColor: item.color }}
     >
-      {item.imageUrl ? (
-        <Image
-          contentFit="cover"
-          source={{ uri: item.imageUrl }}
-          style={StyleSheet.absoluteFill}
-          transition={180}
-        />
-      ) : null}
+      <ResilientImage
+        accessibilityLabel={`${item.title.replace(/\n/g, ' ')} 추천 이미지`}
+        contentFit="cover"
+        fallbackVariant="playlist"
+        style={StyleSheet.absoluteFill}
+        transition={180}
+        uri={item.imageUrl}
+      />
       <View className="absolute inset-0 bg-black/40" />
       <View className="absolute inset-x-0 bottom-0 h-20 bg-black/30" />
       {moodLabel ? (

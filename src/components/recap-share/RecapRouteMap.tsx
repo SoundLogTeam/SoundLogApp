@@ -1,5 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import { Image } from "expo-image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Modal,
@@ -12,6 +11,7 @@ import {
 import MapView, { Marker, Polyline, type Region } from "react-native-maps";
 
 import { AppText } from "@/components/AppText";
+import { ResilientImage } from "@/components/media/ResilientImage";
 import { googleDarkMapStyle } from "@/components/travel/live-sound-map/SoundMapView";
 import { useAuthenticatedImageSource } from "@/hooks/useAuthenticatedImageSource";
 import type {
@@ -77,8 +77,9 @@ function MomentPreview({
     <View className="w-[238px] flex-row items-center gap-3 rounded-[14px] border border-white/10 bg-[#111629]/95 p-3">
       <View className="h-16 w-16 overflow-hidden rounded-[10px] bg-white/10">
         {moment.imageUrl ? (
-          <Image
+          <ResilientImage
             contentFit="cover"
+            fallbackVariant="recap"
             source={photoSource}
             style={StyleSheet.absoluteFill}
           />
@@ -161,8 +162,9 @@ function MomentDetailModal({
           >
             <View className="mx-5 aspect-[4/5] overflow-hidden rounded-[18px] bg-white/[0.06]">
               {moment?.imageUrl ? (
-                <Image
+                <ResilientImage
                   contentFit="cover"
+                  fallbackVariant="recap"
                   source={photoSource}
                   style={StyleSheet.absoluteFill}
                 />

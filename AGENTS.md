@@ -19,6 +19,19 @@
 - API health checks and command-line diagnostics may support investigation, but they do not replace simulator verification and must not be reported as completed app testing.
 - Use a web target only for explicit web build or export compatibility work. Even then, do not use it for product acceptance testing unless the user's latest message explicitly overrides this rule.
 
+## Server Ownership Boundary
+
+- Soundlog 앱 에이전트는 모바일 앱 저장소만 담당한다. `SoundLogServer`, `soundlog-ml`과 운영 인프라는 서버 팀원이 담당한다.
+- 앱 빌드나 배포 요청을 서버 배포 권한으로 해석하지 않는다. 앱을 EAS 또는 TestFlight로 배포하더라도 서버는 변경하지 않는다.
+- 서버 저장소의 파일을 수정하거나 커밋하거나 브랜치를 푸시하거나 Pull Request를 만들지 않는다.
+- 운영 서버에 SSH로 접속하지 않는다. Docker 이미지를 배포하거나 컨테이너를 재시작하거나 배포 워크플로를 실행하지 않는다.
+- 서버의 환경변수와 GitHub Actions 시크릿과 SSH 키와 도메인과 DNS와 인증서와 방화벽 설정을 생성하거나 변경하지 않는다.
+- 운영 데이터베이스의 migration과 seed와 관리자 API와 사용자 또는 신고 데이터를 변경하지 않는다.
+- 앱 연동 검수에 필요한 공개 HTTPS `GET` 요청은 허용한다. 예를 들어 health와 OpenAPI와 법적 문서의 응답 상태를 읽을 수 있다. 이 검사는 서버 배포나 서버 기능 완료의 증거로 사용하지 않는다.
+- 앱 변경에 서버 작업이 필요하면 필요한 API 계약과 현재 실패 증거만 정리해 서버 팀원에게 전달한다. 앱 작업 중 임의로 서버 수정이나 우회 배포를 하지 않는다.
+- 작업을 시작하기 전에 `pwd`, `git rev-parse --show-toplevel`, `git remote get-url origin`으로 앱 저장소인지 확인한다. 서버 저장소가 나오면 즉시 중단하고 앱 저장소로 이동한다.
+- 서버 작업을 함께 해달라는 후속 요청이 오더라도 대상 저장소와 작업 범위를 사용자가 최신 메시지에서 명시하지 않으면 수행하지 않는다.
+
 ## Text Color
 
 - 기본 사용자 노출 텍스트와 버튼, 탭, 칩의 인터랙션 라벨은 흰색 또는 흰색 투명도 계열을 사용한다. 상태를 구분하는 의미 색상과 브랜드 강조 색상은 예외로 둔다.

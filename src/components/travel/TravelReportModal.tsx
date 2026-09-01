@@ -1,10 +1,11 @@
 import { Feather } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useState } from "react";
-import { Image, Modal, Pressable, StyleSheet, View } from "react-native";
+import { Modal, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText } from "@/components/AppText";
+import { ResilientImage } from "@/components/media/ResilientImage";
 import { useAuthenticatedImageSource } from "@/hooks/useAuthenticatedImageSource";
 
 import {
@@ -41,9 +42,10 @@ function RecapThumbnailFrame({ photoUri }: { photoUri?: string }) {
   }
 
   return (
-    <Image
+    <ResilientImage
       className="h-full w-full"
-      resizeMode="cover"
+      contentFit="cover"
+      fallbackVariant="recap"
       source={photoSource}
     />
   );
