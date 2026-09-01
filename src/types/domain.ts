@@ -153,6 +153,13 @@ export type RecapItem = {
   moderationStatus?: 'approved' | 'pending' | 'rejected';
 };
 
+export type RecapBackgroundSuggestion = {
+  backgroundImageUrl: string | null;
+  placeName: string | null;
+  placeType: string | null;
+  source: 'gallery' | 'poi_image' | null;
+};
+
 export type RecapTemplateId = 'album' | 'film' | 'lp' | 'map';
 
 export type RecapVisibility = 'private' | 'public';

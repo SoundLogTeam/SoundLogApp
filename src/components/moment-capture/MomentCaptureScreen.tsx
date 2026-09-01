@@ -280,7 +280,6 @@ export function MomentCaptureScreen() {
       });
       const idempotencyKey = saveIdempotencyKey ?? `recap-capture:${createdAt}`;
       const savedLog = await momentLogApi.createMomentLog({
-        createStandaloneRecap: !activeSessionId,
         createdAt,
         idempotencyKey,
         location: locationSnapshot,
@@ -300,9 +299,18 @@ export function MomentCaptureScreen() {
         throw new Error("recap_save_failed");
       }
 
-      if (!activeSessionId && !savedLog.recapId) {
-        const fallbackRecap = await recapApi.createRecap(
+      if (!activeSessionId) {
+        const backgroundSuggestion = savedLog.location
+          ? await recapApi.getBackgroundSuggestion({
+              location: savedLog.location,
+              moodTags: reviewMoodTags,
+              travelMode: activeTravelMode,
+            })
+          : undefined;
+        const standaloneRecap = await recapApi.createRecap(
           {
+            backgroundImageUrl:
+              backgroundSuggestion?.backgroundImageUrl ?? undefined,
             momentLogIds: [savedLog.id],
             templateId: reviewTemplate,
             visibility: recapVisibility,
@@ -310,7 +318,7 @@ export function MomentCaptureScreen() {
           `standalone-recap:${idempotencyKey}`,
         );
 
-        if (!fallbackRecap) {
+        if (!standaloneRecap) {
           throw new Error("standalone_recap_save_failed");
         }
       }

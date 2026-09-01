@@ -4,6 +4,9 @@ import {
   shouldAttemptAuthenticatedApi,
 } from '@/api/client';
 import type {
+  GeoPoint,
+  MoodTag,
+  RecapBackgroundSuggestion,
   RecapItem,
   RecapMapMarker,
   RecapMapScope,
@@ -11,10 +14,12 @@ import type {
   RecapTemplateId,
   RecapVisibility,
   RoutePoint,
+  TravelMode,
 } from '@/types/domain';
 import { sanitizeRecapItem } from '@/utils/trackSanitizer';
 
 type CreateRecapInput = {
+  backgroundImageUrl?: string;
   momentLogIds?: string[];
   representativeTrackId?: string;
   routePoints?: RoutePoint[];
@@ -94,6 +99,23 @@ export const recapApi = {
         method: 'POST',
       },
     );
+  },
+  getBackgroundSuggestion: async (input: {
+    location: GeoPoint;
+    moodTags?: MoodTag[];
+    travelMode?: TravelMode;
+  }) => {
+    if (!shouldAttemptAuthenticatedApi()) {
+      return Promise.resolve<RecapBackgroundSuggestion | undefined>(undefined);
+    }
+
+    return requestApi<RecapBackgroundSuggestion>(
+      '/v1/recaps/background-suggestion',
+      {
+        body: input,
+        method: 'POST',
+      },
+    ).catch(() => undefined);
   },
   createRecap: async (input: CreateRecapInput, idempotencyKey?: string) => {
     if (!shouldAttemptAuthenticatedApi()) {
