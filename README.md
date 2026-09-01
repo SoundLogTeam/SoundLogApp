@@ -84,6 +84,7 @@ iOS는 TestFlight 또는 ad hoc 기기 등록이 필요합니다. App Store/Test
 
 ## 문서
 
+- [앱 빌드와 TestFlight 배포](deploy.md)
 - [문서 인덱스](docs/README.md)
 - [리캡·로그 도메인 기준](docs/product/RECAP_LOG_DOMAIN_MODEL.md)
 - [서비스 기획서](docs/product/SOUNDLOG_APP_PLANNING.md)
