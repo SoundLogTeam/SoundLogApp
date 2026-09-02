@@ -53,6 +53,8 @@ type MomentReviewPanelProps = {
   errorMessage?: string;
   includeMusic: boolean;
   isSaving: boolean;
+  isRecommendedPhoto: boolean;
+  isRecommendedPhotoFeedbackSubmitted: boolean;
   location?: GeoPoint;
   moodTags: MoodTag[];
   onChangeMoodTags: (moodTags: MoodTag[]) => void;
@@ -60,6 +62,7 @@ type MomentReviewPanelProps = {
   onChangeTemplate: (template: RecapTemplateId) => void;
   onChangeVisibility: (visibility: RecapVisibility) => void;
   onRetake: () => void;
+  onRateRecommendedPhoto: () => void;
   onSave: () => void;
   onToggleMusic: () => void;
   photoUri?: string;
@@ -85,6 +88,8 @@ export const MomentReviewPanel = forwardRef<
     errorMessage,
     includeMusic,
     isSaving,
+    isRecommendedPhoto,
+    isRecommendedPhotoFeedbackSubmitted,
     location,
     moodTags,
     onChangeMoodTags,
@@ -92,6 +97,7 @@ export const MomentReviewPanel = forwardRef<
     onChangeTemplate,
     onChangeVisibility,
     onRetake,
+    onRateRecommendedPhoto,
     onSave,
     onToggleMusic,
     photoUri,
@@ -105,7 +111,8 @@ export const MomentReviewPanel = forwardRef<
 ) {
   const photoCanvasRef = useRef<MomentPhotoCanvasHandle>(null);
   const [isCanvasStickerDragging, setIsCanvasStickerDragging] = useState(false);
-  const moodLabel = moodTags.map((tag) => moodLabels[tag]).join(", ") || "선택 안 함";
+  const moodLabel =
+    moodTags.map((tag) => moodLabels[tag]).join(", ") || "선택 안 함";
   const canToggleMusic = Boolean(track);
   const travelModeLabel = travelMode
     ? (travelModeLabels[travelMode] ?? "미설정")
@@ -195,6 +202,39 @@ export const MomentReviewPanel = forwardRef<
           </View>
         )}
 
+        {isRecommendedPhoto ? (
+          <View className="mt-4 flex-row items-center rounded-[18px] border border-soundlog-lime/45 bg-soundlog-lime/15 px-4 py-4">
+            <View className="h-10 w-10 items-center justify-center rounded-full bg-soundlog-lime/15">
+              <Feather color="#B7E628" name="star" size={19} />
+            </View>
+            <View className="ml-3 min-w-0 flex-1">
+              <AppText className="text-xs font-semibold text-soundlog-lime">
+                추천사진 사용 중
+              </AppText>
+              <AppText className="mt-1 text-sm leading-5 text-white/68">
+                {isRecommendedPhotoFeedbackSubmitted
+                  ? "추천사진 별점을 남겼어요."
+                  : "이 장소와 사진이 잘 어울리는지 알려주세요."}
+              </AppText>
+            </View>
+            {isRecommendedPhotoFeedbackSubmitted ? (
+              <Feather color="#B7E628" name="check-circle" size={21} />
+            ) : (
+              <Pressable
+                accessibilityLabel="추천사진 별점 남기기"
+                accessibilityRole="button"
+                className="ml-3 min-h-11 justify-center rounded-full border border-white/18 bg-soundlog-action px-4"
+                disabled={isSaving}
+                onPress={onRateRecommendedPhoto}
+              >
+                <AppText className="text-xs font-semibold text-soundlog-inverse">
+                  별점 남기기
+                </AppText>
+              </Pressable>
+            )}
+          </View>
+        ) : null}
+
         <View className="mt-7">
           <SectionTitle title="기록 정보" />
 
@@ -220,7 +260,9 @@ export const MomentReviewPanel = forwardRef<
           </View>
 
           <View className="mt-4">
-            <AppText className="text-sm font-medium text-white/80">공개 범위</AppText>
+            <AppText className="text-sm font-medium text-white/80">
+              공개 범위
+            </AppText>
             <View className="mt-3 flex-row rounded-full border border-white/10 bg-white/[0.06] p-1">
               {(
                 [
@@ -300,7 +342,9 @@ export const MomentReviewPanel = forwardRef<
         <View className="mt-7">
           <SectionTitle
             rightContent={
-              <AppText className="text-xs font-semibold text-white/42">{moodLabel}</AppText>
+              <AppText className="text-xs font-semibold text-white/42">
+                {moodLabel}
+              </AppText>
             }
             title="무드"
           />

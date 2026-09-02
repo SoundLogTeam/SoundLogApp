@@ -17,6 +17,7 @@ import { SOUNDLOG_TERMS_VERSION } from '@/constants/legal';
 import { getApiBaseUrl } from '@/api/client';
 import { queryClient } from '@/providers/queryClient';
 import { AppText } from '@/components/AppText';
+import { RecommendationFeedbackSheet } from '@/components/home/RecommendationFeedbackSheet';
 import { getPublicImageUrl } from '@/utils/publicImageAssets';
 import { playlistCurationById } from '@/mocks/playlistMocks';
 import { useAuthStore } from '@/store/authStore';
@@ -28,6 +29,10 @@ import { useTravelSessionStore } from '@/store/travelSessionStore';
 import { useUserProfileStore } from '@/store/userProfileStore';
 import { AuthProvider, AuthSession } from '@/types/auth';
 import { GeoPoint, PlaceContext, Track, TravelMode } from '@/types/domain';
+import {
+  type RecommendationFeedbackSubject,
+  type RecommendationFeedbackSubmission,
+} from '@/utils/recommendationFeedback';
 
 const BUTTON_SIZE = 58;
 const samplePlaylist = playlistCurationById['busan-ocean'];
@@ -173,6 +178,9 @@ function DevTestManagerContent() {
   const [isOpen, setIsOpen] = useState(false);
   const [isServerAuthPending, setIsServerAuthPending] = useState(false);
   const [serverAuthMessage, setServerAuthMessage] = useState<string>();
+  const [feedbackPreviewSubject, setFeedbackPreviewSubject] =
+    useState<RecommendationFeedbackSubject>();
+  const [feedbackPreviewMessage, setFeedbackPreviewMessage] = useState<string>();
   const maxX = Math.max(width - BUTTON_SIZE - 12, 12);
   const maxY = Math.max(height - BUTTON_SIZE - Math.max(insets.bottom, 12) - 12, 80);
   const defaultPosition = useMemo(
@@ -346,6 +354,17 @@ function DevTestManagerContent() {
     likedTracks.forEach((record) => removeLikedTrack(record.track.id));
     savedTracks.forEach((record) => removeSavedTrack(record.track.id));
   };
+  const openFeedbackPreview = (subject: RecommendationFeedbackSubject) => {
+    setFeedbackPreviewSubject(subject);
+    setFeedbackPreviewMessage(undefined);
+    setIsOpen(false);
+  };
+  const submitFeedbackPreview = ({ opinion, rating }: RecommendationFeedbackSubmission) => {
+    setFeedbackPreviewMessage(
+      opinion?.trim() ? `${rating}점과 의견 입력 확인` : `${rating}점만 입력 확인`,
+    );
+    setFeedbackPreviewSubject(undefined);
+  };
   return (
     <>
       <Animated.View
@@ -414,6 +433,21 @@ function DevTestManagerContent() {
                 <StatusPill label={`곡 ${currentTrack?.title ?? '없음'}`} />
                 <StatusPill label={`Auth ${authUser?.displayName ?? authStatus}`} />
                 <StatusPill label={`API ${getApiBaseUrl() ?? '없음'}`} />
+              </ManagerSection>
+
+              <ManagerSection
+                subtitle="공통 별점과 선택 의견 UI를 서버 전송 없이 확인합니다."
+                title="추천 피드백"
+              >
+                <ManagerButton
+                  label="음악 피드백 시트"
+                  onPress={() => openFeedbackPreview('music')}
+                />
+                <ManagerButton
+                  label="사진 피드백 시트"
+                  onPress={() => openFeedbackPreview('photo')}
+                />
+                {feedbackPreviewMessage ? <StatusPill label={feedbackPreviewMessage} /> : null}
               </ManagerSection>
 
               <ManagerSection title="페이지 이동">
@@ -532,6 +566,18 @@ function DevTestManagerContent() {
           </View>
         </View>
       </Modal>
+      <RecommendationFeedbackSheet
+        contextLabel={feedbackPreviewSubject === 'photo' ? '남산서울타워' : '서울'}
+        onClose={() => setFeedbackPreviewSubject(undefined)}
+        onSubmit={submitFeedbackPreview}
+        recommendationReason={
+          feedbackPreviewSubject === 'music'
+            ? '산책 중인 지금, 시원한 무드에 맞춰 추천했어요.'
+            : undefined
+        }
+        subject={feedbackPreviewSubject ?? 'music'}
+        visible={Boolean(feedbackPreviewSubject)}
+      />
     </>
   );
 }

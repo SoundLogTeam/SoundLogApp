@@ -11,6 +11,10 @@ import { recapApi } from "@/api/recapApi";
 import { ApiError } from "@/api/client";
 import { recapQueryKeys } from "@/api/recapQueries";
 import { AppText } from "@/components/AppText";
+import {
+  RecommendationFeedbackSheet,
+  type RecommendationFeedbackSubmission,
+} from "@/components/home/RecommendationFeedbackSheet";
 import { PageHeader } from "@/components/PageHeader";
 import { CameraCaptureView } from "@/components/moment-capture/CameraCaptureView";
 import { CameraPermissionState } from "@/components/moment-capture/CameraPermissionState";
@@ -28,6 +32,7 @@ import { useTravelSessionStore } from "@/store/travelSessionStore";
 import {
   GeoPoint,
   MomentLog,
+  type PlaceContext,
   RecapTemplateId,
   RecapVisibility,
 } from "@/types/domain";
@@ -35,6 +40,7 @@ import { getForegroundLocationWithTimeout } from "@/utils/location";
 import { getMoodTagsFromFilter } from "@/utils/moodTags";
 import { pickMomentPhotoFromLibrary } from "@/utils/momentPhotoPicker";
 import { createRecommendationEventContext } from "@/utils/recommendationEventContext";
+import { createRecommendationFeedbackValue } from "@/utils/recommendationFeedback";
 import { getDistanceMeters } from "@/utils/recapTravelSummary";
 
 type LocationStatus = "denied" | "granted" | "idle" | "loading" | "unavailable";
@@ -81,6 +87,11 @@ export function MomentCaptureScreen() {
   const [isPickingPhoto, setIsPickingPhoto] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>("idle");
+  const [isPhotoFeedbackVisible, setIsPhotoFeedbackVisible] = useState(false);
+  const [isPhotoFeedbackSubmitted, setIsPhotoFeedbackSubmitted] =
+    useState(false);
+  const [recommendedPhotoPlace, setRecommendedPhotoPlace] =
+    useState<PlaceContext>();
 
   const addRecommendationEvent = useRecommendationEventStore(
     (state) => state.addEvent,
@@ -120,7 +131,10 @@ export function MomentCaptureScreen() {
   // same tick as the first one claims the lock.
   const isSavingRef = useRef(false);
 
-  const prepareReview = (photoUri?: string) => {
+  const prepareReview = (
+    photoUri?: string,
+    recommendationPlace?: PlaceContext,
+  ) => {
     const nextCapturedAt = new Date().toISOString();
 
     setCapturedAt(nextCapturedAt);
@@ -131,6 +145,9 @@ export function MomentCaptureScreen() {
     setReviewMoodTags(moodTags);
     setRecapVisibility("private");
     setShouldSaveMusic(Boolean(currentTrack));
+    setRecommendedPhotoPlace(recommendationPlace);
+    setIsPhotoFeedbackSubmitted(false);
+    setIsPhotoFeedbackVisible(false);
     setIsReviewing(true);
     setErrorMessage(undefined);
   };
@@ -241,7 +258,36 @@ export function MomentCaptureScreen() {
       return;
     }
 
-    prepareReview(recommendedPhotoUri);
+    prepareReview(recommendedPhotoUri, capturePlace);
+  };
+
+  const handleSubmitPhotoFeedback = ({
+    opinion,
+    rating,
+  }: RecommendationFeedbackSubmission) => {
+    if (!recommendedPhotoPlace) {
+      return;
+    }
+
+    syncRecommendationEvent(
+      addRecommendationEvent({
+        context: createRecommendationEventContext({
+          placeCategory: recommendedPhotoPlace.category,
+          placeId: recommendedPhotoPlace.id,
+          placeName: recommendedPhotoPlace.title,
+          source: `recommended-photo:${recommendedPhotoPlace.source}`,
+        }),
+        type: "recommendation_feedback",
+        value: createRecommendationFeedbackValue({
+          opinion,
+          rating,
+          subject: "photo",
+        }),
+      }),
+    );
+
+    setIsPhotoFeedbackSubmitted(true);
+    setIsPhotoFeedbackVisible(false);
   };
 
   const handleSave = async () => {
@@ -357,34 +403,48 @@ export function MomentCaptureScreen() {
 
   if (isReviewing) {
     return (
-      <MomentReviewPanel
-        ref={reviewPanelRef}
-        capturedAt={capturedAt}
-        errorMessage={errorMessage}
-        includeMusic={shouldSaveMusic}
-        isSaving={isSaving}
-        location={currentLocation}
-        moodTags={reviewMoodTags}
-        onChangeMoodTags={setReviewMoodTags}
-        onChangePlaceName={setReviewPlaceName}
-        onChangeTemplate={setReviewTemplate}
-        onChangeVisibility={setRecapVisibility}
-        onRetake={() => {
-          setCapturedAt(undefined);
-          setSaveIdempotencyKey(undefined);
-          setCapturedPhotoUri(undefined);
-          setIsReviewing(false);
-          setErrorMessage(undefined);
-        }}
-        onSave={handleSave}
-        onToggleMusic={() => setShouldSaveMusic((value) => !value)}
-        photoUri={capturedPhotoUri}
-        placeName={reviewPlaceName}
-        selectedTemplate={reviewTemplate}
-        track={currentTrack}
-        travelMode={session.status === "active" ? selectedMode : undefined}
-        visibility={recapVisibility}
-      />
+      <>
+        <MomentReviewPanel
+          ref={reviewPanelRef}
+          capturedAt={capturedAt}
+          errorMessage={errorMessage}
+          includeMusic={shouldSaveMusic}
+          isRecommendedPhoto={Boolean(recommendedPhotoPlace)}
+          isRecommendedPhotoFeedbackSubmitted={isPhotoFeedbackSubmitted}
+          isSaving={isSaving}
+          location={currentLocation}
+          moodTags={reviewMoodTags}
+          onChangeMoodTags={setReviewMoodTags}
+          onChangePlaceName={setReviewPlaceName}
+          onChangeTemplate={setReviewTemplate}
+          onChangeVisibility={setRecapVisibility}
+          onRateRecommendedPhoto={() => setIsPhotoFeedbackVisible(true)}
+          onRetake={() => {
+            setCapturedAt(undefined);
+            setSaveIdempotencyKey(undefined);
+            setCapturedPhotoUri(undefined);
+            setRecommendedPhotoPlace(undefined);
+            setIsPhotoFeedbackVisible(false);
+            setIsReviewing(false);
+            setErrorMessage(undefined);
+          }}
+          onSave={handleSave}
+          onToggleMusic={() => setShouldSaveMusic((value) => !value)}
+          photoUri={capturedPhotoUri}
+          placeName={reviewPlaceName}
+          selectedTemplate={reviewTemplate}
+          track={currentTrack}
+          travelMode={session.status === "active" ? selectedMode : undefined}
+          visibility={recapVisibility}
+        />
+        <RecommendationFeedbackSheet
+          contextLabel={recommendedPhotoPlace?.title}
+          onClose={() => setIsPhotoFeedbackVisible(false)}
+          onSubmit={handleSubmitPhotoFeedback}
+          subject="photo"
+          visible={isPhotoFeedbackVisible}
+        />
+      </>
     );
   }
 
