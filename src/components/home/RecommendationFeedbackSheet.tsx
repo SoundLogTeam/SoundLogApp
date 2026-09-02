@@ -1,86 +1,106 @@
-import { Feather } from '@expo/vector-icons';
-import { useEffect, useState } from 'react';
-import { Animated, Modal, Pressable, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Feather } from "@expo/vector-icons";
+import { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  TextInput,
+  View,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AppText } from '@/components/AppText';
-import { useDismissibleBottomSheetGesture } from '@/hooks/useBottomSheetGesture';
+import { AppText } from "@/components/AppText";
+import { useDismissibleBottomSheetGesture } from "@/hooks/useBottomSheetGesture";
+import {
+  RECOMMENDATION_FEEDBACK_MAX_LENGTH,
+  type RecommendationFeedbackRating,
+  type RecommendationFeedbackSubject,
+  type RecommendationFeedbackSubmission,
+} from "@/utils/recommendationFeedback";
 
-export type RecommendationFeedbackRating = 'great' | 'not_for_me' | 'okay';
+export type {
+  RecommendationFeedbackRating,
+  RecommendationFeedbackSubmission,
+} from "@/utils/recommendationFeedback";
 
 type RecommendationFeedbackSheetProps = {
+  contextLabel?: string;
   onClose: () => void;
-  onSubmit: (rating: RecommendationFeedbackRating, moodFilter?: string) => void;
-  playlistReason?: string;
-  regionName?: string;
+  onSubmit: (submission: RecommendationFeedbackSubmission) => void;
+  recommendationReason?: string;
+  subject: RecommendationFeedbackSubject;
   visible: boolean;
 };
 
-const moodOptions = [
-  { icon: '🌿', label: '잔잔한' },
-  { icon: '⚡', label: '신나는' },
-  { icon: '🌙', label: '감성적인' },
-  { icon: '🌊', label: '시원한' },
-] as const;
+const ratings: RecommendationFeedbackRating[] = [1, 2, 3, 4, 5];
 
-const ratingOptions: Array<{
-  description: string;
-  icon: keyof typeof Feather.glyphMap;
-  label: string;
-  value: RecommendationFeedbackRating;
-}> = [
-  {
-    description: '지금 장소와 분위기에 잘 맞아요',
-    icon: 'thumbs-up',
-    label: '딱 좋아요',
-    value: 'great',
+const subjectCopy: Record<
+  RecommendationFeedbackSubject,
+  { description: string; title: string }
+> = {
+  music: {
+    description: "다음 음악 추천을 더 잘 맞추는 데 반영할게요.",
+    title: "이번 음악 추천은 어땠나요?",
   },
-  {
-    description: '들어볼 만하지만 조금 더 맞출 수 있어요',
-    icon: 'minus-circle',
-    label: '괜찮아요',
-    value: 'okay',
+  photo: {
+    description: "다음 추천사진을 더 잘 고르는 데 반영할게요.",
+    title: "이번 추천사진은 어땠나요?",
   },
-  {
-    description: '다른 분위기의 추천을 받고 싶어요',
-    icon: 'refresh-cw',
-    label: '다른 느낌이 좋아요',
-    value: 'not_for_me',
-  },
-];
+};
 
 export function RecommendationFeedbackSheet({
+  contextLabel,
   onClose,
   onSubmit,
-  playlistReason,
-  regionName,
+  recommendationReason,
+  subject,
   visible,
 }: RecommendationFeedbackSheetProps) {
   const insets = useSafeAreaInsets();
-  const [isChoosingMood, setIsChoosingMood] = useState(false);
+  const [isOpinionVisible, setIsOpinionVisible] = useState(false);
+  const [opinion, setOpinion] = useState("");
+  const [rating, setRating] = useState<RecommendationFeedbackRating>();
+  const isSubmittingRef = useRef(false);
   const { panHandlers, translateY } = useDismissibleBottomSheetGesture({
     onDismiss: onClose,
     visible,
   });
+  const copy = subjectCopy[subject];
 
   useEffect(() => {
-    if (visible) {
-      setIsChoosingMood(false);
-    }
-  }, [visible]);
-
-  const handleSelectRating = (rating: RecommendationFeedbackRating) => {
-    if (rating === 'not_for_me') {
-      setIsChoosingMood(true);
+    if (!visible) {
       return;
     }
 
-    onSubmit(rating);
+    setIsOpinionVisible(false);
+    setOpinion("");
+    setRating(undefined);
+    isSubmittingRef.current = false;
+  }, [visible]);
+
+  const handleSubmit = () => {
+    if (!rating || isSubmittingRef.current) {
+      return;
+    }
+
+    isSubmittingRef.current = true;
+    onSubmit({ opinion, rating });
   };
 
   return (
-    <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
-      <View className="flex-1 justify-end">
+    <Modal
+      animationType="fade"
+      onRequestClose={onClose}
+      transparent
+      visible={visible}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        className="flex-1 justify-end"
+      >
         <Pressable
           accessibilityLabel="추천 피드백 닫기"
           className="absolute inset-0 bg-black/68"
@@ -89,6 +109,7 @@ export function RecommendationFeedbackSheet({
         <Animated.View
           className="rounded-t-[30px] border border-white/12 bg-[#0B1020] px-5 pt-3"
           style={{
+            maxHeight: "92%",
             paddingBottom: Math.max(insets.bottom, 18),
             transform: [{ translateY }],
           }}
@@ -103,99 +124,155 @@ export function RecommendationFeedbackSheet({
             <View className="h-[5px] w-11 rounded-full bg-white/35" />
           </View>
 
-          <View className="mt-2 flex-row items-start justify-between gap-4">
-            <View className="min-w-0 flex-1">
-              <AppText className="text-[11px] font-semibold text-soundlog-lime">
-                추천 피드백
-              </AppText>
-              <AppText className="mt-1 text-[22px] font-semibold leading-8 text-white">
-                {isChoosingMood ? '어떤 느낌으로 바꿔볼까요?' : '이번 추천 어땠나요?'}
-              </AppText>
-              {!isChoosingMood && regionName ? (
-                <AppText className="mt-2 text-sm leading-6 text-white/58" numberOfLines={2}>
-                  {regionName}의 사운드트랙을 더 잘 맞추는 데 반영할게요.
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View className="mt-2 flex-row items-start justify-between gap-4">
+              <View className="min-w-0 flex-1">
+                <AppText className="text-[11px] font-semibold text-soundlog-lime">
+                  추천 피드백
                 </AppText>
-              ) : null}
-            </View>
-            <Pressable
-              accessibilityLabel="추천 피드백 닫기"
-              accessibilityRole="button"
-              className="h-10 w-10 items-center justify-center rounded-full bg-white/10"
-              onPress={onClose}
-            >
-              <Feather color="#FFFFFF" name="x" size={18} />
-            </Pressable>
-          </View>
-
-          {playlistReason && !isChoosingMood ? (
-            <View className="mt-4 rounded-[16px] border border-white/10 bg-white/[0.06] px-4 py-3">
-              <AppText className="text-xs leading-5 text-white/58" numberOfLines={3}>
-                {playlistReason}
-              </AppText>
-            </View>
-          ) : null}
-
-          {isChoosingMood ? (
-            <>
-              <View className="mt-5 flex-row flex-wrap gap-2.5">
-                {moodOptions.map((option) => (
-                  <Pressable
-                    accessibilityLabel={`${option.label} 무드로 다시 추천`}
-                    accessibilityRole="button"
-                    className="min-h-12 flex-row items-center rounded-full border border-white/12 bg-white/[0.07] px-4"
-                    key={option.label}
-                    onPress={() => onSubmit('not_for_me', option.label)}
-                  >
-                    <AppText className="mr-2 text-base">{option.icon}</AppText>
-                    <AppText className="text-sm font-semibold text-white">
-                      더 {option.label}
-                    </AppText>
-                  </Pressable>
-                ))}
+                <AppText className="mt-1 text-[22px] font-semibold leading-8 text-white">
+                  {copy.title}
+                </AppText>
+                <AppText className="mt-2 text-sm leading-6 text-white/58">
+                  {contextLabel ? `${contextLabel}에 어울리는 ` : ""}
+                  {copy.description}
+                </AppText>
               </View>
               <Pressable
+                accessibilityLabel="추천 피드백 닫기"
                 accessibilityRole="button"
-                className="mt-5 min-h-12 items-center justify-center rounded-full border border-white/12"
-                onPress={() => onSubmit('not_for_me')}
+                className="h-10 w-10 items-center justify-center rounded-full bg-white/10"
+                onPress={onClose}
               >
-                <AppText className="text-sm font-semibold text-white/68">
-                  무드 변경 없이 보내기
+                <Feather color="#FFFFFF" name="x" size={18} />
+              </Pressable>
+            </View>
+
+            {recommendationReason ? (
+              <View className="mt-4 rounded-[16px] border border-white/10 bg-white/[0.06] px-4 py-3">
+                <AppText
+                  className="text-xs leading-5 text-white/58"
+                  numberOfLines={3}
+                >
+                  {recommendationReason}
+                </AppText>
+              </View>
+            ) : null}
+
+            <View className="mt-6">
+              <View className="flex-row items-center justify-between">
+                {ratings.map((value) => {
+                  const selected = Boolean(rating && value <= rating);
+
+                  return (
+                    <Pressable
+                      accessibilityLabel={`${value}점`}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: rating === value }}
+                      className={`h-12 w-12 items-center justify-center rounded-full border ${
+                        selected
+                          ? "border-soundlog-lime bg-soundlog-lime/15"
+                          : "border-white/12 bg-white/[0.06]"
+                      }`}
+                      key={value}
+                      onPress={() => setRating(value)}
+                    >
+                      <Feather
+                        color={selected ? "#B7E628" : "rgba(255,255,255,0.42)"}
+                        name="star"
+                        size={23}
+                      />
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <AppText
+                accessibilityLiveRegion="polite"
+                className={`mt-3 text-center text-sm font-semibold ${
+                  rating ? "text-soundlog-lime" : "text-white/42"
+                }`}
+              >
+                {rating ? `${rating}점 선택됨` : "별점을 선택해주세요"}
+              </AppText>
+            </View>
+
+            {isOpinionVisible ? (
+              <View className="mt-5">
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-sm font-semibold text-white">
+                    의견
+                  </AppText>
+                  <AppText className="text-xs text-white/42">
+                    {opinion.length}/{RECOMMENDATION_FEEDBACK_MAX_LENGTH}
+                  </AppText>
+                </View>
+                <TextInput
+                  accessibilityLabel="추천 의견 입력"
+                  className="mt-3 min-h-[104px] rounded-[18px] border border-white/12 bg-white/[0.06] px-4 py-3 text-[15px] leading-6 text-white"
+                  maxLength={RECOMMENDATION_FEEDBACK_MAX_LENGTH}
+                  multiline
+                  onChangeText={setOpinion}
+                  placeholder="좋았던 점이나 아쉬웠던 점을 알려주세요."
+                  placeholderTextColor="rgba(255,255,255,0.38)"
+                  textAlignVertical="top"
+                  value={opinion}
+                />
+              </View>
+            ) : (
+              <Pressable
+                accessibilityRole="button"
+                className="mt-5 min-h-11 flex-row items-center justify-center rounded-full border border-white/12 bg-white/[0.04] px-4"
+                onPress={() => setIsOpinionVisible(true)}
+              >
+                <Feather
+                  color="rgba(255,255,255,0.68)"
+                  name="edit-3"
+                  size={16}
+                />
+                <AppText className="ml-2 text-sm font-semibold text-white/68">
+                  의견도 남길래요
                 </AppText>
               </Pressable>
-            </>
-          ) : (
-            <View className="mt-5 gap-2.5">
-              {ratingOptions.map((option) => (
-                <Pressable
-                  accessibilityRole="button"
-                  className="min-h-[62px] flex-row items-center rounded-[18px] border border-white/10 bg-white/[0.06] px-4"
-                  key={option.value}
-                  onPress={() => handleSelectRating(option.value)}
-                >
-                  <View className="h-10 w-10 items-center justify-center rounded-full bg-white/10">
-                    <Feather color="#B7E628" name={option.icon} size={18} />
-                  </View>
-                  <View className="ml-3 min-w-0 flex-1">
-                    <AppText className="text-sm font-semibold text-white">{option.label}</AppText>
-                    <AppText className="mt-1 text-xs leading-5 text-white/48">
-                      {option.description}
-                    </AppText>
-                  </View>
-                  <Feather color="rgba(255,255,255,0.38)" name="chevron-right" size={18} />
-                </Pressable>
-              ))}
-            </View>
-          )}
+            )}
 
-          <Pressable
-            accessibilityRole="button"
-            className="mt-4 min-h-11 items-center justify-center"
-            onPress={onClose}
-          >
-            <AppText className="text-sm font-medium text-white/42">건너뛰기</AppText>
-          </Pressable>
+            <Pressable
+              accessibilityLabel={
+                isOpinionVisible ? "별점과 의견 보내기" : "별점만 보내기"
+              }
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !rating }}
+              className={`mt-5 min-h-14 items-center justify-center rounded-xl border ${
+                rating
+                  ? "border-soundlog-lime/45 bg-soundlog-action"
+                  : "border-white/10 bg-white/[0.06]"
+              }`}
+              disabled={!rating}
+              onPress={handleSubmit}
+            >
+              <AppText
+                className={`font-semibold ${
+                  rating ? "text-soundlog-inverse" : "text-white/38"
+                }`}
+              >
+                {isOpinionVisible ? "별점과 의견 보내기" : "별점만 보내기"}
+              </AppText>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              className="mt-2 min-h-11 items-center justify-center"
+              onPress={onClose}
+            >
+              <AppText className="text-sm font-medium text-white/42">
+                건너뛰기
+              </AppText>
+            </Pressable>
+          </ScrollView>
         </Animated.View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

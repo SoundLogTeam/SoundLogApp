@@ -29,7 +29,7 @@ import { HomeHeader } from "@/components/home/HomeHeader";
 import { LocationContextCard } from "@/components/home/LocationContextCard";
 import {
   RecommendationFeedbackSheet,
-  type RecommendationFeedbackRating,
+  type RecommendationFeedbackSubmission,
 } from "@/components/home/RecommendationFeedbackSheet";
 import {
   MoodRecommendationSection,
@@ -61,6 +61,7 @@ import { toLibraryPlaylistSummary } from "@/utils/libraryPlaylistSummary";
 import { requestForegroundLocationWithStatus } from "@/utils/location";
 import { getMoodTagsFromFilter } from "@/utils/moodTags";
 import { createRecommendationEventContext } from "@/utils/recommendationEventContext";
+import { createRecommendationFeedbackValue } from "@/utils/recommendationFeedback";
 import { getPlaceDisplayTitle } from "@/utils/placeLabel";
 
 const moodFilterToMlMood: Record<string, PlaylistMlMood> = {
@@ -844,13 +845,13 @@ function HomeContent() {
     setFeedbackPlaylist(undefined);
   }, []);
   const handleSubmitRecommendationFeedback = useCallback(
-    (rating: RecommendationFeedbackRating, moodFilter?: string) => {
+    ({ opinion, rating }: RecommendationFeedbackSubmission) => {
       if (!feedbackPlaylist) {
         return;
       }
 
       const context = createRecommendationEventContext({
-        moodFilter: moodFilter ?? selectedMoodFilter,
+        moodFilter: selectedMoodFilter,
         source: feedbackPlaylist.context?.source,
       });
 
@@ -859,39 +860,23 @@ function HomeContent() {
           context,
           playlistId: feedbackPlaylist.id,
           type: "recommendation_feedback",
-          value: moodFilter ? `${rating}:${moodFilter}` : rating,
+          value: createRecommendationFeedbackValue({
+            opinion,
+            rating,
+            subject: "music",
+          }),
         }),
       );
 
-      if (moodFilter) {
-        setSelectedMoodFilter(moodFilter);
-        syncRecommendationEvent(
-          addRecommendationEvent({
-            context,
-            playlistId: feedbackPlaylist.id,
-            type: "mood_adjusted",
-            value: moodFilter,
-          }),
-        );
-        setActionMessage(
-          `${moodFilter} 무드로 바꿨어요. 다음 추천에 바로 반영할게요.`,
-        );
-      } else if (rating === "great") {
-        setActionMessage("좋아요. 비슷한 장소와 무드 추천에 반영할게요.");
-      } else if (rating === "okay") {
-        setActionMessage("피드백을 저장했어요. 다음 추천을 더 잘 맞춰볼게요.");
-      } else {
-        setActionMessage("다음 추천에서는 다른 느낌을 더 살펴볼게요.");
-      }
+      setActionMessage(
+        opinion?.trim()
+          ? `${rating}점과 의견을 남겼어요.`
+          : `${rating}점을 남겼어요.`,
+      );
 
       setFeedbackPlaylist(undefined);
     },
-    [
-      addRecommendationEvent,
-      feedbackPlaylist,
-      selectedMoodFilter,
-      setSelectedMoodFilter,
-    ],
+    [addRecommendationEvent, feedbackPlaylist, selectedMoodFilter],
   );
   const handleSelectMusicPlaylistTrack = useCallback(
     (track: Track) => {
@@ -1167,10 +1152,11 @@ function HomeContent() {
         visible={isMusicPlaylistSheetVisible}
       />
       <RecommendationFeedbackSheet
+        contextLabel={feedbackPlaylist?.regionName}
         onClose={handleCloseRecommendationFeedback}
         onSubmit={handleSubmitRecommendationFeedback}
-        playlistReason={feedbackPlaylist?.reason}
-        regionName={feedbackPlaylist?.regionName}
+        recommendationReason={feedbackPlaylist?.reason}
+        subject="music"
         visible={Boolean(feedbackPlaylist)}
       />
       {currentTrack ? <MiniPlayer /> : null}
