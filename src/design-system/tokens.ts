@@ -25,7 +25,6 @@ export const soundlogDesignTokens = {
     },
     accent: {
       blue: colors.accent.blue,
-      purple: colors.accent.purple,
       gold: colors.accent.gold,
       lime: colors.accent.lime,
       warning: colors.accent.warning,

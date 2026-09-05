@@ -63,7 +63,7 @@ export function BottomNavigation() {
         tabBarActiveTintColor: colors.accent.lime,
         tabBarInactiveTintColor: colors.text.muted,
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: "700",
           marginTop: 2,
         },

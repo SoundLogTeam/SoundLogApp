@@ -80,7 +80,7 @@ export function CameraCaptureView({
             style={{ opacity: controlsDisabled ? 0.7 : 1 }}
           >
             {isCapturing || isPickingPhoto ? (
-              <ActivityIndicator color="#4A1D96" />
+              <ActivityIndicator color="#6EA8FF" />
             ) : (
               <View className="h-[60px] w-[60px] rounded-full bg-white" />
             )}

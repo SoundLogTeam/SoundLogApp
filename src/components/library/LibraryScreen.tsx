@@ -272,7 +272,7 @@ export function LibraryScreen() {
                 className="h-10 flex-1 items-center justify-center rounded-full"
                 onPress={() => selectTab(tab.id)}
                 style={{
-                  backgroundColor: isSelected ? "#4A1D96" : "transparent",
+                  backgroundColor: isSelected ? "#214A73" : "transparent",
                 }}
               >
                 <AppText

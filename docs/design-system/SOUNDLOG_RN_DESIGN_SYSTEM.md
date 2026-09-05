@@ -65,14 +65,15 @@ import {
 | Card              | `#080D18` | `bg-soundlog-card`                         |
 | Elevated card     | `#090E1B` | `bg-soundlog-elevated`                     |
 | Chip              | `#171B2A` | `bg-soundlog-chip`                         |
-| Selected / CTA    | `#B7E628` | `bg-soundlog-selected`, `bg-soundlog-lime` |
+| Selected surface  | `#214A73` | `bg-soundlog-selected`                     |
+| Brand highlight   | `#B7E628` | `bg-soundlog-lime`                         |
 | Focus border      | `#B7E628` | `border-soundlog-focus`                    |
 | Chip border       | `#364283` | `border-soundlog-border`                   |
 | Info blue         | `#6EA8FF` | `text-soundlog-blue`                       |
-| Accent purple     | `#7A2CFF` | `text-soundlog-purple`                     |
+| Accent blue       | `#6EA8FF` | `text-soundlog-blue`                       |
 | Accent gold       | `#B1913A` | `text-soundlog-gold`                       |
 | Warning action    | `#FF8A3D` | `bg-soundlog-warning`                      |
-| Primary action    | `#4A1D96` | `bg-soundlog-action`                       |
+| Primary action    | `#315F9F` | `bg-soundlog-action`                       |
 | Danger action     | `#8E310D` | `bg-soundlog-danger`                       |
 | Inverse text      | `#FFFFFF` | `text-soundlog-inverse`                    |
 

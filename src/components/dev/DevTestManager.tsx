@@ -122,12 +122,12 @@ function ManagerButton({
   onPress,
 }: ManagerButtonProps) {
   const backgroundColor = active
-    ? '#4A1D96'
+    ? '#315F9F'
     : destructive
       ? 'rgba(248,113,113,0.16)'
       : 'rgba(255,255,255,0.1)';
   const borderColor = active
-    ? '#8B72FF'
+    ? '#B7F31D'
     : destructive
       ? 'rgba(248,113,113,0.28)'
       : 'rgba(255,255,255,0.12)';
@@ -356,7 +356,7 @@ function DevTestManagerContent() {
         <Pressable
           accessibilityLabel="테스트 매니저 열기"
           accessibilityRole="button"
-          className="h-[58px] w-[58px] items-center justify-center rounded-full border border-white/20 bg-[#7A2CFF]"
+          className="h-[58px] w-[58px] items-center justify-center rounded-full border border-white/20 bg-soundlog-blue"
           onPress={() => setIsOpen(true)}
         >
           <Feather color="#fff" name="tool" size={21} />

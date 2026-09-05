@@ -86,7 +86,7 @@ Figma 배경은 어두운 그라데이션과 중앙 glow가 있다. RN에서는 
 | 토큰 | 값 | 용도 |
 | --- | --- | --- |
 | `background.primary` | `#050916` | 기본 배경 |
-| `background.deepPurple` | `#160F27` | 그라데이션 |
+| `background.deepNavy` | `#101A38` | 그라데이션 |
 | `background.brownGlow` | `#2C1B33` | 보조 그라데이션 |
 | `text.primary` | `#FFFFFF` | 타이틀 |
 | `text.secondary` | `#C1C1C1` | 날짜/시간 |

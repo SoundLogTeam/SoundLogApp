@@ -5,7 +5,7 @@ const fallbackPalette = [
   '#20146F',
   '#2D6A72',
   '#45536B',
-  '#7A2CFF',
+  '#6EA8FF',
   '#1D7F8C',
 ];
 
