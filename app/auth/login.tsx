@@ -254,7 +254,7 @@ export default function LoginScreen() {
               }`}
             >
               {hasAcceptedRequiredTerms ? (
-                <Feather color="#4A1D96" name="check" size={15} />
+                <Feather color="#6EA8FF" name="check" size={15} />
               ) : null}
             </View>
             <AppText className="min-w-0 flex-1 text-xs leading-5 text-white/65">

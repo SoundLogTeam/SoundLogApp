@@ -150,21 +150,28 @@ export const MomentReviewPanel = forwardRef<
               onPress={onRetake}
             />
           }
+          rightContent={
+            <Pressable
+              accessibilityLabel="이 리캡 저장하기"
+              accessibilityRole="button"
+              accessibilityState={{ busy: isSaving, disabled: isSaving }}
+              className="min-h-11 min-w-[64px] items-center justify-center rounded-full border border-soundlog-lime/45 bg-soundlog-action px-3"
+              disabled={isSaving}
+              onPress={onSave}
+              style={{ opacity: isSaving ? 0.72 : 1 }}
+            >
+              {isSaving ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <AppText className="text-sm font-semibold text-white">저장</AppText>
+              )}
+            </Pressable>
+          }
           title="리캡 만들기"
         />
         <AppText className="ml-12 mt-2 text-sm leading-6 text-white/48">
           사진과 장소, 음악을 확인하고 저장하세요.
         </AppText>
-
-        <View className="mt-7">
-          <SectionTitle title="표현 템플릿" />
-          <View className="mt-3">
-            <RecapTemplateSelector
-              onSelect={onChangeTemplate}
-              selectedTemplate={selectedTemplate}
-            />
-          </View>
-        </View>
 
         {photoUri ? (
           <MomentPhotoCanvas
@@ -194,6 +201,16 @@ export const MomentReviewPanel = forwardRef<
             </AppText>
           </View>
         )}
+
+        <View className="mt-4">
+          <SectionTitle title="게시물 스타일" />
+          <View className="mt-3">
+            <RecapTemplateSelector
+              onSelect={onChangeTemplate}
+              selectedTemplate={selectedTemplate}
+            />
+          </View>
+        </View>
 
         <View className="mt-7">
           <SectionTitle title="기록 정보" />
@@ -244,7 +261,7 @@ export const MomentReviewPanel = forwardRef<
                     style={{ opacity: disabled ? 0.38 : 1 }}
                   >
                     <AppText
-                      className={`text-xs font-semibold ${
+                      className={`text-[13px] font-semibold ${
                         selected ? "text-soundlog-inverse" : "text-white/68"
                       }`}
                     >
@@ -322,7 +339,7 @@ export const MomentReviewPanel = forwardRef<
                   onPress={() => toggleMoodTag(tag)}
                 >
                   <AppText
-                    className={`text-xs font-semibold ${
+                    className={`text-[13px] font-semibold ${
                       selected ? "text-soundlog-inverse" : "text-white/68"
                     }`}
                   >

@@ -98,7 +98,7 @@ export function PlaylistHeroInfo({
           onPress={onOpenFirstTrack}
           style={{ opacity: disabled ? 0.45 : 1 }}
         >
-          <Feather color="#4A1D96" name="music" size={22} />
+          <Feather color="#6EA8FF" name="music" size={22} />
         </Pressable>
       </View>
 

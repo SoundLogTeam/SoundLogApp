@@ -39,7 +39,7 @@ export function RecapTemplateSelector({
             onPress={() => onSelect(option.id)}
           >
             <AppText
-              className={`text-xs font-semibold ${
+              className={`text-[13px] font-semibold ${
                 isSelected ? 'text-soundlog-inverse' : 'text-white/65'
               }`}
             >

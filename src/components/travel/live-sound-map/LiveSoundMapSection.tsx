@@ -808,7 +808,7 @@ export function LiveSoundMapSection({
               </AppText>
             </View>
             <View className="h-10 w-10 items-center justify-center rounded-full bg-soundlog-lime">
-              <Feather color="#4A1D96" name="users" size={17} />
+              <Feather color="#6EA8FF" name="users" size={17} />
             </View>
           </View>
         </Pressable>

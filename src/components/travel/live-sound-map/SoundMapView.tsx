@@ -51,7 +51,7 @@ const markerPalette: Record<
 > = {
   cluster: {
     background: '#251A4A',
-    border: '#8B72FF',
+    border: '#315F9F',
     icon: '#F2EEFF',
     labelBackground: 'rgba(139,114,255,0.22)',
     labelText: '#F2EEFF',
@@ -65,8 +65,8 @@ const markerPalette: Record<
   },
   me: {
     background: '#B7E628',
-    border: '#4A1D96',
-    icon: '#4A1D96',
+    border: '#6EA8FF',
+    icon: '#6EA8FF',
     labelBackground: 'rgba(9,5,21,0.18)',
     labelText: '#FFFFFF',
   },

@@ -1,17 +1,25 @@
 import '../global.css';
 
 import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 
 import { AppEntryGate } from '@/components/auth/AppEntryGate';
 import { AppProviders } from '@/providers/AppProviders';
+
+void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
 export default function RootLayout() {
   return (
     <AppProviders>
       <StatusBar style="light" />
       <AppEntryGate />
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          contentStyle: { backgroundColor: '#070B1F' },
+          headerShown: false,
+        }}
+      >
         <Stack.Screen name="auth/login" />
         <Stack.Screen name="auth/callback" />
         <Stack.Screen name="legal/privacy" />

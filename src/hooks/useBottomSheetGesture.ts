@@ -26,13 +26,43 @@ export function useDismissibleBottomSheetGesture({
   onDismiss,
   visible = true,
 }: DismissibleBottomSheetGestureParams) {
-  const translateY = useRef(new Animated.Value(0)).current;
+  const backdropOpacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(360)).current;
 
   useEffect(() => {
-    if (visible) {
-      translateY.setValue(0);
+    if (!visible) {
+      backdropOpacity.stopAnimation();
+      translateY.stopAnimation();
+      backdropOpacity.setValue(0);
+      translateY.setValue(360);
+      return;
     }
-  }, [translateY, visible]);
+
+    backdropOpacity.stopAnimation();
+    translateY.stopAnimation();
+    backdropOpacity.setValue(0);
+    translateY.setValue(360);
+
+    const animationFrame = requestAnimationFrame(() => {
+      Animated.parallel([
+        Animated.timing(backdropOpacity, {
+          duration: 150,
+          easing: Easing.out(Easing.quad),
+          toValue: 1,
+          useNativeDriver: true,
+        }),
+        Animated.spring(translateY, {
+          damping: 24,
+          mass: 0.82,
+          stiffness: 230,
+          toValue: 0,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+
+    return () => cancelAnimationFrame(animationFrame);
+  }, [backdropOpacity, translateY, visible]);
 
   const restore = useCallback(() => {
     Animated.spring(translateY, {
@@ -44,18 +74,27 @@ export function useDismissibleBottomSheetGesture({
   }, [translateY]);
 
   const dismiss = useCallback(() => {
-    Animated.timing(translateY, {
-      duration: 170,
-      easing: Easing.out(Easing.cubic),
-      toValue: 360,
-      useNativeDriver: true,
-    }).start(({ finished }) => {
+    Animated.parallel([
+      Animated.timing(backdropOpacity, {
+        duration: 150,
+        easing: Easing.in(Easing.quad),
+        toValue: 0,
+        useNativeDriver: true,
+      }),
+      Animated.timing(translateY, {
+        duration: 180,
+        easing: Easing.out(Easing.cubic),
+        toValue: 360,
+        useNativeDriver: true,
+      }),
+    ]).start(({ finished }) => {
       if (finished) {
         onDismiss();
-        translateY.setValue(0);
+        backdropOpacity.setValue(0);
+        translateY.setValue(360);
       }
     });
-  }, [onDismiss, translateY]);
+  }, [backdropOpacity, onDismiss, translateY]);
 
   const panResponder = useMemo(
     () =>
@@ -86,6 +125,8 @@ export function useDismissibleBottomSheetGesture({
   );
 
   return {
+    backdropOpacity,
+    dismiss,
     panHandlers: panResponder.panHandlers,
     translateY,
   };

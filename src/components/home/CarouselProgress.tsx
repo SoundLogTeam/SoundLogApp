@@ -22,7 +22,7 @@ export function CarouselProgress({
   return (
     <View className="mx-auto h-[4px] w-44 rounded-full bg-white/10">
       <View
-        className="h-[4px] rounded-full bg-soundlog-purple"
+        className="h-[4px] rounded-full bg-soundlog-blue"
         style={{
           transform: [{ translateX }],
           width: thumbWidth,

@@ -168,13 +168,13 @@ function getMapLegendItems(filter: RecapMapFilter) {
   if (filter === 'mine') {
     return [
       { color: '#B7E628', label: '내 리캡' },
-      { color: '#8B72FF', label: '리캡 묶음' },
+      { color: '#315F9F', label: '리캡 묶음' },
     ];
   }
 
   return [
     { color: '#FF8A3D', label: '공개 리캡' },
-    { color: '#8B72FF', label: '리캡 묶음' },
+    { color: '#315F9F', label: '리캡 묶음' },
   ];
 }
 
@@ -548,7 +548,7 @@ export function RecapMapSection({
                   </View>
                   <View className="h-11 w-11 items-center justify-center rounded-full bg-soundlog-lime">
                     <Feather
-                      color="#4A1D96"
+                      color="#6EA8FF"
                       name={sessionStatus === 'active' ? 'camera' : 'navigation'}
                       size={18}
                     />
@@ -664,7 +664,7 @@ export function RecapMapSection({
               </View>
               <View className="h-10 w-10 items-center justify-center rounded-full bg-soundlog-lime">
                 <Feather
-                  color="#4A1D96"
+                  color="#6EA8FF"
                   name={sessionStatus === 'active' ? 'camera' : 'navigation'}
                   size={17}
                 />

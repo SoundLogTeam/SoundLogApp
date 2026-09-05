@@ -100,8 +100,8 @@ const baseConfig = {
   android: {
     package: 'com.mannomi.soundlog',
     adaptiveIcon: {
-      backgroundColor: '#E6F4FE',
-      foregroundImage: './assets/soundlog-logo.png',
+      backgroundColor: '#070B1F',
+      foregroundImage: './assets/android-icon-foreground.png',
       backgroundImage: './assets/android-icon-background.png',
       monochromeImage: './assets/android-icon-monochrome.png',
     },
@@ -122,11 +122,20 @@ const baseConfig = {
   },
   web: {
     bundler: 'metro',
-    favicon: './assets/soundlog-logo.png',
+    favicon: './assets/favicon.png',
   },
   plugins: [
     'expo-router',
     'expo-font',
+    [
+      'expo-splash-screen',
+      {
+        backgroundColor: '#070B1F',
+        image: './assets/splash-icon.png',
+        imageWidth: 390,
+        resizeMode: 'contain',
+      },
+    ],
     [
       'expo-camera',
       {

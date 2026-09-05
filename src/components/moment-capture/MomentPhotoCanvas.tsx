@@ -532,7 +532,7 @@ export const MomentPhotoCanvas = forwardRef<
           {isMapTemplate ? (
             <View className="flex-row items-center gap-3">
               <View className="h-8 w-8 items-center justify-center rounded-full bg-soundlog-lime">
-                <Feather color="#4A1D96" name="map-pin" size={15} />
+                <Feather color="#6EA8FF" name="map-pin" size={15} />
               </View>
               <View className="min-w-0 flex-1">
                 <AppText className="text-sm font-semibold text-white">
@@ -667,7 +667,7 @@ function MapMusicPin({ track }: { track?: Track }) {
               { backgroundColor: track?.fallbackColor ?? '#B7E628' },
             ]}
           >
-            <Feather color="#4A1D96" name="music" size={16} />
+            <Feather color="#6EA8FF" name="music" size={16} />
           </View>
         )}
         <View style={styles.mapMusicText}>
@@ -681,7 +681,7 @@ function MapMusicPin({ track }: { track?: Track }) {
       </View>
       <View style={styles.mapPinConnector} />
       <View style={styles.mapPinHead}>
-        <Feather color="#4A1D96" name="music" size={15} />
+        <Feather color="#6EA8FF" name="music" size={15} />
       </View>
       <View style={styles.mapPinPoint} />
     </View>
@@ -947,7 +947,7 @@ function StickerControlHeader({
       <Pressable
         accessibilityLabel={visible ? `${title} 숨기기` : `${title} 표시하기`}
         accessibilityRole="button"
-        className="h-9 w-9 items-center justify-center rounded-full bg-black/25"
+        className="h-11 w-11 items-center justify-center rounded-full bg-black/25"
         disabled={isSaving || disabled}
         onPress={onToggle}
         style={{ opacity: disabled ? 0.45 : 1 }}
@@ -981,17 +981,17 @@ function StickerSegment<T extends string,>({
         return (
           <Pressable
             accessibilityRole="button"
-            className="h-9 flex-1 items-center justify-center rounded-full"
+            className="min-h-11 flex-1 items-center justify-center rounded-full"
             disabled={disabled}
             key={option.value}
             onPress={() => onChange(option.value)}
             style={{
-              backgroundColor: selected ? '#4A1D96' : 'transparent',
+              backgroundColor: selected ? '#214A73' : 'transparent',
               opacity: disabled ? 0.5 : 1,
             }}
           >
             <AppText
-              className="text-xs font-semibold"
+              className="text-[13px] font-semibold"
               style={{
                 color: selected ? '#FFFFFF' : 'rgba(255,255,255,0.6)',
               }}

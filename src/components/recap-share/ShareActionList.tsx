@@ -12,7 +12,7 @@ const actions: Array<{
   textColor: string;
 }> = [
   {
-    backgroundColor: '#4A1D96',
+    backgroundColor: '#315F9F',
     icon: 'download',
     iconColor: '#FFFFFF',
     id: 'save',

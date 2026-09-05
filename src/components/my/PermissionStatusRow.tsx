@@ -122,7 +122,7 @@ export function PermissionStatusRow({
         ) : action ? (
           <View className="flex-row items-center">
             <AppText
-              className="text-[11px]"
+              className="text-xs"
               style={{ color: 'rgba(255,255,255,0.62)' }}
             >
               {action.label}

@@ -28,7 +28,7 @@ export function EndTravelConfirmModal({
       <View className="flex-1 items-center justify-center bg-black/62 px-6">
         <View className="w-full max-w-[360px] rounded-[28px] border border-white/12 bg-[#101626] p-5">
           <View className="h-12 w-12 items-center justify-center rounded-full bg-soundlog-lime">
-            <Feather color="#4A1D96" name="check-circle" size={22} />
+            <Feather color="#6EA8FF" name="check-circle" size={22} />
           </View>
 
           <AppText className="mt-5 text-[22px] font-semibold text-white">

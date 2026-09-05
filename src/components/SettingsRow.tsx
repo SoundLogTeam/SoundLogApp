@@ -50,7 +50,7 @@ export function SettingsRow({
         </AppText>
         {description ? (
           <AppText
-            className="mt-1 text-xs leading-5 text-white/42"
+            className="mt-1 text-xs leading-5 text-white/62"
             numberOfLines={2}
           >
             {description}
@@ -62,8 +62,8 @@ export function SettingsRow({
       ) : null}
       {rightText ? (
         <AppText
-          className="ml-3 max-w-[44%] text-right text-sm text-white/46"
-          numberOfLines={1}
+          className="ml-3 max-w-[44%] text-right text-sm leading-5 text-white/62"
+          numberOfLines={2}
         >
           {rightText}
         </AppText>

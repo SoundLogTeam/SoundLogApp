@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { Animated, Modal, Pressable, View } from 'react-native';
+import { Animated, Modal, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppText } from '@/components/AppText';
@@ -26,15 +26,26 @@ export function TravelModeBottomSheet({
   visible,
 }: TravelModeBottomSheetProps) {
   const insets = useSafeAreaInsets();
-  const { panHandlers, translateY } = useDismissibleBottomSheetGesture({
-    onDismiss: onClose,
-    visible,
-  });
+  const { backdropOpacity, dismiss, panHandlers, translateY } =
+    useDismissibleBottomSheetGesture({
+      onDismiss: onClose,
+      visible,
+    });
 
   return (
-    <Modal animationType="fade" onRequestClose={onClose} transparent visible={visible}>
-      <View className="flex-1 justify-end bg-black/55">
-        <Pressable accessibilityRole="button" className="flex-1" onPress={onClose} />
+    <Modal animationType="none" onRequestClose={dismiss} transparent visible={visible}>
+      <View className="flex-1 justify-end">
+        <Pressable
+          accessibilityLabel="여행 모드 선택 닫기"
+          accessibilityRole="button"
+          onPress={dismiss}
+          style={StyleSheet.absoluteFill}
+        >
+          <Animated.View
+            className="bg-black/55"
+            style={[StyleSheet.absoluteFill, { opacity: backdropOpacity }]}
+          />
+        </Pressable>
         <Animated.View
           className="rounded-t-[30px] border border-white/10 bg-[#0B1020] px-5 pt-4"
           style={{
@@ -63,7 +74,7 @@ export function TravelModeBottomSheet({
               accessibilityLabel="여행 모드 선택 닫기"
               accessibilityRole="button"
               className="h-10 w-10 items-center justify-center rounded-full bg-white/10"
-              onPress={onClose}
+              onPress={dismiss}
             >
               <Feather color="#fff" name="x" size={18} />
             </Pressable>

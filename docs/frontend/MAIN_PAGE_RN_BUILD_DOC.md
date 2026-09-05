@@ -92,7 +92,7 @@ RN에서는 다음 방식 중 하나를 사용한다.
 | `border.chip`        | `#364283` | 칩 테두리          |
 | `text.primary`       | `#FFFFFF` | 주요 텍스트        |
 | `text.secondary`     | `rgba(255,255,255,0.68)` | 보조 텍스트 |
-| `accent.purple`      | `#7A2CFF` | 진행바/선택 포인트 |
+| `accent.blue`        | `#6EA8FF` | 진행바/선택 포인트 |
 | `accent.gold`        | `#B1913A` | 추천 카드          |
 | `player.background`  | `#45343D` | 미니 플레이어      |
 

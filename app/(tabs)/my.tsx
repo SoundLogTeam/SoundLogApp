@@ -5,6 +5,7 @@ import { ScrollView, View } from 'react-native';
 import { meApi } from '@/api/meApi';
 import { useNearbyPlacesQuery } from '@/api/tourQueries';
 import { AppText } from '@/components/AppText';
+import { AccountActionsSection } from '@/components/my/AccountActionsSection';
 import { AuthAccountCard } from '@/components/my/AuthAccountCard';
 import { MySettingsRow } from '@/components/my/MySettingsRow';
 import { PermissionSettingsCard } from '@/components/my/PermissionSettingsCard';
@@ -228,6 +229,8 @@ export default function MyScreen() {
             />
           </View>
         ) : null}
+
+        <AccountActionsSection />
       </ScrollView>
     </Screen>
   );
