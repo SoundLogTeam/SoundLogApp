@@ -31,6 +31,8 @@ export function useDismissibleBottomSheetGesture({
 
   useEffect(() => {
     if (!visible) {
+      backdropOpacity.stopAnimation();
+      translateY.stopAnimation();
       backdropOpacity.setValue(0);
       translateY.setValue(360);
       return;
